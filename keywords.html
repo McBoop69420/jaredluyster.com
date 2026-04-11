@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wizard Battle — Keywords</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d1a;
+    color: #e8e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c9aaff;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 0.85rem;
+    color: #7766aa;
+    margin-bottom: 40px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Section headers ── */
+  .section-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #7766aa;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  /* ── Keyword grid ── */
+  .keyword-grid {
+    width: 100%;
+    max-width: 780px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .keyword-card {
+    background: #13132a;
+    border: 1px solid #2a2a50;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0 12px;
+    align-items: start;
+    transition: border-color 0.15s;
+  }
+  .keyword-card:hover {
+    border-color: #5544aa;
+  }
+
+  .keyword-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    padding-top: 2px;
+    text-align: center;
+  }
+
+  .keyword-body {}
+
+  .keyword-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .keyword-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .keyword-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0.9;
+  }
+
+  .keyword-effect {
+    font-size: 0.82rem;
+    color: #b0a8d8;
+    margin-bottom: 8px;
+    line-height: 1.45;
+  }
+
+  /* ── Mechanic pills ── */
+  .keyword-mechanics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pill-decay    { background: #2a1a40; color: #bb88ff; border: 1px solid #4a2a70; }
+  .pill-grow     { background: #1a2a10; color: #88ff66; border: 1px solid #2a4a20; }
+  .pill-permanent{ background: #1a2030; color: #66aaff; border: 1px solid #2a3a60; }
+  .pill-instant  { background: #301a10; color: #ffaa55; border: 1px solid #60381a; }
+  .pill-dot      { background: #3a1a1a; color: #ff6655; border: 1px solid #6a2a2a; }
+  .pill-skip     { background: #1a1a30; color: #aaaaff; border: 1px solid #2a2a60; }
+  .pill-dmgbuff  { background: #2a2010; color: #ffdd55; border: 1px solid #504020; }
+  .pill-miss     { background: #101a30; color: #55bbff; border: 1px solid #1a3060; }
+  .pill-flatred  { background: #1a2a20; color: #55ddaa; border: 1px solid #2a4a38; }
+  .pill-pctred   { background: #2a1a20; color: #ff88aa; border: 1px solid #502a40; }
+  .pill-stacks   { background: #202020; color: #aaaaaa; border: 1px solid #404040; }
+  .pill-both     { background: #202030; color: #ccbbff; border: 1px solid #3a3a60; }
+
+  /* ── Type badge colors ── */
+  .type-Fire      { background: #4a1a0a; color: #ff6633; border: 1px solid #8a2a10; }
+  .type-Ice       { background: #0a2030; color: #66ddff; border: 1px solid #1a4060; }
+  .type-Lightning { background: #2a2000; color: #ffdd00; border: 1px solid #504000; }
+  .type-Water     { background: #0a1840; color: #4488ff; border: 1px solid #1a2870; }
+  .type-Rock      { background: #1a1208; color: #cc9944; border: 1px solid #3a2810; }
+  .type-Light     { background: #282210; color: #ffdd88; border: 1px solid #504420; }
+  .type-Shadow    { background: #1a0a2a; color: #cc66ff; border: 1px solid #3a1a5a; }
+  .type-Grass     { background: #0a1e10; color: #44cc66; border: 1px solid #1a3820; }
+  .type-Shared    { background: #1a1a1a; color: #aaaaaa; border: 1px solid #333333; }
+
+  /* ── Divider ── */
+  .divider {
+    width: 100%;
+    max-width: 780px;
+    border: none;
+    border-top: 1px solid #2a2a50;
+    margin: 8px 0 32px;
+  }
+
+  /* ── Summary table ── */
+  .table-wrap {
+    width: 100%;
+    max-width: 780px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+    font-size: 0.8rem;
+  }
+  thead tr th {
+    background: #151525;
+    color: #7766aa;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  thead tr th:first-child { border-radius: 8px 0 0 8px; }
+  thead tr th:last-child  { border-radius: 0 8px 8px 0; }
+
+  tbody tr td {
+    background: #13132a;
+    padding: 10px 12px;
+    vertical-align: middle;
+    color: #c0b8e8;
+  }
+  tbody tr td:first-child { border-radius: 8px 0 0 8px; }
+  tbody tr td:last-child  { border-radius: 0 8px 8px 0; }
+  tbody tr:hover td { background: #1a1a38; }
+
+  .tbl-icon { font-size: 1.1rem; }
+  .tbl-name { font-weight: 700; color: #fff; white-space: nowrap; }
+  .tbl-type-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .tbl-decay-yes { color: #bb88ff; }
+  .tbl-decay-no  { color: #66aaff; }
+  .tbl-target-enemy  { color: #ff8855; }
+  .tbl-target-holder { color: #88ddaa; }
+  .tbl-target-instant { color: #ffaa55; }
+</style>
+</head>
+<body>
+
+<h1>Keyword Reference</h1>
+<p class="subtitle">Status effects, mechanics, and how they interact</p>
+
+<!-- ── TYPE-SPECIFIC STATUS EFFECTS ── -->
+<div style="width:100%;max-width:780px;">
+  <p class="section-label">Type-Specific Status Effects</p>
+</div>
+<div class="keyword-grid">
+
+  <!-- CHAR -->
+  <div class="keyword-card">
+    <div class="keyword-icon">🔥</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Char</span>
+        <span class="keyword-type type-Fire">Fire</span>
+      </div>
+      <div class="keyword-effect">
+        At the start of each turn, the target takes damage equal to its current Char stacks.
+        Then the stack count decreases by 1.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-dot">Damage over time</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = damage dealt</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRACK -->
+  <div class="keyword-card">
+    <div class="keyword-icon">❄️</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Freeze</span>
+        <span class="keyword-type type-Ice">Ice</span>
+      </div>
+      <div class="keyword-effect">
+        At the start of the target's turn, their action is skipped entirely.
+        Then the stack count decreases by 1.
+        Multiple stacks mean multiple skipped turns in a row.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-skip">Skips action</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = turns skipped</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOCK -->
+  <div class="keyword-card">
+    <div class="keyword-icon">⚡</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Shock</span>
+        <span class="keyword-type type-Lightning">Lightning</span>
+      </div>
+      <div class="keyword-effect">
+        While the target has any Shock stacks, all Lightning spells deal
+        <strong style="color:#ffdd55;">+50% damage</strong> to them.
+        Stacks decay at end of each turn regardless of how many there are.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-dmgbuff">Lightning ×1.5</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = duration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WET -->
+  <div class="keyword-card">
+    <div class="keyword-icon">🌊</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Drown</span>
+        <span class="keyword-type type-Water">Water</span>
+      </div>
+      <div class="keyword-effect">
+        At the start of each turn, the target takes damage equal to its current Drown stacks.
+        Then the stack count decreases by 1.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-dot">Damage over time</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = damage dealt</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAZE -->
+  <div class="keyword-card">
+    <div class="keyword-icon">💫</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Daze</span>
+        <span class="keyword-type type-Rock">Rock</span>
+      </div>
+      <div class="keyword-effect">
+        The target's attacks deal <strong style="color:#55ddaa;">flat damage equal to current Daze stacks less</strong> than normal.
+        As stacks decay each turn, the reduction shrinks alongside them.
+        <em style="color:#7766aa;">Example: Daze 3 → enemy hits for −3 this turn, −2 next, −1 after.</em>
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-flatred">Flat dmg reduction</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = reduction &amp; duration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLIND -->
+  <div class="keyword-card">
+    <div class="keyword-icon">👁</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Blind</span>
+        <span class="keyword-type type-Light">Light</span>
+      </div>
+      <div class="keyword-effect">
+        While the target has any Blind stacks, each of their attacks has a
+        <strong style="color:#55bbff;">50% chance to deal 0 damage</strong> (miss entirely).
+        Stack count decays by 1 each turn.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-miss">50% miss chance</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = duration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOT -->
+  <div class="keyword-card">
+    <div class="keyword-icon">🌿</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Root</span>
+        <span class="keyword-type type-Grass">Grass</span>
+      </div>
+      <div class="keyword-effect">
+        The holder's attacks deal <strong style="color:#44cc66;">1 less damage per stack</strong>, permanently.
+        Unlike other statuses, Root stacks never decay — only Purify removes them.
+        Applies to both enemies and the player.
+        <em style="color:#7766aa;">Example: Root 4 → permanently −4 damage on all attacks.</em>
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-flatred">−1 dmg per stack</span>
+        <span class="pill pill-permanent">Never decays</span>
+        <span class="pill pill-both">Affects holder</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIFESTEAL -->
+  <div class="keyword-card">
+    <div class="keyword-icon">🌑</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Lifesteal / Drain</span>
+        <span class="keyword-type type-Shadow">Shadow</span>
+      </div>
+      <div class="keyword-effect">
+        An <strong style="color:#ffaa55;">instant effect</strong> — not a status.
+        Deals N damage to the enemy and simultaneously heals the caster for N HP.
+        Can be amplified like any other spell effect.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-instant">Instant</span>
+        <span class="pill pill-dot">Damage + heal</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<!-- ── SHARED STATUS EFFECTS ── -->
+<div style="width:100%;max-width:780px;">
+  <p class="section-label">Shared Status Effects</p>
+</div>
+<div class="keyword-grid">
+
+  <!-- WEAK -->
+  <div class="keyword-card">
+    <div class="keyword-icon">💔</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Weak</span>
+        <span class="keyword-type type-Shared">Shared</span>
+      </div>
+      <div class="keyword-effect">
+        The target's outgoing damage is reduced by <strong style="color:#ff88aa;">25%</strong> (multiplicative).
+        Stacks represent duration — each turn the stack count decreases by 1.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-pctred">−25% damage dealt</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-stacks">Stacks = duration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRENGTH -->
+  <div class="keyword-card">
+    <div class="keyword-icon">💪</div>
+    <div class="keyword-body">
+      <div class="keyword-header">
+        <span class="keyword-name">Strength</span>
+        <span class="keyword-type type-Shared">Shared</span>
+      </div>
+      <div class="keyword-effect">
+        The holder's damage and block are each increased by a
+        <strong style="color:#ffdd55;">flat amount equal to the stack count</strong>.
+        Stacks represent duration — decreases by 1 each turn.
+      </div>
+      <div class="keyword-mechanics">
+        <span class="pill pill-dmgbuff">+N damage &amp; block</span>
+        <span class="pill pill-decay">Decays −1/turn</span>
+        <span class="pill pill-both">Affects holder</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<!-- ── SUMMARY TABLE ── -->
+<div style="width:100%;max-width:780px;">
+  <p class="section-label">At a glance</p>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Effect</th>
+        <th>Decays?</th>
+        <th>Stacks mean</th>
+        <th>Applied to</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tbl-icon">🔥</td>
+        <td class="tbl-name">Char</td>
+        <td><span class="tbl-type-badge type-Fire">Fire</span></td>
+        <td>DoT = stacks/turn</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Damage &amp; duration</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">❄️</td>
+        <td class="tbl-name">Freeze</td>
+        <td><span class="tbl-type-badge type-Ice">Ice</span></td>
+        <td>Skip action</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Turns skipped</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">⚡</td>
+        <td class="tbl-name">Shock</td>
+        <td><span class="tbl-type-badge type-Lightning">Lightning</span></td>
+        <td>Lightning deals ×1.5</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Duration</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">🌊</td>
+        <td class="tbl-name">Drown</td>
+        <td><span class="tbl-type-badge type-Water">Water</span></td>
+        <td>DoT = stacks/turn</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Damage &amp; duration</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">💫</td>
+        <td class="tbl-name">Daze</td>
+        <td><span class="tbl-type-badge type-Rock">Rock</span></td>
+        <td>−stacks flat damage</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Reduction &amp; duration</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">👁</td>
+        <td class="tbl-name">Blind</td>
+        <td><span class="tbl-type-badge type-Light">Light</span></td>
+        <td>50% miss chance</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Duration</td>
+        <td class="tbl-target-enemy">Enemy</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">🌿</td>
+        <td class="tbl-name">Root</td>
+        <td><span class="tbl-type-badge type-Grass">Grass</span></td>
+        <td>−stacks flat damage</td>
+        <td class="tbl-decay-no">Never</td>
+        <td>Permanent reduction</td>
+        <td class="tbl-target-holder">Holder</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">🌑</td>
+        <td class="tbl-name">Lifesteal</td>
+        <td><span class="tbl-type-badge type-Shadow">Shadow</span></td>
+        <td>Deal N dmg, heal N HP</td>
+        <td class="tbl-target-instant">Instant</td>
+        <td>—</td>
+        <td class="tbl-target-instant">Immediate</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">💔</td>
+        <td class="tbl-name">Weak</td>
+        <td><span class="tbl-type-badge type-Shared">Shared</span></td>
+        <td>−25% damage dealt</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Duration</td>
+        <td class="tbl-target-holder">Holder</td>
+      </tr>
+      <tr>
+        <td class="tbl-icon">💪</td>
+        <td class="tbl-name">Strength</td>
+        <td><span class="tbl-type-badge type-Shared">Shared</span></td>
+        <td>+stacks dmg &amp; block</td>
+        <td class="tbl-decay-yes">Yes (−1)</td>
+        <td>Duration &amp; amount</td>
+        <td class="tbl-target-holder">Holder</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
