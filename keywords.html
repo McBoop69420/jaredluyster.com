@@ -227,8 +227,9 @@
         <span class="keyword-type type-Fire">Fire</span>
       </div>
       <div class="keyword-effect">
-        At the start of each turn, the target takes damage equal to its current Char stacks.
-        Then the stack count decreases by 1.
+        Char stacks accumulate on the enemy.
+        At the start of each of its turns, it takes damage equal to its current Char stacks.
+        Then remove 1 Char stack.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dot">Damage over time</span>
@@ -269,10 +270,9 @@
         <span class="keyword-type type-Lightning">Lightning</span>
       </div>
       <div class="keyword-effect">
-        While the target has Shock stacks, Lightning spells deal
-        <strong style="color:#ffdd55;">×1.25 per stack</strong> bonus damage (exponential).
-        Stacks decay by 1 each turn.
-        <em style="color:#7766aa;">Example: Shock 1 → ×1.25. Shock 2 → ×1.56. Shock 3 → ×1.95.</em>
+        Shock stacks accumulate on the enemy.
+        While it has any Shock stacks, Lightning spells deal <strong style="color:#ffdd55;">×1.25 bonus damage per stack</strong> (exponential).
+        Remove 1 Shock stack at the end of each of its turns.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dmgbuff">Lightning ×1.25 per stack</span>
@@ -291,8 +291,9 @@
         <span class="keyword-type type-Water">Water</span>
       </div>
       <div class="keyword-effect">
-        At the start of each turn, the target takes damage equal to its current Drown stacks.
-        Then the stack count decreases by 1.
+        Drown stacks accumulate on the enemy.
+        At the start of each of its turns, it takes damage equal to its current Drown stacks.
+        Then remove 1 Drown stack.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dot">Damage over time</span>
@@ -311,9 +312,9 @@
         <span class="keyword-type type-Rock">Rock</span>
       </div>
       <div class="keyword-effect">
-        The target's attacks deal <strong style="color:#55ddaa;">flat damage equal to current Daze stacks less</strong> than normal.
-        As stacks decay each turn, the reduction shrinks alongside them.
-        <em style="color:#7766aa;">Example: Daze 3 → enemy hits for −3 this turn, −2 next, −1 after.</em>
+        Daze stacks accumulate on the enemy.
+        Its attacks deal <strong style="color:#55ddaa;">flat damage equal to its current Daze stacks less</strong> than normal.
+        Remove 1 Daze stack at the end of each of its turns.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-flatred">Flat dmg reduction</span>
@@ -332,9 +333,9 @@
         <span class="keyword-type type-Light">Light</span>
       </div>
       <div class="keyword-effect">
-        While the target has any Blind stacks, each of their attacks has a
-        <strong style="color:#55bbff;">50% chance to deal 0 damage</strong> (miss entirely).
-        Stack count decays by 1 each turn.
+        Blind stacks accumulate on the enemy.
+        While it has any Blind stacks, each of its attacks has a <strong style="color:#55bbff;">50% chance to miss</strong> entirely.
+        Remove 1 Blind stack at the end of each of its turns.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-miss">50% miss chance</span>
@@ -353,8 +354,9 @@
         <span class="keyword-type type-Grass">Grass</span>
       </div>
       <div class="keyword-effect">
-        At the start of each turn, the target takes damage equal to its current Root stacks.
-        Then the stack count decreases by 1.
+        Root stacks accumulate on the enemy.
+        At the start of each of its turns, it takes damage equal to its current Root stacks.
+        Then remove 1 Root stack.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dot">Damage over time</span>
@@ -373,9 +375,9 @@
         <span class="keyword-type type-Shadow">Shadow</span>
       </div>
       <div class="keyword-effect">
-        Applied to the enemy as a status. At the <strong style="color:#cc66ff;">end of the enemy's next turn</strong>,
-        all stacks are consumed: the enemy loses that many HP and the player heals for the same amount.
-        Stacks do not decay each turn — they all fire at once, then disappear.
+        Lifesteal stacks accumulate on the enemy.
+        At the <strong style="color:#cc66ff;">end of its next turn</strong>, all stacks trigger at once — it loses that many HP and you heal for the same amount.
+        All stacks are then removed.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dot">Damage + heal</span>
@@ -404,8 +406,9 @@
         <span class="keyword-type type-Shared">Shared</span>
       </div>
       <div class="keyword-effect">
-        The target's outgoing damage is reduced by <strong style="color:#ff88aa;">25%</strong> (multiplicative).
-        Stacks represent duration — each turn the stack count decreases by 1.
+        Weak stacks accumulate on the target.
+        While it has any Weak stacks, its outgoing damage is reduced by <strong style="color:#ff88aa;">25%</strong>.
+        Remove 1 Weak stack at the end of each of its turns.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-pctred">−25% damage dealt</span>
@@ -424,9 +427,9 @@
         <span class="keyword-type type-Shared">Shared</span>
       </div>
       <div class="keyword-effect">
-        The holder's damage and block are each increased by a
-        <strong style="color:#ffdd55;">flat amount equal to the stack count</strong>.
-        Stacks represent duration — decreases by 1 each turn.
+        Strength stacks accumulate on the holder.
+        While it has any Strength stacks, its damage and block are each increased by <strong style="color:#ffdd55;">an amount equal to its current Strength stacks</strong>.
+        Remove 1 Strength stack at the end of each of its turns.
       </div>
       <div class="keyword-mechanics">
         <span class="pill pill-dmgbuff">+N damage &amp; block</span>
