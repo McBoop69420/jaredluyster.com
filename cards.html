@@ -179,6 +179,7 @@
   }
   .tag-fade   { background: rgba(255,236,209,.08); color: var(--muted); border: 1px solid var(--line); }
   .tag-onhit  { background: rgba(80,200,120,.12); color: #77cc88; border: 1px solid rgba(80,200,120,.2); }
+  .tag-copies { background: rgba(240,190,99,.18); color: var(--gold); border: 1px solid rgba(240,190,99,.3); font-weight: 800; }
 
   .card-desc { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
@@ -330,60 +331,60 @@ const SHOP_CARDS = [
 
 const STARTER_DECKS = {
   pyromancer: [
-    { name:'Firebolt',     type:'Fire',    cost:1, desc:'Deal 5 damage. Char 1.' },
-    { name:'Ignite',       type:'Fire',    cost:1, desc:'Deal 4 damage. Char 2.' },
-    { name:'Flame Burst',  type:'Fire',    cost:2, desc:'Deal 5 damage twice. Char 3.' },
-    { name:'Inferno Core', type:'Fire',    cost:2, desc:'Char applied this turn is doubled.' },
+    { name:'Firebolt',     type:'Fire',    cost:1, copies:2, desc:'Deal 5 damage. Char 1.' },
+    { name:'Ignite',       type:'Fire',    cost:1, copies:2, desc:'Deal 4 damage. Char 2.' },
+    { name:'Flame Burst',  type:'Fire',    cost:2, copies:1, desc:'Deal 5 damage twice. Char 3.' },
+    { name:'Inferno Core', type:'Fire',    cost:2, copies:1, desc:'Char applied this turn is doubled.' },
   ],
   tidecaller: [
-    { name:'Wavecrash',    type:'Water',   cost:1, desc:'Deal 5 damage. Drown 1.' },
-    { name:'Soothing Wave',type:'Water',   cost:1, desc:'Heal 5 HP. Drown 1.' },
-    { name:'Tidal Flow',   type:'Water',   cost:2, desc:'Deal 8 damage. Draw 1. Gain 1 mana next turn.' },
-    { name:'Drown Surge',  type:'Water',   cost:2, desc:'Deal 8 damage. Drown 4.' },
+    { name:'Wavecrash',    type:'Water',   cost:1, copies:2, desc:'Deal 5 damage. Drown 1.' },
+    { name:'Soothing Wave',type:'Water',   cost:1, copies:2, desc:'Heal 5 HP. Drown 1.' },
+    { name:'Tidal Flow',   type:'Water',   cost:2, copies:1, desc:'Deal 8 damage. Draw 1. Gain 1 mana next turn.' },
+    { name:'Drown Surge',  type:'Water',   cost:2, copies:1, desc:'Deal 8 damage. Drown 4.' },
   ],
   stonewarden: [
-    { name:'Rock Throw',   type:'Rock',    cost:1, desc:'Deal 5 damage. Daze 1.' },
-    { name:'Stoneskin',    type:'Rock',    cost:1, desc:'Gain 5 Block. If hit, Daze 1.', tags:['on-hit'] },
-    { name:'Erode',        type:'Rock',    cost:2, desc:'Deal 10 damage. Daze 2.' },
-    { name:'On Guard',     type:'Rock',    cost:2, desc:'Gain 10 Block. If hit, Daze 2.', tags:['on-hit'] },
+    { name:'Rock Throw',   type:'Rock',    cost:1, copies:2, desc:'Deal 5 damage. Daze 1.' },
+    { name:'Stoneskin',    type:'Rock',    cost:1, copies:2, desc:'Gain 5 Block. If hit, Daze 1.', tags:['on-hit'] },
+    { name:'Erode',        type:'Rock',    cost:2, copies:1, desc:'Deal 10 damage. Daze 2.' },
+    { name:'On Guard',     type:'Rock',    cost:2, copies:1, desc:'Gain 10 Block. If hit, Daze 2.', tags:['on-hit'] },
   ],
   stormseeker: [
-    { name:'Spark Strike', type:'Lightning',cost:1, desc:'Deal 5 damage. Shock 1.' },
-    { name:'Static Charge',type:'Lightning',cost:1, desc:'Deal 4 damage. Shock 2.' },
-    { name:'Chain Lightning',type:'Lightning',cost:2,desc:'Deal 4 damage 3 times.' },
-    { name:'Surge Engine', type:'Lightning',cost:2, desc:'Gain 2 mana next turn. Draw 2 extra cards next turn.', tags:['fade'] },
+    { name:'Spark Strike', type:'Lightning',cost:1, copies:2, desc:'Deal 5 damage. Shock 1.' },
+    { name:'Static Charge',type:'Lightning',cost:1, copies:2, desc:'Deal 4 damage. Shock 2.' },
+    { name:'Chain Lightning',type:'Lightning',cost:2, copies:1, desc:'Deal 4 damage 3 times.' },
+    { name:'Surge Engine', type:'Lightning',cost:2, copies:1, desc:'Gain 2 mana next turn. Draw 2 extra cards next turn.', tags:['fade'] },
   ],
   frostweaver: [
-    { name:'Shardsicle',   type:'Ice',     cost:1, desc:'Deal 5 damage. Freeze 1.' },
-    { name:'Ice Cube',     type:'Ice',     cost:1, desc:'Gain 5 Block. Freeze 1.' },
-    { name:'Frost Armor',  type:'Ice',     cost:2, desc:'Gain 10 Block. Freeze 2.', tags:['fade'] },
-    { name:'Absolute Zero',type:'Ice',     cost:2, desc:'Apply 3 Freeze.', tags:['fade'] },
+    { name:'Shardsicle',   type:'Ice',     cost:1, copies:2, desc:'Deal 5 damage. Freeze 1.' },
+    { name:'Ice Cube',     type:'Ice',     cost:1, copies:2, desc:'Gain 5 Block. Freeze 1.' },
+    { name:'Frost Armor',  type:'Ice',     cost:2, copies:1, desc:'Gain 10 Block. Freeze 2.', tags:['fade'] },
+    { name:'Absolute Zero',type:'Ice',     cost:2, copies:1, desc:'Apply 3 Freeze.', tags:['fade'] },
   ],
   shadowblade: [
-    { name:'Shadow Strike',type:'Shadow',  cost:1, desc:'Deal 5 damage. Lifesteal 1.' },
-    { name:'Curse Touch',  type:'Shadow',  cost:1, desc:'Deal 4 damage. Lifesteal 2.' },
-    { name:'Soul Drain',   type:'Shadow',  cost:2, desc:'Lose 4 HP. Draw an extra card next turn.' },
-    { name:'Dark Pact',    type:'Shadow',  cost:2, desc:'Lose 6 HP. Apply 12 Lifesteal.' },
+    { name:'Shadow Strike',type:'Shadow',  cost:1, copies:2, desc:'Deal 5 damage. Lifesteal 1.' },
+    { name:'Curse Touch',  type:'Shadow',  cost:1, copies:2, desc:'Deal 4 damage. Lifesteal 2.' },
+    { name:'Soul Drain',   type:'Shadow',  cost:2, copies:1, desc:'Lose 4 HP. Draw an extra card next turn.' },
+    { name:'Dark Pact',    type:'Shadow',  cost:2, copies:1, desc:'Lose 6 HP. Apply 12 Lifesteal.' },
   ],
   dawnmage: [
-    { name:'Radiant Bolt', type:'Light',   cost:1, desc:'Deal 5 damage. Blind 1.' },
-    { name:'Shielding Light',type:'Light', cost:1, desc:'Gain 5 Block. Blind 1.' },
-    { name:'Purify',       type:'Light',   cost:2, desc:'Cleanse all debuffs and heal 20 HP.' },
-    { name:'Divine Barrier',type:'Light',  cost:2, desc:'Gain 30 Block.' },
+    { name:'Radiant Bolt', type:'Light',   cost:1, copies:2, desc:'Deal 5 damage. Blind 1.' },
+    { name:'Shielding Light',type:'Light', cost:1, copies:2, desc:'Gain 5 Block. Blind 1.' },
+    { name:'Purify',       type:'Light',   cost:2, copies:1, desc:'Cleanse all debuffs and heal 20 HP.' },
+    { name:'Divine Barrier',type:'Light',  cost:2, copies:1, desc:'Gain 30 Block.' },
   ],
   verdantmaker: [
-    { name:'Vine Lash',    type:'Grass',   cost:1, desc:'Deal 5 damage. Root 1.' },
-    { name:'Entangle',     type:'Grass',   cost:1, desc:'Gain 5 Block. Root 1.' },
-    { name:'Overgrowth',   type:'Grass',   cost:2, desc:'Cast a random 1-cost starter spell. Root 2.' },
-    { name:'Verdant Surge',type:'Grass',   cost:2, desc:'Root applied this turn is doubled.', tags:['fade'] },
+    { name:'Vine Lash',    type:'Grass',   cost:1, copies:2, desc:'Deal 5 damage. Root 1.' },
+    { name:'Entangle',     type:'Grass',   cost:1, copies:2, desc:'Gain 5 Block. Root 1.' },
+    { name:'Overgrowth',   type:'Grass',   cost:2, copies:1, desc:'Cast a random 1-cost starter spell. Root 2.' },
+    { name:'Verdant Surge',type:'Grass',   cost:2, copies:1, desc:'Root applied this turn is doubled.', tags:['fade'] },
   ],
 };
 
-const UNIVERSAL_CARDS = [
-  { name:'Mana Petal', type:'Neutral', cost:0, desc:'Gain 1 mana.', tags:['fade'] },
-  { name:'Amplify',    type:'Neutral', cost:1, desc:'The next spell you cast gains +50% effect.', tags:['fade'] },
-  { name:'Focus',      type:'Neutral', cost:1, desc:'Draw 2 cards.', tags:['fade'] },
-  { name:'Guard',      type:'Neutral', cost:1, desc:'Gain 8 Block.', tags:['fade'] },
+const NEUTRAL_CARDS = [
+  { name:'Mana Petal', type:'Neutral', cost:0, copies:1, desc:'Gain 1 mana.', tags:['fade'] },
+  { name:'Amplify',    type:'Neutral', cost:1, copies:1, desc:'The next spell you cast gains +50% effect.', tags:['fade'] },
+  { name:'Focus',      type:'Neutral', cost:1, copies:1, desc:'Draw 2 cards.', tags:['fade'] },
+  { name:'Guard',      type:'Neutral', cost:1, copies:1, desc:'Gain 8 Block.', tags:['fade'] },
 ];
 
 // ─── Render ─────────────────────────────────────────────────────────────────
@@ -395,7 +396,11 @@ function renderCard(card) {
   const costClass = card.cost === 0 ? 'card-cost free' : 'card-cost';
   const costLabel = card.cost === 0 ? '0' : card.cost;
 
+  const copiesHtml = (card.copies && card.copies > 1)
+    ? `<span class="tag tag-copies">×${card.copies}</span>` : '';
+
   const tagHtml = [
+    copiesHtml,
     hasFade  ? `<span class="tag tag-fade">Fade</span>` : '',
     hasOnHit ? `<span class="tag tag-onhit">On Hit</span>` : '',
   ].join('');
@@ -442,14 +447,18 @@ function buildShopSection() {
 
 function buildStarterSection() {
   let html = `<div class="section" id="sec-starter">
-    <div class="section-title"><span class="section-icon">🎓</span> Starter Decks <span style="font-size:.7rem;font-weight:400;color:var(--muted);letter-spacing:.04em;text-transform:none;font-family:sans-serif;">(6 class cards each)</span></div>`;
+    <div class="section-title"><span class="section-icon">🎓</span> Starter Decks <span style="font-size:.7rem;font-weight:400;color:var(--muted);letter-spacing:.04em;text-transform:none;font-family:sans-serif;">(6 class cards + 4 neutral)</span></div>`;
 
   Object.entries(STARTER_DECKS).forEach(([wid, cards]) => {
     const wtype = WIZARD_TYPE[wid];
+    const allCards = [
+      ...cards.map(c => ({...c, rarity:'starter'})),
+      ...NEUTRAL_CARDS.map(c => ({...c, rarity:'starter'})),
+    ];
     html += `<div class="type-group">
       <div class="type-label tb-${wtype}">${WIZARD_ICONS[wid]} ${WIZARD_NAMES[wid]}</div>
       <div class="card-grid">
-        ${cards.map(c => renderCard({...c, rarity:'starter'})).join('')}
+        ${allCards.map(renderCard).join('')}
       </div>
     </div>`;
   });
@@ -462,14 +471,14 @@ function buildUniversalSection() {
   return `<div class="section" id="sec-universal">
     <div class="section-title"><span class="section-icon">✨</span> Neutral Cards <span style="font-size:.7rem;font-weight:400;color:var(--muted);letter-spacing:.04em;text-transform:none;font-family:sans-serif;">(4 cards shared by all classes)</span></div>
     <div class="card-grid">
-      ${UNIVERSAL_CARDS.map(c => renderCard({...c, rarity:'starter'})).join('')}
+      ${NEUTRAL_CARDS.map(c => renderCard({...c, rarity:'starter'})).join('')}
     </div>
   </div>`;
 }
 
 // Inject
 const root = document.getElementById('cardRoot');
-root.innerHTML = buildUniversalSection() + buildStarterSection() + buildShopSection();
+root.innerHTML = buildStarterSection() + buildShopSection() + buildUniversalSection();
 
 // ─── Filter ──────────────────────────────────────────────────────────────────
 const SEC_MAP = { shop:'sec-shop', starter:'sec-starter', universal:'sec-universal' };
