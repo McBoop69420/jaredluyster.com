@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle is a roguelike deckbuilder where eight elemental wizards climb the Arcane Tower.">
+    <title>Wizard Battle</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <style>
+        body {
+            overflow-x: hidden;
+            padding-bottom: 64px;
+        }
+
+        /* ── Home ── */
+        .hero {
+            padding: 72px 0 48px;
+        }
+
+        .hero-copy,
+        .panel,
+        .wizard {
+            border: 1px solid var(--line);
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-copy {
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px;
+            padding: 36px;
+        }
+
+        .hero-copy::before {
+            content: "";
+            position: absolute;
+            inset: auto -12% -36% auto;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(240, 190, 99, 0.22), transparent 68%);
+            pointer-events: none;
+        }
+
+        h1 {
+            margin: 18px 0 12px;
+            font-size: clamp(3.2rem, 10vw, 6rem);
+            line-height: 0.92;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 3rem);
+        }
+
+        .section-head p,
+        .panel p,
+        .wizard p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin: 28px 0 24px;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .stat {
+            border-radius: 18px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 1.8rem;
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        .stat span {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        section { padding: 26px 0 10px; }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .section-head p { max-width: 34rem; }
+
+        .feature-grid,
+        .wizard-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .wizard-grid  { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+        .panel,
+        .wizard {
+            border-radius: 24px;
+            padding: 24px;
+        }
+
+        .panel strong,
+        .wizard-top strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.15rem;
+        }
+
+        .panel .accent {
+            color: var(--gold);
+            font-size: 0.82rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .wizard-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .wizard-top span {
+            font-size: 0.8rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .sigil {
+            display: inline-grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            margin-bottom: 14px;
+            border-radius: 16px;
+            font-size: 1.7rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .footer {
+            padding: 36px 0 48px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        /* ── Cards ── */
+        .page { max-width: 1280px; margin: 0 auto; padding: 32px 16px 0; position: relative; z-index: 1; }
+
+        .page-title {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            color: var(--gold);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 10px;
+        }
+
+        .spell-card {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .card-name { font-size: 0.92rem; font-weight: 700; }
+
+        .card-cost {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(164, 123, 255, 0.25);
+            border: 1px solid rgba(164, 123, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #c8aaff;
+        }
+
+        .card-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+        /* ── Keywords ── */
+        .page-centered {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 16px 0;
+        }
+
+        .keyword-grid {
+            width: 100%;
+            max-width: 780px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .keyword-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px 18px;
+            display: grid;
+            grid-template-columns: 40px 1fr;
+            gap: 0 12px;
+            align-items: start;
+        }
+
+        .keyword-icon { font-size: 1.6rem; line-height: 1; padding-top: 2px; text-align: center; }
+
+        .keyword-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+
+        .keyword-name { font-size: 1rem; font-weight: 700; }
+
+        .keyword-short {
+            font-size: 0.78rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .keyword-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+        /* ── Type Chart ── */
+        .page-narrow { max-width: 840px; margin: 0 auto; padding: 48px 16px 0; position: relative; z-index: 1; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 6px; }
+
+        th, td { padding: 10px 8px; text-align: center; border-radius: 10px; }
+
+        th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+        td { background: var(--card); border: 1px solid var(--line); font-weight: 700; }
+
+        .good { color: #9be48b; }
+        .bad  { color: #ffb28f; }
+
+        /* ── Responsive ── */
+        @media (max-width: 980px) {
+            .feature-grid,
+            .wizard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .section-head,
+            .feature-grid,
+            .wizard-grid,
+            .hero-stats {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .hero { padding-top: 36px; }
+            .hero-copy, .panel, .wizard { padding: 22px; border-radius: 24px; }
+
+            .keyword-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="#" data-route="">
+                <img class="brand-mark" src="wizard-hat.png" alt="Wizard Battle icon">
+                <div class="brand-copy">
+                    <strong>Wizard Battle</strong>
+                    <span>Arcane Roguelike Deckbuilder</span>
+                </div>
+            </a>
+            <nav class="nav" id="main-nav">
+                <a href="#" data-route="">Home</a>
+                <a href="#keywords" data-route="keywords">Keywords</a>
+                <a href="#type-chart" data-route="type-chart">Type Chart</a>
+                <a href="#cards" data-route="cards">Cards</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="app"></main>
+
+    <footer class="shell footer" id="site-footer" hidden>
+        Website pages live under <code>website/</code>. The game app remains separate and loads only the game shell.
+    </footer>
+
+    <script>
+        const pages = {
+            '': {
+                title: 'Wizard Battle',
+                render() {
+                    document.getElementById('site-footer').hidden = false;
+                    return `
+                    <section class="hero">
+                        <div class="shell hero-grid">
+                            <div class="hero-copy">
+                                <div class="eyebrow">Eight paths. One tower. No safe turns.</div>
+                                <h1>Wizard Battle</h1>
+                                <p class="lead">Wizard Battle is a roguelike deckbuilder where elemental matchups matter, every route reshapes your deck, and each wizard pushes a different style of spellcraft.</p>
+                                <div class="cta-row">
+                                    <a class="button button-primary" href="#keywords">Browse Keywords</a>
+                                    <a class="button button-secondary" href="#type-chart">View Type Chart</a>
+                                    <a class="button button-secondary" href="#cards">View All Cards</a>
+                                </div>
+                                <div class="hero-stats">
+                                    <div class="stat"><strong>8</strong><span>Wizard classes</span></div>
+                                    <div class="stat"><strong>47</strong><span>Spells to draft</span></div>
+                                    <div class="stat"><strong>12</strong><span>Floors to conquer</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="features">
+                        <div class="shell">
+                            <div class="section-head">
+                                <h2>Built Around Sharp Decisions</h2>
+                                <p>Wizard Battle rewards players who plan ahead and adapt on the fly. Every choice builds or breaks your run.</p>
+                            </div>
+                            <div class="feature-grid">
+                                <article class="panel">
+                                    <div class="accent">Elemental Matchups</div>
+                                    <strong>Type advantages change every fight</strong>
+                                    <p>The right spell can end a fight early. The wrong one can stall your whole run.</p>
+                                </article>
+                                <article class="panel">
+                                    <div class="accent">Map Routing</div>
+                                    <strong>Each node is a commitment</strong>
+                                    <p>Safer paths buy time. Harder ones offer bigger rewards. Shops and rest sites keep runs alive.</p>
+                                </article>
+                                <article class="panel">
+                                    <div class="accent">Deckbuilding</div>
+                                    <strong>Every reward changes your line</strong>
+                                    <p>Add tools, trim greed, and build around the wizard you picked at the start of the climb.</p>
+                                </article>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="wizards">
+                        <div class="shell">
+                            <div class="section-head">
+                                <h2>Choose Your Wizard</h2>
+                                <p>Each wizard approaches the tower differently. Same rules, different pressure.</p>
+                            </div>
+                            <div class="wizard-grid">
+                                <article class="wizard"><div class="sigil">🔥</div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Pressure, burn stacks, and relentless damage.</p></article>
+                                <article class="wizard"><div class="sigil">🌊</div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Control, healing, and drawn-out fights.</p></article>
+                                <article class="wizard"><div class="sigil">🪨</div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Defense, attrition, and surviving longer than the enemy.</p></article>
+                                <article class="wizard"><div class="sigil">⚡</div><div class="wizard-top"><strong>Stormseeker</strong><span>Lightning</span></div><p>Speed, shock, and fast chains.</p></article>
+                            </div>
+                        </div>
+                    </section>`;
+                }
+            },
+
+            'keywords': {
+                title: 'Wizard Battle — Keywords',
+                render() {
+                    document.getElementById('site-footer').hidden = true;
+                    return `
+                    <div class="page-centered">
+                        <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.06em;">Keywords</h1>
+                        <p class="subtitle" style="letter-spacing:.05em;">Reference page for the game's core mechanics and status terms.</p>
+                        <div class="keyword-grid">
+                            <article class="keyword-card"><div class="keyword-icon">🔥</div><div><div class="keyword-header"><div class="keyword-name">Char</div><div class="keyword-short">Burning damage</div></div><div class="keyword-desc">At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.</div></div></article>
+                            <article class="keyword-card"><div class="keyword-icon">❄️</div><div><div class="keyword-header"><div class="keyword-name">Freeze</div><div class="keyword-short">Turn denial</div></div><div class="keyword-desc">Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.</div></div></article>
+                            <article class="keyword-card"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Lightning bonus</div></div><div class="keyword-desc">Lightning spells deal more damage to Shocked targets.</div></div></article>
+                            <article class="keyword-card"><div class="keyword-icon">🌊</div><div><div class="keyword-header"><div class="keyword-name">Drown</div><div class="keyword-short">Start-of-turn damage</div></div><div class="keyword-desc">At the start of each turn, the target takes damage equal to its Drown stacks.</div></div></article>
+                            <article class="keyword-card"><div class="keyword-icon">🌿</div><div><div class="keyword-header"><div class="keyword-name">Root</div><div class="keyword-short">Burst setup</div></div><div class="keyword-desc">When the enemy takes damage, all Root stacks are consumed and explode for bonus damage.</div></div></article>
+                            <article class="keyword-card"><div class="keyword-icon">✨</div><div><div class="keyword-header"><div class="keyword-name">Amplify</div><div class="keyword-short">Spell boost</div></div><div class="keyword-desc">Your next spell gains a stronger effect.</div></div></article>
+                        </div>
+                    </div>`;
+                }
+            },
+
+            'type-chart': {
+                title: 'Wizard Battle — Type Chart',
+                render() {
+                    document.getElementById('site-footer').hidden = true;
+                    return `
+                    <div class="page-narrow">
+                        <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);">Type Chart</h1>
+                        <p class="subtitle">Rows are attackers. Columns are defenders.</p>
+                        <table>
+                            <thead>
+                                <tr><th></th><th>Fire</th><th>Water</th><th>Earth</th><th>Lightning</th><th>Ice</th><th>Shadow</th><th>Light</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th>Fire</th><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Water</th><td class="good">2x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Earth</th><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Lightning</th><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Ice</th><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Shadow</th><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td></tr>
+                                <tr><th>Light</th><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
+                            </tbody>
+                        </table>
+                    </div>`;
+                }
+            },
+
+            'cards': {
+                title: 'Wizard Battle — Card Reference',
+                render() {
+                    document.getElementById('site-footer').hidden = true;
+                    return `
+                    <div class="page">
+                        <h1 class="page-title">Card Reference</h1>
+                        <p class="subtitle">A lightweight website-only reference page. The game app remains separate.</p>
+                        <div class="card-grid">
+                            <article class="spell-card"><div class="card-header"><div class="card-name">Firebolt</div><div class="card-cost">1</div></div><div class="card-desc">Deal damage and start building burn pressure.</div></article>
+                            <article class="spell-card"><div class="card-header"><div class="card-name">Tidal Ward</div><div class="card-cost">1</div></div><div class="card-desc">Gain block and stabilize the next enemy swing.</div></article>
+                            <article class="spell-card"><div class="card-header"><div class="card-name">Static Lance</div><div class="card-cost">2</div></div><div class="card-desc">Burst damage that scales harder against shocked enemies.</div></article>
+                            <article class="spell-card"><div class="card-header"><div class="card-name">Frost Bind</div><div class="card-cost">2</div></div><div class="card-desc">Apply freeze stacks and buy a safer next turn.</div></article>
+                        </div>
+                    </div>`;
+                }
+            }
+        };
+
+        function getRoute() {
+            return location.hash.replace(/^#\/?/, '');
+        }
+
+        function render() {
+            const route = getRoute();
+            const page = pages[route] || pages[''];
+            document.title = page.title;
+            document.getElementById('app').innerHTML = page.render();
+            window.scrollTo(0, 0);
+
+            // Update active nav link
+            document.querySelectorAll('#main-nav a').forEach(a => {
+                a.classList.toggle('active', a.dataset.route === (pages[route] ? route : ''));
+            });
+        }
+
+        window.addEventListener('hashchange', render);
+        render();
+    </script>
+</body>
+</html>
