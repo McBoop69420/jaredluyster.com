@@ -654,30 +654,30 @@
 
                     function cardHTML(c) {
                         const rarityClass = 'rarity-' + c.rarity.toLowerCase();
-                        return \`<article class="spell-card">
+                        return `<article class="spell-card">
                             <div class="card-header">
-                                <div class="card-name">\${c.name}</div>
-                                <div class="card-cost">\${c.cost}</div>
+                                <div class="card-name">${c.name}</div>
+                                <div class="card-cost">${c.cost}</div>
                             </div>
-                            <div class="card-desc">\${c.effects}</div>
+                            <div class="card-desc">${c.effects}</div>
                             <div class="card-footer">
-                                <span class="rarity \${rarityClass}">\${c.rarity}</span>
-                                \${c.starter ? '<span class="starter-badge">Starter</span>' : ''}
+                                <span class="rarity ${rarityClass}">${c.rarity}</span>
+                                ${c.starter ? '<span class="starter-badge">Starter</span>' : ''}
                             </div>
-                        </article>\`;
+                        </article>`;
                     }
 
-                    const sectionsHTML = elements.map(el => \`
-                        <section class="elem-section" data-elem="\${el.key}">
-                            <div class="elem-header" style="--elem-color:\${el.color}">\${el.icon} \${el.label}</div>
-                            <div class="card-grid">\${el.cards.map(cardHTML).join('')}</div>
+                    const sectionsHTML = elements.map(el => `
+                        <section class="elem-section" data-elem="${el.key}">
+                            <div class="elem-header" style="--elem-color:${el.color}">${el.icon} ${el.label}</div>
+                            <div class="card-grid">${el.cards.map(cardHTML).join('')}</div>
                         </section>
-                    \`).join('');
+                    `).join('');
 
-                    const filterHTML = \`<div class="elem-filter" id="elem-filter">
+                    const filterHTML = `<div class="elem-filter" id="elem-filter">
                         <button class="elem-btn active" data-elem="all">All</button>
-                        \${elements.map(el => \`<button class="elem-btn" data-elem="\${el.key}">\${el.icon} \${el.label}</button>\`).join('')}
-                    </div>\`;
+                        ${elements.map(el => `<button class="elem-btn" data-elem="${el.key}">${el.icon} ${el.label}</button>`).join('')}
+                    </div>`;
 
                     setTimeout(() => {
                         document.getElementById('elem-filter').addEventListener('click', e => {
@@ -691,13 +691,13 @@
                         });
                     }, 0);
 
-                    return \`
+                    return `
                     <div class="page">
                         <h1 class="page-title">Card Reference</h1>
                         <p class="subtitle">All spells available in the game. Starter cards are included in class starting decks.</p>
-                        \${filterHTML}
-                        \${sectionsHTML}
-                    </div>\`;
+                        ${filterHTML}
+                        ${sectionsHTML}
+                    </div>`;
                 }
             }
         };
