@@ -286,6 +286,78 @@
         .good { color: #9be48b; }
         .bad  { color: #ffb28f; }
 
+        /* ── Cards extended ── */
+        .elem-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 28px;
+            justify-content: center;
+        }
+
+        .elem-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        .elem-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+        .elem-btn.active { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25); }
+
+        .elem-section { margin-bottom: 32px; }
+
+        .elem-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--elem-color, var(--muted));
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .rarity {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            border-radius: 8px;
+        }
+
+        .rarity-common  { background: rgba(156,163,175,0.15); color: #9ca3af; }
+        .rarity-uncommon { background: rgba(129,140,248,0.18); color: #a5b4fc; }
+        .rarity-rare    { background: rgba(240,190,99,0.18);  color: #f0be63; }
+
+        .starter-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 1px 6px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.07);
+            color: var(--muted);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 980px) {
             .feature-grid,
@@ -455,17 +527,164 @@
                 title: 'Wizard Battle — Card Reference',
                 render() {
                     document.getElementById('site-footer').hidden = true;
-                    return `
+
+                    const elements = [
+                        { key: 'fire',      label: 'Fire',      icon: '🔥', color: '#ff6b3d', cards: [
+                            { name: 'Ember Shot',   cost: 1, rarity: 'Common',   effects: 'Deal 8 damage' },
+                            { name: 'Fireball',     cost: 2, rarity: 'Common',   effects: 'Deal 14 damage. Apply 2 Burn' },
+                            { name: 'Flame Shield', cost: 1, rarity: 'Common',   effects: 'Gain 8 Block. Apply 1 Burn to attacker on hit' },
+                            { name: 'Inferno',      cost: 3, rarity: 'Uncommon', effects: 'Deal 22 damage. Apply 4 Burn' },
+                            { name: 'Kindle',       cost: 0, rarity: 'Common',   effects: 'Apply 2 Burn. Draw 1' },
+                            { name: 'Heat Wave',    cost: 2, rarity: 'Uncommon', effects: 'Deal 10 damage. Apply 1 Weak' },
+                            { name: 'Magma Form',   cost: 2, rarity: 'Rare',     effects: 'Gain 2 Strength. Gain 6 Block' },
+                            { name: 'Firebolt',     cost: 1, rarity: 'Common',   effects: 'Deal 6 damage', starter: true },
+                            { name: 'Ignite',       cost: 1, rarity: 'Common',   effects: 'Apply 3 Burn', starter: true },
+                            { name: 'Flame Burst',  cost: 2, rarity: 'Common',   effects: 'Deal 5 damage twice', starter: true },
+                            { name: 'Inferno Core', cost: 2, rarity: 'Uncommon', effects: 'Burn applied this turn is doubled', starter: true },
+                        ]},
+                        { key: 'water',     label: 'Water',     icon: '🌊', color: '#4da6ff', cards: [
+                            { name: 'Water Bolt',    cost: 1, rarity: 'Common',   effects: 'Deal 7 damage' },
+                            { name: 'Tidal Wave',    cost: 2, rarity: 'Common',   effects: 'Deal 12 damage. Apply 2 Weak' },
+                            { name: 'Healing Rain',  cost: 2, rarity: 'Common',   effects: 'Heal 12 HP' },
+                            { name: 'Tidal Shield',  cost: 1, rarity: 'Common',   effects: 'Gain 10 Block' },
+                            { name: 'Whirlpool',     cost: 2, rarity: 'Uncommon', effects: 'Deal 8 damage twice' },
+                            { name: 'Mana Spring',   cost: 0, rarity: 'Uncommon', effects: 'Gain 1 mana. Draw 1 card' },
+                            { name: 'Deep Current',  cost: 3, rarity: 'Rare',     effects: 'Deal 20 damage. Heal 8 HP' },
+                            { name: 'Soothing Wave', cost: 1, rarity: 'Common',   effects: 'Heal 5 HP', starter: true },
+                            { name: 'Tidal Flow',    cost: 2, rarity: 'Common',   effects: 'Deal 4 damage. Draw 1. Gain 1 mana next turn', starter: true },
+                            { name: 'Drown Surge',   cost: 2, rarity: 'Common',   effects: 'Deal 4 damage. Apply 4 Drown', starter: true },
+                        ]},
+                        { key: 'rock',      label: 'Rock',      icon: '🪨', color: '#b8956a', cards: [
+                            { name: 'Rock Throw',    cost: 1, rarity: 'Common',   effects: 'Deal 8 damage' },
+                            { name: 'Stone Wall',    cost: 1, rarity: 'Common',   effects: 'Gain 12 Block' },
+                            { name: 'Quake',         cost: 2, rarity: 'Common',   effects: 'Deal 14 damage. Apply 2 Weak' },
+                            { name: 'Boulder Crash', cost: 3, rarity: 'Uncommon', effects: 'Deal 28 damage' },
+                            { name: 'Earthen Skin',  cost: 2, rarity: 'Uncommon', effects: 'Gain 2 Strength. Gain 8 Block' },
+                            { name: 'Tremor',        cost: 0, rarity: 'Common',   effects: 'Deal 4 damage. Gain 4 Block' },
+                            { name: 'Fissure',       cost: 2, rarity: 'Rare',     effects: 'Deal 12 damage. Draw 2' },
+                            { name: 'Stone Strike',  cost: 1, rarity: 'Common',   effects: 'Deal 6 damage', starter: true },
+                            { name: 'Barkskin',      cost: 1, rarity: 'Common',   effects: 'Gain 10 Block', starter: true },
+                            { name: 'Root Snare',    cost: 2, rarity: 'Common',   effects: 'Deal 4 damage. Apply 2 Roots', starter: true },
+                            { name: 'Earthwarden',   cost: 2, rarity: 'Common',   effects: 'Gain 15 Block', starter: true },
+                        ]},
+                        { key: 'lightning', label: 'Lightning', icon: '⚡', color: '#ffd93d', cards: [
+                            { name: 'Spark',           cost: 1, rarity: 'Common',   effects: 'Deal 7 damage. Apply 1 Shock' },
+                            { name: 'Chain Bolt',      cost: 2, rarity: 'Common',   effects: 'Deal 10 damage. Apply 2 Shock' },
+                            { name: 'Thunderstrike',   cost: 2, rarity: 'Uncommon', effects: 'Deal 18 damage' },
+                            { name: 'Static Field',    cost: 1, rarity: 'Common',   effects: 'Gain 6 Block. Apply 1 Shock to attacker on hit' },
+                            { name: 'Overcharge',      cost: 0, rarity: 'Uncommon', effects: 'Gain 2 mana. Discard 1 card' },
+                            { name: 'Storm Call',      cost: 3, rarity: 'Rare',     effects: 'Deal 10 damage three times' },
+                            { name: 'Arc Surge',       cost: 1, rarity: 'Common',   effects: 'Deal 6 damage. Draw 1' },
+                            { name: 'Spark Strike',    cost: 1, rarity: 'Common',   effects: 'Deal 6 damage', starter: true },
+                            { name: 'Static Charge',   cost: 1, rarity: 'Common',   effects: 'Deal 3 damage. Apply 2 Shock', starter: true },
+                            { name: 'Chain Lightning', cost: 2, rarity: 'Common',   effects: 'Deal 4 damage 3 times', starter: true },
+                            { name: 'Surge Engine',    cost: 2, rarity: 'Uncommon', effects: 'Gain 2 mana next turn', starter: true },
+                        ]},
+                        { key: 'ice',       label: 'Ice',       icon: '❄️', color: '#7dd3f7', cards: [
+                            { name: 'Frost Bolt',    cost: 1, rarity: 'Common',   effects: 'Deal 7 damage. Apply 1 Freeze' },
+                            { name: 'Blizzard',      cost: 2, rarity: 'Common',   effects: 'Deal 12 damage. Apply 2 Freeze' },
+                            { name: 'Ice Armor',     cost: 1, rarity: 'Common',   effects: 'Gain 10 Block' },
+                            { name: 'Glacial Spike', cost: 2, rarity: 'Uncommon', effects: 'Deal 18 damage. Apply 1 Weak' },
+                            { name: 'Absolute Zero', cost: 3, rarity: 'Rare',     effects: 'Apply 3 Freeze. Deal 20 damage' },
+                            { name: 'Chill',         cost: 0, rarity: 'Common',   effects: 'Apply 1 Freeze. Gain 4 Block' },
+                            { name: 'Crystallize',   cost: 1, rarity: 'Uncommon', effects: 'Gain 16 Block' },
+                            { name: 'Ice Shard',     cost: 1, rarity: 'Common',   effects: 'Deal 6 damage', starter: true },
+                            { name: 'Chill',         cost: 1, rarity: 'Common',   effects: 'Apply 1 Freeze', starter: true },
+                            { name: 'Frost Armor',   cost: 2, rarity: 'Common',   effects: 'Gain 10 Block. Apply 1 Freeze', starter: true },
+                            { name: 'Absolute Zero', cost: 2, rarity: 'Uncommon', effects: 'Apply 2 Freeze', starter: true },
+                        ]},
+                        { key: 'shadow',    label: 'Shadow',    icon: '🌑', color: '#a78bfa', cards: [
+                            { name: 'Shadow Bolt',   cost: 1, rarity: 'Common',   effects: 'Deal 9 damage' },
+                            { name: 'Drain Life',    cost: 2, rarity: 'Common',   effects: 'Deal 10 damage. Heal 5 HP' },
+                            { name: 'Curse',         cost: 1, rarity: 'Common',   effects: 'Apply 3 Weak to enemy' },
+                            { name: 'Void Tear',     cost: 2, rarity: 'Uncommon', effects: 'Deal 16 damage. Apply 2 Weak' },
+                            { name: 'Dark Pact',     cost: 0, rarity: 'Uncommon', effects: 'Lose 4 HP. Draw 2 cards' },
+                            { name: 'Soul Rend',     cost: 3, rarity: 'Rare',     effects: 'Deal 24 damage. Heal 12 HP' },
+                            { name: 'Shadow Step',   cost: 1, rarity: 'Common',   effects: 'Gain 8 Block. Apply 1 Weak' },
+                            { name: 'Shadow Strike', cost: 1, rarity: 'Common',   effects: 'Deal 6 damage. Heal 2 HP', starter: true },
+                            { name: 'Curse Touch',   cost: 1, rarity: 'Common',   effects: 'Apply 2 Weak', starter: true },
+                            { name: 'Soul Drain',    cost: 2, rarity: 'Common',   effects: 'Deal 8 damage. Heal 6 HP', starter: true },
+                            { name: 'Dark Pact',     cost: 2, rarity: 'Uncommon', effects: 'Lose 4 HP. Gain 2 Strength', starter: true },
+                        ]},
+                        { key: 'light',     label: 'Light',     icon: '☀️', color: '#fde68a', cards: [
+                            { name: 'Radiant Bolt',    cost: 1, rarity: 'Common',   effects: 'Deal 7 damage' },
+                            { name: 'Holy Shield',     cost: 1, rarity: 'Common',   effects: 'Gain 12 Block' },
+                            { name: 'Divine Smite',    cost: 2, rarity: 'Common',   effects: 'Deal 14 damage. Apply 2 Weak' },
+                            { name: 'Blessing',        cost: 1, rarity: 'Uncommon', effects: 'Heal 8 HP. Draw 1' },
+                            { name: 'Purify',          cost: 0, rarity: 'Uncommon', effects: 'Remove all negative statuses. Draw 1' },
+                            { name: 'Sunburst',        cost: 3, rarity: 'Rare',     effects: 'Deal 20 damage. Heal 10 HP. Gain 8 Block' },
+                            { name: 'Radiance',        cost: 2, rarity: 'Uncommon', effects: 'Gain 2 Strength. Heal 6 HP' },
+                            { name: 'Shielding Light', cost: 1, rarity: 'Common',   effects: 'Gain 8 Block', starter: true },
+                            { name: 'Purify',          cost: 2, rarity: 'Uncommon', effects: 'Cleanse all debuffs. Heal 5 HP', starter: true },
+                            { name: 'Divine Barrier',  cost: 2, rarity: 'Common',   effects: 'Gain 15 Block', starter: true },
+                        ]},
+                        { key: 'grass',     label: 'Grass',     icon: '🌿', color: '#6ee7b7', cards: [
+                            { name: 'Vine Whip',     cost: 1, rarity: 'Common',   effects: 'Deal 5 damage. Apply 1 Poison' },
+                            { name: 'Spore Cloud',   cost: 1, rarity: 'Common',   effects: 'Apply 2 Poison. Gain 4 Block' },
+                            { name: 'Thorn Armor',   cost: 1, rarity: 'Common',   effects: 'Gain 8 Block. Apply 1 Poison to attacker on hit' },
+                            { name: 'Seed Shot',     cost: 0, rarity: 'Common',   effects: 'Apply 1 Poison. Draw 1' },
+                            { name: 'Overgrowth',    cost: 2, rarity: 'Uncommon', effects: 'Apply 4 Poison. Deal 6 damage' },
+                            { name: 'Entangle',      cost: 2, rarity: 'Uncommon', effects: 'Apply 2 Poison. Apply 2 Weak' },
+                            { name: 'Verdant Bloom', cost: 3, rarity: 'Rare',     effects: 'Apply 6 Poison. Heal 10 HP' },
+                            { name: 'Vine Lash',     cost: 1, rarity: 'Common',   effects: 'Deal 6 damage', starter: true },
+                            { name: 'Entangle',      cost: 1, rarity: 'Common',   effects: 'Apply 2 Roots', starter: true },
+                            { name: 'Overgrowth',    cost: 2, rarity: 'Common',   effects: 'Gain 8 Block. Apply 2 Roots', starter: true },
+                            { name: 'Verdant Surge', cost: 2, rarity: 'Uncommon', effects: 'Roots applied this turn are doubled', starter: true },
+                        ]},
+                        { key: 'neutral',   label: 'Neutral',   icon: '✨', color: '#9ca3af', cards: [
+                            { name: 'Focus',      cost: 1, rarity: 'Common',   effects: 'Draw 2 cards' },
+                            { name: 'Guard',      cost: 1, rarity: 'Common',   effects: 'Gain 8 Block' },
+                            { name: 'Amplify',    cost: 1, rarity: 'Uncommon', effects: 'Next spell cast gains +50% effect' },
+                            { name: 'Mana Petal', cost: 0, rarity: 'Common',   effects: 'Gain 1 mana. Fade (single use)' },
+                        ]},
+                    ];
+
+                    function cardHTML(c) {
+                        const rarityClass = 'rarity-' + c.rarity.toLowerCase();
+                        return \`<article class="spell-card">
+                            <div class="card-header">
+                                <div class="card-name">\${c.name}</div>
+                                <div class="card-cost">\${c.cost}</div>
+                            </div>
+                            <div class="card-desc">\${c.effects}</div>
+                            <div class="card-footer">
+                                <span class="rarity \${rarityClass}">\${c.rarity}</span>
+                                \${c.starter ? '<span class="starter-badge">Starter</span>' : ''}
+                            </div>
+                        </article>\`;
+                    }
+
+                    const sectionsHTML = elements.map(el => \`
+                        <section class="elem-section" data-elem="\${el.key}">
+                            <div class="elem-header" style="--elem-color:\${el.color}">\${el.icon} \${el.label}</div>
+                            <div class="card-grid">\${el.cards.map(cardHTML).join('')}</div>
+                        </section>
+                    \`).join('');
+
+                    const filterHTML = \`<div class="elem-filter" id="elem-filter">
+                        <button class="elem-btn active" data-elem="all">All</button>
+                        \${elements.map(el => \`<button class="elem-btn" data-elem="\${el.key}">\${el.icon} \${el.label}</button>\`).join('')}
+                    </div>\`;
+
+                    setTimeout(() => {
+                        document.getElementById('elem-filter').addEventListener('click', e => {
+                            const btn = e.target.closest('.elem-btn');
+                            if (!btn) return;
+                            const target = btn.dataset.elem;
+                            document.querySelectorAll('.elem-btn').forEach(b => b.classList.toggle('active', b === btn));
+                            document.querySelectorAll('.elem-section').forEach(s => {
+                                s.style.display = (target === 'all' || s.dataset.elem === target) ? '' : 'none';
+                            });
+                        });
+                    }, 0);
+
+                    return \`
                     <div class="page">
                         <h1 class="page-title">Card Reference</h1>
-                        <p class="subtitle">A lightweight website-only reference page. The game app remains separate.</p>
-                        <div class="card-grid">
-                            <article class="spell-card"><div class="card-header"><div class="card-name">Firebolt</div><div class="card-cost">1</div></div><div class="card-desc">Deal damage and start building burn pressure.</div></article>
-                            <article class="spell-card"><div class="card-header"><div class="card-name">Tidal Ward</div><div class="card-cost">1</div></div><div class="card-desc">Gain block and stabilize the next enemy swing.</div></article>
-                            <article class="spell-card"><div class="card-header"><div class="card-name">Static Lance</div><div class="card-cost">2</div></div><div class="card-desc">Burst damage that scales harder against shocked enemies.</div></article>
-                            <article class="spell-card"><div class="card-header"><div class="card-name">Frost Bind</div><div class="card-cost">2</div></div><div class="card-desc">Apply freeze stacks and buy a safer next turn.</div></article>
-                        </div>
-                    </div>`;
+                        <p class="subtitle">All spells available in the game. Starter cards are included in class starting decks.</p>
+                        \${filterHTML}
+                        \${sectionsHTML}
+                    </div>\`;
                 }
             }
         };
