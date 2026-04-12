@@ -390,11 +390,11 @@
           Freeze stacks accumulate on the enemy.
           At <strong style="color:#66ddff;">3 stacks</strong>, it becomes
           <strong style="color:#66ddff;">Frozen</strong> — it skips its next action and all Freeze stacks are removed.
-          Otherwise, remove 1 Freeze stack at the end of each of its turns.
+          Freeze stacks never decay on their own.
         </div>
         <div class="keyword-mechanics">
           <span class="pill pill-skip">Skips action at 3 stacks</span>
-          <span class="pill pill-decay">Decays −1 below threshold</span>
+          <span class="pill pill-permanent">Never decays</span>
           <span class="pill pill-instant">All stacks consumed on trigger</span>
         </div>
       </div>
@@ -613,7 +613,7 @@
           <td class="tbl-name">Freeze</td>
           <td><span class="tbl-type-badge type-Ice">Ice</span></td>
           <td>Frozen at 3 stacks (skip + reset)</td>
-          <td class="tbl-decay-yes">Yes (−1 below 3)</td>
+          <td class="tbl-decay-no">Never</td>
           <td>Threshold trigger</td>
           <td class="tbl-target-enemy">Enemy</td>
         </tr>
