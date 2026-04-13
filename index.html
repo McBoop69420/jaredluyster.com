@@ -300,7 +300,18 @@
             align-items: start;
         }
 
-        .keyword-icon { font-size: 1.6rem; line-height: 1; padding-top: 2px; text-align: center; }
+        .keyword-icon {
+            font-size: 1.6rem;
+            line-height: 1;
+            padding-top: 2px;
+            text-align: center;
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--kw-color, var(--gold)) 15%, transparent);
+        }
 
         .keyword-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
 
@@ -308,7 +319,7 @@
 
         .keyword-short {
             font-size: 0.78rem;
-            color: var(--gold);
+            color: var(--kw-color, var(--gold));
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
@@ -537,17 +548,18 @@
                         <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.06em;">Keywords</h1>
                         <p class="subtitle" style="letter-spacing:.05em;">Reference page for the game's core mechanics and status terms.</p>
                         <div class="keyword-grid">
-                            <article class="keyword-card"><div class="keyword-icon">🔥</div><div><div class="keyword-header"><div class="keyword-name">Char</div><div class="keyword-short">Burning damage</div></div><div class="keyword-desc">At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">❄️</div><div><div class="keyword-header"><div class="keyword-name">Freeze</div><div class="keyword-short">Turn denial</div></div><div class="keyword-desc">Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Lightning amplifier</div></div><div class="keyword-desc">Each Shock stack multiplies Lightning spell damage by ×1.25. Stacks are consumed on hit.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">🌊</div><div><div class="keyword-header"><div class="keyword-name">Drown</div><div class="keyword-short">Start-of-turn damage</div></div><div class="keyword-desc">At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">🌿</div><div><div class="keyword-header"><div class="keyword-name">Root</div><div class="keyword-short">Burst on hit</div></div><div class="keyword-desc">When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">✨</div><div><div class="keyword-header"><div class="keyword-name">Amplify</div><div class="keyword-short">Spell boost</div></div><div class="keyword-desc">Your next spell gains +50% effect. Consumed on cast.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">💀</div><div><div class="keyword-header"><div class="keyword-name">Weak</div><div class="keyword-short">Damage reduction</div></div><div class="keyword-desc">The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">💪</div><div><div class="keyword-header"><div class="keyword-name">Strength</div><div class="keyword-short">Damage bonus</div></div><div class="keyword-desc">Each Strength stack permanently increases the target's attack and spell damage by 1.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">😵</div><div><div class="keyword-header"><div class="keyword-name">Daze</div><div class="keyword-short">Action confusion</div></div><div class="keyword-desc">50% chance the enemy repeats its previous action instead of its intended one.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">🌑</div><div><div class="keyword-header"><div class="keyword-name">Blind</div><div class="keyword-short">Miss chance</div></div><div class="keyword-desc">50% chance the enemy's attack misses entirely and deals no damage.</div></div></article>
-                            <article class="keyword-card"><div class="keyword-icon">🩸</div><div><div class="keyword-header"><div class="keyword-name">Lifesteal</div><div class="keyword-short">HP drain</div></div><div class="keyword-desc">At the end of the turn, drains HP from the enemy equal to the stacks and heals you for the same amount.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#94a3b8"><div class="keyword-icon">🛡️</div><div><div class="keyword-header"><div class="keyword-name">Block</div><div class="keyword-short">Damage absorption</div></div><div class="keyword-desc">Absorbs incoming damage before HP. Block resets to 0 at the start of your next turn and does not carry between encounters.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#c4b5fd"><div class="keyword-icon">🪄</div><div><div class="keyword-header"><div class="keyword-name">Fade</div><div class="keyword-short">Single use</div></div><div class="keyword-desc">This card is removed from your deck after it is played. It does not go to the discard pile.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#ff6633"><div class="keyword-icon">🔥</div><div><div class="keyword-header"><div class="keyword-name">Char</div><div class="keyword-short">Burning damage</div></div><div class="keyword-desc">At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#66ddff"><div class="keyword-icon">❄️</div><div><div class="keyword-header"><div class="keyword-name">Freeze</div><div class="keyword-short">Turn denial</div></div><div class="keyword-desc">Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#ffdd00"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Lightning amplifier</div></div><div class="keyword-desc">Each Shock stack multiplies Lightning spell damage by ×1.25. Stacks are consumed on hit.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#4488ff"><div class="keyword-icon">🌊</div><div><div class="keyword-header"><div class="keyword-name">Drown</div><div class="keyword-short">Start-of-turn damage</div></div><div class="keyword-desc">At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#44cc66"><div class="keyword-icon">🌿</div><div><div class="keyword-header"><div class="keyword-name">Root</div><div class="keyword-short">Burst on hit</div></div><div class="keyword-desc">When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#cc6666"><div class="keyword-icon">💔</div><div><div class="keyword-header"><div class="keyword-name">Weak</div><div class="keyword-short">Damage reduction</div></div><div class="keyword-desc">The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#d4af37"><div class="keyword-icon">💪</div><div><div class="keyword-header"><div class="keyword-name">Strength</div><div class="keyword-short">Damage bonus</div></div><div class="keyword-desc">Each Strength stack permanently increases the target's attack and spell damage by 1.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#cc9944"><div class="keyword-icon">💫</div><div><div class="keyword-header"><div class="keyword-name">Daze</div><div class="keyword-short">Action confusion</div></div><div class="keyword-desc">50% chance the enemy repeats its previous action instead of its intended one.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#f2f2f2"><div class="keyword-icon">✨</div><div><div class="keyword-header"><div class="keyword-name">Blind</div><div class="keyword-short">Miss chance</div></div><div class="keyword-desc">50% chance the enemy's attack misses entirely and deals no damage.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#cc66ff"><div class="keyword-icon">🌙</div><div><div class="keyword-header"><div class="keyword-name">Lifesteal</div><div class="keyword-short">HP drain</div></div><div class="keyword-desc">At the end of the turn, drains HP from the enemy equal to the stacks and heals you for the same amount.</div></div></article>
                         </div>
                     </div>`;
                 }
