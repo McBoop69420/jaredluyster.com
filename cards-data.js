@@ -7,7 +7,7 @@ const CARD_REFERENCE = [
         cards: [
             { name: 'Ember Shot', cost: 1, rarity: 'Common', effects: 'Deal 8 damage.' },
             { name: 'Fireball', cost: 2, rarity: 'Common', effects: 'Deal 14 damage. Apply 2 Char.' },
-            { name: 'Flame Shield', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 1 Char to attacker on hit.' },
+            { name: 'Flame Shield', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 1 Char to the attacker on hit.' },
             { name: 'Inferno', cost: 3, rarity: 'Uncommon', effects: 'Deal 22 damage. Apply 4 Char.' },
             { name: 'Kindle', cost: 0, rarity: 'Common', effects: 'Apply 2 Char. Draw 1.' },
             { name: 'Heat Wave', cost: 2, rarity: 'Uncommon', effects: 'Deal 10 damage. Apply 1 Weak.' },
@@ -15,7 +15,7 @@ const CARD_REFERENCE = [
             { name: 'Firebolt', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Char 1.', starter: true },
             { name: 'Ignite', cost: 1, rarity: 'Starter', effects: 'Deal 4 damage. Char 2.', starter: true },
             { name: 'Flame Burst', cost: 2, rarity: 'Starter', effects: 'Deal 5 damage twice. Char 3.', starter: true },
-            { name: 'Inferno Core', cost: 2, rarity: 'Starter', effects: 'Char applied this turn is doubled.', starter: true },
+            { name: 'Inferno Core', cost: 2, rarity: 'Starter', effects: 'Char applied this turn is doubled.', starter: true, fade: true },
         ],
     },
     {
@@ -90,8 +90,8 @@ const CARD_REFERENCE = [
             { name: 'Crystallize', cost: 1, rarity: 'Uncommon', effects: 'Gain 16 Block.' },
             { name: 'Shardsicle', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Freeze 1.', starter: true },
             { name: 'Ice Cube', cost: 1, rarity: 'Starter', effects: 'Gain 5 Block. Freeze 1.', starter: true },
-            { name: 'Frost Armor', cost: 2, rarity: 'Starter', effects: 'Gain 10 Block. Freeze 2.', starter: true },
-            { name: 'Absolute Zero', cost: 2, rarity: 'Starter', effects: 'Apply 3 Freeze.', starter: true },
+            { name: 'Frost Armor', cost: 2, rarity: 'Starter', effects: 'Gain 10 Block. Freeze 2.', starter: true, fade: true },
+            { name: 'Absolute Zero', cost: 2, rarity: 'Starter', effects: 'Apply 3 Freeze.', starter: true, fade: true },
         ],
     },
     {
@@ -109,7 +109,7 @@ const CARD_REFERENCE = [
             { name: 'Shadow Step', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 1 Weak.' },
             { name: 'Shadow Strike', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Lifesteal 1.', starter: true },
             { name: 'Curse Touch', cost: 1, rarity: 'Starter', effects: 'Deal 4 damage. Lifesteal 2.', starter: true },
-            { name: 'Soul Drain', cost: 2, rarity: 'Starter', effects: 'Lose 4 HP. Draw an extra card at the start of your next turn.', starter: true },
+            { name: 'Soul Drain', cost: 2, rarity: 'Starter', effects: 'Lose 4 HP. Draw an extra card next turn.', starter: true },
             { name: 'Dark Pact', cost: 2, rarity: 'Starter', effects: 'Lose 6 HP. Apply 12 Lifesteal.', starter: true },
         ],
     },
