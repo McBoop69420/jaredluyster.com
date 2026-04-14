@@ -783,11 +783,18 @@
                 title: 'Wizard Battle — Card Reference',
                 render() {
                     document.getElementById('site-footer').hidden = true;
-                    const elements = CARD_REFERENCE;
+                    const CYCLE_ORDER = ['fire','grass','ice','rock','lightning','water','shadow','light','neutral'];
+                    const byKey = Object.fromEntries(CARD_REFERENCE.map(el => [el.key, el]));
+                    const elements = CYCLE_ORDER.map(k => byKey[k]).filter(Boolean);
                     const allCards = elements.flatMap(el => el.cards);
                     const draftableCount = allCards.filter(card => !card.starter).length;
                     const starterCount = allCards.filter(card => card.starter).length;
                     const fadeCount = allCards.filter(card => card.fade).length;
+
+                    const RARITY_ORDER = { Starter: 0, Common: 1, Uncommon: 2, Rare: 3 };
+                    function sortedCards(cards) {
+                        return [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 99) - (RARITY_ORDER[b.rarity] ?? 99));
+                    }
 
                     function cardHTML(c) {
                         const rarityClass = 'rarity-' + c.rarity.toLowerCase();
@@ -806,7 +813,7 @@
                     const sectionsHTML = elements.map(el => `
                         <section class="elem-section" data-elem="${el.key}">
                             <div class="elem-header" style="--elem-color:${el.color}">${el.icon} ${el.label}</div>
-                            <div class="card-grid">${el.cards.map(cardHTML).join('')}</div>
+                            <div class="card-grid">${sortedCards(el.cards).map(cardHTML).join('')}</div>
                         </section>
                     `).join('');
 
