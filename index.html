@@ -207,7 +207,13 @@
             font-size: 0.78rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
+
+        .meta-pill:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+        .meta-pill.active { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25); }
 
         .meta-pill strong {
             color: #fff;
@@ -785,7 +791,7 @@
 
                     function cardHTML(c) {
                         const rarityClass = 'rarity-' + c.rarity.toLowerCase();
-                        return `<article class="spell-card" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}">
+                        return `<article class="spell-card" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}" data-starter="${c.starter ? '1' : '0'}" data-fade="${c.fade ? '1' : '0'}">
                             <div class="card-header">
                                 <div class="card-name">${c.name}</div>
                                 <div class="card-cost">${c.cost}</div>
@@ -813,6 +819,7 @@
                         const filter = document.getElementById('elem-filter');
                         const search = document.getElementById('card-search');
                         let activeElement = 'all';
+                        let activePool = 'all'; // 'all' | 'draft' | 'starter' | 'fade'
 
                         function updateCards() {
                             const query = (search.value || '').trim().toLowerCase();
@@ -823,7 +830,14 @@
                                 section.querySelectorAll('.spell-card').forEach(card => {
                                     const haystack = `${card.dataset.name} ${card.dataset.effects}`.toLowerCase();
                                     const matchesQuery = !query || haystack.includes(query);
-                                    const show = matchesElement && matchesQuery;
+                                    const isStarter = card.dataset.starter === '1';
+                                    const isFade = card.dataset.fade === '1';
+                                    const matchesPool =
+                                        activePool === 'all' ? true :
+                                        activePool === 'draft' ? !isStarter :
+                                        activePool === 'starter' ? isStarter :
+                                        activePool === 'fade' ? isFade : true;
+                                    const show = matchesElement && matchesQuery && matchesPool;
                                     card.hidden = !show;
                                     if (show) visibleCards += 1;
                                 });
@@ -840,6 +854,15 @@
                             updateCards();
                         });
 
+                        document.getElementById('pool-filter').addEventListener('click', e => {
+                            const btn = e.target.closest('.meta-pill');
+                            if (!btn) return;
+                            const pool = btn.dataset.pool;
+                            activePool = activePool === pool ? 'all' : pool;
+                            document.querySelectorAll('.meta-pill').forEach(b => b.classList.toggle('active', b.dataset.pool === activePool));
+                            updateCards();
+                        });
+
                         search.addEventListener('input', updateCards);
                         updateCards();
                     }, 0);
@@ -849,11 +872,11 @@
                         <h1 class="page-title">Card Reference</h1>
                         <p class="subtitle">Full spell list for every element, including class starters and shared neutral cards.</p>
                         <div class="cards-toolbar">
-                            <div class="cards-meta">
-                                <span class="meta-pill"><strong>${allCards.length}</strong>Total cards</span>
-                                <span class="meta-pill"><strong>${draftableCount}</strong>Draft pool</span>
-                                <span class="meta-pill"><strong>${starterCount}</strong>Starter cards</span>
-                                <span class="meta-pill"><strong>${fadeCount}</strong>Fade cards</span>
+                            <div class="cards-meta" id="pool-filter">
+                                <button class="meta-pill" data-pool="all"><strong>${allCards.length}</strong>Total cards</button>
+                                <button class="meta-pill" data-pool="draft"><strong>${draftableCount}</strong>Draft pool</button>
+                                <button class="meta-pill" data-pool="starter"><strong>${starterCount}</strong>Starter cards</button>
+                                <button class="meta-pill" data-pool="fade"><strong>${fadeCount}</strong>Fade cards</button>
                             </div>
                             <input class="cards-search" id="card-search" type="search" placeholder="Search cards, effects, or keywords">
                         </div>
