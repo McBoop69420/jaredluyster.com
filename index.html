@@ -784,7 +784,7 @@
                 title: 'Wizard Battle — Card Reference',
                 render() {
                     document.getElementById('site-footer').hidden = true;
-                    const CYCLE_ORDER = ['fire','grass','ice','rock','lightning','water','shadow','light','neutral'];
+                    const CYCLE_ORDER = ['fire','grass','ice','rock','arc','water','shadow','light','neutral'];
                     const byKey = Object.fromEntries(CARD_REFERENCE.map(el => [el.key, el]));
                     const elements = CYCLE_ORDER.map(k => byKey[k]).filter(Boolean);
                     const allCards = elements.flatMap(el => el.cards);

@@ -3,7 +3,7 @@
 ## Core Loop
 
 1. Choose a wizard class → start with a fixed 10-card deck
-2. Navigate a procedurally generated map of nodes (12 floors + boss)
+2. Navigate a procedurally generated map of nodes (floors 1–11, boss on floor 12)
 3. Fight enemies, collect gold, upgrade your deck, survive to the boss
 
 ---

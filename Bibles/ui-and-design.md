@@ -95,11 +95,14 @@ Each type and status uses an emoji icon as its primary visual identifier. Icons 
 
 | Rarity | Visual Treatment |
 |---|---|
+| Starter | Distinct marker (e.g. "STARTER DECK" badge); not part of draft/shop pool |
 | Common | Standard border |
 | Uncommon | Slightly elevated border/glow |
 | Rare | Premium treatment |
 
 Rarity currently affects: shop price, reward pool weighting (rares appear less). No explicit visual color-coding of rarity is standardized yet — treat this as TBD.
+
+**Starter** cards are not a shop or reward rarity — they are a fixed deck membership flag. They do not appear in draft rewards or shop inventory. Every class has exactly 4 Starter cards forming its starting deck. Starter is separate from Common/Uncommon/Rare and should never be treated as a tier above or below them.
 
 ---
 

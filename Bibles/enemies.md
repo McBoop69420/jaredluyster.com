@@ -4,7 +4,7 @@ Enemies cycle through their intent pattern in order, repeating from the start wh
 
 ---
 
-## Common Enemies (Floors 1–4, 6–9, 11–14)
+## Common Enemies (Floors 1–4, 6–9, 11)
 
 One per type. Found at Battle nodes.
 
@@ -22,7 +22,7 @@ One per type. Found at Battle nodes.
 
 ---
 
-## Elite Enemies (Floors 6–9, 11–14)
+## Elite Enemies (Floors 6–9, 11)
 
 Found at Elite nodes. +15 gold reward over common.
 

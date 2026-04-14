@@ -104,9 +104,12 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 ## Purify / Cleanse
 
 The spell *Purify* (Dawnmage) removes all negative status effects from the player:
-`Char, Freeze, Shock, Drown, Weak, Root, Daze, Blind, Lifesteal`
+`Char, Freeze, Shock, Drown, Weak, Root, Daze`
 
-Strength is **not** cleansed (it's a buff, not a debuff — and currently only appears on enemies).
+**Not** cleansed by Purify:
+- **Strength** — a buff, not a debuff; currently only appears on enemies
+- **Blind** — a debuff the player applies *to enemies* (makes enemy attacks miss); the player cannot be Blinded under current rules
+- **Lifesteal** — a beneficial effect (heals the player); removing it would be self-defeating and conflicts with Shadowblade's sustain identity
 
 ---
 

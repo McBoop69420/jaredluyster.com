@@ -27,7 +27,7 @@ The root custom properties in [style.css](/Users/jaredl/Documents/Wizard%20Battl
 - `--card`, `--card-strong`: translucent panel backgrounds
 - `--shadow`, `--shadow-soft`: elevation
 - `--hp-fill`, `--hp-bg`: health bar colors
-- `--fire`, `--water`, `--earth`, `--lightning`, `--ice`, `--shadow-type`, `--light`: elemental type colors
+- `--fire`, `--water`, `--earth`, `--arc`, `--ice`, `--shadow-type`, `--light`: elemental type colors
 
 Safe-area variables are also defined so mobile/fullscreen layouts respect device insets:
 

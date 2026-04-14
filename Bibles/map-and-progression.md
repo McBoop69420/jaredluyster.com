@@ -2,7 +2,7 @@
 
 ## Map Structure
 
-- **12 floors** of nodes + a boss on floor 12 (floor 0 is the start node)
+- **12 floors** of nodes (floor 0 = start, floors 1–11 = regular, floor 12 = boss)
 - **6 paths** generated per run — paths branch and cross, creating choices
 - **7 columns wide** — nodes placed at column positions 0–6
 - Boss is always centered (column 3)
@@ -65,7 +65,7 @@ Always: Boss
 |---|---|
 | 1–4 | Common only |
 | 6–9 | Common + Elite (at elite nodes) |
-| 11–14 | Common + Elite (at elite nodes) |
+| 11 | Common + Elite (at elite nodes) |
 | 12 (boss node) | Boss only |
 
 Boss is always chosen from the boss pool (one per type). Random selection from all 8 boss types.

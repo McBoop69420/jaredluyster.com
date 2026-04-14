@@ -57,7 +57,7 @@ const CARD_REFERENCE = [
         ],
     },
     {
-        key: 'lightning',
+        key: 'arc',
         label: 'Arc',
         icon: '⚡',
         color: '#f97316',
