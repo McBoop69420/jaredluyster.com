@@ -590,150 +590,156 @@
                 title: 'Wizard Battle — Type Chart',
                 render() {
                     document.getElementById('site-footer').hidden = true;
-
                     setTimeout(() => {
                         const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
                         const TYPE_ICONS = { Fire:'🔥', Water:'🌊', Rock:'🪨', Arc:'⚡', Ice:'❄️', Shadow:'🌑', Light:'☀️', Grass:'🌿' };
-                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#22c55e' };
+                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#ffe000', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#ffe066', Grass:'#33aa55' };
+                        // Inner triangles: Fire→Ice→Arc→Fire | Grass→Rock→Water→Grass
+                        // Outer ring: Fire→Grass→Ice→Rock→Arc→Fire
+                        // Shadow↔Light mutual 2×, self 0.5×
+                        // Outer ring: Fire→Grass→Ice→Rock→Arc→Water→Fire
+                        // Inner tri 1: Fire→Ice→Arc→Fire | Inner tri 2: Grass→Rock→Water→Grass
+                        // Each type: 2 strengths, 2 weaknesses (symmetric: A beats B → A=2× vs B, B=0.5× vs A)
+                        // Fire:  beats Grass+Ice,  weak to Water+Arc
+                        // Grass: beats Ice+Rock,   weak to Fire+Water
+                        // Ice:   beats Rock+Arc,   weak to Grass+Fire
+                        // Rock:  beats Arc+Water,  weak to Ice+Grass
+                        // Arc:   beats Water+Fire, weak to Rock+Ice
+                        // Water: beats Fire+Grass, weak to Arc+Rock
                         const EFF = {
-                            Fire:      {Fire:1, Water:0.5, Rock:1,   Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:2  },
-                            Water:     {Fire:2, Water:1,   Rock:1,   Arc:0.5, Ice:1,   Shadow:1,   Light:1,   Grass:1  },
-                            Rock:      {Fire:1, Water:1,   Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:1,   Grass:1  },
-                            Arc: {Fire:1, Water:2,   Rock:0.5, Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:1  },
-                            Ice:       {Fire:1, Water:1,   Rock:2,   Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:0.5},
-                            Shadow:    {Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:0.5, Light:2,   Grass:1  },
-                            Light:     {Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:2,   Light:0.5, Grass:1  },
-                            Grass:     {Fire:0.5, Water:1, Rock:1,   Arc:1,   Ice:2,   Shadow:1,   Light:1,   Grass:1  },
+                            Fire:   { Fire:1, Water:0.5, Rock:1,   Arc:0.5, Ice:2,   Shadow:1,   Light:1,   Grass:2   },
+                            Water:  { Fire:2, Water:1,   Rock:0.5, Arc:0.5, Ice:1,   Shadow:1,   Light:1,   Grass:2   },
+                            Rock:   { Fire:1, Water:2,   Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:1,   Grass:0.5 },
+                            Arc:    { Fire:2, Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Shadow:1,   Light:1,   Grass:1   },
+                            Ice:    { Fire:0.5, Water:1, Rock:2,   Arc:2,   Ice:1,   Shadow:1,   Light:1,   Grass:0.5 },
+                            Shadow: { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:0.5, Light:2,   Grass:1   },
+                            Light:  { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:2,   Light:0.5, Grass:1   },
+                            Grass:  { Fire:0.5, Water:0.5, Rock:2, Arc:1,   Ice:2,   Shadow:1,   Light:1,   Grass:1   },
                         };
-                        const WHEEL_TYPES = ['Fire','Grass','Ice','Rock','Arc','Water','Shadow','Light'];
-                        const R_MAIN = 110, OFFSET = 10;
 
-                        function typePos(t) {
-                            const idx6 = ['Fire','Grass','Ice','Rock','Arc','Water'].indexOf(t);
-                            if (idx6 !== -1) {
-                                const angle = (idx6 / 6) * Math.PI * 2 - Math.PI / 2;
-                                return { x: Math.cos(angle) * R_MAIN, y: Math.sin(angle) * R_MAIN };
-                            }
-                            if (t === 'Shadow') return { x: -75, y: 210 };
-                            if (t === 'Light')  return { x:  75, y: 210 };
-                        }
+                        // Hexagon: Fire(top) → Grass → Ice → Rock → Arc → Water → back to Fire
+                        // Clockwise starting at top
+                        const R = 110;
+                        const hexOrder = ['Fire','Grass','Ice','Rock','Arc','Water'];
+                        const positions = {};
+                        hexOrder.forEach((t, i) => {
+                            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                            positions[t] = { x: Math.cos(angle) * R, y: Math.sin(angle) * R };
+                        });
+                        positions.Shadow = { x: -75, y: 210 };
+                        positions.Light  = { x:  75, y: 210 };
 
-                        function shortenLine(x1, y1, x2, y2, amt) {
-                            const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
-                            return { x1: x1+dx/len*amt, y1: y1+dy/len*amt, x2: x2-dx/len*amt, y2: y2-dy/len*amt };
-                        }
-
-                        function hasBothDirections(from, to) {
-                            const fv = EFF[from][to], rv = EFF[to][from];
-                            return (fv >= 2 || fv <= 0.5) && (rv >= 2 || rv <= 0.5);
-                        }
-
-                        function pairOffset(from, to, val) {
-                            const pa = typePos(from), pb = typePos(to);
-                            const dx = pb.x-pa.x, dy = pb.y-pa.y, len = Math.sqrt(dx*dx+dy*dy);
-                            const nx = -dy/len, ny = dx/len;
-                            const mx = (pa.x+pb.x)/2, my = (pa.y+pb.y)/2;
-                            const outward = (mx*nx + my*ny) > 0 ? 1 : -1;
-                            const side = val >= 2 ? outward : -outward;
-                            return { ox: nx*OFFSET*side, oy: ny*OFFSET*side };
-                        }
-
+                        const svg = document.getElementById('wheelSvg');
                         const arrowLayer = document.getElementById('arrowLayer');
                         const nodeLayer  = document.getElementById('nodeLayer');
-                        const NS = 'http://www.w3.org/2000/svg';
 
-                        TYPES.forEach(attacker => {
-                            TYPES.forEach(defender => {
-                                if (attacker === defender) return;
-                                const val = EFF[attacker][defender];
-                                if (val !== 2 && val !== 0.5) return;
-                                const p1 = typePos(attacker), p2 = typePos(defender);
-                                let ox = 0, oy = 0;
-                                if (hasBothDirections(attacker, defender)) {
-                                    const off = pairOffset(attacker, defender, val);
-                                    ox = off.ox; oy = off.oy;
-                                }
-                                const s = shortenLine(p1.x+ox, p1.y+oy, p2.x+ox, p2.y+oy, 36);
-                                const color = val >= 2 ? '#66ff99' : '#ff7755';
-                                const marker = val >= 2 ? 'arr-super' : 'arr-self';
-                                const line = document.createElementNS(NS, 'line');
-                                line.setAttribute('x1', s.x1); line.setAttribute('y1', s.y1);
-                                line.setAttribute('x2', s.x2); line.setAttribute('y2', s.y2);
-                                line.setAttribute('stroke', color);
-                                line.setAttribute('stroke-width', '2');
-                                line.setAttribute('opacity', '0.6');
-                                line.setAttribute('marker-end', 'url(#' + marker + ')');
-                                line.setAttribute('class', 'arrow from-' + attacker + ' to-' + defender);
-                                arrowLayer.appendChild(line);
-                            });
+                        function shortenLine(x1,y1,x2,y2,amt) {
+                            const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+                            return { x1:x1+dx/len*amt, y1:y1+dy/len*amt, x2:x2-dx/len*amt, y2:y2-dy/len*amt };
+                        }
+
+                        const OFFSET = 9;
+                        function hasBoth(a,b) {
+                            const fv=EFF[a][b], rv=EFF[b][a];
+                            return (fv>=2||fv<=0.5)&&(rv>=2||rv<=0.5);
+                        }
+                        function pairOffset(from,to,val) {
+                            const pa=positions[from], pb=positions[to];
+                            const dx=pb.x-pa.x, dy=pb.y-pa.y, len=Math.sqrt(dx*dx+dy*dy);
+                            const nx=-dy/len, ny=dx/len;
+                            const mx=(pa.x+pb.x)/2, my=(pa.y+pb.y)/2;
+                            const outward=(mx*nx+my*ny)>0?1:-1;
+                            const side=val>=2?outward:-outward;
+                            return { ox:nx*OFFSET*side, oy:ny*OFFSET*side };
+                        }
+
+                        // Outer ring edges (adjacent hexagon nodes)
+                        const outerRing = [['Fire','Grass'],['Grass','Ice'],['Ice','Rock'],['Rock','Arc'],['Arc','Water'],['Water','Fire']];
+                        // Inner triangle edges (skip-one)
+                        const innerTri = [['Fire','Ice'],['Ice','Arc'],['Arc','Fire'],['Grass','Rock'],['Rock','Water'],['Water','Grass']];
+                        const innerSet = new Set(innerTri.map(([a,b]) => a+'>'+b));
+
+                        // Draw all arrows with equal style
+                        [...outerRing, ...innerTri].forEach(([attacker, defender]) => {
+                            const p1=positions[attacker], p2=positions[defender];
+                            const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
+                            const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+                            line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1);
+                            line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2);
+                            line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
+                            line.setAttribute('opacity','0.65');
+                            line.setAttribute('marker-end','url(#arr-super)');
+                            line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
+                            arrowLayer.appendChild(line);
                         });
 
-                        TYPES.forEach(t => {
-                            const val = EFF[t][t];
-                            if (val === 1) return;
-                            const pos = typePos(t);
-                            const isLeft = pos.x < 0, isRight = pos.x > 0;
-                            let startX, startY, cx1, cy1, cx2, cy2, endX, endY;
-                            if (t === 'Shadow' || t === 'Light') {
-                                startX=pos.x-8; startY=pos.y+30; cx1=pos.x-40; cy1=pos.y+68; cx2=pos.x+40; cy2=pos.y+68; endX=pos.x+8; endY=pos.y+30;
-                            } else if (isLeft) {
-                                startX=pos.x-22; startY=pos.y-8; cx1=pos.x-60; cy1=pos.y-40; cx2=pos.x-60; cy2=pos.y+24; endX=pos.x-22; endY=pos.y+8;
-                            } else if (isRight) {
-                                startX=pos.x+22; startY=pos.y-8; cx1=pos.x+60; cy1=pos.y-40; cx2=pos.x+60; cy2=pos.y+24; endX=pos.x+22; endY=pos.y+8;
-                            } else {
-                                startX=pos.x-8; startY=pos.y+22; cx1=pos.x-40; cy1=pos.y+60; cx2=pos.x+40; cy2=pos.y+60; endX=pos.x+8; endY=pos.y+22;
-                            }
-                            const color = val >= 2 ? '#66ff99' : '#ff7755';
-                            const path = document.createElementNS(NS, 'path');
-                            path.setAttribute('d', 'M ' + startX + ',' + startY + ' C ' + cx1 + ',' + cy1 + ' ' + cx2 + ',' + cy2 + ' ' + endX + ',' + endY);
-                            path.setAttribute('stroke', color); path.setAttribute('stroke-width', '2');
-                            path.setAttribute('fill', 'none'); path.setAttribute('opacity', '0.7');
-                            path.setAttribute('marker-end', 'url(#' + (val >= 2 ? 'arr-super' : 'arr-self') + ')');
-                            path.setAttribute('class', 'self-arrow from-' + t + ' to-' + t);
+                        // Shadow↔Light mutual 2× arrows (offset so both directions are visible)
+                        [['Shadow','Light'],['Light','Shadow']].forEach(([attacker, defender]) => {
+                            const p1=positions[attacker], p2=positions[defender];
+                            const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
+                            const oy = attacker==='Shadow' ? -10 : 10;
+                            const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+                            line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1+oy);
+                            line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2+oy);
+                            line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
+                            line.setAttribute('opacity','0.65');
+                            line.setAttribute('marker-end','url(#arr-super)');
+                            line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
+                            arrowLayer.appendChild(line);
+                        });
+
+                        // Self-referential 0.5× loops for Shadow and Light (red)
+                        // Shadow center (-75,210) radius 32; Light center (75,210) radius 32
+                        // Start/end on circle edge at ~45° from vertical, looping outward
+                        [{t:'Shadow', sx:-97, sy:188, cx1:-148, cy1:172, cx2:-148, cy2:248, ex:-97, ey:232},
+                         {t:'Light',  sx: 97, sy:188, cx1: 148, cy1:172, cx2: 148, cy2:248, ex: 97, ey:232}
+                        ].forEach(({t, sx, sy, cx1, cy1, cx2, cy2, ex, ey}) => {
+                            const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+                            path.setAttribute('d',`M ${sx},${sy} C ${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`);
+                            path.setAttribute('stroke','#ff4444'); path.setAttribute('stroke-width','2');
+                            path.setAttribute('fill','none'); path.setAttribute('opacity','0.75');
+                            path.setAttribute('marker-end','url(#arr-self-red)');
+                            path.setAttribute('class',`self-arrow from-${t} to-${t}`);
                             arrowLayer.appendChild(path);
                         });
 
-                        let selectedType = null;
-                        WHEEL_TYPES.forEach(t => {
-                            const pos = typePos(t);
-                            const g = document.createElementNS(NS, 'g');
-                            g.setAttribute('class', 'type-node');
-                            g.setAttribute('data-type', t);
-                            g.setAttribute('transform', 'translate(' + pos.x + ',' + pos.y + ')');
-                            const circle = document.createElementNS(NS, 'circle');
-                            circle.setAttribute('r', 32);
-                            circle.setAttribute('fill', TYPE_COLORS[t] + '22');
-                            circle.setAttribute('stroke', TYPE_COLORS[t]);
-                            circle.setAttribute('stroke-width', '2.5');
-                            const emoji = document.createElementNS(NS, 'text');
-                            emoji.setAttribute('text-anchor', 'middle');
-                            emoji.setAttribute('dominant-baseline', 'central');
-                            emoji.setAttribute('y', '-7'); emoji.setAttribute('font-size', '18');
-                            emoji.textContent = TYPE_ICONS[t];
-                            const lbl = document.createElementNS(NS, 'text');
-                            lbl.setAttribute('text-anchor', 'middle');
-                            lbl.setAttribute('dominant-baseline', 'central');
-                            lbl.setAttribute('y', '14'); lbl.setAttribute('font-size', '8');
-                            lbl.setAttribute('fill', TYPE_COLORS[t]);
-                            lbl.setAttribute('font-weight', '700');
-                            lbl.setAttribute('letter-spacing', '0.04em');
-                            lbl.textContent = t.toUpperCase();
-                            g.appendChild(circle); g.appendChild(emoji); g.appendChild(lbl);
+                        let selectedType=null;
+                        Object.keys(positions).forEach(t => {
+                            const pos=positions[t];
+                            const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+                            g.setAttribute('class','type-node'); g.setAttribute('data-type',t);
+                            g.setAttribute('transform',`translate(${pos.x},${pos.y})`);
+                            g.style.cursor='pointer';
+                            const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+                            circle.setAttribute('r','32');
+                            circle.setAttribute('fill',TYPE_COLORS[t]+'22');
+                            circle.setAttribute('stroke',TYPE_COLORS[t]);
+                            circle.setAttribute('stroke-width','2.5');
+                            const emoji=document.createElementNS('http://www.w3.org/2000/svg','text');
+                            emoji.setAttribute('text-anchor','middle'); emoji.setAttribute('dominant-baseline','central');
+                            emoji.setAttribute('y','-7'); emoji.setAttribute('font-size','18');
+                            emoji.textContent=TYPE_ICONS[t];
+                            const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+                            label.setAttribute('text-anchor','middle'); label.setAttribute('dominant-baseline','central');
+                            label.setAttribute('y','14'); label.setAttribute('font-size','8');
+                            label.setAttribute('fill',TYPE_COLORS[t]); label.setAttribute('font-weight','700');
+                            label.setAttribute('letter-spacing','0.04em');
+                            label.textContent=t.toUpperCase();
+                            g.appendChild(circle); g.appendChild(emoji); g.appendChild(label);
                             g.addEventListener('click', () => {
-                                if (selectedType === t) {
-                                    selectedType = null;
-                                    nodeLayer.querySelectorAll('.type-node').forEach(n => n.classList.remove('selected','dimmed'));
-                                    arrowLayer.querySelectorAll('line, path').forEach(l => l.setAttribute('opacity','0.6'));
+                                if (selectedType===t) {
+                                    selectedType=null;
+                                    nodeLayer.querySelectorAll('.type-node').forEach(n=>n.setAttribute('opacity','1'));
+                                    arrowLayer.querySelectorAll('line,path').forEach(l=>l.setAttribute('opacity','0.6'));
                                     return;
                                 }
-                                selectedType = t;
+                                selectedType=t;
                                 nodeLayer.querySelectorAll('.type-node').forEach(n => {
-                                    n.classList.remove('selected','dimmed');
-                                    n.getAttribute('data-type') === t ? n.classList.add('selected') : n.classList.add('dimmed');
+                                    n.setAttribute('opacity', n.getAttribute('data-type')===t ? '1' : '0.25');
                                 });
-                                arrowLayer.querySelectorAll('line, path').forEach(l => {
-                                    const cls = l.getAttribute('class') || '';
-                                    l.setAttribute('opacity', (cls.includes('from-' + t) || cls.includes('to-' + t)) ? '1' : '0.08');
+                                arrowLayer.querySelectorAll('line,path').forEach(l => {
+                                    const cls=l.getAttribute('class')||'';
+                                    l.setAttribute('opacity', cls.includes(`from-${t}`)||cls.includes(`to-${t}`) ? '1' : '0.05');
                                 });
                             });
                             nodeLayer.appendChild(g);
@@ -744,37 +750,30 @@
                     <div class="page-narrow">
                         <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);">Type Chart</h1>
                         <p class="subtitle">Click a type to highlight its matchups. Rows are attackers, columns are defenders.</p>
-
-                        <div class="wheel-section">
-                            <div class="wheel-container">
-                                <svg class="wheel" viewBox="-175 -170 350 470" id="wheelSvg">
-                                    <defs>
-                                        <marker id="arr-super" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                                            <path d="M0,0 L0,6 L8,3 z" fill="#66ff99" opacity="0.85"/>
-                                        </marker>
-                                        <marker id="arr-self" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                                            <path d="M0,0 L0,6 L8,3 z" fill="#ff7755" opacity="0.9"/>
-                                        </marker>
-                                    </defs>
-                                    <g id="arrowLayer"></g>
-                                    <g id="nodeLayer"></g>
-                                </svg>
-                            </div>
+                        <div style="display:flex;justify-content:center;margin-bottom:40px;">
+                          <svg id="wheelSvg" style="width:340px;height:460px;overflow:visible;" viewBox="-175 -150 350 470">
+                            <defs>
+                              <marker id="arr-super"    markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#66ff99" opacity="0.85"/></marker>
+                              <marker id="arr-self"     markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff7755" opacity="0.9"/></marker>
+                              <marker id="arr-self-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff4444" opacity="0.9"/></marker>
+                            </defs>
+                            <g id="arrowLayer"></g>
+                            <g id="nodeLayer"></g>
+                          </svg>
                         </div>
-
                         <table>
                             <thead>
                                 <tr><th></th><th>Fire</th><th>Water</th><th>Rock</th><th>Arc</th><th>Ice</th><th>Shadow</th><th>Light</th><th>Grass</th></tr>
                             </thead>
                             <tbody>
-                                <tr><th>Fire</th><td>1x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td></tr>
-                                <tr><th>Water</th><td class="good">2x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td></tr>
-                                <tr><th>Rock</th><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td></tr>
-                                <tr><th>Arc</th><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td></tr>
-                                <tr><th>Ice</th><td>1x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td></tr>
+                                <tr><th>Fire</th>  <td>1x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td>1x</td><td class="good">2x</td></tr>
+                                <tr><th>Water</th> <td class="good">2x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td></tr>
+                                <tr><th>Rock</th>  <td>1x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td></tr>
+                                <tr><th>Arc</th>   <td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Ice</th>   <td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td></tr>
                                 <tr><th>Shadow</th><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td></tr>
-                                <tr><th>Light</th><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
-                                <tr><th>Grass</th><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Light</th> <td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
+                                <tr><th>Grass</th> <td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td></tr>
                             </tbody>
                         </table>
                     </div>`;
