@@ -549,7 +549,7 @@
                                 <article class="wizard"><div class="sigil">🔥</div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
                                 <article class="wizard"><div class="sigil">🌊</div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, mana generation, and Drown control.</p></article>
                                 <article class="wizard"><div class="sigil">🪨</div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
-                                <article class="wizard"><div class="sigil">⚡</div><div class="wizard-top"><strong>Stormseeker</strong><span>Lightning</span></div><p>Fast chains and Shock combos.</p></article>
+                                <article class="wizard"><div class="sigil">⚡</div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
                                 <article class="wizard"><div class="sigil">❄️</div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
                                 <article class="wizard"><div class="sigil">🌑</div><div class="wizard-top"><strong>Shadowblade</strong><span>Shadow</span></div><p>Lifesteal, curses, and Weak.</p></article>
                                 <article class="wizard"><div class="sigil">☀️</div><div class="wizard-top"><strong>Dawnmage</strong><span>Light</span></div><p>Shields, heals, and Blind.</p></article>
@@ -573,7 +573,7 @@
                             <article class="keyword-card" style="--kw-color:#c4b5fd"><div class="keyword-icon">🪄</div><div><div class="keyword-header"><div class="keyword-name">Fade</div><div class="keyword-short">Single use</div></div><div class="keyword-desc">This card is removed from your deck after it is played. It does not go to the discard pile.</div></div></article>
                             <article class="keyword-card" style="--kw-color:#ff6633"><div class="keyword-icon">🔥</div><div><div class="keyword-header"><div class="keyword-name">Char</div><div class="keyword-short">Burning damage</div></div><div class="keyword-desc">At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.</div></div></article>
                             <article class="keyword-card" style="--kw-color:#66ddff"><div class="keyword-icon">❄️</div><div><div class="keyword-header"><div class="keyword-name">Freeze</div><div class="keyword-short">Turn denial</div></div><div class="keyword-desc">Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#ffdd00"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Lightning amplifier</div></div><div class="keyword-desc">Each Shock stack multiplies Lightning spell damage by ×1.25. Stacks are consumed on hit.</div></div></article>
+                            <article class="keyword-card" style="--kw-color:#ffdd00"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Arc amplifier</div></div><div class="keyword-desc">Each Shock stack multiplies Arc spell damage by ×1.25. Stacks are consumed on hit.</div></div></article>
                             <article class="keyword-card" style="--kw-color:#4488ff"><div class="keyword-icon">🌊</div><div><div class="keyword-header"><div class="keyword-name">Drown</div><div class="keyword-short">Start-of-turn damage</div></div><div class="keyword-desc">At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.</div></div></article>
                             <article class="keyword-card" style="--kw-color:#44cc66"><div class="keyword-icon">🌿</div><div><div class="keyword-header"><div class="keyword-name">Root</div><div class="keyword-short">Burst on hit</div></div><div class="keyword-desc">When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.</div></div></article>
                             <article class="keyword-card" style="--kw-color:#cc6666"><div class="keyword-icon">💔</div><div><div class="keyword-header"><div class="keyword-name">Weak</div><div class="keyword-short">Damage reduction</div></div><div class="keyword-desc">The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.</div></div></article>
@@ -592,24 +592,24 @@
                     document.getElementById('site-footer').hidden = true;
 
                     setTimeout(() => {
-                        const TYPES = ['Fire','Water','Rock','Lightning','Ice','Shadow','Light','Grass'];
-                        const TYPE_ICONS = { Fire:'🔥', Water:'🌊', Rock:'🪨', Lightning:'⚡', Ice:'❄️', Shadow:'🌑', Light:'☀️', Grass:'🌿' };
-                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Lightning:'#ffe000', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#ffe066', Grass:'#33aa55' };
+                        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
+                        const TYPE_ICONS = { Fire:'🔥', Water:'🌊', Rock:'🪨', Arc:'⚡', Ice:'❄️', Shadow:'🌑', Light:'☀️', Grass:'🌿' };
+                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#22c55e' };
                         const EFF = {
-                            Fire:      {Fire:1, Water:0.5, Rock:1,   Lightning:1,   Ice:1,   Shadow:1,   Light:1,   Grass:2  },
-                            Water:     {Fire:2, Water:1,   Rock:1,   Lightning:0.5, Ice:1,   Shadow:1,   Light:1,   Grass:1  },
-                            Rock:      {Fire:1, Water:1,   Rock:1,   Lightning:2,   Ice:0.5, Shadow:1,   Light:1,   Grass:1  },
-                            Lightning: {Fire:1, Water:2,   Rock:0.5, Lightning:1,   Ice:1,   Shadow:1,   Light:1,   Grass:1  },
-                            Ice:       {Fire:1, Water:1,   Rock:2,   Lightning:1,   Ice:1,   Shadow:1,   Light:1,   Grass:0.5},
-                            Shadow:    {Fire:1, Water:1,   Rock:1,   Lightning:1,   Ice:1,   Shadow:0.5, Light:2,   Grass:1  },
-                            Light:     {Fire:1, Water:1,   Rock:1,   Lightning:1,   Ice:1,   Shadow:2,   Light:0.5, Grass:1  },
-                            Grass:     {Fire:0.5, Water:1, Rock:1,   Lightning:1,   Ice:2,   Shadow:1,   Light:1,   Grass:1  },
+                            Fire:      {Fire:1, Water:0.5, Rock:1,   Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:2  },
+                            Water:     {Fire:2, Water:1,   Rock:1,   Arc:0.5, Ice:1,   Shadow:1,   Light:1,   Grass:1  },
+                            Rock:      {Fire:1, Water:1,   Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:1,   Grass:1  },
+                            Arc: {Fire:1, Water:2,   Rock:0.5, Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:1  },
+                            Ice:       {Fire:1, Water:1,   Rock:2,   Arc:1,   Ice:1,   Shadow:1,   Light:1,   Grass:0.5},
+                            Shadow:    {Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:0.5, Light:2,   Grass:1  },
+                            Light:     {Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:2,   Light:0.5, Grass:1  },
+                            Grass:     {Fire:0.5, Water:1, Rock:1,   Arc:1,   Ice:2,   Shadow:1,   Light:1,   Grass:1  },
                         };
-                        const WHEEL_TYPES = ['Fire','Grass','Ice','Rock','Lightning','Water','Shadow','Light'];
+                        const WHEEL_TYPES = ['Fire','Grass','Ice','Rock','Arc','Water','Shadow','Light'];
                         const R_MAIN = 110, OFFSET = 10;
 
                         function typePos(t) {
-                            const idx6 = ['Fire','Grass','Ice','Rock','Lightning','Water'].indexOf(t);
+                            const idx6 = ['Fire','Grass','Ice','Rock','Arc','Water'].indexOf(t);
                             if (idx6 !== -1) {
                                 const angle = (idx6 / 6) * Math.PI * 2 - Math.PI / 2;
                                 return { x: Math.cos(angle) * R_MAIN, y: Math.sin(angle) * R_MAIN };
