@@ -798,11 +798,11 @@
                         return [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 99) - (RARITY_ORDER[b.rarity] ?? 99));
                     }
 
-                    function cardHTML(c) {
+                    function cardHTML(c, color) {
                         const rarityClass = 'rarity-' + c.rarity.toLowerCase();
                         return `<article class="spell-card" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}" data-starter="${c.starter ? '1' : '0'}" data-fade="${c.fade ? '1' : '0'}">
                             <div class="card-header">
-                                <div class="card-name">${c.name}</div>
+                                <div class="card-name" style="color:${color}">${c.name}</div>
                                 <div class="card-cost">${c.cost}</div>
                             </div>
                             <div class="card-desc">${c.effects}${c.fade ? ' Fade.' : ''}</div>
@@ -815,7 +815,7 @@
                     const sectionsHTML = elements.map(el => `
                         <section class="elem-section" data-elem="${el.key}">
                             <div class="elem-header" style="--elem-color:${el.color}">${el.icon} ${el.label}</div>
-                            <div class="card-grid">${sortedCards(el.cards).map(cardHTML).join('')}</div>
+                            <div class="card-grid">${sortedCards(el.cards).map(c => cardHTML(c, el.color)).join('')}</div>
                         </section>
                     `).join('');
 
