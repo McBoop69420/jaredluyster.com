@@ -136,7 +136,7 @@ const CARD_REFERENCE = [
         key: 'grass',
         label: 'Grass',
         icon: '🌿',
-        color: '#6ee7b7',
+        color: '#22c55e',
         cards: [
             { name: 'Vine Whip', cost: 1, rarity: 'Common', effects: 'Deal 5 damage. Apply 2 Root.' },
             { name: 'Spore Cloud', cost: 1, rarity: 'Common', effects: 'Apply 2 Root. Gain 4 Block.' },
