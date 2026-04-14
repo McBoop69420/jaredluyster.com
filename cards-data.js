@@ -60,7 +60,7 @@ const CARD_REFERENCE = [
         key: 'lightning',
         label: 'Arc',
         icon: '⚡',
-        color: '#ffd93d',
+        color: '#f97316',
         cards: [
             { name: 'Spark', cost: 1, rarity: 'Common', effects: 'Deal 7 damage. Apply 1 Shock.' },
             { name: 'Chain Bolt', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Apply 2 Shock.' },
@@ -117,7 +117,7 @@ const CARD_REFERENCE = [
         key: 'light',
         label: 'Light',
         icon: '☀️',
-        color: '#e2e8f0',
+        color: '#fde68a',
         cards: [
             { name: 'Radiant Bolt', cost: 1, rarity: 'Common', effects: 'Deal 7 damage.' },
             { name: 'Holy Shield', cost: 1, rarity: 'Common', effects: 'Gain 12 Block.' },
