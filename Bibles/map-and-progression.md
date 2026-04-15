@@ -123,10 +123,10 @@ Shop is one-visit per node — items don't restock.
 
 | Event | Icon | Choices |
 |---|---|---|
-| Ancient Tome | 📜 | Gain 30 gold / Leave |
+| Worn Notebook | 📜 | Gain 30 gold / Leave |
 | Gemstone Cache | 💎 | Gain 50 gold / Ignore |
 | Strange Potion | 🧪 | Heal 15 HP / Lose 10 HP for +2 max HP / Leave |
-| Mysterious Shrine | 🌫 | Spend 30 gold to heal to full / Pray (40% chance to heal 10 HP) / Move on |
+| Makeshift Shrine | 🌫 | Spend 30 gold to heal to full / Pray (40% chance to heal 10 HP) / Move on |
 
 ---
 

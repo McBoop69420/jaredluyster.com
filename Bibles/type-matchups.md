@@ -169,18 +169,18 @@ Each enemy's type determines both what class it is **and** what your class match
 | 🧝 Thunder Mage | ⚡ Arc | 🪨 Rock (2×) | ⚡ Arc |
 | 💀 Frost Lich | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice |
 | 🕷 Void Reaper | 🌑 Shadow | ☀️ Light (2×) | 🌑 Shadow |
-| 🌳 Ancient Treant | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass |
+| 🌳 Old-Growth | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass |
 | ⚔️ Radiant Paladin | ☀️ Light | 🌑 Shadow (2×) | ☀️ Light |
 
 ### Bosses
 
 | Boss | Type | Weak to | Resists | Notes |
 |---|---|---|---|---|
-| 👁 Mysterious Stranger | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire | Stacks Char + Strength; Water counters both its damage and yours |
+| 👁 The Drifter | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire | Stacks Char + Strength; Water counters both its damage and yours |
 | 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc (2×) | 🌊 Water | Heavy Weak application; Arc's 2× helps offset -25% damage from Weak |
 | ⛰️ Mountain Titan | 🪨 Rock | ❄️ Ice (2×) | 🪨 Rock | Highest HP in the game (180); Ice's Freeze control buys turns to stack damage |
 | 🌩️ Storm Sovereign | ⚡ Arc | 🪨 Rock (2×) | ⚡ Arc | Gains Strength early; Rock cuts damage on its final 30-damage surge |
-| 🧊 Glacier Ancient | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice | Opens with 3 Freeze stacks; Grass ignores the freeze threat and punishes ice typing |
+| 🧊 Glacial Mass | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice | Opens with 3 Freeze stacks; Grass ignores the freeze threat and punishes ice typing |
 | 🌑 Shadow Sovereign | 🌑 Shadow | ☀️ Light (2×) | 🌑 Shadow | 4 Weak stacks early; Light offsets this by dealing 2× against the Weak source |
 | ✨ Celestial Arbiter | ☀️ Light | 🌑 Shadow (2×) | ☀️ Light | Most defensive boss (high block intents); Shadow's Weak/Lifesteal sustains through long fights |
 | 🌲 World Root | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass | Massive Root application (up to 9 stacks); Fire negates Root detonation damage entirely via 2× advantage AND the roots can't detonate if the player resists |

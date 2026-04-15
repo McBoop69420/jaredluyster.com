@@ -79,7 +79,7 @@
 ```
 base damage
 + Strength bonus (if attacker has Strength)
-× 0.75 if target has Weak (floor)
+× 0.75^N if target has Weak (N = stacks, floor at end)
 × type effectiveness multiplier (2 = weakness, floor(÷2) = resistance, 1 = neutral)
 × amplify multiplier (×1.5 if Amplify active)
 × shock multiplier (×1.25^N if target has Shock stacks AND spell is Arc)
@@ -111,7 +111,7 @@ Shadow and Light are a separate pair: each is super effective against the other.
 **Weakness** — target is weak to your spell's type: keyword damage is **doubled (2×)**.
 **Resistance** — target resists your spell's type: keyword damage is **halved, rounded down**.
 
-Type effectiveness applies to keyword damage only. It does **not** affect status effect stacks or block values.
+Type effectiveness applies to all typed damage — player spell keyword damage and enemy `Attack` intents (which are typed by the enemy's elemental type). It does **not** affect status effect stacks or block values.
 
 ---
 

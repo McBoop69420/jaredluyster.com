@@ -9,12 +9,12 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Effect | Color | Type | Source | Mechanic Summary |
 |---|---|---|---|---|
 | Char | `#ff6633` | DoT | Fire | Deals damage = stacks at end of enemy turn, decays -1/turn |
-| Drown | `#4488ff` | DoT | Water | Deals damage = stacks each turn, **no decay** |
+| Drown | `#4488ff` | DoT | Water | Deals damage = stacks at end of enemy turn, **no decay** |
 | Shock | `#ffdd00` | Amplifier | Arc | Arc attacks deal ×1.25 per stack; decays -1/turn |
 | Root | `#44cc66` | Trap | Grass | On next damage hit: bursts for 2× stacks as bonus damage, all stacks consumed |
 | Freeze | `#66ddff` | Skip | Ice | At 3+ stacks: skip action, consume all stacks |
 | Daze | `#cc9944` | Disruption | Rock | 50% chance enemy repeats previous action; decays -1/turn |
-| Blind | `#f2f2f2` | Miss | Light | 50% chance enemy attack misses entirely; decays -1/turn |
+| Blind | `#f2f2f2` | Miss | Light | If target has ≥1 stack: 50% chance next attack misses entirely; Blind -1 per attack |
 | Weak | `#cc6666` | Debuff | Shadow/various | Reduces all damage dealt by 25%; decays -1/turn |
 | Strength | `#d4af37` | Buff | Enemy buffs | Adds flat bonus to all attacks |
 | Lifesteal | `#cc66ff` | Drain | Shadow | At end of enemy turn: drains HP from enemy, heals player |
@@ -33,7 +33,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 
 ### Drown (Water) `#4488ff`
 - **Applied by:** Water spells (e.g. Drown Surge)
-- **Ticks:** Each turn (player turn tick)
+- **Ticks:** End of enemy turn (same phase as Char and Lifesteal)
 - **Effect:** Target takes damage equal to current Drown stacks
 - **Decay:** **None** — stacks persist indefinitely
 - **Clears at:** Only via Purify/cleanse
@@ -73,18 +73,18 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 ### Blind (Light) `#f2f2f2`
 - **Applied by:** Light spells (e.g. Radiant Bolt)
 - **Ticks:** Each enemy attack
-- **Effect:** 50% chance per Blind stack that the attack misses entirely (no damage)
-- **Decay:** -1 per turn
+- **Effect:** If the target has ≥1 Blind stack, their next attack has a 50% chance to miss entirely (no damage). One stack is consumed per attack regardless of hit or miss.
+- **Decay:** -1 per attack (not per turn — stacks represent number of attacks affected, not duration)
 - **Clears at:** 0 stacks
-- **Note:** Probabilistic — does not guarantee safety, but averages well over multiple attacks
+- **Note:** Additional stacks extend how many attacks can miss, not the miss probability. 1 stack = 50% on the next attack. 3 stacks = 50% on each of the next 3 attacks.
 
 ### Weak `#cc6666`
 - **Applied by:** Multiple types (Shadow, Water, Rock)
 - **Ticks:** Each turn
-- **Effect:** All damage dealt by the affected target is reduced by 25% (floor division)
+- **Effect:** Each stack multiplies all damage dealt by the affected target by ×0.75. Total multiplier = 0.75^N (floor at the end). 2 stacks = ×0.5625, 3 stacks = ×0.422, etc.
 - **Decay:** -1 per turn
 - **Clears at:** 0 stacks
-- **Note:** Neutral/shared status — crosses type boundaries
+- **Note:** Neutral/shared status — crosses type boundaries. Stacks multiplicatively, not additively — additional stacks have diminishing but meaningful returns.
 
 ### Strength `#d4af37`
 - **Applied by:** Enemy buff intents; some player spells (Magma Form, Earthen Skin)

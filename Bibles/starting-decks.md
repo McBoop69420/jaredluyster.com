@@ -191,14 +191,14 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Dawnbolt | 1 | ×2 | Deal 6 damage. Apply 1 Blind |
+| Radiant Bolt | 1 | ×2 | Deal 6 damage. Apply 1 Blind |
 | Shielding Light | 1 | ×2 | Gain 8 Block |
-| Holy Purify | 2 | ×1 | Cleanse all debuffs. Heal 20 HP |
+| Purify | 2 | ×1 | Cleanse all debuffs. Heal 20 HP |
 | Divine Barrier | 2 | ×1 | Gain 30 Block |
 
-**Key mechanic:** Purify removes every negative status from the player (Char, Drown, Freeze, Shock, Weak, Root, Daze, Blind, Lifesteal) and heals 20 HP. Against Char/Drown-heavy enemies, this card is worth more than any attack.
+**Key mechanic:** Purify removes all negative statuses from the player (Char, Drown, Freeze, Shock, Weak, Root, Daze) and heals 20 HP. Against Char/Drown-heavy enemies, this card is worth more than any attack.
 
-**Key mechanic:** Blind gives 50% miss chance per stack. Two stacks = 75% chance the attack misses (independent rolls). Very powerful against single heavy-hitter enemies.
+**Key mechanic:** Blind gives a 50% miss chance on the enemy's next attack, then consumes 1 stack. Additional stacks extend how many attacks can miss, not the probability. Stack Radiant Bolt to protect against multiple consecutive attacks.
 
 **Type matchups:** Strong vs Shadow (2×). Weak vs Light enemies (0.5×).
 
@@ -219,11 +219,11 @@ These 4 cards are in every starting deck. They are removed from the game permane
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
 | Vine Lash | 1 | ×2 | Deal 6 damage |
-| Entangle Roots | 1 | ×2 | Apply 2 Root |
-| Verdant Growth | 2 | ×1 | Gain 8 Block. Apply 2 Root |
+| Entangle | 1 | ×2 | Apply 2 Root |
+| Overgrowth | 2 | ×1 | Gain 8 Block. Apply 2 Root |
 | Verdant Surge | 2 | ×1 | Root applied this turn is doubled |
 
-**Key combo:** Verdant Surge → Entangle Roots → Entangle Roots → Vine Lash. That's (2+2) ×2 = 8 Root stacks, then detonates on Vine Lash for 16 burst bonus damage + 6 damage = 22 damage total from one sequence.
+**Key combo:** Verdant Surge → Entangle → Entangle → Vine Lash. That's (2+2) ×2 = 8 Root stacks, then detonates on Vine Lash for 16 burst bonus damage + 6 damage = 22 damage total from one sequence.
 
 **Key mechanic:** Root does nothing on its own until the enemy takes damage. Time the detonation — the bigger the Root stack before you trigger it, the more burst damage.
 

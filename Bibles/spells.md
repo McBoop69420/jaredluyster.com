@@ -113,7 +113,7 @@ Full spell reference organized by type. Starter cards are marked *(S)*.
 | Shadow Strike *(S)* | 1 | Common | Deal 4 damage. Drain 2 life | Lifesteal 2 |
 | Curse Touch *(S)* | 1 | Common | Apply 2 Weak | Pure debuff |
 | Soul Drain *(S)* | 2 | Common | Deal 8 damage. Drain 6 life | Lifesteal 6 |
-| Dark Pact *(S)* | 2 | Uncommon | Lose 4 HP. Gain 2 Strength | Permanent Strength at HP cost |
+| Shadow Pact *(S)* | 2 | Uncommon | Lose 6 HP. Apply 12 Lifesteal | Big Lifesteal burst at HP cost |
 | Shadow Bolt | 1 | Common | Deal 9 damage | Highest 1-cost direct damage |
 | Drain Life | 2 | Common | Deal 10 damage. Heal 5 HP | Sustain attack |
 | Curse | 1 | Common | Apply 3 Weak to enemy | Strong debuff stacker |
@@ -126,7 +126,7 @@ Full spell reference organized by type. Starter cards are marked *(S)*.
 
 ## Light ☀️
 
-**Status:** Blind (50% miss chance per stack; decays -1/turn)
+**Status:** Blind (50% miss chance on next attack if ≥1 stack; -1 stack per attack)
 
 | Name | Cost | Rarity | Effect | Notes |
 |---|---|---|---|---|
