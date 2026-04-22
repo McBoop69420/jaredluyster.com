@@ -23,7 +23,7 @@
 
 ### Enemy Turn
 - Enemy executes the next intent in their fixed pattern (cycles through)
-- Intents are: **attack**, **defend** (gain block), **buff** (gain Strength), **status** (apply a status to player)
+- Intents are: **attack**, **defend** (gain block), **status** (apply a status to player)
 - After enemy acts: end-of-turn status effects tick (Char, Drown, Lifesteal)
 - Enemy pattern then advances to the next intent
 
@@ -78,8 +78,6 @@
 
 ```
 base damage
-+ Strength bonus (if attacker has Strength)
-× 0.75^N if target has Weak (N = stacks, floor at end)
 × type effectiveness multiplier (2 = weakness, floor(÷2) = resistance, 1 = neutral)
 × amplify multiplier (×1.5 if Amplify active)
 × shock multiplier (×1.25^N if target has Shock stacks AND spell is Arc)
@@ -93,20 +91,20 @@ Root detonation triggers separately on any damage hit.
 
 ## Type Effectiveness
 
-**Cycle:** Fire > Grass > Ice > Rock > Arc > Water > Fire (each beats one, loses to one)
+**Cycle:** Fire → Grass → Ice → Rock → Arc → Water → Fire. Each type beats the two types directly ahead of it in the rotation, creating two simultaneous cycles — the outer hex chain and the two inner triangles (Fire/Ice/Arc and Grass/Rock/Water). Each cycle type beats 2 and loses to 2.
 
-Shadow and Light are a separate pair: each is super effective against the other.
+Shadow and Light are a separate pair: each is super effective against the other, resists itself.
 
 | Attacker → | vs Fire | vs Water | vs Rock | vs Arc | vs Ice | vs Shadow | vs Light | vs Grass |
 |---|---|---|---|---|---|---|---|---|
-| **Fire** | 1× | 0.5× | 1× | 1× | 1× | 1× | 1× | **2×** |
-| **Water** | **2×** | 1× | 1× | 0.5× | 1× | 1× | 1× | 1× |
-| **Rock** | 1× | 1× | 1× | **2×** | 0.5× | 1× | 1× | 1× |
-| **Arc** | 1× | **2×** | 0.5× | 1× | 1× | 1× | 1× | 1× |
-| **Ice** | 1× | 1× | **2×** | 1× | 1× | 1× | 1× | 0.5× |
+| **Fire** | 1× | 0.5× | 1× | 0.5× | **2×** | 1× | 1× | **2×** |
+| **Water** | **2×** | 1× | 0.5× | 0.5× | 1× | 1× | 1× | **2×** |
+| **Rock** | 1× | **2×** | 1× | **2×** | 0.5× | 1× | 1× | 0.5× |
+| **Arc** | **2×** | **2×** | 0.5× | 1× | 0.5× | 1× | 1× | 1× |
+| **Ice** | 0.5× | 1× | **2×** | **2×** | 1× | 1× | 1× | 0.5× |
 | **Shadow** | 1× | 1× | 1× | 1× | 1× | 0.5× | **2×** | 1× |
 | **Light** | 1× | 1× | 1× | 1× | 1× | **2×** | 0.5× | 1× |
-| **Grass** | 0.5× | 1× | 1× | 1× | **2×** | 1× | 1× | 1× |
+| **Grass** | 0.5× | 0.5× | **2×** | 1× | **2×** | 1× | 1× | 1× |
 
 **Weakness** — target is weak to your spell's type: keyword damage is **doubled (2×)**.
 **Resistance** — target resists your spell's type: keyword damage is **halved, rounded down**.
@@ -129,11 +127,9 @@ The spell *Amplify* (neutral, in all starting decks) grants a one-time ×1.5 mul
 
 ---
 
-## Strength
+## Foresight
 
-- Flat bonus added to every attack, enemy or player
-- Stacks with itself (each point adds +1 per attack)
-- Applies before Weak reduction
+A universal keyword available on spells of any class. When a spell has **Foresight**, it draws 1 card at the start of the player's next turn (after normal hand draw). Multiple Foresight triggers in a turn stack — each queued draw fires separately at the next turn start.
 
 ---
 

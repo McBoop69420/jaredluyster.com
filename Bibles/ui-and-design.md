@@ -29,11 +29,9 @@ Each status effect has its own color, distinct from but related to its source ty
 | Daze | Rock gold | `#cc9944` | Rock |
 | Shock | Lightning yellow | `#ffdd00` | Arc |
 | Freeze | Ice blue | `#66ddff` | Ice |
-| Weak | Dull red | `#cc6666` | Neutral/shared |
 | Root | Grass green | `#44cc66` | Grass |
 | Blind | Pale white | `#f2f2f2` | Light |
 | Lifesteal | Shadow purple | `#cc66ff` | Shadow |
-| Strength | Empowerment gold | `#d4af37` | Neutral/shared (enemy) |
 
 > Status colors intentionally differ slightly from type colors for contrast — do not swap them.
 
@@ -103,6 +101,14 @@ Each type and status uses an emoji icon as its primary visual identifier. Icons 
 Rarity currently affects: shop price, reward pool weighting (rares appear less). No explicit visual color-coding of rarity is standardized yet — treat this as TBD.
 
 **Starter** cards are not a shop or reward rarity — they are a fixed deck membership flag. They do not appear in draft rewards or shop inventory. Every class has exactly 4 Starter cards forming its starting deck. Starter is separate from Common/Uncommon/Rare and should never be treated as a tier above or below them.
+
+---
+
+## Shop UI
+
+- **Buy button:** Each item displays a pill-style "Buy 💰 X" button in place of a plain price tag, making the purchase action immediately obvious.
+- **Sold Out state:** Purchased items remain visible but are dimmed (50% opacity, muted text) so the player can see what they've already bought without cluttering the layout.
+- **Purchase toast:** On every successful purchase, a "[Card name] added to deck!" or "[Item name] purchased!" notification slides up from the bottom of the screen and fades out after 2 seconds.
 
 ---
 
