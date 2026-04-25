@@ -66,6 +66,12 @@ a {
     text-decoration: none;
 }
 
+.tag-kw,
+.tag-type {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
 img {
     display: block;
     max-width: 100%;
@@ -141,6 +147,10 @@ button {
 
 .nav a:hover {
     color: var(--ink);
+}
+
+.nav a.active {
+    color: var(--gold);
 }
 
 .eyebrow {

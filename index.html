@@ -6,6 +6,7 @@
     <meta name="description" content="Wizard Battle is a roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.">
     <title>Wizard Battle</title>
     <link rel="stylesheet" href="shared-theme.css">
+    <script src="tagify.js"></script>
     <style>
         body {
             overflow-x: hidden;
@@ -79,12 +80,14 @@
             border-radius: 18px;
             padding: 16px;
             background: rgba(255, 255, 255, 0.04);
+            border-left: 3px solid var(--stat-color, rgba(255,255,255,0.08));
         }
 
         .stat strong {
             display: block;
             font-size: 1.8rem;
             font-family: Georgia, "Times New Roman", serif;
+            color: var(--stat-color, var(--ink));
         }
 
         .stat span {
@@ -244,6 +247,7 @@
             background: var(--card);
             border-radius: 12px;
             border: 1px solid var(--line);
+            border-left: 3px solid var(--c, var(--line));
             padding: 12px 14px;
             display: flex;
             flex-direction: column;
@@ -265,14 +269,14 @@
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: rgba(164, 123, 255, 0.25);
-            border: 1px solid rgba(164, 123, 255, 0.4);
+            background: color-mix(in srgb, var(--c, var(--plum)) 20%, transparent);
+            border: 1px solid color-mix(in srgb, var(--c, var(--plum)) 40%, transparent);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
             font-weight: 800;
-            color: #c8aaff;
+            color: var(--c, #c8aaff);
         }
 
         .card-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
@@ -381,14 +385,15 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--elem-color, var(--muted));
-            margin-bottom: 12px;
-            padding-bottom: 8px;
+            margin-bottom: 14px;
+            padding: 10px 0 10px 14px;
             border-bottom: 1px solid var(--line);
+            border-left: 3px solid var(--elem-color, var(--line));
         }
 
         .rarity {
@@ -458,6 +463,30 @@
 
             .keyword-grid { grid-template-columns: 1fr; }
         }
+
+        .nav-refresh {
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 236, 209, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: color 0.15s, background 0.15s, transform 0.2s;
+            margin-left: 6px;
+        }
+
+        .nav-refresh:hover {
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-refresh:active {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body>
@@ -475,6 +504,7 @@
                 <a href="#keywords" data-route="keywords">Keywords</a>
                 <a href="#type-chart" data-route="type-chart">Type Chart</a>
                 <a href="#cards" data-route="cards">Cards</a>
+                <button class="nav-refresh" onclick="location.reload()" title="Refresh">↺</button>
             </nav>
         </div>
     </header>
@@ -505,9 +535,9 @@
                                     <a class="button button-secondary" href="#cards">View All Cards</a>
                                 </div>
                                 <div class="hero-stats">
-                                    <div class="stat"><strong>8</strong><span>Wizard classes</span></div>
-                                    <div class="stat"><strong>56</strong><span>Spells to draft</span></div>
-                                    <div class="stat"><strong>12</strong><span>Floors per journey</span></div>
+                                    <div class="stat" style="--stat-color:var(--plum)"><strong>8</strong><span>Wizard classes</span></div>
+                                    <div class="stat" style="--stat-color:var(--ember)"><strong>56</strong><span>Spells to draft</span></div>
+                                    <div class="stat" style="--stat-color:var(--sky)"><strong>12</strong><span>Floors per journey</span></div>
                                 </div>
                             </div>
                         </div>
@@ -569,18 +599,21 @@
                         <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.06em;">Keywords</h1>
                         <p class="subtitle" style="letter-spacing:.05em;">Reference page for the game's core mechanics and status terms.</p>
                         <div class="keyword-grid">
-                            <article class="keyword-card" style="--kw-color:#94a3b8"><div class="keyword-icon">🛡️</div><div><div class="keyword-header"><div class="keyword-name">Block</div><div class="keyword-short">Damage absorption</div></div><div class="keyword-desc">Absorbs incoming damage before HP. Block resets to 0 at the start of your next turn and does not carry between encounters.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#c4b5fd"><div class="keyword-icon">🪄</div><div><div class="keyword-header"><div class="keyword-name">Fade</div><div class="keyword-short">Single use</div></div><div class="keyword-desc">This card is removed from your deck after it is played. It does not go to the discard pile.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#ff6633"><div class="keyword-icon">🔥</div><div><div class="keyword-header"><div class="keyword-name">Char</div><div class="keyword-short">Burning damage</div></div><div class="keyword-desc">At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#66ddff"><div class="keyword-icon">❄️</div><div><div class="keyword-header"><div class="keyword-name">Freeze</div><div class="keyword-short">Turn denial</div></div><div class="keyword-desc">Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#ffdd00"><div class="keyword-icon">⚡</div><div><div class="keyword-header"><div class="keyword-name">Shock</div><div class="keyword-short">Arc amplifier</div></div><div class="keyword-desc">Each Shock stack multiplies Arc spell damage by ×1.25. Stacks are consumed on hit.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#4488ff"><div class="keyword-icon">🌊</div><div><div class="keyword-header"><div class="keyword-name">Drown</div><div class="keyword-short">Start-of-turn damage</div></div><div class="keyword-desc">At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#44cc66"><div class="keyword-icon">🌿</div><div><div class="keyword-header"><div class="keyword-name">Root</div><div class="keyword-short">Burst on hit</div></div><div class="keyword-desc">When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#cc6666"><div class="keyword-icon">💔</div><div><div class="keyword-header"><div class="keyword-name">Weak</div><div class="keyword-short">Damage reduction</div></div><div class="keyword-desc">The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#d4af37"><div class="keyword-icon">💪</div><div><div class="keyword-header"><div class="keyword-name">Strength</div><div class="keyword-short">Damage bonus</div></div><div class="keyword-desc">Each Strength stack permanently increases the target's attack and spell damage by 1.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#cc9944"><div class="keyword-icon">💫</div><div><div class="keyword-header"><div class="keyword-name">Daze</div><div class="keyword-short">Action confusion</div></div><div class="keyword-desc">50% chance the enemy repeats its previous action instead of its intended one.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#f2f2f2"><div class="keyword-icon">✨</div><div><div class="keyword-header"><div class="keyword-name">Blind</div><div class="keyword-short">Miss chance</div></div><div class="keyword-desc">50% chance the enemy's attack misses entirely and deals no damage.</div></div></article>
-                            <article class="keyword-card" style="--kw-color:#cc66ff"><div class="keyword-icon">🌙</div><div><div class="keyword-header"><div class="keyword-name">Lifesteal</div><div class="keyword-short">HP drain</div></div><div class="keyword-desc">At the end of the turn, drains HP from the enemy equal to the stacks and heals you for the same amount.</div></div></article>
+                            ${[
+                                { color:'#94a3b8', icon:'🛡️', name:'Block',     short:'Damage absorption',    desc:'Absorbs incoming damage before HP. Block resets to 0 at the start of your next turn and does not carry between encounters.' },
+                                { color:'#c4b5fd', icon:'🪄', name:'Fade',      short:'Single use',           desc:'This card is removed from your deck after it is played. It does not go to the discard pile.' },
+                                { color:'#ff6633', icon:'🔥', name:'Char',      short:'Burning damage',       desc:'At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.' },
+                                { color:'#66ddff', icon:'❄️', name:'Freeze',    short:'Turn denial',          desc:'Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.' },
+                                { color:'#ffdd00', icon:'⚡', name:'Shock',     short:'Arc amplifier',        desc:'Each Shock stack multiplies Arc spell damage by ×1.25. Stacks are consumed on hit.' },
+                                { color:'#4488ff', icon:'🌊', name:'Drown',     short:'Start-of-turn damage', desc:'At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.' },
+                                { color:'#44cc66', icon:'🌿', name:'Root',      short:'Burst on hit',         desc:'When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.' },
+                                { color:'#cc6666', icon:'💔', name:'Weak',      short:'Damage reduction',     desc:'The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.' },
+                                { color:'#d4af37', icon:'💪', name:'Strength',  short:'Damage bonus',         desc:'Each Strength stack permanently increases the target\'s attack and spell damage by 1.' },
+                                { color:'#cc9944', icon:'💫', name:'Daze',      short:'Action confusion',     desc:'50% chance the enemy repeats its previous action instead of its intended one.' },
+                                { color:'#f2f2f2', icon:'✨', name:'Blind',     short:'Miss chance',          desc:'50% chance the enemy\'s attack misses entirely and deals no damage.' },
+                                { color:'#cc66ff', icon:'🌙', name:'Lifesteal', short:'HP drain',             desc:'At the end of the turn, drains HP from the enemy equal to the stacks and heals you for the same amount.' },
+                                { color:'#b8d0f5', icon:'🔮', name:'Foresight', short:'Delayed card draw',    desc:'At the start of your next turn, draw 1 extra card. Multiple Foresight triggers in a turn each queue a separate draw.' },
+                            ].map(k => `<article class="keyword-card" style="--kw-color:${k.color}"><div class="keyword-icon">${k.icon}</div><div><div class="keyword-header"><div class="keyword-name">${k.name}</div><div class="keyword-short">${k.short}</div></div><div class="keyword-desc">${tagify(k.desc)}</div></div></article>`).join('')}
                         </div>
                     </div>`;
                 }
@@ -626,8 +659,8 @@
                             const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
                             positions[t] = { x: Math.cos(angle) * R, y: Math.sin(angle) * R };
                         });
-                        positions.Shadow = { x: -75, y: 210 };
-                        positions.Light  = { x:  75, y: 210 };
+                        positions.Shadow = { x: -75, y: 160 };
+                        positions.Light  = { x:  75, y: 160 };
 
                         const svg = document.getElementById('wheelSvg');
                         const arrowLayer = document.getElementById('arrowLayer');
@@ -691,8 +724,8 @@
                         // Self-referential 0.5× loops for Shadow and Light (red)
                         // Shadow center (-75,210) radius 32; Light center (75,210) radius 32
                         // Start/end on circle edge at ~45° from vertical, looping outward
-                        [{t:'Shadow', sx:-97, sy:188, cx1:-148, cy1:172, cx2:-148, cy2:248, ex:-97, ey:232},
-                         {t:'Light',  sx: 97, sy:188, cx1: 148, cy1:172, cx2: 148, cy2:248, ex: 97, ey:232}
+                        [{t:'Shadow', sx:-97, sy:138, cx1:-148, cy1:122, cx2:-148, cy2:198, ex:-97, ey:182},
+                         {t:'Light',  sx: 97, sy:138, cx1: 148, cy1:122, cx2: 148, cy2:198, ex: 97, ey:182}
                         ].forEach(({t, sx, sy, cx1, cy1, cx2, cy2, ex, ey}) => {
                             const path=document.createElementNS('http://www.w3.org/2000/svg','path');
                             path.setAttribute('d',`M ${sx},${sy} C ${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`);
@@ -751,7 +784,7 @@
                         <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);">Type Chart</h1>
                         <p class="subtitle">Click a type to highlight its matchups. Rows are attackers, columns are defenders.</p>
                         <div style="display:flex;justify-content:center;margin-bottom:40px;">
-                          <svg id="wheelSvg" style="width:340px;height:460px;overflow:visible;" viewBox="-175 -150 350 470">
+                          <svg id="wheelSvg" style="width:340px;height:360px;overflow:visible;" viewBox="-175 -150 350 360">
                             <defs>
                               <marker id="arr-super"    markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#66ff99" opacity="0.85"/></marker>
                               <marker id="arr-self"     markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff7755" opacity="0.9"/></marker>
@@ -799,12 +832,12 @@
 
                     function cardHTML(c, color) {
                         const rarityClass = 'rarity-' + c.rarity.toLowerCase();
-                        return `<article class="spell-card" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}" data-starter="${c.starter ? '1' : '0'}" data-fade="${c.fade ? '1' : '0'}">
+                        return `<article class="spell-card" style="--c:${color}" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}" data-starter="${c.starter ? '1' : '0'}" data-fade="${c.fade ? '1' : '0'}">
                             <div class="card-header">
                                 <div class="card-name" style="color:${color}">${c.name}</div>
                                 <div class="card-cost">${c.cost}</div>
                             </div>
-                            <div class="card-desc">${c.effects}${c.fade ? ' Fade.' : ''}</div>
+                            <div class="card-desc">${tagify(c.effects + (c.fade ? ' Fade.' : ''))}</div>
                             <div class="card-footer">
                                 ${c.starter ? '<span class="starter-badge">Starter Deck</span>' : `<span class="rarity ${rarityClass}">${c.rarity}</span>`}
                             </div>
