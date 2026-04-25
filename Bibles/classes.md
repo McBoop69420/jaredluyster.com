@@ -8,14 +8,14 @@ Each class is a wizard archetype defined by their element, HP, and in-game descr
 
 | Class | Type | HP | In-Game Description |
 |---|---|---|---|
-| Pyromancer | Fire | 70 | Burn DoT, high damage. |
-| Tidecaller | Water | 70 | Healing, mana gen, control. |
-| Stonewarden | Rock | 70 | Max defense, outlasts foes. |
+| Pyromancer | Fire | 70 | Char DoT, high damage. |
+| Tidecaller | Water | 70 | Healing, mana gen, Drown control. |
+| Stonewarden | Rock | 70 | Max defense, Daze stacks, outlasts foes. |
 | Stormseeker | Arc | 70 | Fast chains, Shock combos. |
 | Frostweaver | Ice | 70 | Freeze control. |
-| Shadowblade | Shadow | 70 | Lifesteal, curses, Weak. |
-| Dawnmage | Light | 70 | Shields, heals, cleanses. |
-| Verdantmaker | Grass | 70 | Low base damage, exponential DoT. |
+| Shadowblade | Shadow | 70 | Lifesteal and curses. |
+| Dawnmage | Light | 70 | Shields, heals, Blind. |
+| Verdantmaker | Grass | 70 | Low base damage, exponential Root DoT. |
 
 ---
 
@@ -57,9 +57,9 @@ Accumulates Freeze stacks on enemies — Freeze doesn't decay, so it builds unti
 ---
 
 ### Shadowblade
-**Type:** Shadow | **HP:** 70 | *"Lifesteal, curses, Weak."*
+**Type:** Shadow | **HP:** 70 | *"Lifesteal and curses."*
 
-Three tools working together. Lifesteal drains HP from the enemy and heals the player at end of their turn — passive sustain without using a healing card. Weak reduces all enemy damage by 25% per stack, stacking multiplicatively. Curses keep the enemy weakened long-term. Self-sustaining in a way no other class is; doesn't rely on rest nodes as heavily.
+Lifesteal drains HP from the enemy and heals the player at end of their turn — passive sustain without using a healing card. Every card applies Lifesteal, so recovery is constant across the whole turn. Self-sustaining in a way no other class is; doesn't rely on rest nodes as heavily.
 
 ---
 

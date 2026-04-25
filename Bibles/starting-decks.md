@@ -25,22 +25,22 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Fire | **HP:** 70
 
-**Identity:** Burn DoT stacker. Applies Char to steadily drain enemy HP. The deck rewards setup — Inferno Core unlocks burst Char turns.
+**Identity:** Burn DoT stacker. Every card applies Char — the deck builds pressure from the first turn and never lets up.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Firebolt | 1 | ×2 | Deal 6 damage |
-| Ignite | 1 | ×2 | Apply 3 Char |
-| Flame Burst | 2 | ×1 | Deal 5 damage twice |
-| Inferno Core | 2 | ×1 | Char applied this turn is doubled |
+| Firebolt | 1 | ×2 | Deal 5 damage. Apply 1 Char |
+| Ignite | 1 | ×2 | Deal 4 damage. Apply 2 Char |
+| Flame Burst | 2 | ×1 | Deal 5 damage. Apply 2 Char. Twice |
+| Cauterize | 2 | ×1 | Gain 10 Block. Apply 3 Char |
 
-**Key combo:** Play Inferno Core → then Ignite in the same turn → 6 Char instead of 3. Char ticks at end of every enemy turn and decays by 1 after dealing damage.
+**Key mechanic:** Char ticks at end of every enemy turn and decays by 1 after dealing damage. Stack it early — even 4–5 Char is significant sustained pressure.
 
-**Type matchups:** Strong vs Grass (2×). Weak vs Water (0.5×).
+**Type matchups:** Strong vs Ice, Grass (2×). Weak vs Arc, Water (0.5×).
 
-**Early game:** Low immediate damage — you're setting up Char stacks. Play Ignite before attacking.
+**Early game:** Every card applies Char, so pressure builds naturally. Lead with Ignite or Flame Burst to stack faster.
 
 **Late game:** High sustained damage from stacked Char. Look for more Char spells (Kindle, Fireball) from rewards.
 
@@ -50,26 +50,24 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Water | **HP:** 70
 
-**Identity:** Healing, mana generation, and Drown DoT. The most survivable class. Wins long fights by healing through damage and stacking permanent Drown.
+**Identity:** Drown DoT stacker. Every card applies Drown — the deck builds permanent passive damage from the first turn while staying alive through healing and block.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Wavecrash | 1 | ×2 | Deal 6 damage |
-| Soothing Wave | 1 | ×2 | Heal 5 HP |
-| Tidal Flow | 2 | ×1 | Deal 4 damage. Draw 1. Gain 1 mana next turn |
-| Drown Surge | 2 | ×1 | Deal 4 damage. Apply 4 Drown |
+| Wavecrash | 1 | ×2 | Deal 5 damage. Apply 1 Drown |
+| Soothing Wave | 1 | ×2 | Heal 4 HP. Apply 2 Drown |
+| Drown Surge | 2 | ×1 | Deal 8 damage. Apply 5 Drown |
+| Riptide | 2 | ×1 | Deal 4 damage. Apply 2 Drown. Gain 1 mana next turn |
 
-**Key combo:** Tidal Flow sets up a 4-mana turn the next round. Use extra mana for a heavy damage + Drown stack turn.
+**Key mechanic:** Drown never decays. Every card applies it — even a slow turn spent healing with Soothing Wave still adds 2 permanent stacks. By mid-fight, Drown alone deals significant damage each turn.
 
-**Key mechanic:** Drown never decays. Stack it early and it pays off every turn for the rest of the fight.
+**Type matchups:** Strong vs Grass, Fire (2×). Weak vs Rock, Arc (0.5×).
 
-**Type matchups:** Strong vs Fire (2×). Weak vs Arc (0.5×).
+**Early game:** Every card builds Drown pressure regardless of situation. Lead with Soothing Wave turns to stay healthy while stacking faster.
 
-**Early game:** Flexible — can heal, deal damage, or generate mana depending on the situation.
-
-**Late game:** Passive Drown damage handles a lot of work. Pair with block spells if Drown has built up enough to be lethal without attacking.
+**Late game:** Passive Drown damage handles a lot of work. Look for Whirlpool (multi-hit) and Deep Current from rewards to add burst on top of the DoT foundation.
 
 ---
 
@@ -77,24 +75,24 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Rock | **HP:** 70
 
-**Identity:** Maximum defense. Outlasts enemies through block accumulation and Daze disruption. Lowest raw damage, but nearly impossible to kill.
+**Identity:** Daze stacker. Every card applies Daze — the deck disrupts enemy actions from turn one while building enormous block. Lowest raw damage, but Daze makes enemy turns increasingly unreliable.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Rock Throw | 1 | ×2 | Deal 6 damage |
-| Stoneskin | 1 | ×2 | Gain 10 Block |
-| Erode | 2 | ×1 | Deal 4 damage. Apply 2 Daze |
-| On Guard | 2 | ×1 | Gain 25 Block |
+| Rock Throw | 1 | ×2 | Deal 5 damage. Apply 1 Daze |
+| Stoneskin | 1 | ×2 | Gain 8 Block. Apply 2 Daze |
+| Erode | 2 | ×1 | Deal 8 damage. Apply 4 Daze |
+| On Guard | 2 | ×1 | Gain 20 Block. Apply 2 Daze |
 
-**Key combo:** Apply Daze after an enemy defends. 50% chance they repeat the defend action instead of attacking next turn — effectively wasting their turn while you keep blocking.
+**Key mechanic:** Daze gives a 50% chance the enemy repeats their last action instead of acting normally. Every card applies it — landing several stacks before a big enemy attack can waste their turn entirely.
 
-**Key mechanic:** On Guard (25 Block for 2 mana) is one of the most efficient block cards in the game. This deck can absorb enormous amounts of damage.
+**Key combo:** Stoneskin (2 Daze) + Erode (4 Daze) in one turn = 6 Daze stacked. Each stack is an independent disruption chance — sustained pressure on enemy actions while block absorbs what gets through.
 
-**Type matchups:** Strong vs Arc (2×). Weak vs Ice (0.5×).
+**Type matchups:** Strong vs Water, Arc (2×). Weak vs Grass, Ice (0.5×).
 
-**Early game:** Stack block constantly. Take minimal damage. Use Erode to disrupt attack patterns.
+**Early game:** Stack Daze and block simultaneously. Every card contributes to both — no dead draws.
 
 **Late game:** Needs damage to close out fights — prioritize attack or Daze spells from rewards. Boulder Crash (28 damage) is a key pickup.
 
@@ -104,26 +102,26 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Arc | **HP:** 70
 
-**Identity:** Fast chains and exponential burst. Stack Shock on the enemy, then land a heavy Arc hit for multiplied damage. Highest damage ceiling in the game.
+**Identity:** Shock stacker. Every card applies Shock — the deck builds exponential damage multipliers before cashing them in with Chain Lightning for maximum burst. Highest damage ceiling in the game.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Spark Strike | 1 | ×2 | Deal 6 damage |
-| Static Charge | 1 | ×2 | Deal 3 damage. Apply 1 Shock |
-| Chain Lightning | 2 | ×1 | Deal 4 damage 3 times |
-| Surge Engine | 2 | ×1 | Gain 2 mana next turn |
+| Spark Strike | 1 | ×2 | Deal 5 damage. Apply 1 Shock |
+| Static Charge | 1 | ×2 | Deal 3 damage. Apply 2 Shock |
+| Chain Lightning | 2 | ×1 | Deal 4 damage 3 times. Apply 2 Shock |
+| Surge Engine | 2 | ×1 | Gain 2 mana next turn. Apply 3 Shock |
 
-**Key combo:** Surge Engine this turn → 5 mana next turn → Static Charge + Static Charge + Chain Lightning (2 Shock stacks → ×1.25² ≈ ×1.56 on each of 3 hits).
+**Key combo:** Surge Engine this turn (3 Shock, 2 mana next turn) → 5 mana next turn with 3 Shock already stacked → Chain Lightning (4×3 damage × ×1.25³ ≈ ×1.95 per hit, plus 2 more Shock applied).
 
 **Key mechanic:** Shock multiplies Arc damage by ×1.25 per stack, compounding (×1.25^N). Chain Lightning hits 3 times — each hit benefits from the full Shock multiplier.
 
-**Type matchups:** Strong vs Water (2×). Weak vs Rock (0.5×).
+**Type matchups:** Strong vs Fire, Water (2×). Weak vs Ice, Rock (0.5×).
 
-**Early game:** Build Shock stacks first, then burst. Don't waste the multiplier on Spark Strike when Chain Lightning is in hand.
+**Early game:** Every card builds Shock. Prioritize Surge Engine turns to bank mana and stack fast before dropping Chain Lightning.
 
-**Late game:** Storm Call (10 damage ×3) with Shock is devastating. Overcharge (free +2 mana) enables bigger burst turns.
+**Late game:** Storm Call (10 damage ×3) with high Shock is devastating. Surge Engine cycling back every loop keeps Shock climbing.
 
 ---
 
@@ -131,26 +129,26 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Ice | **HP:** 70
 
-**Identity:** Control. Accumulate Freeze stacks — at 3, the enemy skips their entire turn. Pairs solid block with turn denial.
+**Identity:** Freeze control. Every card applies Freeze — the deck steadily builds toward the 3-stack threshold where the enemy skips their entire turn.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Shardsicle | 1 | ×2 | Deal 6 damage |
-| Ice Cube | 1 | ×2 | Gain 10 Block |
-| Frost Armor | 2 | ×1 | Gain 10 Block. Apply 1 Freeze — Fade |
-| Absolute Zero | 2 | ×1 | Apply 1 Freeze — Fade |
+| Shardsicle | 1 | ×2 | Deal 5 damage. Apply 1 Freeze |
+| Ice Cube | 1 | ×2 | Gain 8 Block. Apply 2 Freeze |
+| Blizzard Strike | 2 | ×1 | Deal 5 damage. Apply 2 Freeze. Twice |
+| Frost Armor | 2 | ×1 | Gain 10 Block. Apply 3 Freeze |
 
-**Key mechanic:** Freeze doesn't decay on its own — stacks accumulate across turns. When the enemy hits 3 Freeze stacks, their next action is skipped and all stacks are consumed.
+**Key mechanic:** Freeze stacks accumulate across turns with no decay. At 3 stacks, the enemy skips their next action and all stacks are consumed. Every card applies Freeze — the threshold arrives fast.
 
-**Note:** Frost Armor and Absolute Zero are Fade in the starting deck — they leave after use. Non-Fade versions exist in the reward pool.
+**Key combo:** Frost Armor (3 Freeze) into Ice Cube (2 Freeze) = 5 stacks. The first skip consumes 3, leaving 2 behind — one more card reaches the next threshold immediately.
 
-**Type matchups:** Strong vs Rock (2×). Weak vs Grass (0.5×).
+**Type matchups:** Strong vs Arc, Rock (2×). Weak vs Fire, Grass (0.5×).
 
-**Early game:** Alternate block and Freeze application. The Fade cards provide Freeze setup early; replace them with non-Fade Freeze spells from rewards.
+**Early game:** Alternate attacks and block while Freeze builds. Time the 3-stack trigger before a telegraphed enemy attack for maximum value.
 
-**Late game:** A skipped enemy turn at the right moment (before a big attack) can win fights. Blizzard (12 damage + 2 Freeze) and Absolute Zero (rare, 3 Freeze + 20 damage) are priority pickups.
+**Late game:** Blizzard Strike's multi-hit is the starter deck's highest Freeze-per-turn. Blizzard (reward pool) and Absolute Zero (rare) accelerate stacking further.
 
 ---
 
@@ -158,26 +156,26 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Shadow | **HP:** 70
 
-**Identity:** Lifesteal and curses. Drains HP from enemies to sustain itself. Weak debuff cuts enemy damage by 25%. Self-sufficient — doesn't need healing from rest nodes as badly as others.
+**Identity:** Lifesteal and curses. Every card applies Lifesteal — the deck drains HP from enemies constantly, turning every turn into a sustained health advantage.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Shadow Strike | 1 | ×2 | Deal 4 damage. Lifesteal 2 |
-| Curse Touch | 1 | ×2 | Apply 2 Weak |
-| Soul Drain | 2 | ×1 | Deal 8 damage. Lifesteal 6 |
-| Shadow Pact | 2 | ×1 | Lose 6 HP. Apply 12 Lifesteal |
+| Shadow Strike | 1 | ×2 | Deal 5 damage. Lifesteal 2 |
+| Curse Touch | 1 | ×2 | Deal 2 damage. Lifesteal 4 |
+| Soul Drain | 2 | ×1 | Deal 8 damage. Lifesteal 8 |
+| Shadow Pact | 2 | ×1 | Lose 6 HP. Lifesteal 12 |
 
-**Key mechanic:** Lifesteal queues up as a drain — at the end of the enemy's next turn, that much HP is taken from them and given to you. It applies even if they die during your turn.
+**Key mechanic:** Lifesteal queues up as a drain — at the end of the enemy's next turn, that much HP is taken from them and given to you. Every card applies Lifesteal, so it stacks across the turn.
 
-**Key combo:** Curse Touch (2 Weak) reduces all enemy attacks by 25%. With 2 stacks applied, enemy is dealing 50% less damage — effectively doubling your effective HP.
+**Key combo:** Shadow Pact (−6 HP, 12 Lifesteal) + Curse Touch (2 dmg, 4 Lifesteal) + Shadow Strike (5 dmg, 2 Lifesteal) in one turn = 18 queued Lifesteal. Net swing: −6 HP now, +18 at end of enemy turn = +12 HP ahead — plus 7 direct damage dealt.
 
 **Type matchups:** Strong vs Light (2×). Weak vs Shadow enemies (0.5×).
 
-**Early game:** Lead with Curse Touch to reduce incoming damage immediately. Lifesteal provides consistent HP recovery without needing rest stops.
+**Early game:** Every card applies Lifesteal — recovery is constant without needing rest stops.
 
-**Late game:** Dark Pact (draw 2 cards, lose 4 HP) and Soul Rend (24 damage + heal 12) are priority upgrades. The deck scales well with more Lifesteal and Weak stacking.
+**Late game:** Dark Pact (draw 2 cards, lose 4 HP) and Soul Rend (24 damage + heal 12) are priority upgrades.
 
 ---
 
@@ -185,26 +183,26 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Light | **HP:** 70
 
-**Identity:** Shields, heals, and cleanses. The most defensive class. Purify hard-counters status-heavy enemies. Blind disrupts attacks on a per-stack basis.
+**Identity:** Blind stacker. Every card applies Blind — the deck disrupts enemy attacks from the first turn while Purify cleanses any status that slips through.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Radiant Bolt | 1 | ×2 | Deal 6 damage. Apply 1 Blind |
-| Shielding Light | 1 | ×2 | Gain 8 Block |
-| Purify | 2 | ×1 | Cleanse all debuffs. Heal 20 HP |
-| Divine Barrier | 2 | ×1 | Gain 30 Block |
+| Radiant Bolt | 1 | ×2 | Deal 5 damage. Apply 1 Blind |
+| Shielding Light | 1 | ×2 | Gain 8 Block. Apply 2 Blind |
+| Divine Barrier | 2 | ×1 | Gain 20 Block. Apply 3 Blind |
+| Purify | 2 | ×1 | Cleanse all debuffs. Heal 20 HP. Apply 2 Blind |
 
-**Key mechanic:** Purify removes all negative statuses from the player (Char, Drown, Freeze, Shock, Weak, Root, Daze) and heals 20 HP. Against Char/Drown-heavy enemies, this card is worth more than any attack.
+**Key mechanic:** Blind gives a 50% miss chance on the enemy's next attack, then consumes 1 stack. Every card applies Blind — stack it before a heavy-hitting enemy and multiple attacks can miss consecutively.
 
-**Key mechanic:** Blind gives a 50% miss chance on the enemy's next attack, then consumes 1 stack. Additional stacks extend how many attacks can miss, not the probability. Stack Radiant Bolt to protect against multiple consecutive attacks.
+**Key mechanic:** Purify removes all negative statuses from the player (Char, Drown, Freeze, Shock, Root, Daze) and heals 20 HP — and now also blinds the enemy in the same action. Against status-heavy enemies, this card alone can swing the fight.
 
 **Type matchups:** Strong vs Shadow (2×). Weak vs Light enemies (0.5×).
 
-**Early game:** Block and heal to stay healthy. Apply Blind to disrupt the enemy's attack intent.
+**Early game:** Stack Blind every turn. Take minimal damage from attacks. Hold Purify for when enemy statuses overwhelm.
 
-**Late game:** Holy Purify and Divine Barrier carry this class far. Sunburst (20 damage + 10 heal + 8 block) is a top-tier rare pickup for this class.
+**Late game:** Sunburst (20 damage + 10 heal + 8 block) is the priority pickup. The deck's defensive depth is unmatched.
 
 ---
 
@@ -212,23 +210,23 @@ These 4 cards are in every starting deck. They are removed from the game permane
 
 **Type:** Grass | **HP:** 70
 
-**Identity:** Root trap with exponential burst. Stacks Root on the enemy — which detonates as 2× stacks in bonus damage the next time they take any damage. Verdant Surge doubles Root applied this turn.
+**Identity:** Root trap. Every card applies Root — the deck builds stacks constantly, and Verdant Surge doubles them in a single turn for explosive burst detonations.
 
 **Starting Deck (class cards):**
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Vine Lash | 1 | ×2 | Deal 6 damage |
-| Entangle | 1 | ×2 | Apply 2 Root |
-| Overgrowth | 2 | ×1 | Gain 8 Block. Apply 2 Root |
-| Verdant Surge | 2 | ×1 | Root applied this turn is doubled |
+| Vine Lash | 1 | ×2 | Deal 5 damage. Apply 1 Root |
+| Entangle | 1 | ×2 | Gain 4 Block. Apply 2 Root |
+| Overgrowth | 2 | ×1 | Deal 8 damage. Apply 4 Root |
+| Verdant Surge | 2 | ×1 | Apply 2 Root. Root applied this turn is doubled |
 
-**Key combo:** Verdant Surge → Entangle → Entangle → Vine Lash. That's (2+2) ×2 = 8 Root stacks, then detonates on Vine Lash for 16 burst bonus damage + 6 damage = 22 damage total from one sequence.
+**Key mechanic:** Root detonates on the next hit the enemy takes — dealing 2× the stack count as bonus damage, then clearing. Every card applies Root, so stacks accumulate even on defensive turns.
 
-**Key mechanic:** Root does nothing on its own until the enemy takes damage. Time the detonation — the bigger the Root stack before you trigger it, the more burst damage.
+**Key combo:** Verdant Surge → Entangle → Entangle → Vine Lash: (2+2+2) ×2 = 12 Root stacks, detonating on Vine Lash for 24 bonus damage + 5 base = 29 total from one sequence.
 
-**Type matchups:** Strong vs Ice (2×). Weak vs Fire (0.5×).
+**Type matchups:** Strong vs Rock, Ice (2×). Weak vs Water, Fire (0.5×).
 
-**Early game:** Build Root stacks before dealing damage. Don't waste detonations on small hits — save trigger damage for when stacks are high.
+**Early game:** Build Root before attacking. Even Entangle turns (block + Root) contribute to the detonation. Don't trigger until stacks are significant.
 
-**Late game:** Verdant Bloom (6 Root + 10 heal) is a top pickup. The deck rewards patience and setup over raw aggression.
+**Late game:** Verdant Surge cycling back every loop means burst potential is always available. Verdant Bloom (6 Root + 10 heal) is the priority reward pickup.

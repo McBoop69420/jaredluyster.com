@@ -15,10 +15,10 @@ Type effectiveness applies **only to keyword damage** (damage dealt by typed ele
 
 **Resistance** — the target resists your spell's type: keyword damage is **halved, rounded down (floor ÷ 2)**.
 
-The multiplier is applied after Strength and Weak, before Amplify and Shock:
+The multiplier is applied before Amplify and Shock:
 
 ```
-(base + Strength) × Weak(0.75) × type effectiveness × Amplify × Shock
+base × type effectiveness × Amplify × Shock
 ```
 
 Where `type effectiveness` = 2 (weakness), 0.5 floored (resistance), or 1 (neutral).
@@ -32,29 +32,37 @@ Labels shown in-game:
 
 ## The Elemental Cycles
 
-Six types are arranged in a hexagon and form two interlocking triangles. Each type beats one and loses to one.
+Six types are arranged in a hexagon. Each type beats the **two types directly ahead of it** in the rotation and loses to the **two types directly behind it**:
 
-**Triangle 1 — Fire / Ice / Arc:**
 ```
-Fire → Ice → Arc → Fire
+Fire → Grass → Ice → Rock → Arc → Water → Fire
 ```
-- 🔥 Fire beats ❄️ Ice
-- ❄️ Ice beats ⚡ Arc
-- ⚡ Arc beats 🔥 Fire
 
-**Triangle 2 — Grass / Rock / Water:**
-```
-Grass → Rock → Water → Grass
-```
-- 🌿 Grass beats 🪨 Rock
-- 🪨 Rock beats 🌊 Water
-- 🌊 Water beats 🌿 Grass
+This single rule creates both cycles simultaneously:
+
+**Inner triangles** (every other step):
+- 🔥 Fire → ❄️ Ice → ⚡ Arc → 🔥 Fire
+- 🌿 Grass → 🪨 Rock → 🌊 Water → 🌿 Grass
+
+**Outer hex chain** (adjacent steps):
+- 🔥 Fire → 🌿 Grass → ❄️ Ice → 🪨 Rock → ⚡ Arc → 🌊 Water → 🔥 Fire
+
+**Combined result — each cycle type beats 2, loses to 2:**
+
+| Type | Beats (2×) | Loses to (0.5×) |
+|---|---|---|
+| 🔥 Fire | ❄️ Ice, 🌿 Grass | ⚡ Arc, 🌊 Water |
+| 🌿 Grass | 🪨 Rock, ❄️ Ice | 🌊 Water, 🔥 Fire |
+| ❄️ Ice | ⚡ Arc, 🪨 Rock | 🔥 Fire, 🌿 Grass |
+| 🪨 Rock | 🌊 Water, ⚡ Arc | ❄️ Ice, 🌿 Grass |
+| ⚡ Arc | 🔥 Fire, 🌊 Water | 🪨 Rock, ❄️ Ice |
+| 🌊 Water | 🌿 Grass, 🔥 Fire | ⚡ Arc, 🪨 Rock |
 
 **Pair — Shadow / Light:**
 - 🌑 Shadow beats ☀️ Light (2×), resists itself (0.5×)
 - ☀️ Light beats 🌑 Shadow (2×), resists itself (0.5×)
 
-Types from different triangles are always neutral (1×) against each other. The two triangles share the same hexagonal node layout in the type chart.
+Shadow and Light have no interactions with the six cycle types (always 1×).
 
 ---
 
@@ -64,56 +72,56 @@ Rows = attacker type. Columns = defender type.
 
 | Attacker ↓ / Defender → | 🔥 Fire | 🌊 Water | 🪨 Rock | ⚡ Arc | ❄️ Ice | 🌑 Shadow | ☀️ Light | 🌿 Grass |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 🔥 **Fire** | 1× | 1× | 1× | 0.5× | **2×** | 1× | 1× | 1× |
-| 🌊 **Water** | 1× | 1× | 0.5× | 1× | 1× | 1× | 1× | **2×** |
-| 🪨 **Rock** | 1× | **2×** | 1× | 1× | 1× | 1× | 1× | 0.5× |
-| ⚡ **Arc** | **2×** | 1× | 1× | 1× | 0.5× | 1× | 1× | 1× |
-| ❄️ **Ice** | 0.5× | 1× | 1× | **2×** | 1× | 1× | 1× | 1× |
+| 🔥 **Fire** | 1× | 0.5× | 1× | 0.5× | **2×** | 1× | 1× | **2×** |
+| 🌊 **Water** | **2×** | 1× | 0.5× | 0.5× | 1× | 1× | 1× | **2×** |
+| 🪨 **Rock** | 1× | **2×** | 1× | **2×** | 0.5× | 1× | 1× | 0.5× |
+| ⚡ **Arc** | **2×** | **2×** | 0.5× | 1× | 0.5× | 1× | 1× | 1× |
+| ❄️ **Ice** | 0.5× | 1× | **2×** | **2×** | 1× | 1× | 1× | 0.5× |
 | 🌑 **Shadow** | 1× | 1× | 1× | 1× | 1× | 0.5× | **2×** | 1× |
 | ☀️ **Light** | 1× | 1× | 1× | 1× | 1× | **2×** | 0.5× | 1× |
-| 🌿 **Grass** | 1× | 0.5× | **2×** | 1× | 1× | 1× | 1× | 1× |
+| 🌿 **Grass** | 0.5× | 0.5× | **2×** | 1× | **2×** | 1× | 1× | 1× |
 
 ---
 
 ## Per-Type Breakdown
 
 ### 🔥 Fire
-- **Super effective vs:** ❄️ Ice (2×)
-- **Not very effective vs:** ⚡ Arc (0.5×)
-- **Neutral vs:** Water, Rock, Shadow, Light, Grass
-- **Design note:** Fire melts Ice directly. Arc's electrical disruption short-circuits sustained flame, making Arc enemies the primary threat for a Pyromancer.
+- **Super effective vs:** ❄️ Ice (2×), 🌿 Grass (2×)
+- **Not very effective vs:** ⚡ Arc (0.5×), 🌊 Water (0.5×)
+- **Neutral vs:** Rock, Shadow, Light
+- **Design note:** Fire melts Ice and scorches Grass. Arc's electrical disruption short-circuits sustained flame; Water smothers it outright — making Arc and Water enemies the twin threats for a Pyromancer.
 
 ---
 
 ### 🌊 Water
-- **Super effective vs:** 🌿 Grass (2×)
-- **Not very effective vs:** 🪨 Rock (0.5×)
-- **Neutral vs:** Fire, Arc, Ice, Shadow, Light
-- **Design note:** Water drowns and uproots Grass. Rock absorbs and redirects water — stone enemies shrug off flood damage.
+- **Super effective vs:** 🌿 Grass (2×), 🔥 Fire (2×)
+- **Not very effective vs:** 🪨 Rock (0.5×), ⚡ Arc (0.5×)
+- **Neutral vs:** Ice, Shadow, Light
+- **Design note:** Water drowns Grass and extinguishes Fire. Rock absorbs and redirects water; Arc ionizes it — both shrug off flood damage and give Stormcallers a hard time.
 
 ---
 
 ### 🪨 Rock
-- **Super effective vs:** 🌊 Water (2×)
-- **Not very effective vs:** 🌿 Grass (0.5×)
-- **Neutral vs:** Fire, Arc, Ice, Shadow, Light
-- **Design note:** Rock dams and redirects water flow. Grass roots find purchase in stone, slowly breaking it apart.
+- **Super effective vs:** 🌊 Water (2×), ⚡ Arc (2×)
+- **Not very effective vs:** 🌿 Grass (0.5×), ❄️ Ice (0.5×)
+- **Neutral vs:** Fire, Shadow, Light
+- **Design note:** Rock dams water and grounds electrical charge. Grass roots find purchase in stone and break it apart; Ice freezes and fractures it — both deny the Earthwarden their momentum.
 
 ---
 
 ### ⚡ Arc
-- **Super effective vs:** 🔥 Fire (2×)
-- **Not very effective vs:** ❄️ Ice (0.5×)
-- **Neutral vs:** Water, Rock, Shadow, Light, Grass
-- **Design note:** Arc breaks continuity — electrical disruption snuffs out sustained flame. Ice insulates against Arc, dissipating the charge before it lands.
+- **Super effective vs:** 🔥 Fire (2×), 🌊 Water (2×)
+- **Not very effective vs:** ❄️ Ice (0.5×), 🪨 Rock (0.5×)
+- **Neutral vs:** Grass, Shadow, Light
+- **Design note:** Arc snuffs sustained flame and electrifies water conductively. Ice insulates and dissipates the charge; Rock grounds it entirely — both neuter the Voltmage's output.
 
 ---
 
 ### ❄️ Ice
-- **Super effective vs:** ⚡ Arc (2×)
-- **Not very effective vs:** 🔥 Fire (0.5×)
-- **Neutral vs:** Water, Rock, Shadow, Light, Grass
-- **Design note:** Ice stops movement and grounds electrical charge completely. Fire melts through frozen attacks before they connect.
+- **Super effective vs:** ⚡ Arc (2×), 🪨 Rock (2×)
+- **Not very effective vs:** 🔥 Fire (0.5×), 🌿 Grass (0.5×)
+- **Neutral vs:** Water, Shadow, Light
+- **Design note:** Ice grounds electrical charge and fractures stone through freeze-expansion. Fire melts frozen attacks before they connect; Grass insulates against cold and pushes through it — both punish the Frostbinder.
 
 ---
 
@@ -121,7 +129,7 @@ Rows = attacker type. Columns = defender type.
 - **Super effective vs:** ☀️ Light (2×)
 - **Not very effective vs:** 🌑 Shadow (0.5×)
 - **Neutral vs:** Fire, Water, Rock, Arc, Ice, Grass
-- **Design note:** Shadow is off-cycle entirely. Its identity is tempo (Weak reduces enemy output, Lifesteal sustains HP), so type matchups are narrow by design — super strong vs Light, nearly immune to itself. Shadow vs Shadow mirrors are low-damage duels where status stacking decides the fight.
+- **Design note:** Shadow is off-cycle entirely. Its identity is attrition (Lifesteal sustains HP through prolonged fights), so type matchups are narrow by design — super strong vs Light, nearly immune to itself. Shadow vs Shadow mirrors are low-damage duels where status stacking decides the fight.
 
 ---
 
@@ -134,10 +142,10 @@ Rows = attacker type. Columns = defender type.
 ---
 
 ### 🌿 Grass
-- **Super effective vs:** 🪨 Rock (2×)
-- **Not very effective vs:** 🌊 Water (0.5×)
-- **Neutral vs:** Fire, Arc, Ice, Shadow, Light
-- **Design note:** Roots find purchase in stone and break it apart over time. Water drowns root systems before they can spread, making water-type enemies a hard counter to Root-based strategies.
+- **Super effective vs:** 🪨 Rock (2×), ❄️ Ice (2×)
+- **Not very effective vs:** 🌊 Water (0.5×), 🔥 Fire (0.5×)
+- **Neutral vs:** Arc, Shadow, Light
+- **Design note:** Roots crack stone and insulate against cold. Water drowns root systems before they spread; Fire scorches them instantly — both hard-counter Root-stacking strategies and punish the Thornweaver for slow play.
 
 ---
 
@@ -147,60 +155,60 @@ Each enemy's type determines both what class it is **and** what your class match
 
 ### Common Enemies
 
-| Enemy | Type | Weak to | Resists |
+| Enemy | Type | Weak to (2×) | Resists (0.5×) |
 |---|---|---|---|
-| 👺 Fire Imp | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire (0.5× vs Water) |
-| 🌋 Lava Golem | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire |
-| 🧜 Sea Sprite | 🌊 Water | ⚡ Arc (2×) | 🌊 Water |
-| 🟤 Mud Elemental | 🪨 Rock | ❄️ Ice (2×) | 🪨 Rock |
-| 🔵 Storm Wisp | ⚡ Arc | 🪨 Rock (2×) | ⚡ Arc |
-| 🐺 Frost Wolf | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice |
-| 👻 Shade Wraith | 🌑 Shadow | ☀️ Light (2×) | 🌑 Shadow |
-| 🛡 Holy Sentinel | ☀️ Light | 🌑 Shadow (2×) | ☀️ Light |
-| 🌱 Vine Creeper | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass |
+| 👺 Fire Imp | 🔥 Fire | ⚡ Arc, 🌊 Water | ❄️ Ice, 🌿 Grass |
+| 🌋 Lava Golem | 🔥 Fire | ⚡ Arc, 🌊 Water | ❄️ Ice, 🌿 Grass |
+| 🧜 Sea Sprite | 🌊 Water | ⚡ Arc, 🪨 Rock | 🌿 Grass, 🔥 Fire |
+| 🟤 Mud Elemental | 🪨 Rock | ❄️ Ice, 🌿 Grass | 🌊 Water, ⚡ Arc |
+| 🔵 Storm Wisp | ⚡ Arc | ❄️ Ice, 🪨 Rock | 🔥 Fire, 🌊 Water |
+| 🐺 Frost Wolf | ❄️ Ice | 🔥 Fire, 🌿 Grass | ⚡ Arc, 🪨 Rock |
+| 👻 Shade Wraith | 🌑 Shadow | ☀️ Light | 🌑 Shadow |
+| 🛡 Holy Sentinel | ☀️ Light | 🌑 Shadow | ☀️ Light |
+| 🌱 Vine Creeper | 🌿 Grass | 🔥 Fire, 🌊 Water | ❄️ Ice, 🪨 Rock |
 
 ### Elite Enemies
 
-| Enemy | Type | Weak to | Resists |
+| Enemy | Type | Weak to (2×) | Resists (0.5×) |
 |---|---|---|---|
-| 🌞 Magma Lord | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire |
-| 🧙 Tide Witch | 🌊 Water | ⚡ Arc (2×) | 🌊 Water |
-| 🗿 Stone Guardian | 🪨 Rock | ❄️ Ice (2×) | 🪨 Rock |
-| 🧝 Thunder Mage | ⚡ Arc | 🪨 Rock (2×) | ⚡ Arc |
-| 💀 Frost Lich | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice |
-| 🕷 Void Reaper | 🌑 Shadow | ☀️ Light (2×) | 🌑 Shadow |
-| 🌳 Old-Growth | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass |
-| ⚔️ Radiant Paladin | ☀️ Light | 🌑 Shadow (2×) | ☀️ Light |
+| 🌞 Magma Lord | 🔥 Fire | ⚡ Arc, 🌊 Water | ❄️ Ice, 🌿 Grass |
+| 🧙 Tide Witch | 🌊 Water | ⚡ Arc, 🪨 Rock | 🌿 Grass, 🔥 Fire |
+| 🗿 Stone Guardian | 🪨 Rock | ❄️ Ice, 🌿 Grass | 🌊 Water, ⚡ Arc |
+| 🧝 Thunder Mage | ⚡ Arc | ❄️ Ice, 🪨 Rock | 🔥 Fire, 🌊 Water |
+| 💀 Frost Lich | ❄️ Ice | 🔥 Fire, 🌿 Grass | ⚡ Arc, 🪨 Rock |
+| 🕷 Void Reaper | 🌑 Shadow | ☀️ Light | 🌑 Shadow |
+| 🌳 Old-Growth | 🌿 Grass | 🔥 Fire, 🌊 Water | ❄️ Ice, 🪨 Rock |
+| ⚔️ Radiant Paladin | ☀️ Light | 🌑 Shadow | ☀️ Light |
 
 ### Bosses
 
-| Boss | Type | Weak to | Resists | Notes |
+| Boss | Type | Weak to (2×) | Resists (0.5×) | Notes |
 |---|---|---|---|---|
-| 👁 The Drifter | 🔥 Fire | 🌊 Water (2×) | 🔥 Fire | Stacks Char + Strength; Water counters both its damage and yours |
-| 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc (2×) | 🌊 Water | Heavy Weak application; Arc's 2× helps offset -25% damage from Weak |
-| ⛰️ Mountain Titan | 🪨 Rock | ❄️ Ice (2×) | 🪨 Rock | Highest HP in the game (180); Ice's Freeze control buys turns to stack damage |
-| 🌩️ Storm Sovereign | ⚡ Arc | 🪨 Rock (2×) | ⚡ Arc | Gains Strength early; Rock cuts damage on its final 30-damage surge |
-| 🧊 Glacial Mass | ❄️ Ice | 🌿 Grass (2×) | ❄️ Ice | Opens with 3 Freeze stacks; Grass ignores the freeze threat and punishes ice typing |
-| 🌑 Shadow Sovereign | 🌑 Shadow | ☀️ Light (2×) | 🌑 Shadow | 4 Weak stacks early; Light offsets this by dealing 2× against the Weak source |
-| ✨ Celestial Arbiter | ☀️ Light | 🌑 Shadow (2×) | ☀️ Light | Most defensive boss (high block intents); Shadow's Weak/Lifesteal sustains through long fights |
-| 🌲 World Root | 🌿 Grass | 🔥 Fire (2×) | 🌿 Grass | Massive Root application (up to 9 stacks); Fire negates Root detonation damage entirely via 2× advantage AND the roots can't detonate if the player resists |
+| 👁 The Drifter | 🔥 Fire | ⚡ Arc, 🌊 Water | ❄️ Ice, 🌿 Grass | Stacks Char on intents 2 and 3; Arc and Water both counter its sustained output |
+| 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc, 🪨 Rock | 🌿 Grass, 🔥 Fire | Applies 5 permanent Drown; Rock and Arc deal 2× and can burst it before Drown compounds |
+| ⛰️ Mountain Titan | 🪨 Rock | ❄️ Ice, 🌿 Grass | 🌊 Water, ⚡ Arc | Highest HP in the game (180); Ice Freeze control and Grass Root stacking both punish its slow kit |
+| 🌩️ Storm Sovereign | ⚡ Arc | ❄️ Ice, 🪨 Rock | 🔥 Fire, 🌊 Water | Stacks Shock on itself before a 30-damage finish; Rock cuts the final hit and Ice negates the Shock |
+| 🧊 Glacial Mass | ❄️ Ice | 🔥 Fire, 🌿 Grass | ⚡ Arc, 🪨 Rock | Opens with 3 Freeze stacks; Fire and Grass both ignore the freeze threat and punish the typing |
+| 🌑 Shadow Sovereign | 🌑 Shadow | ☀️ Light | 🌑 Shadow | Pure escalating attacks; Light's 2× advantage and block/Blind combo are the best counter |
+| ✨ Celestial Arbiter | ☀️ Light | 🌑 Shadow | ☀️ Light | Most defensive boss; applies Blind on intent 3 to disrupt your offense — Shadow's Lifesteal sustains through the long fight |
+| 🌲 World Root | 🌿 Grass | 🔥 Fire, 🌊 Water | ❄️ Ice, 🪨 Rock | Massive Root application (up to 9 stacks); Fire and Water both deal 2× and clear the Root threat |
 
 ---
 
 ## Class vs. Boss Matchup Quick Reference
 
-Your class type determines your spell type. Bold = favorable (2×). Italic = unfavorable (0.5×).
+Your class type determines your spell type. Bold = favorable (2×). Italic = unfavorable (0.5×). Each cycle class now has two favorable and two unfavorable boss matchups.
 
-| Class | 👁 Overlord (🔥) | 🐉 Leviathan (🌊) | ⛰️ Titan (🪨) | 🌩️ Sovereign (⚡) | 🧊 Glacier (❄️) | 🌑 Shadow Sov (🌑) | ✨ Arbiter (☀️) | 🌲 World Root (🌿) |
+| Class | 👁 Drifter (🔥) | 🐉 Leviathan (🌊) | ⛰️ Titan (🪨) | 🌩️ Sovereign (⚡) | 🧊 Glacial (❄️) | 🌑 Shadow Sov (🌑) | ✨ Arbiter (☀️) | 🌲 World Root (🌿) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 🔥 Pyromancer | 1× | *0.5×* | 1× | 1× | 1× | 1× | 1× | **2×** |
-| 🌊 Stormcaller | **2×** | 1× | 1× | *0.5×* | 1× | 1× | 1× | 1× |
-| 🪨 Earthwarden | 1× | 1× | 1× | **2×** | *0.5×* | 1× | 1× | 1× |
-| ⚡ Voltmage | 1× | **2×** | *0.5×* | 1× | 1× | 1× | 1× | 1× |
-| ❄️ Frostbinder | 1× | 1× | **2×** | 1× | 1× | 1× | 1× | *0.5×* |
+| 🔥 Pyromancer | 1× | *0.5×* | 1× | *0.5×* | **2×** | 1× | 1× | **2×** |
+| 🌊 Stormcaller | **2×** | 1× | *0.5×* | *0.5×* | 1× | 1× | 1× | **2×** |
+| 🪨 Earthwarden | 1× | **2×** | 1× | **2×** | *0.5×* | 1× | 1× | *0.5×* |
+| ⚡ Voltmage | **2×** | **2×** | *0.5×* | 1× | *0.5×* | 1× | 1× | 1× |
+| ❄️ Frostbinder | *0.5×* | 1× | **2×** | **2×** | 1× | 1× | 1× | *0.5×* |
 | 🌑 Voidwalker | 1× | 1× | 1× | 1× | 1× | *0.5×* | **2×** | 1× |
 | ☀️ Dawnseeker | 1× | 1× | 1× | 1× | 1× | **2×** | *0.5×* | 1× |
-| 🌿 Thornweaver | *0.5×* | 1× | 1× | 1× | **2×** | 1× | 1× | 1× |
+| 🌿 Thornweaver | *0.5×* | *0.5×* | **2×** | 1× | **2×** | 1× | 1× | 1× |
 
 > Note: Any boss can appear on floor 12. The matchup you draw is luck — but knowing it early lets you buy the right spells at the shop on floor 10.
 
@@ -214,7 +222,7 @@ Neutral spells (Focus, Guard, Amplify, Mana Petal) deal no elemental damage and 
 
 ## Design Principles
 
-**One weakness, one resistance per type (cycle types):** Every cycle type in a run will have exactly one type it fears and one it exploits. This keeps the system learnable without being overwhelming.
+**Two weaknesses, two resistances per cycle type:** Every cycle type beats two and loses to two. The relationships come from two overlapping cycles — the inner triangles (Fire/Ice/Arc and Grass/Rock/Water) and the outer hexagonal chain — both active simultaneously. This gives players two favorable and two unfavorable matchups per class, adding decision depth without needing to memorize a giant matrix.
 
 **Off-cycle types stay off-cycle:** Shadow and Light have no interaction with the six cycle types. This is intentional — their identity is tempo and disruption, not raw damage cycling. Adding cycle interactions would dilute that identity.
 

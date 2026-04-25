@@ -1,188 +1,203 @@
 # Spells Bible
 
-Full spell reference organized by type. Starter cards are marked *(S)*.
+Full spell reference organized by type. All values sourced from `js/data/spells.js`.
+
+**Conventions:**
+- *(S)* = Starter card (part of a class's starting 10-card deck)
+- *Fade* = Card is exiled on play (removed from deck permanently)
+- *On hit* = Reactive effect that triggers when the enemy's attack deals damage through your block
+- Multi-hit spells list each hit separately (e.g. "Twice" = effects listed once, apply twice)
 
 ---
 
 ## Fire 🔥
 
-**Status:** Char (DoT, decays -1/turn after dealing damage)
+**Class status:** Char — DoT equal to stacks, ticks at end of enemy turn, decays -1 after ticking.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Firebolt *(S)* | 1 | Common | Deal 5 damage. Apply 1 Char | Basic attack + Char |
-| Ignite *(S)* | 1 | Common | Deal 4 damage. Apply 2 Char | Damage-leaning DoT setup |
-| Flame Burst *(S)* | 2 | Common | Deal 5 damage. Apply 2 Char. Twice | Both hits count for type effectiveness |
-| Cauterize *(S)* | 2 | Uncommon | Gain 10 Block. Apply 3 Char | Defensive Char option |
-| Ember Shot | 1 | Common | Deal 8 damage | Better than Firebolt, no status |
-| Fireball | 2 | Common | Deal 14 damage. Apply 2 Char | Solid combined card |
-| Flame Shield | 1 | Common | Gain 8 Block. Apply 1 Char to attacker on hit | Reactive Char stacking |
-| Inferno | 3 | Uncommon | Deal 22 damage. Apply 4 Char | Big turn finisher |
-| Kindle | 0 | Common | Apply 2 Char. Draw 1 | Zero-cost DoT + cantrip |
-| Heat Wave | 2 | Uncommon | Deal 10 damage. Apply 3 Char. Foresight. | — |
-| Magma Form | 2 | Rare | Gain 12 Block | Large defensive burst |
+**Signature buff:** Inferno Core — doubles all Char applied this turn. Single-turn only.
+
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Firebolt *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Char. |
+| Ignite *(S)* | 1 | Starter | Deal 4 damage. Apply 2 Char. |
+| Flame Burst *(S)* | 2 | Starter | Deal 5 damage. Apply 2 Char. Twice. |
+| Cauterize *(S)* | 2 | Starter | Gain 10 Block. Apply 3 Char. |
+| Inferno Core *(S)* | 2 | Starter | Char applied this turn is doubled. |
+| Ember Shot | 1 | Common | Deal 8 damage. |
+| Kindle | 0 | Common | Apply 2 Char. Draw 1. |
+| Fireball | 2 | Common | Deal 14 damage. Apply 2 Char. |
+| Flame Shield | 1 | Common | Gain 8 Block. On hit: apply 1 Char to attacker. |
+| Heat Wave | 2 | Uncommon | Deal 10 damage. Apply 3 Char. Draw 1 next turn. |
+| Inferno | 3 | Uncommon | Deal 22 damage. Apply 4 Char. |
+| Magma Form | 2 | Rare | Gain 12 Block. |
 
 ---
 
 ## Water 🌊
 
-**Status:** Drown (DoT, no decay — permanent stacks)
+**Class status:** Drown — DoT equal to stacks, ticks at end of enemy turn. No decay (permanent).
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Wavecrash *(S)* | 1 | Common | Deal 5 damage. Apply 1 Drown | Basic attack + Drown |
-| Soothing Wave *(S)* | 1 | Common | Heal 4 HP. Apply 2 Drown | Sustain + Drown setup |
-| Drown Surge *(S)* | 2 | Common | Deal 8 damage. Apply 5 Drown | Heavy attack + Drown dump |
-| Riptide *(S)* | 2 | Common | Deal 4 damage. Apply 2 Drown. Gain 1 mana next turn | Mana gen + Drown setup |
-| Water Bolt | 1 | Common | Deal 7 damage | Basic attack |
-| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. Gain 1 mana next turn | Excellent value; sets up next turn |
-| Tidal Wave | 2 | Common | Deal 12 damage | — |
-| Healing Rain | 2 | Common | Heal 12 HP | Strong heal |
-| Tidal Shield | 1 | Common | Gain 10 Block | Solid block |
-| Whirlpool | 2 | Uncommon | Deal 14 damage. Apply 3 Drown | Heavy Drown dump |
-| Mana Spring | 0 | Uncommon | Gain 1 mana. Draw 1 | Zero-cost value engine |
-| Deep Current | 3 | Rare | Deal 20 damage. Heal 8 HP | Hybrid finisher |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Wavecrash *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Drown. |
+| Soothing Wave *(S)* | 1 | Starter | Heal 4 HP. Apply 2 Drown. |
+| Drown Surge *(S)* | 2 | Starter | Deal 8 damage. Apply 5 Drown. |
+| Riptide *(S)* | 2 | Starter | Deal 4 damage. Apply 2 Drown. Gain 1 mana next turn. |
+| Water Bolt | 1 | Common | Deal 7 damage. |
+| Tidal Shield | 1 | Common | Gain 10 Block. |
+| Tidal Wave | 2 | Common | Deal 12 damage. |
+| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. Gain 1 mana next turn. |
+| Healing Rain | 2 | Common | Heal 12 HP. |
+| Mana Spring | 0 | Uncommon | Gain 1 mana. Draw 1. |
+| Whirlpool | 2 | Uncommon | Deal 14 damage. Apply 3 Drown. |
+| Deep Current | 3 | Rare | Deal 20 damage. Heal 8 HP. |
 
 ---
 
 ## Rock 🪨
 
-**Status:** Daze (50% chance enemy repeats last action; decays -1/turn)
+**Class status:** Daze — 50% chance the enemy repeats its previous action instead. Decays -1/turn.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Rock Throw *(S)* | 1 | Common | Deal 5 damage. Apply 1 Daze | Basic attack + Daze |
-| Stoneskin *(S)* | 1 | Common | Gain 8 Block. Apply 2 Daze | Block + Daze setup |
-| Erode *(S)* | 2 | Common | Deal 8 damage. Apply 4 Daze | Heavy attack + Daze dump |
-| On Guard *(S)* | 2 | Common | Gain 20 Block. Apply 2 Daze | Defensive Daze option |
-| Boulder Toss | 1 | Common | Deal 8 damage | — |
-| Stone Wall | 1 | Common | Gain 12 Block | — |
-| Quake | 2 | Common | Deal 14 damage. Apply 2 Daze | — |
-| Boulder Crash | 3 | Uncommon | Deal 28 damage. Apply 3 Daze. | — |
-| Earthen Skin | 2 | Uncommon | Gain 16 Block | Large defensive burst |
-| Tremor | 0 | Common | Deal 4 damage. Gain 4 Block | Zero-cost chip damage + block |
-| Fissure | 2 | Rare | Deal 12 damage. Draw 2 | Card advantage |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Rock Throw *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Daze. |
+| Stoneskin *(S)* | 1 | Starter | Gain 8 Block. Apply 2 Daze. |
+| Erode *(S)* | 2 | Starter | Deal 8 damage. Apply 4 Daze. |
+| On Guard *(S)* | 2 | Starter | Gain 20 Block. Apply 2 Daze. |
+| Rock Throw | 1 | Common | Deal 5 damage. Apply 1 Daze. |
+| Stone Wall | 1 | Common | Gain 12 Block. |
+| Tremor | 0 | Common | Deal 4 damage. Gain 4 Block. |
+| Quake | 2 | Common | Deal 14 damage. Apply 2 Daze. |
+| Boulder Crash | 3 | Uncommon | Deal 28 damage. Apply 3 Daze. |
+| Earthen Skin | 2 | Uncommon | Gain 16 Block. |
+| Fissure | 2 | Rare | Deal 12 damage. Draw 2. |
 
 ---
 
 ## Arc ⚡
 
-**Status:** Shock (amplifies Arc damage ×1.25^N; decays -1/turn)
+**Class status:** Shock — multiplies Arc damage by ×1.25 per stack. Decays -1/turn.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Spark Strike *(S)* | 1 | Common | Deal 5 damage. Apply 1 Shock | Basic attack + Shock |
-| Static Charge *(S)* | 1 | Common | Deal 3 damage. Apply 2 Shock | Shock-leaning setup |
-| Chain Lightning *(S)* | 2 | Common | Deal 4 damage 3 times. Apply 2 Shock | Multi-hit + Shock |
-| Surge Engine *(S)* | 2 | Uncommon | Gain 2 mana next turn. Apply 3 Shock | Mana gen + heavy Shock setup |
-| Spark | 1 | Common | Deal 7 damage. Apply 1 Shock | Better Spark Strike |
-| Chain Bolt | 2 | Common | Deal 10 damage. Apply 2 Shock | Setup + damage combined |
-| Thunderstrike | 2 | Uncommon | Deal 18 damage | Best damage-per-cost at Uncommon |
-| Static Field | 1 | Common | Gain 6 Block. Apply 1 Shock to attacker on hit | Defensive Shock stacker |
-| Overcharge | 0 | Uncommon | Gain 2 mana. Discard 1 card | Net: free +2 mana, -1 card |
-| Storm Call | 3 | Rare | Deal 10 damage three times | 30 total; explosive with Shock |
-| Arc Surge | 1 | Common | Deal 6 damage. Draw 1 | Cantrip attack |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Spark Strike *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Shock. |
+| Static Charge *(S)* | 1 | Starter | Deal 4 damage. Apply 2 Shock. |
+| Chain Lightning *(S)* | 2 | Starter | Deal 4 damage three times. Apply 2 Shock. |
+| Surge Engine *(S)* | 2 | Starter | Gain 2 mana next turn. Apply 3 Shock. |
+| Spark | 1 | Common | Deal 7 damage. Apply 1 Shock. |
+| Arc Surge | 1 | Common | Deal 6 damage. Draw 1. |
+| Chain Bolt | 2 | Common | Deal 10 damage. Apply 2 Shock. |
+| Static Field | 1 | Common | Gain 6 Block. On hit: apply 1 Shock to attacker. |
+| Overcharge | 0 | Uncommon | Gain 2 mana. Discard 1 card. |
+| Thunderstrike | 2 | Uncommon | Deal 18 damage. |
+| Storm Call | 3 | Rare | Deal 10 damage three times. |
 
 ---
 
 ## Ice ❄️
 
-**Status:** Freeze (at 3+ stacks: enemy skips turn, all stacks consumed; no decay)
+**Class status:** Freeze — at 3+ stacks, the enemy's action is skipped and all Freeze is consumed.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Shardsicle *(S)* | 1 | Common | Deal 5 damage. Apply 1 Freeze | Basic attack + Freeze |
-| Ice Cube *(S)* | 1 | Common | Gain 8 Block. Apply 2 Freeze | Block + Freeze setup |
-| Blizzard Strike *(S)* | 2 | Common | Deal 5 damage. Apply 2 Freeze. Twice | Multi-hit + Freeze |
-| Frost Armor *(S)* | 2 | Common | Gain 10 Block. Apply 3 Freeze | Defensive Freeze option; hits threshold alone |
-| Frost Bolt | 1 | Common | Deal 7 damage. Apply 1 Freeze | Attack + Freeze |
-| Blizzard | 2 | Common | Deal 12 damage. Apply 2 Freeze | Efficient Freeze stacker |
-| Ice Armor | 1 | Common | Gain 10 Block | — |
-| Glacial Spike | 2 | Uncommon | Deal 18 damage | High-damage single hit |
-| Absolute Zero | 3 | Rare | Apply 3 Freeze. Deal 20 damage | Instantly hits Freeze threshold |
-| Chill | 0 | Common | Apply 1 Freeze. Gain 4 Block | Zero-cost efficiency |
-| Crystallize | 1 | Uncommon | Gain 16 Block | Highest block per cost in game |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Shardsicle *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Freeze. |
+| Ice Cube *(S)* | 1 | Starter | Gain 8 Block. Apply 2 Freeze. |
+| Blizzard Strike *(S)* | 2 | Starter | Deal 5 damage. Apply 2 Freeze. Twice. |
+| Frost Armor *(S)* | 2 | Starter | Gain 10 Block. Apply 3 Freeze. |
+| Absolute Zero *(S)* | 2 | Starter | Apply 3 Freeze. Fade. |
+| Chill | 0 | Common | Apply 1 Freeze. Gain 4 Block. |
+| Frost Bolt | 1 | Common | Deal 7 damage. Apply 1 Freeze. |
+| Ice Armor | 1 | Common | Gain 10 Block. |
+| Blizzard | 2 | Common | Deal 12 damage. Apply 2 Freeze. |
+| Crystallize | 1 | Uncommon | Gain 16 Block. |
+| Glacial Spike | 2 | Uncommon | Deal 18 damage. |
+| Absolute Zero | 3 | Rare | Apply 3 Freeze. Deal 20 damage. |
 
 ---
 
 ## Shadow 🌑
 
-**Status:** Lifesteal (drain HP on end of enemy turn)
+**Class status:** Lifesteal — drains enemy HP and heals player at end of enemy turn. Fully consumed each tick.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Shadow Strike *(S)* | 1 | Common | Deal 5 damage. Lifesteal 2 | Basic attack + Lifesteal |
-| Curse Touch *(S)* | 1 | Common | Deal 2 damage. Lifesteal 4 | Lifesteal-leaning; chip damage keeps it active |
-| Soul Drain *(S)* | 2 | Common | Deal 8 damage. Lifesteal 8 | Heavy attack + Lifesteal dump |
-| Shadow Pact *(S)* | 2 | Uncommon | Lose 6 HP. Lifesteal 12 | HP cost for large Lifesteal burst |
-| Shadow Bolt | 1 | Common | Deal 9 damage | Highest 1-cost direct damage |
-| Drain Life | 2 | Common | Deal 10 damage. Heal 5 HP | Sustain attack |
-| Curse | 1 | Common | Lifesteal 6 | Pure Lifesteal burst |
-| Void Tear | 2 | Uncommon | Deal 16 damage | High-damage single hit |
-| Dark Pact | 0 | Uncommon | Lose 4 HP. Draw 2 cards | Card draw at HP cost |
-| Soul Rend | 3 | Rare | Deal 24 damage. Heal 12 HP | Big finisher + sustain |
-| Shadow Step | 1 | Common | Gain 8 Block | Defensive option |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Shadow Strike *(S)* | 1 | Starter | Deal 5 damage. Lifesteal 2. |
+| Curse Touch *(S)* | 1 | Starter | Lifesteal 4. |
+| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 8. |
+| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 12. |
+| Shadow Bolt | 1 | Common | Deal 9 damage. |
+| Shadow Step | 1 | Common | Gain 8 Block. |
+| Curse | 1 | Common | Lifesteal 6. |
+| Drain Life | 2 | Common | Deal 10 damage. Heal 5 HP. |
+| Dark Pact | 0 | Uncommon | Lose 4 HP. Draw 2 cards. |
+| Void Tear | 2 | Uncommon | Deal 16 damage. |
+| Soul Rend | 3 | Rare | Deal 24 damage. Apply 12 Lifesteal. |
 
 ---
 
 ## Light ☀️
 
-**Status:** Blind (50% miss chance on next attack if ≥1 stack; -1 stack per attack)
+**Class status:** Blind — each stack gives 50% miss chance per attack, consuming 1 stack per attack hit or miss.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Radiant Bolt *(S)* | 1 | Common | Deal 5 damage. Apply 1 Blind | Basic attack + Blind |
-| Shielding Light *(S)* | 1 | Common | Gain 8 Block. Apply 2 Blind | Block + Blind setup |
-| Divine Barrier *(S)* | 2 | Common | Gain 20 Block. Apply 3 Blind | Defensive Blind option |
-| Purify *(S)* | 2 | Uncommon | Cleanse all debuffs. Heal 20 HP. Apply 2 Blind | Reactive utility; cleanses + blinds |
-| Holy Bolt | 1 | Common | Deal 7 damage | — |
-| Holy Shield | 1 | Common | Gain 12 Block | — |
-| Divine Smite | 2 | Common | Deal 14 damage. Apply 2 Blind | Attack + Blind |
-| Blessing | 1 | Uncommon | Heal 8 HP. Draw 1 | Cantrip heal |
-| Cleanse | 0 | Uncommon | Remove all negative statuses. Draw 1 | Zero-cost cleanse + draw |
-| Sunburst | 3 | Rare | Deal 20 damage. Heal 10 HP. Gain 8 Block | All-in-one finisher |
-| Radiance | 2 | Uncommon | Heal 14 HP | Large heal |
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Radiant Bolt *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Blind. |
+| Shielding Light *(S)* | 1 | Starter | Gain 8 Block. Apply 2 Blind. |
+| Purify *(S)* | 2 | Starter | Cleanse all debuffs. Heal 20 HP. Apply 2 Blind. |
+| Divine Barrier *(S)* | 2 | Starter | Gain 20 Block. Apply 3 Blind. |
+| Radiant Bolt | 1 | Common | Deal 7 damage. |
+| Holy Shield | 1 | Common | Gain 12 Block. |
+| Divine Smite | 2 | Common | Deal 14 damage. Apply 2 Blind. |
+| Blessing | 1 | Uncommon | Heal 8 HP. Draw 1. |
+| Purify | 0 | Uncommon | Remove all negative statuses. Draw 1. |
+| Radiance | 2 | Uncommon | Heal 14 HP. |
+| Sunburst | 3 | Rare | Deal 20 damage. Heal 10 HP. Gain 8 Block. |
 
 ---
 
 ## Grass 🌿
 
-**Status:** Root (detonates on next damage taken: deals 2× stacks as burst, then consumed)
+**Class status:** Root — detonates on any damage: deals 2× stacks as bonus damage, then all Root is consumed.
 
-| Name | Cost | Rarity | Effect | Notes |
-|---|---|---|---|---|
-| Vine Lash *(S)* | 1 | Common | Deal 5 damage. Apply 1 Root | Basic attack + Root |
-| Entangle *(S)* | 1 | Common | Gain 4 Block. Apply 2 Root | Block + Root setup |
-| Overgrowth *(S)* | 2 | Common | Deal 8 damage. Apply 4 Root | Heavy attack + Root dump |
-| Verdant Surge *(S)* | 2 | Uncommon | Apply 2 Root. Root applied this turn is doubled | Combo enabler; 12 Root with two Entangles |
-| Vine Whip | 1 | Common | Deal 5 damage. Apply 1 Root | Attack + trap |
-| Spore Cloud | 1 | Common | Apply 2 Root. Gain 4 Block | Setup + block |
-| Thorn Armor | 1 | Common | Gain 8 Block. Apply 1 Root to attacker on hit | Reactive Root |
-| Seed Shot | 0 | Common | Apply 1 Root. Draw 1 | Zero-cost setup + draw |
-| Thicket | 2 | Uncommon | Apply 4 Root. Deal 6 damage | Bigger trap setup |
-| Root Bind | 2 | Uncommon | Apply 4 Root | Larger Root setup |
-| Verdant Bloom | 3 | Rare | Apply 6 Root. Heal 10 HP | Maximum trap investment |
-
----
-
-## Neutral (All Classes — Fade)
+**Signature buff:** Verdant Surge — doubles all Root applied this turn. Single-turn only.
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
-| Focus | 1 | Common | Draw 2 cards |
-| Guard | 1 | Common | Gain 8 Block |
-| Amplify | 1 | Uncommon | Next spell this turn gains ×1.5 effect |
-| Mana Petal | 0 | Common | Gain 1 mana this turn |
+| Vine Lash *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Root. |
+| Entangle *(S)* | 1 | Starter | Gain 4 Block. Apply 2 Root. |
+| Overgrowth *(S)* | 2 | Starter | Deal 8 damage. Apply 4 Root. |
+| Verdant Surge *(S)* | 2 | Starter | Root applied this turn is doubled. Fade. |
+| Vine Whip | 1 | Common | Deal 5 damage. Apply 1 Root. |
+| Seed Shot | 0 | Common | Apply 1 Root. Draw 1. |
+| Spore Cloud | 1 | Common | Apply 2 Root. Gain 4 Block. |
+| Thorn Armor | 1 | Common | Gain 8 Block. On hit: apply 1 Root to attacker. |
+| Thicket | 2 | Uncommon | Apply 4 Root. Deal 6 damage. |
+| Root Bind | 2 | Uncommon | Apply 4 Root. |
+| Verdant Bloom | 3 | Rare | Apply 6 Root. Heal 10 HP. |
 
 ---
 
-## Notable Mechanics
+## Neutral (Universal Starters — All Classes)
 
-**Multi-hit spells** (Flame Burst, Chain Lightning, Blizzard Strike, Storm Call, etc.): each individual hit triggers type effectiveness and Root detonation separately. Multi-hit is exclusive to Fire, Arc, and Ice.
+All four universal starters are **Fade**. They match the wizard's element color in-game but are Neutral type for damage purposes.
 
-**Zero-cost spells** (Kindle, Mana Spring, Overcharge, Chill, Tremor, Seed Shot, Mana Petal, Cleanse): free to cast, but most have trade-offs (discard, Fade, minor values).
+| Name | Cost | Rarity | Effect |
+|---|---|---|---|
+| Focus | 1 | Starter | Draw 2 cards. Fade. |
+| Guard | 1 | Starter | Gain 8 Block. Fade. |
+| Amplify | 1 | Starter | The next spell you cast gains +50% effect. Fade. |
+| Mana Petal | 0 | Starter | Gain 1 mana. Fade. |
 
-**Fade cards**: one-use only, removed from deck on play. Starter Fade cards (Focus, Guard, Amplify, Mana Petal) naturally thin from deck as used. Non-starter Fade spells are clearly marked.
+---
 
-**Foresight**: universal keyword available to all classes. Draw 1 card at the start of your next turn.
+## Mechanic Notes
 
+**Multi-hit spells:** Each hit resolves independently — type effectiveness applies per hit, and Root detonates on the first hit. Spells with "Twice" or "three times" in the description repeat all listed effects. Examples: Flame Burst (2 hits of 5 dmg + 2 Char), Chain Lightning (3 hits of 4 dmg), Blizzard Strike (2 hits of 5 dmg + 2 Freeze), Storm Call (3 hits of 10 dmg).
+
+**Lifesteal:** Applied as a status on the enemy. At the end of the enemy's turn, the enemy loses that many HP and the player heals the same amount (capped at max HP). Then all Lifesteal stacks are consumed. Multiple Lifesteal effects played in one turn stack.
+
+**On-hit effects** (Flame Shield, Static Field, Thorn Armor): The reactive effect only triggers if the enemy's attack deals damage through your block. The effect is cleared at the start of your next turn.
+
+**Cleanse** (starter Purify): Removes Char, Freeze, Shock, Drown, Root, and Daze from the player. Does not remove Blind or Lifesteal.
+
+**gainMana vs. gainManaNextTurn:** `gainMana` (Mana Petal, Mana Spring, Overcharge) adds mana immediately and can exceed your base max. `gainManaNextTurn` (Riptide, Tidal Flow, Surge Engine) adds bonus mana at the start of your next turn; multiple stack additively.

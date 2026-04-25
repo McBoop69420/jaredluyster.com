@@ -76,7 +76,7 @@ Boss is always chosen from the boss pool (one per type). Random selection from a
 
 After winning any battle:
 - **Gold:** 10–25 (random) + 15 bonus if enemy was elite tier
-- **Spell choice:** 3 random spells offered, biased toward player's type. Player chooses one to add to deck, or skips.
+- **Spell choice:** 3 random spells offered, all from the player's type. Player chooses one to add to deck, or skips.
 
 ---
 
@@ -87,16 +87,14 @@ Two actions available:
 | Action | Effect |
 |---|---|
 | Heal | Restore 30% of max HP (floored). Does not overheal. |
-| (No second option by default) | Rest node currently only offers healing |
-
-> Note: Future rest actions may be added (upgrade, remove spell, etc.).
+| Remove Spell | Choose one spell from your deck to permanently remove. |
 
 ---
 
 ## Shop Nodes
 
 Shop offers:
-- **4 spells for purchase** (biased toward player type, includes some off-type)
+- **4 spells for purchase** (3 from player's type, 1 from a random other type)
 - **4 items always in stock:**
 
 | Item | Icon | Price | Effect |
@@ -119,7 +117,7 @@ Shop is one-visit per node — items don't restock.
 
 ## Event Nodes
 
-4 possible events (randomly selected). All are one-time encounters with 2–3 choices:
+7 possible events (randomly selected). All are one-time encounters with 2–3 choices:
 
 | Event | Icon | Choices |
 |---|---|---|
@@ -127,6 +125,9 @@ Shop is one-visit per node — items don't restock.
 | Gemstone Cache | 💎 | Gain 50 gold / Ignore |
 | Strange Potion | 🧪 | Heal 15 HP / Lose 10 HP for +2 max HP / Leave |
 | Makeshift Shrine | 🌫 | Spend 30 gold to heal to full / Pray (40% chance to heal 10 HP) / Move on |
+| Ancient Tome | 📚 | Add a random Common spell of your type to your deck / Sell it for 35 gold / Leave |
+| Cursed Chest | ☠️ | Add a random spell of your type (any rarity). Lose 20 HP / Leave |
+| Wandering Scholar | 🧙 | Remove one spell from your deck, gain a random Uncommon of your type / Leave |
 
 ---
 
@@ -135,5 +136,22 @@ Shop is one-visit per node — items don't restock.
 - HP carries between all encounters — there is no reset except at Rest nodes
 - Deck size grows each run (reward spells added permanently to that run's deck)
 - No relics or passive items currently (beyond shop consumables)
-- There is no branching difficulty scaling — floor number determines the enemy tier pool
 - Elites do not appear at floors 1–4 at all, even by chance
+
+---
+
+## Difficulty Scaling
+
+Enemy stats scale linearly with floor number. Bosses (floor 12) are hand-crafted and not subject to floor scaling.
+
+| Stat | Scaling |
+|---|---|
+| HP | Base × (1 + floor × 0.10) |
+| Damage | Base × (1 + floor × 0.08) |
+
+**Examples at key floors:**
+- Floor 4 (end of early): 1.4× HP, 1.32× damage
+- Floor 9 (end of mid): 1.9× HP, 1.72× damage
+- Floor 11 (pre-boss): 2.1× HP, 1.88× damage
+
+**Design intent:** This dungeon is designed as a hard intro. Scaling is intentionally steep — the player should feel the pressure by mid-run and be genuinely tested at floor 11. Further content above this dungeon will be where players grind and master their decks.

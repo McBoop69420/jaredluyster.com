@@ -15,8 +15,6 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Freeze | `#66ddff` | Skip | Ice | At 3+ stacks: skip action, consume all stacks |
 | Daze | `#cc9944` | Disruption | Rock | 50% chance enemy repeats previous action; decays -1/turn |
 | Blind | `#f2f2f2` | Miss | Light | If target has ≥1 stack: 50% chance next attack misses entirely; Blind -1 per attack |
-| Weak | `#cc6666` | Debuff | Shadow/various | Reduces all damage dealt by 25%; decays -1/turn |
-| Strength | `#d4af37` | Buff | Enemy buffs | Adds flat bonus to all attacks |
 | Lifesteal | `#cc66ff` | Drain | Shadow | At end of enemy turn: drains HP from enemy, heals player |
 
 ---
@@ -78,20 +76,6 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Clears at:** 0 stacks
 - **Note:** Additional stacks extend how many attacks can miss, not the miss probability. 1 stack = 50% on the next attack. 3 stacks = 50% on each of the next 3 attacks.
 
-### Weak `#cc6666`
-- **Applied by:** Multiple types (Shadow, Water, Rock)
-- **Ticks:** Each turn
-- **Effect:** Each stack multiplies all damage dealt by the affected target by ×0.75. Total multiplier = 0.75^N (floor at the end). 2 stacks = ×0.5625, 3 stacks = ×0.422, etc.
-- **Decay:** -1 per turn
-- **Clears at:** 0 stacks
-- **Note:** Neutral/shared status — crosses type boundaries. Stacks multiplicatively, not additively — additional stacks have diminishing but meaningful returns.
-
-### Strength `#d4af37`
-- **Applied by:** Enemy buff intents; some player spells (Magma Form, Earthen Skin)
-- **Effect:** Adds flat bonus damage to every attack
-- **Decay:** None — permanent until battle ends or cleansed
-- **Note:** One of the most dangerous enemy buffs; prioritize kills before Strength stacks build
-
 ### Lifesteal (Shadow) `#cc66ff`
 - **Applied by:** Shadow spells (e.g. Drain Life, Soul Rend, Shadow Strike)
 - **Ticks:** End of enemy turn
@@ -104,10 +88,9 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 ## Purify / Cleanse
 
 The spell *Purify* (Dawnmage) removes all negative status effects from the player:
-`Char, Freeze, Shock, Drown, Weak, Root, Daze`
+`Char, Freeze, Shock, Drown, Root, Daze`
 
 **Not** cleansed by Purify:
-- **Strength** — a buff, not a debuff; currently only appears on enemies
 - **Blind** — a debuff the player applies *to enemies* (makes enemy attacks miss); the player cannot be Blinded under current rules
 - **Lifesteal** — a beneficial effect (heals the player); removing it would be self-defeating and conflicts with Shadowblade's sustain identity
 
@@ -121,5 +104,4 @@ The spell *Purify* (Dawnmage) removes all negative status effects from the playe
 | Stack Root → cast any damage | Detonation burst |
 | Stack Char via Inferno Core | Double stacks this turn, then burn over time |
 | Stack Freeze to 3 → enemy skips | Full turn wasted for enemy |
-| Apply Weak + any damage | 25% reduction on all enemy attacks that turn |
 | Apply Daze after enemy attacks | Next turn: 50% chance they repeat the attack (instead of defending/buffing) |
