@@ -1,7 +1,7 @@
 {
-  "name": "bible-viewer",
+  "name": "atlas",
   "version": "1.0.0",
-  "description": "Wizard Battle design bible viewer",
+  "description": "Wizard Battle Atlas",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

@@ -7,9 +7,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.jaredluyster.bibleviewer</string>
     <key>CFBundleName</key>
-    <string>Bible Viewer</string>
+    <string>Atlas</string>
     <key>CFBundleDisplayName</key>
-    <string>Bible Viewer</string>
+    <string>Atlas</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="tagify.js"></script>
+    <style>
+        body {
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            border-right: 1px solid var(--line);
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px 16px 14px;
+            border-bottom: 1px solid var(--line);
+            flex-shrink: 0;
+        }
+
+        .sidebar-header strong {
+            display: block;
+            font-size: 0.7rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .sidebar-header span {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .file-list {
+            list-style: none;
+            margin: 0;
+            padding: 8px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .file-list li button {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 9px 16px;
+            font-size: 0.88rem;
+            color: var(--muted);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: color 120ms, border-color 120ms, background 120ms;
+            line-height: 1.3;
+        }
+
+        .file-list li button:hover {
+            color: var(--ink);
+            background: rgba(255, 236, 209, 0.04);
+        }
+
+        .file-list li button.active {
+            color: var(--gold);
+            border-left-color: var(--gold);
+            background: rgba(240, 190, 99, 0.06);
+        }
+
+        /* ── Main content ── */
+        .content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: rgba(8, 6, 10, 0.3);
+        }
+
+        .content-header h1 {
+            margin: 0;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+
+        .content-header .filepath {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: "SF Mono", "Fira Code", monospace;
+        }
+
+        .scroll-area {
+            overflow-y: auto;
+            flex: 1;
+            padding: 36px 48px 64px;
+        }
+
+        .scroll-area.iframe-mode {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .embed-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ── Markdown rendering ── */
+        .md h1, .md h2, .md h3 {
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+        }
+
+        .md h1 {
+            font-size: 2rem;
+            margin: 0 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line-strong);
+        }
+
+        .md h2 {
+            font-size: 1.3rem;
+            margin: 36px 0 12px;
+            color: var(--gold);
+        }
+
+        .md h3 {
+            font-size: 1.05rem;
+            margin: 24px 0 8px;
+            color: var(--sky);
+            font-family: inherit;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .md p {
+            color: var(--muted);
+            line-height: 1.75;
+            margin: 0 0 14px;
+            max-width: 72ch;
+        }
+
+        .md strong {
+            color: var(--ink);
+        }
+
+        .md em {
+            color: var(--muted);
+        }
+
+        .md hr {
+            border: none;
+            border-top: 1px solid var(--line);
+            margin: 28px 0;
+        }
+
+        .md ul, .md ol {
+            color: var(--muted);
+            padding-left: 1.4em;
+            margin: 0 0 14px;
+            line-height: 1.7;
+        }
+
+        .md li {
+            margin-bottom: 4px;
+        }
+
+        .md code {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.85em;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 1px 6px;
+            color: var(--sky);
+        }
+
+        .md pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            margin: 0 0 18px;
+        }
+
+        .md pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--moss);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .md blockquote {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            border-left: 3px solid var(--plum);
+            background: rgba(164, 123, 255, 0.06);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .md blockquote p {
+            margin: 0;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* Tables */
+        .md table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 0 20px;
+            font-size: 0.9rem;
+        }
+
+        .md thead tr {
+            border-bottom: 2px solid var(--line-strong);
+        }
+
+        .md th {
+            text-align: left;
+            padding: 8px 12px;
+            color: var(--gold);
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .md td {
+            padding: 8px 12px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        .md td strong {
+            color: var(--ink);
+        }
+
+        .md td code {
+            font-size: 0.82em;
+        }
+
+        .md tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .md tbody tr:hover td {
+            background: rgba(255, 236, 209, 0.03);
+        }
+
+        /* ── Search ── */
+        .search-wrap {
+            padding: 10px 10px 0;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 120ms, background 120ms;
+            font-family: inherit;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+            opacity: 0.6;
+        }
+
+        .search-input:focus {
+            border-color: var(--gold);
+            background: rgba(240,190,99,0.04);
+        }
+
+        .search-results {
+            list-style: none;
+            margin: 0;
+            padding: 8px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .search-results .result-item {
+            padding: 8px 14px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: background 120ms, border-color 120ms;
+        }
+
+        .search-results .result-item:hover {
+            background: rgba(255,236,209,0.04);
+            border-left-color: var(--gold);
+        }
+
+        .result-label {
+            font-size: 0.72rem;
+            color: var(--gold);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .result-snippet {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.45;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-snippet mark {
+            background: rgba(240,190,99,0.3);
+            color: var(--gold);
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .search-empty {
+            padding: 16px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        /* highlighted matches in main content */
+        .md mark.search-hit {
+            background: rgba(240,190,99,0.28);
+            color: inherit;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .md mark.search-hit.current-hit {
+            background: rgba(240,190,99,0.6);
+            color: inherit;
+        }
+
+        /* ── Refresh button ── */
+        .refresh-btn {
+            background: none;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 120ms, border-color 120ms, background 120ms;
+            flex-shrink: 0;
+        }
+
+        .refresh-btn:hover {
+            color: var(--ink);
+            border-color: var(--gold);
+            background: rgba(240, 190, 99, 0.06);
+        }
+
+        .refresh-btn:active {
+            background: rgba(240, 190, 99, 0.12);
+        }
+
+        .refresh-btn svg {
+            transition: transform 400ms ease;
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 500ms linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Empty / loading state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            gap: 8px;
+        }
+
+        .empty-state span {
+            font-size: 2.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <strong>Wizard Battle</strong>
+            <span>Design Bibles</span>
+        </div>
+        <div class="search-wrap">
+            <input class="search-input" id="searchInput" type="search" placeholder="Search all bibles… (/)">
+        </div>
+        <ul class="file-list" id="fileList"></ul>
+    </aside>
+
+    <div class="content">
+        <div class="content-header">
+            <h1 id="contentTitle">Select a document</h1>
+            <div style="display:flex;align-items:center;gap:14px">
+                <span class="filepath" id="contentPath"></span>
+                <button class="refresh-btn" id="refreshBtn" title="Reload file (R)">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.5 6A4.5 4.5 0 1 1 8.25 2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        <polyline points="8.25,0.5 8.25,2.5 10.25,2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Reload
+                </button>
+            </div>
+        </div>
+        <div class="scroll-area">
+            <div class="md" id="mdContent">
+                <div class="empty-state">
+                    <span>📖</span>
+                    <p>Choose a bible from the sidebar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FILES = [
+        { label: 'Classes & Starting Decks', file: 'classes.md' },
+        { label: 'Starting Decks', file: 'starting-decks.md' },
+        { label: 'Spells', file: 'spells.md' },
+        { label: 'Enemies', file: 'enemies.md' },
+        { label: 'Status Effects', file: 'status-effects.md' },
+        { label: 'Type Matchups', file: 'type-matchups.md' },
+        { label: 'Card Mechanics', file: 'card-mechanics.md' },
+        { label: 'Game Systems', file: 'game-systems.md' },
+        { label: 'Map & Progression', file: 'map-and-progression.md' },
+        { label: 'World & Lore', file: 'world-and-lore.md' },
+        { label: 'UI & Design', file: 'ui-and-design.md' },
+        { label: 'HTML Styling Guide', file: 'HTML_STYLING_GUIDE.md' },
+        { label: 'Design Notes', file: 'design-notes.md' },
+        { label: 'Todo', file: 'todo.md' },
+        { label: 'Logo Palette', type: 'iframe', src: 'logo-palette.html' },
+    ];
+
+    const fileList     = document.getElementById('fileList');
+    const mdContent    = document.getElementById('mdContent');
+    const contentTitle = document.getElementById('contentTitle');
+    const contentPath  = document.getElementById('contentPath');
+    const refreshBtn   = document.getElementById('refreshBtn');
+    const searchInput  = document.getElementById('searchInput');
+
+    let activeBtn   = null;
+    let activeFile  = null;
+    let activeLabel = null;
+
+    // Cache of raw file text keyed by filename
+    const fileCache = {};
+
+    const scrollArea = mdContent.parentElement;
+
+    // Build sidebar file list buttons
+    const fileBtns = {};
+    FILES.forEach((entry) => {
+        const li  = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.textContent = entry.label;
+        btn.addEventListener('click', () => {
+            clearSearch(true);
+            if (entry.type === 'iframe') {
+                loadIframe(entry.src, entry.label, btn);
+            } else {
+                loadFile(entry.file, entry.label, btn);
+            }
+        });
+        li.appendChild(btn);
+        fileList.appendChild(li);
+        if (entry.file) fileBtns[entry.file] = btn;
+    });
+
+    async function fetchFile(file) {
+        if (fileCache[file] !== undefined) return fileCache[file];
+        try {
+            const res  = await fetch(`Bibles/${file}?t=${Date.now()}`);
+            fileCache[file] = await res.text();
+        } catch {
+            fileCache[file] = '';
+        }
+        return fileCache[file];
+    }
+
+    function loadIframe(src, label, btn) {
+        if (activeBtn) activeBtn.classList.remove('active');
+        btn.classList.add('active');
+        activeBtn   = btn;
+        activeFile  = null;
+        activeLabel = label;
+        contentTitle.textContent = label;
+        contentPath.textContent  = src;
+        scrollArea.classList.add('iframe-mode');
+        mdContent.innerHTML = `<iframe class="embed-iframe" src="${src}"></iframe>`;
+    }
+
+    async function loadFile(file, label, btn, isRefresh = false, highlightQuery = '') {
+        scrollArea.classList.remove('iframe-mode');
+        if (!isRefresh) {
+            if (activeBtn) activeBtn.classList.remove('active');
+            btn.classList.add('active');
+            activeBtn   = btn;
+            activeFile  = file;
+            activeLabel = label;
+        }
+
+        contentTitle.textContent = activeLabel;
+        contentPath.textContent  = `Bibles/${activeFile}`;
+        if (!isRefresh) {
+            mdContent.innerHTML = '<div class="empty-state"><span>⏳</span><p>Loading…</p></div>';
+        }
+
+        try {
+            if (isRefresh) delete fileCache[activeFile];
+            const text = await fetchFile(activeFile);
+            mdContent.innerHTML = tagify(marked.parse(text));
+            colorizeHexCodes(mdContent);
+            if (highlightQuery) {
+                highlightMatches(mdContent, highlightQuery);
+                scrollToFirstHit();
+            }
+        } catch (e) {
+            mdContent.innerHTML = `<p style="color:var(--ember)">Failed to load ${activeFile}</p>`;
+        }
+    }
+
+    function refresh() {
+        if (!activeFile) return;
+        refreshBtn.classList.add('spinning');
+        setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
+        loadFile(activeFile, activeLabel, activeBtn, true);
+    }
+
+    refreshBtn.addEventListener('click', refresh);
+
+    // ── Search ──────────────────────────────────────────────
+
+    let searchDebounce = null;
+    let searchResultsList = null;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(runSearch, 220);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            clearSearch(true);
+            searchInput.blur();
+        }
+    });
+
+    function clearHighlights() {
+        mdContent.querySelectorAll('mark.search-hit').forEach(mark => {
+            mark.replaceWith(document.createTextNode(mark.textContent));
+        });
+    }
+
+    function clearSearch(clearInput = false) {
+        if (clearInput) searchInput.value = '';
+        if (searchResultsList) {
+            searchResultsList.remove();
+            searchResultsList = null;
+        }
+        fileList.style.display = '';
+    }
+
+    async function runSearch() {
+        const q = searchInput.value.trim();
+        if (!q || q.length < 2) {
+            if (searchResultsList) clearSearch();
+            clearHighlights();
+            return;
+        }
+
+        // Lazy-load all files in parallel
+        await Promise.all(FILES.map(({ file }) => fetchFile(file)));
+
+        const lq = q.toLowerCase();
+        const results = [];
+
+        FILES.forEach(({ label, file }) => {
+            const raw = fileCache[file] || '';
+            const lines = raw.split('\n');
+            lines.forEach((line, i) => {
+                if (line.toLowerCase().includes(lq)) {
+                    results.push({ label, file, line: line.trim(), lineIndex: i });
+                }
+            });
+        });
+
+        renderResults(results, q);
+    }
+
+    function renderResults(results, q) {
+        fileList.style.display = 'none';
+
+        if (searchResultsList) searchResultsList.remove();
+        searchResultsList = document.createElement('ul');
+        searchResultsList.className = 'search-results';
+
+        if (results.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'search-empty';
+            empty.textContent = 'No results';
+            searchResultsList.appendChild(empty);
+        } else {
+            results.slice(0, 60).forEach(({ label, file, line }) => {
+                const li   = document.createElement('li');
+                li.className = 'result-item';
+
+                const lbl  = document.createElement('div');
+                lbl.className = 'result-label';
+                lbl.textContent = label;
+
+                const snip = document.createElement('div');
+                snip.className = 'result-snippet';
+                snip.innerHTML = highlightSnippet(line, q);
+
+                li.appendChild(lbl);
+                li.appendChild(snip);
+                li.addEventListener('click', () => {
+                    clearSearch(true);
+                    const btn = fileBtns[file];
+                    loadFile(file, label, btn, false, q);
+                });
+                searchResultsList.appendChild(li);
+            });
+
+            if (results.length > 60) {
+                const more = document.createElement('div');
+                more.className = 'search-empty';
+                more.textContent = `+${results.length - 60} more — refine your query`;
+                searchResultsList.appendChild(more);
+            }
+        }
+
+        fileList.parentNode.insertBefore(searchResultsList, fileList.nextSibling);
+    }
+
+    function highlightSnippet(text, q) {
+        const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const re = new RegExp(escapeRe(q), 'gi');
+        return safe.replace(re, m => `<mark>${m}</mark>`);
+    }
+
+    function highlightMatches(root, q) {
+        const re = new RegExp(escapeRe(q), 'gi');
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach(node => {
+            if (!re.test(node.textContent)) return;
+            re.lastIndex = 0;
+            const frag = document.createDocumentFragment();
+            let last = 0, m;
+            while ((m = re.exec(node.textContent)) !== null) {
+                frag.appendChild(document.createTextNode(node.textContent.slice(last, m.index)));
+                const mark = document.createElement('mark');
+                mark.className = 'search-hit';
+                mark.textContent = m[0];
+                frag.appendChild(mark);
+                last = m.index + m[0].length;
+            }
+            frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+            node.parentNode.replaceChild(frag, node);
+        });
+
+        // Mark first hit as current
+        const first = root.querySelector('mark.search-hit');
+        if (first) first.classList.add('current-hit');
+    }
+
+    function scrollToFirstHit() {
+        const hit = mdContent.querySelector('mark.search-hit');
+        if (hit) hit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function escapeRe(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ── Keyboard shortcuts ───────────────────────────────────
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && e.target.tagName !== 'INPUT' && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+            return;
+        }
+        if (e.key === 'r' && !e.metaKey && !e.ctrlKey && e.target.tagName !== 'INPUT') {
+            refresh();
+        }
+    });
+
+    function colorizeHexCodes(root) {
+        const hexRe = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+        root.querySelectorAll('code').forEach(el => {
+            const val = el.textContent.trim();
+            if (!hexRe.test(val)) return;
+            const heading = el.closest('h1, h2, h3, h4, h5, h6');
+            if (heading) {
+                heading.style.color = val;
+                el.remove();
+            } else {
+                el.style.background = val;
+                el.style.borderColor = 'rgba(0,0,0,0.25)';
+                const hex = val.slice(1);
+                const r = parseInt(hex.length === 3 ? hex[0]+hex[0] : hex.slice(0,2), 16);
+                const g = parseInt(hex.length === 3 ? hex[1]+hex[1] : hex.slice(2,4), 16);
+                const b = parseInt(hex.length === 3 ? hex[2]+hex[2] : hex.slice(4,6), 16);
+                const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+                el.style.color = lum > 0.55 ? '#111' : '#fff';
+            }
+        });
+    }
+
+    // Load first file on open
+    const firstBtn = fileList.querySelector('button');
+    if (firstBtn) firstBtn.click();
+</script>
+</body>
+</html>
