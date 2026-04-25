@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo Palette — Wizard Battle</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #09070d;
+    color: #f5ecdd;
+    font-family: "Avenir Next Condensed", "Gill Sans", "Trebuchet MS", sans-serif;
+    padding: 56px 40px 96px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.1rem;
+    color: #f0be63;
+    margin-bottom: 6px;
+  }
+
+  .sub {
+    color: #c7bba4;
+    font-size: 0.9rem;
+    margin-bottom: 44px;
+    max-width: 520px;
+    line-height: 1.65;
+  }
+
+  .sub em { color: #f5ecdd; font-style: normal; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 36px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .legend-group { display: flex; flex-direction: column; gap: 8px; }
+
+  .legend-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #4a4540;
+  }
+
+  .legend-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.72rem;
+    color: #b0a898;
+  }
+
+  .chip-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Reference */
+  .section-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #3e3a34;
+    margin-bottom: 14px;
+  }
+
+  .ref-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 52px;
+    padding-bottom: 44px;
+    border-bottom: 1px solid rgba(255,236,209,0.07);
+  }
+
+  .ref-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .px-note {
+    font-size: 0.62rem;
+    color: #3a3630;
+    letter-spacing: 0.06em;
+  }
+
+  /* Variants */
+  .variants {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 44px;
+    max-width: 880px;
+  }
+
+  .variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .variant-name {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #b0a898;
+    text-align: center;
+  }
+
+  .logo-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .px-label {
+    font-size: 0.6rem;
+    color: #363230;
+    width: 22px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .bg-swatches {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .bg-swatch {
+    width: 24px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .desc {
+    font-size: 0.76rem;
+    color: #5a5450;
+    text-align: center;
+    max-width: 200px;
+    line-height: 1.6;
+  }
+
+  svg, img {
+    display: block;
+    transition: transform 170ms ease;
+  }
+  svg:hover, img:hover {
+    transform: scale(1.06);
+    cursor: default;
+  }
+</style>
+</head>
+<body>
+
+<h1>Logo Palette — Cycle + Duality</h1>
+<p class="sub">
+  <em>Six blades</em> = hex cycle clockwise: Fire → Grass → Ice → Rock → Arc → Water.
+  <em>Background</em> = Shadow/Light duality: Shadow (purple) left, Light (warm) right.
+  Three intensity levels of the duality.
+</p>
+
+<div class="legend">
+  <div class="legend-group">
+    <div class="legend-label">Blades — Hex Cycle</div>
+    <div class="legend-chips" id="cycle-chips"></div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-label">Background — Duality</div>
+    <div class="legend-chips" id="duality-chips"></div>
+  </div>
+</div>
+
+<div class="section-label">Original</div>
+<div class="ref-row" id="ref-row"></div>
+
+<div class="variants" id="variants"></div>
+
+<div class="section-label" style="margin-top:64px;margin-bottom:14px">Vortex — Wide Sweep</div>
+<p class="sub" style="margin-bottom:32px">Full 60° blade arc with tinted element fill — each blade carries its element color as a body, not just an edge.</p>
+<div class="variants" id="vortex-row"></div>
+
+<script>
+// ── Element cycle (clockwise hex chain, from Colors/ swatches) ────────────────
+const CYCLE = [
+  { name: "Fire",  color: "#ff6633" },
+  { name: "Grass", color: "#44cc66" },
+  { name: "Ice",   color: "#66ddff" },
+  { name: "Rock",  color: "#cc9944" },
+  { name: "Arc",   color: "#da7723" },
+  { name: "Water", color: "#4488ff" },
+];
+
+const SHADOW_HUE = "#cc66ff";
+const LIGHT_HUE  = "#f2f2f2";
+
+// ── Blade geometry — swept fan blade, 200×200 viewBox, center (100,100) ───────
+//
+// Each blade is a proper propeller/fan blade shape:
+//   - Convex trailing edge (right side, outer curve)
+//   - Concave leading edge (left side, inner curve — this face catches "light")
+//   - Wide outer arc (~46° of rim)
+//   - Narrow inner hub arc (~12°)
+//
+// Root trailing:  r≈18, θ=84°  → (102, 82)
+// Tip trailing:   r≈82, θ=100° → (86, 19)   ← outer rim, slightly clockwise of axis
+// Tip leading:    r≈82, θ=130° → (47, 37)   ← outer rim, counterclockwise of axis
+// Root leading:   r≈18, θ=96°  → (98, 82)
+//
+const BLADE = "M 102,82 C 106,58 94,28 86,19 A 82,82 0 0,0 47,37 C 65,55 90,76 98,82 A 18,18 0 0,1 102,82 Z";
+const EDGE_LEAD  = "M 47,37 C 65,55 90,76 98,82";   // concave leading face — the lit edge
+const EDGE_TRAIL = "M 102,82 C 106,58 94,28 86,19";  // convex trailing face — subtle secondary rim
+
+// ── Vortex blade — full 60° sweep, tinted element fill ───────────────────────
+const VORTEX_BLADE      = "M 103,74 C 112,36 96,6 87,19 A 82,82 0 0,0 26,65 C 42,68 84,70 94,75 A 26,26 0 0,1 103,74 Z";
+const VORTEX_EDGE_LEAD  = "M 26,65 C 42,68 84,70 94,75";
+const VORTEX_EDGE_TRAIL = "M 103,74 C 112,36 96,6 87,19";
+
+const ROTS = [0, 60, 120, 180, 240, 300];
+
+// ── Background intensity variants ────────────────────────────────────────────
+const VARIANTS = [
+  {
+    name: "Whisper",
+    desc: "Duality barely present — reads as a clean, premium dark icon",
+    bgShadow: "#0e0b15",
+    bgLight:  "#141008",
+  },
+  {
+    name: "Standard",
+    desc: "Shadow (purple) and Light (warm) clearly readable",
+    bgShadow: "#130a22",
+    bgLight:  "#1e1508",
+  },
+  {
+    name: "Vivid",
+    desc: "High contrast — Shadow and Light actively compete",
+    bgShadow: "#1e0830",
+    bgLight:  "#2e1e06",
+  },
+];
+
+// ── SVG builder ───────────────────────────────────────────────────────────────
+function makeSVG(bgShadow, bgLight, uid, opts = {}) {
+  const blade     = opts.blade     || BLADE;
+  const edgeLead  = opts.edgeLead  || EDGE_LEAD;
+  const edgeTrail = opts.edgeTrail || EDGE_TRAIL;
+  const tinted    = opts.tinted    || false;
+  const defs = `
+    <!-- Background: Shadow left → Light right -->
+    <linearGradient id="bg${uid}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="${bgShadow}"/>
+      <stop offset="100%" stop-color="${bgLight}"/>
+    </linearGradient>
+
+    <!-- Vignette: darkens edges, pushes eye to center -->
+    <radialGradient id="vig${uid}" cx="50%" cy="50%" r="65%">
+      <stop offset="0%"   stop-color="transparent"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.55)"/>
+    </radialGradient>
+
+    <!-- Center glow: bright white energy core -->
+    <radialGradient id="glow${uid}" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="22%"  stop-color="#f8f4ff" stop-opacity="0.9"/>
+      <stop offset="55%"  stop-color="#c0d8ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#8080ff"  stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow filter for edge highlights -->
+    <filter id="f${uid}" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2.8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Soft filter for trailing edge -->
+    <filter id="fs${uid}" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>`;
+
+  const fills = ROTS.map((r, i) =>
+    tinted
+      ? `<path d="${blade}" fill="${CYCLE[i].color}" opacity="0.22" transform="rotate(${r},100,100)"/>`
+      : `<path d="${blade}" fill="#06040e" opacity="0.96" transform="rotate(${r},100,100)"/>`
+  ).join('');
+
+  const leadEdges = ROTS.map((r, i) =>
+    `<path d="${edgeLead}" fill="none" stroke="${CYCLE[i].color}" stroke-width="2.8" stroke-linecap="round" opacity="0.94" filter="url(#f${uid})" transform="rotate(${r},100,100)"/>`
+  ).join('');
+
+  const trailEdges = ROTS.map((r, i) =>
+    `<path d="${edgeTrail}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.4" stroke-linecap="round" filter="url(#fs${uid})" transform="rotate(${r},100,100)"/>`
+  ).join('');
+
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="display:block">
+  <defs>${defs}</defs>
+
+  <!-- 1. Background -->
+  <rect width="200" height="200" rx="44" fill="url(#bg${uid})"/>
+
+  <!-- 2. Blade fills -->
+  ${fills}
+
+  <!-- 3. Leading (lit) edge per element -->
+  ${leadEdges}
+
+  <!-- 4. Trailing edge secondary rim lights -->
+  ${trailEdges}
+
+  <!-- 5. Vignette overlay -->
+  <rect width="200" height="200" rx="44" fill="url(#vig${uid})" opacity="0.65"/>
+
+  <!-- 6. Center glow -->
+  <circle cx="100" cy="100" r="48" fill="url(#glow${uid})"/>
+</svg>`;
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+document.getElementById('cycle-chips').innerHTML = CYCLE.map(el =>
+  `<div class="chip"><div class="chip-dot" style="background:${el.color}"></div>${el.name}</div>`
+).join('');
+
+document.getElementById('duality-chips').innerHTML = [
+  { name: "Shadow", color: SHADOW_HUE },
+  { name: "Light",  color: LIGHT_HUE, outline: true },
+].map(({ name, color, outline }) =>
+  `<div class="chip"><div class="chip-dot" style="background:${color};${outline ? 'border:1px solid #888;' : ''}"></div>${name}</div>`
+).join('');
+
+// ── Reference ─────────────────────────────────────────────────────────────────
+const refRow = document.getElementById('ref-row');
+[160, 64, 32].forEach(px => {
+  const block = document.createElement('div');
+  block.className = 'ref-block';
+  block.innerHTML = `
+    <img src="Wizard Battle.png" width="${px}" height="${px}" style="border-radius:${Math.round(px*0.22)}px">
+    <div class="px-note">${px}px</div>`;
+  refRow.append(block);
+});
+
+// ── Variants ──────────────────────────────────────────────────────────────────
+const container = document.getElementById('variants');
+
+VARIANTS.forEach((v, vi) => {
+  const col = document.createElement('div');
+  col.className = 'variant';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'variant-name';
+  nameEl.textContent = v.name;
+
+  const stack = document.createElement('div');
+  stack.className = 'logo-stack';
+
+  [160, 64, 32].forEach((px, si) => {
+    const uid = `v${vi}s${si}`;
+    const row = document.createElement('div');
+    row.className = 'logo-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'px-label';
+    lbl.textContent = px;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `width:${px}px;height:${px}px;flex-shrink:0`;
+    wrap.innerHTML = makeSVG(v.bgShadow, v.bgLight, uid);
+    wrap.querySelector('svg').setAttribute('width', px);
+    wrap.querySelector('svg').setAttribute('height', px);
+
+    row.append(lbl, wrap);
+    stack.append(row);
+  });
+
+  // Shadow → Light background gradient swatch
+  const swatchWrap = document.createElement('div');
+  swatchWrap.className = 'bg-swatches';
+  const grad = document.createElement('div');
+  grad.className = 'bg-swatch';
+  grad.style.cssText = `width:52px;background:linear-gradient(to right, ${v.bgShadow}, ${v.bgLight})`;
+  swatchWrap.append(grad);
+
+  const desc = document.createElement('div');
+  desc.className = 'desc';
+  desc.textContent = v.desc;
+
+  col.append(nameEl, stack, swatchWrap, desc);
+  container.append(col);
+});
+
+// ── Vortex variants ───────────────────────────────────────────────────────────
+const vortexRow = document.getElementById('vortex-row');
+const VORTEX_OPTS = { blade: VORTEX_BLADE, edgeLead: VORTEX_EDGE_LEAD, edgeTrail: VORTEX_EDGE_TRAIL, tinted: true };
+
+VARIANTS.forEach((v, vi) => {
+  const col = document.createElement('div');
+  col.className = 'variant';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'variant-name';
+  nameEl.textContent = v.name;
+
+  const stack = document.createElement('div');
+  stack.className = 'logo-stack';
+
+  [160, 64, 32].forEach((px, si) => {
+    const uid = `vx${vi}s${si}`;
+    const row = document.createElement('div');
+    row.className = 'logo-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'px-label';
+    lbl.textContent = px;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `width:${px}px;height:${px}px;flex-shrink:0`;
+    wrap.innerHTML = makeSVG(v.bgShadow, v.bgLight, uid, VORTEX_OPTS);
+    wrap.querySelector('svg').setAttribute('width', px);
+    wrap.querySelector('svg').setAttribute('height', px);
+
+    row.append(lbl, wrap);
+    stack.append(row);
+  });
+
+  const swatchWrap = document.createElement('div');
+  swatchWrap.className = 'bg-swatches';
+  const grad = document.createElement('div');
+  grad.className = 'bg-swatch';
+  grad.style.cssText = `width:52px;background:linear-gradient(to right, ${v.bgShadow}, ${v.bgLight})`;
+  swatchWrap.append(grad);
+
+  const desc = document.createElement('div');
+  desc.className = 'desc';
+  desc.textContent = v.desc;
+
+  col.append(nameEl, stack, swatchWrap, desc);
+  vortexRow.append(col);
+});
+
+</script>
+</body>
+</html>
