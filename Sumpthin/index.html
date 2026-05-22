@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sumpthin P1P1</title>
+    <meta
+      name="description"
+      content="Generate a Supreme Masters P1P1 pack from the Sumpthin cube."
+    >
+    <link rel="preconnect" href="https://cubecobra.com">
+    <link rel="preconnect" href="https://cards.scryfall.io">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Supreme Masters</p>
+          <h1 id="page-title">Sumpthin P1P1</h1>
+        </div>
+        <div class="actions">
+          <button id="generate-pack" class="primary" type="button">Generate Pack</button>
+          <button id="copy-link" class="secondary" type="button">Copy Pack Link</button>
+        </div>
+      </section>
+
+      <section class="status-panel" aria-live="polite">
+        <p id="status">Loading cube from CubeCobra...</p>
+        <dl class="stats">
+          <div>
+            <dt>Commons</dt>
+            <dd id="common-count">-</dd>
+          </div>
+          <div>
+            <dt>Uncommons</dt>
+            <dd id="uncommon-count">-</dd>
+          </div>
+          <div>
+            <dt>Rare Slot</dt>
+            <dd id="rare-count">-</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="pack-wrap" aria-label="Generated pack">
+        <div id="pack-grid" class="pack-grid"></div>
+      </section>
+    </main>
+
+    <template id="card-template">
+      <article class="card-tile">
+        <a target="_blank" rel="noreferrer">
+          <img alt="" loading="lazy">
+        </a>
+        <div class="card-meta">
+          <span class="card-name"></span>
+          <span class="card-rarity"></span>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
