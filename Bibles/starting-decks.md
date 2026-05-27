@@ -131,7 +131,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Type:** Ice | **HP:** 70
 
-**Identity:** Control. Accumulate Freeze stacks — at 3, the enemy skips their entire turn. Pairs solid block with turn denial.
+**Identity:** Control. Accumulate Freeze stacks — at 5, the enemy skips their entire turn. Pairs solid block with turn denial.
 
 **Starting Deck (class cards):**
 
@@ -142,7 +142,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 | Frost Armor | 2 | ×1 | Gain 10 Block. Apply 1 Freeze — Fade |
 | Absolute Zero | 2 | ×1 | Apply 1 Freeze — Fade |
 
-**Key mechanic:** Freeze doesn't decay on its own — stacks accumulate across turns. When the enemy hits 3 Freeze stacks, their next action is skipped and all stacks are consumed.
+**Key mechanic:** Freeze doesn't decay on its own — stacks accumulate across turns. When the enemy hits 5 Freeze stacks, their next action is skipped and all stacks are consumed.
 
 **Note:** Frost Armor and Absolute Zero are Fade in the starting deck — they leave after use. Non-Fade versions exist in the reward pool.
 

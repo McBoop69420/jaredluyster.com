@@ -9,7 +9,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Effect | Color | Type | Source | Mechanic Summary |
 |---|---|---|---|---|
 | Char | `#ff6633` | DoT | Fire | Deals damage = stacks after player turn, before enemy action; decays -1/turn |
-| Drown | `#4488ff` | DoT | Water | Deals damage = stacks at end of enemy turn; **no decay** |
+| Drown | `#4488ff` | DoT | Water | Deals damage = stacks after player turn, before enemy action; **no decay** |
 | Shock | `#ffdd00` | Amplifier | Arc | Arc attacks deal ×1.25 per stack; decays -1/turn |
 | Root | `#44cc66` | Trap | Grass | On next damage hit: bursts for 2× stacks as bonus damage, all stacks consumed |
 | Freeze | `#66ddff` | Skip | Ice | At 5+ stacks: skip action, consume all stacks |
@@ -17,7 +17,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Blind | `#f2f2f2` | Miss | Light | 50% chance enemy attack misses entirely; decays -1/turn |
 | Weak | `#cc6666` | Debuff | Shadow/various | Reduces all damage dealt by 25%; decays -1/turn |
 | Strength | `#d4af37` | Buff | Enemy buffs | Adds flat bonus to all attacks |
-| Lifesteal | `#cc66ff` | Drain | Shadow | At start of player turn: drains HP from enemy, heals player |
+| Lifesteal | `#cc66ff` | Drain | Shadow | After enemy acts: drains HP from enemy, heals player |
 
 ---
 
@@ -33,7 +33,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 
 ### Drown (Water) `#4488ff`
 - **Applied by:** Water spells (e.g. Drown Surge)
-- **Ticks:** End of enemy turn
+- **Ticks:** After the player ends their turn, before the enemy takes an action
 - **Effect:** Target takes damage equal to current Drown stacks
 - **Decay:** **None** — stacks persist indefinitely
 - **Clears at:** Only via Purify/cleanse
@@ -94,10 +94,10 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 
 ### Lifesteal (Shadow) `#cc66ff`
 - **Applied by:** Shadow spells (e.g. Drain Life, Soul Rend, Shadow Strike)
-- **Ticks:** Start of player turn
+- **Ticks:** After the enemy acts
 - **Effect:** Drains HP from enemy equal to stacks, heals player by that amount
 - **Decay:** Consumed after triggering (single-trigger per application)
-- **Note:** Healing arrives at the top of your next turn — the drain pays out after surviving the enemy's action
+- **Note:** Healing pays out after surviving the enemy's action
 
 ---
 

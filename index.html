@@ -165,6 +165,25 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
+        .sigil img,
+        .type-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .type-icon {
+            width: 1.35em;
+            height: 1.35em;
+            flex: 0 0 auto;
+        }
+
+        .type-icon.small {
+            width: 1.05em;
+            height: 1.05em;
+        }
+
         .footer {
             padding: 36px 0 48px;
             color: var(--muted);
@@ -578,14 +597,14 @@
                                 <p>Each wizard approaches the journey differently. Same rules, different pressure.</p>
                             </div>
                             <div class="wizard-grid">
-                                <article class="wizard"><div class="sigil">🔥</div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
-                                <article class="wizard"><div class="sigil">🌊</div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, draw, and Drown control.</p></article>
-                                <article class="wizard"><div class="sigil">🪨</div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
-                                <article class="wizard"><div class="sigil">⚡</div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
-                                <article class="wizard"><div class="sigil">❄️</div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
-                                <article class="wizard"><div class="sigil">🌑</div><div class="wizard-top"><strong>Shadowblade</strong><span>Shadow</span></div><p>Lifesteal, curses, and Weak.</p></article>
-                                <article class="wizard"><div class="sigil">☀️</div><div class="wizard-top"><strong>Dawnmage</strong><span>Light</span></div><p>Shields, heals, and Blind.</p></article>
-                                <article class="wizard"><div class="sigil">🌿</div><div class="wizard-top"><strong>Verdantmaker</strong><span>Grass</span></div><p>Root stacks with exponential burst damage.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_fire.png" alt="Fire"></div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_water.png" alt="Water"></div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, draw, and Drown control.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_rock.png" alt="Rock"></div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_arc.png" alt="Arc"></div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_ice.png" alt="Ice"></div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_shadow.png" alt="Shadow"></div><div class="wizard-top"><strong>Shadowblade</strong><span>Shadow</span></div><p>Lifesteal, curses, and Weak.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_light.png" alt="Light"></div><div class="wizard-top"><strong>Dawnmage</strong><span>Light</span></div><p>Shields, heals, and Blind.</p></article>
+                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_grass.png" alt="Grass"></div><div class="wizard-top"><strong>Verdantmaker</strong><span>Grass</span></div><p>Root stacks with exponential burst damage.</p></article>
                             </div>
                         </div>
                     </section>`;
@@ -626,7 +645,7 @@
                     document.getElementById('site-footer').hidden = true;
                     setTimeout(() => {
                         const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
-                        const TYPE_ICONS = { Fire:'🔥', Water:'🌊', Rock:'🪨', Arc:'⚡', Ice:'❄️', Shadow:'🌑', Light:'☀️', Grass:'🌿' };
+                        const TYPE_ICONS = { Fire:'TypeIcons/icon_fire.png', Water:'TypeIcons/icon_water.png', Rock:'TypeIcons/icon_rock.png', Arc:'TypeIcons/icon_arc.png', Ice:'TypeIcons/icon_ice.png', Shadow:'TypeIcons/icon_shadow.png', Light:'TypeIcons/icon_light.png', Grass:'TypeIcons/icon_grass.png' };
                         const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#33aa55' };
                         // Revised 8-type chart from Wizard Battle's TypeChart.cs.
                         // Each type has 3 strengths, 3 weaknesses, and 1 neutral pair.
@@ -704,17 +723,18 @@
                             circle.setAttribute('fill',TYPE_COLORS[t]+'22');
                             circle.setAttribute('stroke',TYPE_COLORS[t]);
                             circle.setAttribute('stroke-width','2.5');
-                            const emoji=document.createElementNS('http://www.w3.org/2000/svg','text');
-                            emoji.setAttribute('text-anchor','middle'); emoji.setAttribute('dominant-baseline','central');
-                            emoji.setAttribute('y','-7'); emoji.setAttribute('font-size','18');
-                            emoji.textContent=TYPE_ICONS[t];
+                            const icon=document.createElementNS('http://www.w3.org/2000/svg','image');
+                            icon.setAttribute('href',TYPE_ICONS[t]);
+                            icon.setAttribute('x','-12'); icon.setAttribute('y','-24');
+                            icon.setAttribute('width','24'); icon.setAttribute('height','24');
+                            icon.setAttribute('preserveAspectRatio','xMidYMid meet');
                             const label=document.createElementNS('http://www.w3.org/2000/svg','text');
                             label.setAttribute('text-anchor','middle'); label.setAttribute('dominant-baseline','central');
                             label.setAttribute('y','14'); label.setAttribute('font-size','8');
                             label.setAttribute('fill',TYPE_COLORS[t]); label.setAttribute('font-weight','700');
                             label.setAttribute('letter-spacing','0.04em');
                             label.textContent=t.toUpperCase();
-                            g.appendChild(circle); g.appendChild(emoji); g.appendChild(label);
+                            g.appendChild(circle); g.appendChild(icon); g.appendChild(label);
                             g.addEventListener('click', () => {
                                 if (selectedType===t) {
                                     selectedType=null;
@@ -775,6 +795,7 @@
                     document.getElementById('site-footer').hidden = true;
                     const CYCLE_ORDER = ['fire','grass','ice','rock','arc','water','shadow','light','neutral'];
                     const byKey = Object.fromEntries(CARD_REFERENCE.map(el => [el.key, el]));
+                    const iconHTML = (el, cls='type-icon') => el.icon.endsWith('.png') ? `<img class="${cls}" src="${el.icon}" alt="${el.label}">` : `<span class="${cls}">${el.icon}</span>`;
                     const elements = CYCLE_ORDER.map(k => byKey[k]).filter(Boolean);
                     const allCards = elements.flatMap(el => el.cards);
                     const draftableCount = allCards.filter(card => !card.starter).length;
@@ -802,14 +823,14 @@
 
                     const sectionsHTML = elements.map(el => `
                         <section class="elem-section" data-elem="${el.key}">
-                            <div class="elem-header" style="--elem-color:${el.color}">${el.icon} ${el.label}</div>
+                            <div class="elem-header" style="--elem-color:${el.color}">${iconHTML(el)} ${el.label}</div>
                             <div class="card-grid">${sortedCards(el.cards).map(c => cardHTML(c, el.color)).join('')}</div>
                         </section>
                     `).join('');
 
                     const filterHTML = `<div class="elem-filter" id="elem-filter">
                         <button class="elem-btn active" data-elem="all">All</button>
-                        ${elements.map(el => `<button class="elem-btn" data-elem="${el.key}">${el.icon} ${el.label}</button>`).join('')}
+                        ${elements.map(el => `<button class="elem-btn" data-elem="${el.key}">${iconHTML(el, 'type-icon small')} ${el.label}</button>`).join('')}
                     </div>`;
 
                     setTimeout(() => {

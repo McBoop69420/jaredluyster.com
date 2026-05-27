@@ -112,7 +112,7 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 
 ## Ice ❄️
 
-**Class status:** Freeze — at 3+ stacks, the enemy's action is skipped and all Freeze is consumed.
+**Class status:** Freeze — at 5+ stacks, the enemy's action is skipped and all Freeze is consumed.
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|

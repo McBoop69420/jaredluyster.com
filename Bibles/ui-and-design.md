@@ -41,20 +41,20 @@ Each status effect has its own color, distinct from but related to its source ty
 
 ## Icons
 
-Each type and status uses an emoji icon as its primary visual identifier. Icons are used in: wizard selection, spell cards, enemy display, map nodes, status effect chips.
+Each elemental type uses its transparent PNG sigil as its primary visual identifier. Icons are used in: wizard selection, spell cards, enemy display, map nodes, and status effect chips. Emoji remain acceptable as fallback labels in plain-text bibles and places where image assets cannot render.
 
 **Type Icons:**
-| Type | Icon |
-|---|---|
-| Fire | 🔥 |
-| Water | 🌊 |
-| Rock | 🪨 |
-| Arc | ⚡ |
-| Ice | ❄️ |
-| Shadow | 🌑 |
-| Light | ☀️ |
-| Grass | 🌿 |
-| Neutral | ⬡ |
+| Type | Asset | Fallback |
+|---|---|---|
+| Fire | `Assets/Resources/Sprites/TypeIcons/icon_fire.png` | 🔥 |
+| Water | `Assets/Resources/Sprites/TypeIcons/icon_water.png` | 🌊 |
+| Rock | `Assets/Resources/Sprites/TypeIcons/icon_rock.png` | 🪨 |
+| Arc | `Assets/Resources/Sprites/TypeIcons/icon_arc.png` | ⚡ |
+| Ice | `Assets/Resources/Sprites/TypeIcons/icon_ice.png` | ❄️ |
+| Shadow | `Assets/Resources/Sprites/TypeIcons/icon_shadow.png` | 🌑 |
+| Light | `Assets/Resources/Sprites/TypeIcons/icon_light.png` | ☀️ |
+| Grass | `Assets/Resources/Sprites/TypeIcons/icon_grass.png` | 🌿 |
+| Neutral | none | ⬡ |
 
 **Map Node Icons:**
 | Node | Icon |
