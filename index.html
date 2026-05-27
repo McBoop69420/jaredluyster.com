@@ -538,7 +538,7 @@
                                 </div>
                                 <div class="hero-stats">
                                     <div class="stat" style="--stat-color:var(--plum)"><strong>8</strong><span>Wizard classes</span></div>
-                                    <div class="stat" style="--stat-color:var(--ember)"><strong>56</strong><span>Spells to draft</span></div>
+                                    <div class="stat" style="--stat-color:var(--ember)"><strong>57</strong><span>Spells to draft</span></div>
                                     <div class="stat" style="--stat-color:var(--sky)"><strong>12</strong><span>Floors per journey</span></div>
                                 </div>
                             </div>
@@ -579,7 +579,7 @@
                             </div>
                             <div class="wizard-grid">
                                 <article class="wizard"><div class="sigil">🔥</div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
-                                <article class="wizard"><div class="sigil">🌊</div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, mana generation, and Drown control.</p></article>
+                                <article class="wizard"><div class="sigil">🌊</div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, draw, and Drown control.</p></article>
                                 <article class="wizard"><div class="sigil">🪨</div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
                                 <article class="wizard"><div class="sigil">⚡</div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
                                 <article class="wizard"><div class="sigil">❄️</div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
@@ -602,19 +602,18 @@
                         <p class="subtitle" style="letter-spacing:.05em;">Reference page for the game's core mechanics and status terms.</p>
                         <div class="keyword-grid">
                             ${[
-                                { color:'#94a3b8', icon:'🛡️', name:'Block',     short:'Damage absorption',    desc:'Absorbs incoming damage before HP. Block resets to 0 at the start of your next turn and does not carry between encounters.' },
-                                { color:'#c4b5fd', icon:'🪄', name:'Fade',      short:'Single use',           desc:'This card is removed from your deck after it is played. It does not go to the discard pile.' },
-                                { color:'#ff6633', icon:'🔥', name:'Char',      short:'Burning damage',       desc:'At the end of each turn, the target takes damage equal to its Char stacks, then loses 1 stack.' },
-                                { color:'#66ddff', icon:'❄️', name:'Freeze',    short:'Turn denial',          desc:'Stacks accumulate. At 3 stacks, the enemy is Frozen and skips its action.' },
-                                { color:'#ffdd00', icon:'⚡', name:'Shock',     short:'Arc amplifier',        desc:'Each Shock stack multiplies Arc spell damage by ×1.25. Stacks are consumed on hit.' },
-                                { color:'#4488ff', icon:'🌊', name:'Drown',     short:'Start-of-turn damage', desc:'At the start of each turn, the target takes damage equal to its Drown stacks. Stacks do not decay.' },
-                                { color:'#44cc66', icon:'🌿', name:'Root',      short:'Burst on hit',         desc:'When the enemy takes damage, all Root stacks are consumed and detonate for 2× stacks bonus damage.' },
-                                { color:'#cc6666', icon:'💔', name:'Weak',      short:'Damage reduction',     desc:'The afflicted target deals 25% less damage on attacks. Each stack reduces one attack.' },
-                                { color:'#d4af37', icon:'💪', name:'Strength',  short:'Damage bonus',         desc:'Each Strength stack permanently increases the target\'s attack and spell damage by 1.' },
-                                { color:'#cc9944', icon:'💫', name:'Daze',      short:'Action confusion',     desc:'50% chance the enemy repeats its previous action instead of its intended one.' },
-                                { color:'#f2f2f2', icon:'✨', name:'Blind',     short:'Miss chance',          desc:'50% chance the enemy\'s attack misses entirely and deals no damage.' },
-                                { color:'#cc66ff', icon:'🌙', name:'Lifesteal', short:'HP drain',             desc:'At the end of the turn, drains HP from the enemy equal to the stacks and heals you for the same amount.' },
-                                { color:'#b8d0f5', icon:'🔮', name:'Foresight', short:'Delayed card draw',    desc:'At the start of your next turn, draw 1 extra card. Multiple Foresight triggers in a turn each queue a separate draw.' },
+                                { color:'#94a3b8', icon:'🛡️', name:'Block',     short:'Damage absorption', desc:'Absorbs incoming damage before HP. Player Block resets to 0 at the start of each player turn.' },
+                                { color:'#c4b5fd', icon:'🪄', name:'Fade',      short:'Combat exhaust',     desc:'After this card is played, it goes to the exhaust pile and does not return for the current combat.' },
+                                { color:'#ff6633', icon:'🔥', name:'Char',      short:'Burning damage',     desc:'After you end your turn, the enemy takes damage equal to its Char stacks before acting, then loses 1 stack.' },
+                                { color:'#66ddff', icon:'❄️', name:'Freeze',    short:'Turn denial',        desc:'At 5 stacks, the enemy skips its action and all Freeze stacks are consumed.' },
+                                { color:'#ffdd00', icon:'⚡', name:'Shock',     short:'Arc amplifier',      desc:'Arc attacks deal ×1.25 damage per Shock stack. Shock decays by 1 each turn.' },
+                                { color:'#4488ff', icon:'🌊', name:'Drown',     short:'Persistent damage',  desc:'After you end your turn, the enemy takes damage equal to its Drown stacks before acting. Drown does not decay.' },
+                                { color:'#44cc66', icon:'🌿', name:'Root',      short:'Burst on hit',       desc:'When the target takes damage, Root detonates for 2× current stacks as bonus damage, then all Root is consumed.' },
+                                { color:'#cc6666', icon:'💔', name:'Weak',      short:'Damage reduction',   desc:'The afflicted target deals 25% less damage while Weak remains. Weak decays by 1 each turn.' },
+                                { color:'#d4af37', icon:'💪', name:'Strength',  short:'Damage bonus',       desc:'Adds flat bonus damage to attacks and spell damage. Strength does not decay.' },
+                                { color:'#cc9944', icon:'💫', name:'Daze',      short:'Action confusion',   desc:'50% chance the enemy repeats its previous action instead of its intended one. Daze decays by 1 each turn.' },
+                                { color:'#f2f2f2', icon:'✨', name:'Blind',     short:'Miss chance',        desc:'50% chance the enemy attack misses entirely. Blind decays by 1 each turn.' },
+                                { color:'#cc66ff', icon:'🌙', name:'Lifesteal', short:'HP drain',           desc:'Shadow drain effects damage the enemy and heal the player for the drained amount, capped by max HP.' },
                             ].map(k => `<article class="keyword-card" style="--kw-color:${k.color}"><div class="keyword-icon">${k.icon}</div><div><div class="keyword-header"><div class="keyword-name">${k.name}</div><div class="keyword-short">${k.short}</div></div><div class="keyword-desc">${tagify(k.desc)}</div></div></article>`).join('')}
                         </div>
                     </div>`;
@@ -628,28 +627,18 @@
                     setTimeout(() => {
                         const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
                         const TYPE_ICONS = { Fire:'🔥', Water:'🌊', Rock:'🪨', Arc:'⚡', Ice:'❄️', Shadow:'🌑', Light:'☀️', Grass:'🌿' };
-                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#ffe000', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#ffe066', Grass:'#33aa55' };
-                        // Inner triangles: Fire→Ice→Arc→Fire | Grass→Rock→Water→Grass
-                        // Outer ring: Fire→Grass→Ice→Rock→Arc→Fire
-                        // Shadow↔Light mutual 2×, self 0.5×
-                        // Outer ring: Fire→Grass→Ice→Rock→Arc→Water→Fire
-                        // Inner tri 1: Fire→Ice→Arc→Fire | Inner tri 2: Grass→Rock→Water→Grass
-                        // Each type: 2 strengths, 2 weaknesses (symmetric: A beats B → A=2× vs B, B=0.5× vs A)
-                        // Fire:  beats Grass+Ice,  weak to Water+Arc
-                        // Grass: beats Ice+Rock,   weak to Fire+Water
-                        // Ice:   beats Rock+Arc,   weak to Grass+Fire
-                        // Rock:  beats Arc+Water,  weak to Ice+Grass
-                        // Arc:   beats Water+Fire, weak to Rock+Ice
-                        // Water: beats Fire+Grass, weak to Arc+Rock
+                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#33aa55' };
+                        // Revised 8-type chart from Wizard Battle's TypeChart.cs.
+                        // Each type has 3 strengths, 3 weaknesses, and 1 neutral pair.
                         const EFF = {
-                            Fire:   { Fire:1, Water:0.5, Rock:1,   Arc:0.5, Ice:2,   Shadow:1,   Light:1,   Grass:2   },
-                            Water:  { Fire:2, Water:1,   Rock:0.5, Arc:0.5, Ice:1,   Shadow:1,   Light:1,   Grass:2   },
-                            Rock:   { Fire:1, Water:2,   Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:1,   Grass:0.5 },
-                            Arc:    { Fire:2, Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Shadow:1,   Light:1,   Grass:1   },
-                            Ice:    { Fire:0.5, Water:1, Rock:2,   Arc:2,   Ice:1,   Shadow:1,   Light:1,   Grass:0.5 },
-                            Shadow: { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:0.5, Light:2,   Grass:1   },
-                            Light:  { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Shadow:2,   Light:0.5, Grass:1   },
-                            Grass:  { Fire:0.5, Water:0.5, Rock:2, Arc:1,   Ice:2,   Shadow:1,   Light:1,   Grass:1   },
+                            Fire:   { Fire:1,   Water:0.5, Rock:0.5, Arc:0.5, Ice:2,   Shadow:2,   Light:1,   Grass:2   },
+                            Water:  { Fire:2,   Water:1,   Rock:2,   Arc:0.5, Ice:1,   Shadow:0.5, Light:2,   Grass:0.5 },
+                            Rock:   { Fire:2,   Water:0.5, Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:2,   Grass:0.5 },
+                            Arc:    { Fire:2,   Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Shadow:2,   Light:0.5, Grass:1   },
+                            Ice:    { Fire:0.5, Water:1,   Rock:2,   Arc:2,   Ice:1,   Shadow:2,   Light:0.5, Grass:0.5 },
+                            Shadow: { Fire:0.5, Water:2,   Rock:1,   Arc:0.5, Ice:0.5, Shadow:1,   Light:2,   Grass:2   },
+                            Light:  { Fire:1,   Water:0.5, Rock:0.5, Arc:2,   Ice:2,   Shadow:0.5, Light:1,   Grass:2   },
+                            Grass:  { Fire:0.5, Water:2,   Rock:2,   Arc:1,   Ice:2,   Shadow:0.5, Light:0.5, Grass:1   },
                         };
 
                         // Hexagon: Fire(top) → Grass → Ice → Rock → Arc → Water → back to Fire
@@ -687,57 +676,22 @@
                             const side=val>=2?outward:-outward;
                             return { ox:nx*OFFSET*side, oy:ny*OFFSET*side };
                         }
-
-                        // Outer ring edges (adjacent hexagon nodes)
-                        const outerRing = [['Fire','Grass'],['Grass','Ice'],['Ice','Rock'],['Rock','Arc'],['Arc','Water'],['Water','Fire']];
-                        // Inner triangle edges (skip-one)
-                        const innerTri = [['Fire','Ice'],['Ice','Arc'],['Arc','Fire'],['Grass','Rock'],['Rock','Water'],['Water','Grass']];
-                        const innerSet = new Set(innerTri.map(([a,b]) => a+'>'+b));
-
-                        // Draw all arrows with equal style
-                        [...outerRing, ...innerTri].forEach(([attacker, defender]) => {
-                            const p1=positions[attacker], p2=positions[defender];
-                            const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
-                            const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-                            line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1);
-                            line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2);
-                            line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
-                            line.setAttribute('opacity','0.65');
-                            line.setAttribute('marker-end','url(#arr-super)');
-                            line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
-                            arrowLayer.appendChild(line);
+                        // Draw all super-effective relationships from the current 8-type chart.
+                        TYPES.forEach(attacker => {
+                            TYPES.forEach(defender => {
+                                if (EFF[attacker][defender] !== 2) return;
+                                const p1=positions[attacker], p2=positions[defender];
+                                const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
+                                const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+                                line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1);
+                                line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2);
+                                line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
+                                line.setAttribute('opacity','0.65');
+                                line.setAttribute('marker-end','url(#arr-super)');
+                                line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
+                                arrowLayer.appendChild(line);
+                            });
                         });
-
-                        // Shadow↔Light mutual 2× arrows (offset so both directions are visible)
-                        [['Shadow','Light'],['Light','Shadow']].forEach(([attacker, defender]) => {
-                            const p1=positions[attacker], p2=positions[defender];
-                            const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
-                            const oy = attacker==='Shadow' ? -10 : 10;
-                            const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-                            line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1+oy);
-                            line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2+oy);
-                            line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
-                            line.setAttribute('opacity','0.65');
-                            line.setAttribute('marker-end','url(#arr-super)');
-                            line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
-                            arrowLayer.appendChild(line);
-                        });
-
-                        // Self-referential 0.5× loops for Shadow and Light (red)
-                        // Shadow center (-75,210) radius 32; Light center (75,210) radius 32
-                        // Start/end on circle edge at ~45° from vertical, looping outward
-                        [{t:'Shadow', sx:-97, sy:138, cx1:-148, cy1:122, cx2:-148, cy2:198, ex:-97, ey:182},
-                         {t:'Light',  sx: 97, sy:138, cx1: 148, cy1:122, cx2: 148, cy2:198, ex: 97, ey:182}
-                        ].forEach(({t, sx, sy, cx1, cy1, cx2, cy2, ex, ey}) => {
-                            const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-                            path.setAttribute('d',`M ${sx},${sy} C ${cx1},${cy1} ${cx2},${cy2} ${ex},${ey}`);
-                            path.setAttribute('stroke','#ff4444'); path.setAttribute('stroke-width','2');
-                            path.setAttribute('fill','none'); path.setAttribute('opacity','0.75');
-                            path.setAttribute('marker-end','url(#arr-self-red)');
-                            path.setAttribute('class',`self-arrow from-${t} to-${t}`);
-                            arrowLayer.appendChild(path);
-                        });
-
                         let selectedType=null;
                         Object.keys(positions).forEach(t => {
                             const pos=positions[t];
@@ -801,14 +755,14 @@
                                 <tr><th></th><th>Fire</th><th>Water</th><th>Rock</th><th>Arc</th><th>Ice</th><th>Shadow</th><th>Light</th><th>Grass</th></tr>
                             </thead>
                             <tbody>
-                                <tr><th>Fire</th>  <td>1x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td>1x</td><td class="good">2x</td></tr>
-                                <tr><th>Water</th> <td class="good">2x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td></tr>
-                                <tr><th>Rock</th>  <td>1x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td></tr>
-                                <tr><th>Arc</th>   <td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td>1x</td><td>1x</td><td>1x</td></tr>
-                                <tr><th>Ice</th>   <td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td></tr>
-                                <tr><th>Shadow</th><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td></tr>
-                                <tr><th>Light</th> <td>1x</td><td>1x</td><td>1x</td><td>1x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
-                                <tr><th>Grass</th> <td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td>1x</td><td>1x</td><td>1x</td></tr>
+                                <tr><th>Fire</th>  <td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td></tr>
+                                <tr><th>Water</th> <td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
+                                <tr><th>Rock</th>  <td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
+                                <tr><th>Arc</th>   <td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
+                                <tr><th>Ice</th>   <td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td></tr>
+                                <tr><th>Shadow</th><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td></tr>
+                                <tr><th>Light</th> <td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td></tr>
+                                <tr><th>Grass</th> <td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td></tr>
                             </tbody>
                         </table>
                     </div>`;

@@ -8,14 +8,14 @@ Each class is a wizard archetype defined by their element, HP, and in-game descr
 
 | Class | Type | HP | In-Game Description |
 |---|---|---|---|
-| Pyromancer | Fire | 70 | Char DoT, high damage. |
-| Tidecaller | Water | 70 | Healing, mana gen, Drown control. |
-| Stonewarden | Rock | 70 | Max defense, Daze stacks, outlasts foes. |
+| Pyromancer | Fire | 70 | Burn DoT, high damage. |
+| Tidecaller | Water | 70 | Healing, sustain, control. |
+| Stonewarden | Rock | 70 | Max defense, outlasts foes. |
 | Stormseeker | Arc | 70 | Fast chains, Shock combos. |
 | Frostweaver | Ice | 70 | Freeze control. |
-| Shadowblade | Shadow | 70 | Lifesteal and curses. |
-| Dawnmage | Light | 70 | Shields, heals, Blind. |
-| Verdantmaker | Grass | 70 | Low base damage, exponential Root DoT. |
+| Shadowblade | Shadow | 70 | Lifesteal, curses, Weak. |
+| Dawnmage | Light | 70 | Shields, heals, cleanses. |
+| Verdantmaker | Grass | 70 | Low base damage, exponential DoT. |
 
 ---
 
@@ -29,23 +29,23 @@ Applies Char stacks that deal damage every enemy turn and decay slowly. The clas
 ---
 
 ### Tidecaller
-**Type:** Water | **HP:** 70 | *"Healing, mana gen, control."*
+**Type:** Water | **HP:** 70 | *"Healing, sustain, control."*
 
-Three distinct tools in one class. Healing (Soothing Wave) extends HP longevity. Mana generation (Tidal Flow) unlocks turns with more cards played than mana normally allows. Drown applies permanent DoT that compounds with no decay — the "control" part. Best in long fights where all three tools get to pay off.
+Three distinct tools in one class. Healing (Soothing Wave) extends HP longevity. Extra draw (Tidal Flow) widens the current hand while mana keeps turns bounded. Drown applies permanent DoT that compounds with no decay — the "control" part. Best in long fights where all three tools get to pay off.
 
 ---
 
 ### Stonewarden
 **Type:** Rock | **HP:** 70 | *"Max defense, outlasts foes."*
 
-The highest block values of any class. On Guard (25 Block, 2 mana) is the defining card — it creates a near-impenetrable wall. Daze disrupts enemy patterns by making them repeat their last action. This class wins by making the enemy's damage irrelevant. Requires patience; damage output is the lowest in the roster.
+The highest block values of any class. On Guard is the defining card — it creates a near-impenetrable wall. Daze disrupts enemy patterns by making them repeat their last action. This class wins by making the enemy's damage irrelevant. Requires patience; damage output is the lowest in the roster.
 
 ---
 
 ### Stormseeker
 **Type:** Arc | **HP:** 70 | *"Fast chains, Shock combos."*
 
-Speed and burst. Shock stacks on the enemy multiply incoming Arc damage (×1.25 per stack, compounding). Chain Lightning hits three times — each hit benefits from the full Shock multiplier. Surge Engine generates extra mana for the next turn, enabling big combo turns. The highest single-turn damage ceiling in the game.
+Speed and burst. Shock stacks on the enemy multiply incoming Arc damage (×1.25 per stack, compounding). Chain Lightning hits three times — each hit benefits from the full Shock multiplier. Surge Engine adds a concentrated Shock setup card, enabling big combo turns. The highest single-turn damage ceiling in the game.
 
 ---
 
@@ -57,9 +57,9 @@ Accumulates Freeze stacks on enemies — Freeze doesn't decay, so it builds unti
 ---
 
 ### Shadowblade
-**Type:** Shadow | **HP:** 70 | *"Lifesteal and curses."*
+**Type:** Shadow | **HP:** 70 | *"Lifesteal, curses, Weak."*
 
-Lifesteal drains HP from the enemy and heals the player at end of their turn — passive sustain without using a healing card. Every card applies Lifesteal, so recovery is constant across the whole turn. Self-sustaining in a way no other class is; doesn't rely on rest nodes as heavily.
+Three tools working together. Lifesteal drains HP from the enemy and heals the player at end of their turn — passive sustain without using a healing card. Weak reduces all enemy damage by 25% per stack, stacking multiplicatively. Curses keep the enemy weakened long-term. Self-sustaining in a way no other class is; doesn't rely on rest nodes as heavily.
 
 ---
 
@@ -83,4 +83,4 @@ Root stacks accumulate on the enemy and do nothing — until the enemy takes any
 
 **Descriptions are three words or a short phrase, comma-separated.** They communicate the strategy, not the story. Keep them factual and specific. "Burn DoT, high damage" tells you both *how* (DoT) and *what* (damage). "Freeze control" tells you the mechanic and the role. Avoid vague words like "versatile" or "balanced."
 
-**Each class should have a distinct identity that doesn't overlap.** Both Tidecaller and Dawnmage involve healing, but Tidecaller is about mana generation and permanent DoT while Dawnmage is about cleansing and block. The descriptions should reflect what makes each class *uniquely* that class, not what it shares with others.
+**Each class should have a distinct identity that doesn't overlap.** Both Tidecaller and Dawnmage involve healing, but Tidecaller is about extra draw and permanent DoT while Dawnmage is about cleansing and block. The descriptions should reflect what makes each class *uniquely* that class, not what it shares with others.

@@ -9,7 +9,8 @@ Reference documents for consistent design, writing, and development decisions.
 | [Status Effects](status-effects.md) | All 10 effects — mechanics, colors, decay, interactions |
 | [Classes](classes.md) | All 8 classes — identity, description, design notes |
 | [Starting Decks](starting-decks.md) | All 8 starting decks — deck cards, combos, matchups |
-| [Spells](spells.md) | Full spell reference by type, with mechanic notes |
+| [Spells](spells.md) | Full spell reference by type — costs, effects, rarities |
+| [Card Mechanics](card-mechanics.md) | Draw/discard/exhaust piles, mana, Amplify, on-hit effects, reward cards |
 | [Enemies](enemies.md) | All enemies by tier — HP, intents, boss strategies |
 | [Map & Progression](map-and-progression.md) | Floor structure, node types, probabilities, shop/rest/events |
 | [UI & Design](ui-and-design.md) | Type colors, status colors, icons, design principles |

@@ -1,205 +1,673 @@
 const CARD_REFERENCE = [
     {
-        key: 'fire',
-        label: 'Fire',
-        icon: '🔥',
-        color: '#ff4422',
-        cards: [
-            { name: 'Ember Shot', cost: 1, rarity: 'Common', effects: 'Deal 8 damage.' },
-            { name: 'Fireball', cost: 2, rarity: 'Common', effects: 'Deal 14 damage. Apply 2 Char.' },
-            { name: 'Flame Shield', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 1 Char to the attacker on hit.' },
-            { name: 'Inferno', cost: 3, rarity: 'Uncommon', effects: 'Deal 22 damage. Apply 4 Char.' },
-            { name: 'Kindle', cost: 0, rarity: 'Common', effects: 'Apply 2 Char. Draw 1.' },
-            { name: 'Heat Wave', cost: 2, rarity: 'Uncommon', effects: 'Deal 10 damage. Apply 3 Char. Foresight.' },
-            { name: 'Magma Form', cost: 2, rarity: 'Rare', effects: 'Gain 12 Block.' },
-            { name: 'Scorch', cost: 1, rarity: 'Common', effects: 'Deal 4 damage. Apply 4 Char.' },
-            { name: 'Flamestrike', cost: 2, rarity: 'Common', effects: 'Deal 12 damage. Apply 4 Char.' },
-            { name: 'Magma Bolt', cost: 3, rarity: 'Common', effects: 'Deal 16 damage. Apply 8 Char.' },
-            { name: 'Smoldering Strike', cost: 1, rarity: 'Uncommon', effects: 'Deal 5 damage. Apply 4 Char.' },
-            { name: 'Pyroclasm', cost: 2, rarity: 'Uncommon', effects: 'Deal 10 damage. Apply 7 Char.' },
-            { name: 'Conflagration', cost: 2, rarity: 'Rare', effects: 'Deal 6 damage. Deal bonus damage equal to enemy\'s current Char stacks. Apply 4 Char.' },
-            { name: 'Firebolt', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Char.', starter: true },
-            { name: 'Ignite', cost: 1, rarity: 'Starter', effects: 'Deal 4 damage. Apply 2 Char.', starter: true },
-            { name: 'Flame Burst', cost: 2, rarity: 'Starter', effects: 'Deal 5 damage. Apply 2 Char. Twice.', starter: true },
-            { name: 'Cauterize', cost: 2, rarity: 'Starter', effects: 'Gain 10 Block. Apply 3 Char.', starter: true },
-        ],
+        "key":  "fire",
+        "label":  "Fire",
+        "icon":  "🔥",
+        "color":  "#ff4422",
+        "cards":  [
+                      {
+                          "name":  "Flame Burst",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 2 Char. Twice.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Firebolt",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Char.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Ignite",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 4 damage. Apply 2 Char.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Cauterize",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 10 Block. Apply 3 Char.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Kindle",
+                          "cost":  0,
+                          "rarity":  "Common",
+                          "effects":  "Apply 2 Char. Draw 1."
+                      },
+                      {
+                          "name":  "Inferno",
+                          "cost":  3,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 22 damage. Apply 4 Char."
+                      },
+                      {
+                          "name":  "Fireball",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 14 damage. Apply 2 Char."
+                      },
+                      {
+                          "name":  "Flame Shield",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 8 Block. On hit: apply 1 Char to attacker."
+                      },
+                      {
+                          "name":  "Ember Shot",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 8 damage."
+                      },
+                      {
+                          "name":  "Heat Wave",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 10 damage. Apply 3 Char. Draw 1 next turn."
+                      },
+                      {
+                          "name":  "Magma Form",
+                          "cost":  2,
+                          "rarity":  "Rare",
+                          "effects":  "Gain 12 Block."
+                      }
+                  ]
     },
     {
-        key: 'water',
-        label: 'Water',
-        icon: '🌊',
-        color: '#2277ff',
-        cards: [
-            { name: 'Water Bolt', cost: 1, rarity: 'Common', effects: 'Deal 7 damage.' },
-            { name: 'Tidal Wave', cost: 2, rarity: 'Common', effects: 'Deal 12 damage.' },
-            { name: 'Healing Rain', cost: 2, rarity: 'Common', effects: 'Heal 12 HP.' },
-            { name: 'Tidal Shield', cost: 1, rarity: 'Common', effects: 'Gain 10 Block.' },
-            { name: 'Tidal Flow', cost: 2, rarity: 'Common', effects: 'Deal 4 damage. Draw 1. Gain 1 mana next turn.' },
-            { name: 'Whirlpool', cost: 2, rarity: 'Uncommon', effects: 'Deal 14 damage. Apply 3 Drown.' },
-            { name: 'Mana Spring', cost: 0, rarity: 'Uncommon', effects: 'Gain 1 mana. Draw 1 card.' },
-            { name: 'Deep Current', cost: 3, rarity: 'Rare', effects: 'Deal 20 damage. Heal 8 HP.' },
-            { name: 'Drenching Rain', cost: 1, rarity: 'Common', effects: 'Heal 6 HP. Apply 2 Drown.' },
-            { name: 'Monsoon', cost: 2, rarity: 'Uncommon', effects: 'Deal 8 damage. Apply 4 Drown. Gain 1 mana next turn.' },
-            { name: 'Abyssal Current', cost: 3, rarity: 'Rare', effects: 'Deal 12 damage. Apply Drown equal to enemy\'s current Drown stacks.' },
-            { name: 'Wavecrash', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Drown.', starter: true },
-            { name: 'Soothing Wave', cost: 1, rarity: 'Starter', effects: 'Heal 4 HP. Apply 2 Drown.', starter: true },
-            { name: 'Drown Surge', cost: 2, rarity: 'Starter', effects: 'Deal 8 damage. Apply 5 Drown.', starter: true },
-            { name: 'Riptide', cost: 2, rarity: 'Starter', effects: 'Deal 4 damage. Apply 2 Drown. Gain 1 mana next turn.', starter: true },
-        ],
+        "key":  "water",
+        "label":  "Water",
+        "icon":  "🌊",
+        "color":  "#2277ff",
+        "cards":  [
+                      {
+                          "name":  "Soothing Wave",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Heal 4 HP. Apply 2 Drown.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Riptide",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 4 damage. Apply 2 Drown.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Wavecrash",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Drown.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Drown Surge",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 8 damage. Apply 5 Drown.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Deep Current",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Deal 20 damage. Heal 8 HP."
+                      },
+                      {
+                          "name":  "Mana Spring",
+                          "cost":  0,
+                          "rarity":  "Uncommon",
+                          "effects":  "Draw 1."
+                      },
+                      {
+                          "name":  "Tidal Shield",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 10 Block."
+                      },
+                      {
+                          "name":  "Whirlpool",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 14 damage. Apply 3 Drown."
+                      },
+                      {
+                          "name":  "Healing Rain",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Heal 12 HP."
+                      },
+                      {
+                          "name":  "Tidal Flow",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 4 damage. Draw 1."
+                      },
+                      {
+                          "name":  "Water Bolt",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 7 damage."
+                      },
+                      {
+                          "name":  "Tidal Wave",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 12 damage."
+                      }
+                  ]
     },
     {
-        key: 'rock',
-        label: 'Rock',
-        icon: '🪨',
-        color: '#a87832',
-        cards: [
-            { name: 'Boulder Toss', cost: 1, rarity: 'Common', effects: 'Deal 8 damage.' },
-            { name: 'Stone Wall', cost: 1, rarity: 'Common', effects: 'Gain 12 Block.' },
-            { name: 'Quake', cost: 2, rarity: 'Common', effects: 'Deal 14 damage. Apply 2 Daze.' },
-            { name: 'Boulder Crash', cost: 3, rarity: 'Uncommon', effects: 'Deal 28 damage. Apply 3 Daze.' },
-            { name: 'Earthen Skin', cost: 2, rarity: 'Uncommon', effects: 'Gain 16 Block.' },
-            { name: 'Tremor', cost: 0, rarity: 'Common', effects: 'Deal 4 damage. Gain 4 Block.' },
-            { name: 'Fissure', cost: 2, rarity: 'Rare', effects: 'Deal 12 damage. Draw 2.' },
-            { name: 'Gravel Burst', cost: 1, rarity: 'Common', effects: 'Deal 5 damage. Apply 3 Daze.' },
-            { name: 'Landslide', cost: 2, rarity: 'Common', effects: 'Deal 12 damage. Apply 4 Daze.' },
-            { name: 'Fortify', cost: 2, rarity: 'Common', effects: 'Gain 14 Block. Apply 2 Daze.' },
-            { name: 'Seismic Slam', cost: 3, rarity: 'Uncommon', effects: 'Deal 20 damage. Apply 6 Daze.' },
-            { name: 'Petrify', cost: 2, rarity: 'Rare', effects: 'Gain 16 Block. Apply 8 Daze.' },
-            { name: 'Rock Throw', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Daze.', starter: true },
-            { name: 'Stoneskin', cost: 1, rarity: 'Starter', effects: 'Gain 8 Block. Apply 2 Daze.', starter: true },
-            { name: 'Erode', cost: 2, rarity: 'Starter', effects: 'Deal 8 damage. Apply 4 Daze.', starter: true },
-            { name: 'On Guard', cost: 2, rarity: 'Starter', effects: 'Gain 20 Block. Apply 2 Daze.', starter: true },
-        ],
+        "key":  "rock",
+        "label":  "Rock",
+        "icon":  "🪨",
+        "color":  "#a87832",
+        "cards":  [
+                      {
+                          "name":  "Erode",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 8 damage. Apply 4 Daze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "On Guard",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 20 Block. Apply 2 Daze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Stoneskin",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 8 Block. Apply 2 Daze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Rock Throw",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 4 damage. Apply 1 Daze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Tremor",
+                          "cost":  0,
+                          "rarity":  "Common",
+                          "effects":  "Deal 4 damage. Gain 4 Block."
+                      },
+                      {
+                          "name":  "Boulder Crash",
+                          "cost":  3,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 28 damage. Apply 3 Daze."
+                      },
+                      {
+                          "name":  "Rock Throw",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 5 damage. Apply 1 Daze."
+                      },
+                      {
+                          "name":  "Stone Wall",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 12 Block."
+                      },
+                      {
+                          "name":  "Quake",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 14 damage. Apply 2 Daze."
+                      },
+                      {
+                          "name":  "Fissure",
+                          "cost":  2,
+                          "rarity":  "Rare",
+                          "effects":  "Deal 12 damage. Draw 2."
+                      },
+                      {
+                          "name":  "Earthen Skin",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Gain 16 Block."
+                      }
+                  ]
     },
     {
-        key: 'arc',
-        label: 'Arc',
-        icon: '⚡',
-        color: '#f97316',
-        cards: [
-            { name: 'Spark', cost: 1, rarity: 'Common', effects: 'Deal 7 damage. Apply 1 Shock.' },
-            { name: 'Chain Bolt', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Apply 2 Shock.' },
-            { name: 'Thunderstrike', cost: 2, rarity: 'Uncommon', effects: 'Deal 18 damage.' },
-            { name: 'Static Field', cost: 1, rarity: 'Common', effects: 'Gain 6 Block. Apply 1 Shock to the attacker on hit.' },
-            { name: 'Overcharge', cost: 0, rarity: 'Uncommon', effects: 'Gain 2 mana. Discard 1 card.' },
-            { name: 'Storm Call', cost: 3, rarity: 'Rare', effects: 'Deal 10 damage 3 times.' },
-            { name: 'Arc Surge', cost: 1, rarity: 'Common', effects: 'Deal 6 damage. Draw 1.' },
-            { name: 'Volt Strike', cost: 1, rarity: 'Common', effects: 'Deal 5 damage. Apply 2 Shock.' },
-            { name: 'Lightning Ward', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 2 Shock.' },
-            { name: 'Discharge', cost: 2, rarity: 'Common', effects: 'Deal 14 damage. Apply 3 Shock.' },
-            { name: 'Ball Lightning', cost: 3, rarity: 'Uncommon', effects: 'Deal 5 damage 4 times. Apply 1 Shock.' },
-            { name: 'Tempest', cost: 2, rarity: 'Rare', effects: 'Deal 8 damage. Apply 6 Shock. Gain 2 mana next turn.' },
-            { name: 'Spark Strike', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Shock.', starter: true },
-            { name: 'Static Charge', cost: 1, rarity: 'Starter', effects: 'Deal 3 damage. Apply 2 Shock.', starter: true },
-            { name: 'Chain Lightning', cost: 2, rarity: 'Starter', effects: 'Deal 4 damage 3 times. Apply 2 Shock.', starter: true },
-            { name: 'Surge Engine', cost: 2, rarity: 'Starter', effects: 'Gain 2 mana next turn. Apply 3 Shock.', starter: true },
-        ],
+        "key":  "arc",
+        "label":  "Arc",
+        "icon":  "⚡",
+        "color":  "#f97316",
+        "cards":  [
+                      {
+                          "name":  "Chain Lightning",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 4 damage three times. Apply 2 Shock.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Static Charge",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 4 damage. Apply 2 Shock.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Spark Strike",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Shock.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Surge Engine",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Apply 3 Shock.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Overcharge",
+                          "cost":  0,
+                          "rarity":  "Uncommon",
+                          "effects":  "Discard 1 card."
+                      },
+                      {
+                          "name":  "Spark",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 7 damage. Apply 1 Shock."
+                      },
+                      {
+                          "name":  "Storm Call",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Deal 10 damage three times."
+                      },
+                      {
+                          "name":  "Arc Surge",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 6 damage. Draw 1."
+                      },
+                      {
+                          "name":  "Static Field",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 6 Block. On hit: apply 1 Shock to attacker."
+                      },
+                      {
+                          "name":  "Chain Bolt",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 10 damage. Apply 2 Shock."
+                      },
+                      {
+                          "name":  "Thunderstrike",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 18 damage."
+                      }
+                  ]
     },
     {
-        key: 'ice',
-        label: 'Ice',
-        icon: '❄️',
-        color: '#88ddff',
-        cards: [
-            { name: 'Frost Bolt', cost: 1, rarity: 'Common', effects: 'Deal 7 damage. Apply 1 Freeze.' },
-            { name: 'Blizzard', cost: 2, rarity: 'Common', effects: 'Deal 12 damage. Apply 2 Freeze.' },
-            { name: 'Ice Armor', cost: 1, rarity: 'Common', effects: 'Gain 10 Block.' },
-            { name: 'Glacial Spike', cost: 2, rarity: 'Uncommon', effects: 'Deal 18 damage.' },
-            { name: 'Absolute Zero', cost: 3, rarity: 'Rare', effects: 'Apply 3 Freeze. Deal 20 damage.' },
-            { name: 'Chill', cost: 0, rarity: 'Common', effects: 'Apply 1 Freeze. Gain 4 Block.' },
-            { name: 'Crystallize', cost: 1, rarity: 'Uncommon', effects: 'Gain 16 Block.' },
-            { name: 'Frost Spike', cost: 1, rarity: 'Common', effects: 'Deal 4 damage. Apply 2 Freeze.' },
-            { name: 'Arctic Armor', cost: 2, rarity: 'Common', effects: 'Gain 14 Block. Apply 2 Freeze.' },
-            { name: 'Hailstorm', cost: 2, rarity: 'Common', effects: 'Deal 6 damage. Apply 2 Freeze. Twice.' },
-            { name: 'Flash Freeze', cost: 1, rarity: 'Uncommon', effects: 'Apply 4 Freeze.' },
-            { name: 'Glacial Cascade', cost: 3, rarity: 'Rare', effects: 'Deal 8 damage. Apply 3 Freeze. 3 times.' },
-            { name: 'Shardsicle', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Freeze.', starter: true },
-            { name: 'Ice Cube', cost: 1, rarity: 'Starter', effects: 'Gain 8 Block. Apply 2 Freeze.', starter: true },
-            { name: 'Blizzard Strike', cost: 2, rarity: 'Starter', effects: 'Deal 5 damage. Apply 2 Freeze. Twice.', starter: true },
-            { name: 'Frost Armor', cost: 2, rarity: 'Starter', effects: 'Gain 10 Block. Apply 3 Freeze.', starter: true },
-        ],
+        "key":  "ice",
+        "label":  "Ice",
+        "icon":  "❄️",
+        "color":  "#88ddff",
+        "cards":  [
+                      {
+                          "name":  "Ice Cube",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 8 Block. Apply 2 Freeze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Shardsicle",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Freeze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Blizzard Strike",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 2 Freeze. Twice.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Frost Armor",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 10 Block. Apply 3 Freeze.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Chill",
+                          "cost":  0,
+                          "rarity":  "Common",
+                          "effects":  "Apply 1 Freeze. Gain 4 Block."
+                      },
+                      {
+                          "name":  "Ice Armor",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 10 Block."
+                      },
+                      {
+                          "name":  "Glacial Spike",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 18 damage."
+                      },
+                      {
+                          "name":  "Frost Bolt",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 7 damage. Apply 1 Freeze."
+                      },
+                      {
+                          "name":  "Absolute Zero",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Apply 3 Freeze. Deal 20 damage."
+                      },
+                      {
+                          "name":  "Crystallize",
+                          "cost":  1,
+                          "rarity":  "Uncommon",
+                          "effects":  "Gain 16 Block."
+                      },
+                      {
+                          "name":  "Blizzard",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 12 damage. Apply 2 Freeze."
+                      }
+                  ]
     },
     {
-        key: 'shadow',
-        label: 'Shadow',
-        icon: '🌑',
-        color: '#bb33ee',
-        cards: [
-            { name: 'Shadow Bolt', cost: 1, rarity: 'Common', effects: 'Deal 9 damage.' },
-            { name: 'Drain Life', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Heal 5 HP.' },
-            { name: 'Curse', cost: 1, rarity: 'Common', effects: 'Lifesteal 6.' },
-            { name: 'Void Tear', cost: 2, rarity: 'Uncommon', effects: 'Deal 16 damage.' },
-            { name: 'Dark Pact', cost: 0, rarity: 'Uncommon', effects: 'Lose 4 HP. Draw 2 cards.' },
-            { name: 'Soul Rend', cost: 3, rarity: 'Rare', effects: 'Deal 24 damage. Heal 12 HP.' },
-            { name: 'Shadow Step', cost: 1, rarity: 'Common', effects: 'Gain 8 Block.' },
-            { name: 'Blood Tap', cost: 0, rarity: 'Common', effects: 'Lose 3 HP. Lifesteal 6.' },
-            { name: 'Haunting', cost: 1, rarity: 'Common', effects: 'Deal 4 damage. Lifesteal 5.' },
-            { name: 'Wraith Strike', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Lifesteal 10.' },
-            { name: 'Consume', cost: 2, rarity: 'Uncommon', effects: 'Deal 6 damage. Lifesteal 6. Draw 1.' },
-            { name: 'Vampiric Surge', cost: 3, rarity: 'Rare', effects: 'Deal 16 damage. Lifesteal 20.' },
-            { name: 'Shadow Strike', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Lifesteal 2.', starter: true },
-            { name: 'Curse Touch', cost: 1, rarity: 'Starter', effects: 'Deal 2 damage. Lifesteal 4.', starter: true },
-            { name: 'Soul Drain', cost: 2, rarity: 'Starter', effects: 'Deal 8 damage. Lifesteal 8.', starter: true },
-            { name: 'Shadow Pact', cost: 2, rarity: 'Starter', effects: 'Lose 6 HP. Lifesteal 12.', starter: true },
-        ],
+        "key":  "shadow",
+        "label":  "Shadow",
+        "icon":  "🌑",
+        "color":  "#bb33ee",
+        "cards":  [
+                      {
+                          "name":  "Shadow Pact",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Lose 6 HP. Lifesteal 8.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Shadow Strike",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Lifesteal 2.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Soul Drain",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 8 damage. Lifesteal 5.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Curse Touch",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Lifesteal 3.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Void Tear",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Deal 16 damage."
+                      },
+                      {
+                          "name":  "Drain Life",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 10 damage. Heal 5 HP."
+                      },
+                      {
+                          "name":  "Shadow Bolt",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 9 damage."
+                      },
+                      {
+                          "name":  "Dark Pact",
+                          "cost":  0,
+                          "rarity":  "Uncommon",
+                          "effects":  "Lose 4 HP. Draw 2 cards."
+                      },
+                      {
+                          "name":  "Curse",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Lifesteal 6."
+                      },
+                      {
+                          "name":  "Shadow Step",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 8 Block."
+                      },
+                      {
+                          "name":  "Soul Rend",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Deal 24 damage. Apply 12 Lifesteal."
+                      }
+                  ]
     },
     {
-        key: 'light',
-        label: 'Light',
-        icon: '☀️',
-        color: '#facc15',
-        cards: [
-            { name: 'Holy Bolt', cost: 1, rarity: 'Common', effects: 'Deal 7 damage.' },
-            { name: 'Holy Shield', cost: 1, rarity: 'Common', effects: 'Gain 12 Block.' },
-            { name: 'Divine Smite', cost: 2, rarity: 'Common', effects: 'Deal 14 damage. Apply 2 Blind.' },
-            { name: 'Blessing', cost: 1, rarity: 'Uncommon', effects: 'Heal 8 HP. Draw 1.' },
-            { name: 'Cleanse', cost: 0, rarity: 'Uncommon', effects: 'Remove all negative statuses. Draw 1.' },
-            { name: 'Sunburst', cost: 3, rarity: 'Rare', effects: 'Deal 20 damage. Heal 10 HP. Gain 8 Block.' },
-            { name: 'Radiance', cost: 2, rarity: 'Uncommon', effects: 'Heal 14 HP.' },
-            { name: 'Luminance', cost: 1, rarity: 'Common', effects: 'Deal 5 damage. Apply 2 Blind.' },
-            { name: 'Searing Light', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Apply 3 Blind.' },
-            { name: 'Blinding Flash', cost: 0, rarity: 'Common', effects: 'Apply 3 Blind.' },
-            { name: 'Beacon', cost: 2, rarity: 'Rare', effects: 'Apply 5 Blind. Heal 15 HP. Draw 1.' },
-            { name: 'Radiant Bolt', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Blind.', starter: true },
-            { name: 'Shielding Light', cost: 1, rarity: 'Starter', effects: 'Gain 8 Block. Apply 2 Blind.', starter: true },
-            { name: 'Divine Barrier', cost: 2, rarity: 'Starter', effects: 'Gain 20 Block. Apply 3 Blind.', starter: true },
-            { name: 'Purify', cost: 2, rarity: 'Starter', effects: 'Cleanse all debuffs. Heal 20 HP. Apply 2 Blind.', starter: true },
-        ],
+        "key":  "light",
+        "label":  "Light",
+        "icon":  "☀️",
+        "color":  "#facc15",
+        "cards":  [
+                      {
+                          "name":  "Shielding Light",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 8 Block. Apply 2 Blind.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Purify",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Cleanse all debuffs. Heal 20 HP. Apply 2 Blind.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Divine Barrier",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 20 Block. Apply 3 Blind.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Radiant Bolt",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Blind.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Sunburst",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Deal 20 damage. Heal 10 HP. Gain 8 Block."
+                      },
+                      {
+                          "name":  "Radiance",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Heal 14 HP."
+                      },
+                      {
+                          "name":  "Blessing",
+                          "cost":  1,
+                          "rarity":  "Uncommon",
+                          "effects":  "Heal 8 HP. Draw 1."
+                      },
+                      {
+                          "name":  "Holy Shield",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 12 Block."
+                      },
+                      {
+                          "name":  "Radiant Bolt",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 7 damage."
+                      },
+                      {
+                          "name":  "Divine Smite",
+                          "cost":  2,
+                          "rarity":  "Common",
+                          "effects":  "Deal 14 damage. Apply 2 Blind."
+                      },
+                      {
+                          "name":  "Purify",
+                          "cost":  0,
+                          "rarity":  "Uncommon",
+                          "effects":  "Remove all negative statuses. Draw 1."
+                      }
+                  ]
     },
     {
-        key: 'grass',
-        label: 'Grass',
-        icon: '🌿',
-        color: '#22c55e',
-        cards: [
-            { name: 'Vine Whip', cost: 1, rarity: 'Common', effects: 'Deal 5 damage. Apply 2 Root.' },
-            { name: 'Thornwhip', cost: 1, rarity: 'Common', effects: 'Deal 7 damage. Apply 1 Root.' },
-            { name: 'Blight', cost: 1, rarity: 'Common', effects: 'Apply 3 Root.' },
-            { name: 'Canopy Strike', cost: 2, rarity: 'Common', effects: 'Deal 10 damage. Apply 3 Root.' },
-            { name: 'Entanglement', cost: 3, rarity: 'Uncommon', effects: 'Deal 12 damage. Apply 8 Root.' },
-            { name: 'Ancient Growth', cost: 2, rarity: 'Rare', effects: 'Deal 6 damage. Apply 4 Root. Root applied this turn is doubled.' },
-            { name: 'Spore Cloud', cost: 1, rarity: 'Common', effects: 'Apply 2 Root. Gain 4 Block.' },
-            { name: 'Thorn Armor', cost: 1, rarity: 'Common', effects: 'Gain 8 Block. Apply 1 Root to the attacker on hit.' },
-            { name: 'Seed Shot', cost: 0, rarity: 'Common', effects: 'Apply 1 Root. Draw 1.' },
-            { name: 'Thicket', cost: 2, rarity: 'Uncommon', effects: 'Apply 4 Root. Deal 6 damage.' },
-            { name: 'Root Bind', cost: 2, rarity: 'Uncommon', effects: 'Apply 4 Root.' },
-            { name: 'Verdant Bloom', cost: 3, rarity: 'Rare', effects: 'Apply 6 Root. Heal 10 HP.' },
-            { name: 'Vine Lash', cost: 1, rarity: 'Starter', effects: 'Deal 5 damage. Apply 1 Root.', starter: true },
-            { name: 'Entangle', cost: 1, rarity: 'Starter', effects: 'Gain 4 Block. Apply 2 Root.', starter: true },
-            { name: 'Overgrowth', cost: 2, rarity: 'Starter', effects: 'Deal 8 damage. Apply 4 Root.', starter: true },
-            { name: 'Verdant Surge', cost: 2, rarity: 'Starter', effects: 'Apply 2 Root. Root applied this turn is doubled.', starter: true },
-        ],
+        "key":  "grass",
+        "label":  "Grass",
+        "icon":  "🌿",
+        "color":  "#22c55e",
+        "cards":  [
+                      {
+                          "name":  "Overgrowth",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 8 damage. Apply 4 Root.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Entangle",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 4 Block. Apply 2 Root.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Vine Lash",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Deal 5 damage. Apply 1 Root.",
+                          "starter":  true
+                      },
+                      {
+                          "name":  "Verdant Surge",
+                          "cost":  2,
+                          "rarity":  "Starter",
+                          "effects":  "Root applied this turn is doubled.",
+                          "starter":  true,
+                          "fade":  true
+                      },
+                      {
+                          "name":  "Spore Cloud",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Apply 2 Root. Gain 4 Block."
+                      },
+                      {
+                          "name":  "Thorn Armor",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Gain 8 Block. On hit: apply 1 Root to attacker."
+                      },
+                      {
+                          "name":  "Seed Shot",
+                          "cost":  0,
+                          "rarity":  "Common",
+                          "effects":  "Apply 1 Root. Draw 1."
+                      },
+                      {
+                          "name":  "Verdant Bloom",
+                          "cost":  3,
+                          "rarity":  "Rare",
+                          "effects":  "Apply 6 Root. Heal 10 HP."
+                      },
+                      {
+                          "name":  "Root Bind",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Apply 4 Root."
+                      },
+                      {
+                          "name":  "Thicket",
+                          "cost":  2,
+                          "rarity":  "Uncommon",
+                          "effects":  "Apply 4 Root. Deal 6 damage."
+                      },
+                      {
+                          "name":  "Vine Whip",
+                          "cost":  1,
+                          "rarity":  "Common",
+                          "effects":  "Deal 5 damage. Apply 1 Root."
+                      }
+                  ]
     },
     {
-        key: 'neutral',
-        label: 'Neutral',
-        icon: '✨',
-        color: '#888888',
-        cards: [
-            { name: 'Focus', cost: 1, rarity: 'Starter', effects: 'Draw 2 cards.', starter: true, fade: true },
-            { name: 'Guard', cost: 1, rarity: 'Starter', effects: 'Gain 8 Block.', starter: true, fade: true },
-            { name: 'Amplify', cost: 1, rarity: 'Starter', effects: 'The next spell you cast gains +50% effect.', starter: true, fade: true },
-            { name: 'Mana Petal', cost: 0, rarity: 'Starter', effects: 'Gain 1 mana.', starter: true, fade: true },
-        ],
-    },
+        "key":  "neutral",
+        "label":  "Neutral",
+        "icon":  "✨",
+        "color":  "#888888",
+        "cards":  [
+                      {
+                          "name":  "Amplify",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "The next spell you cast gains +50% effect.",
+                          "starter":  true,
+                          "fade":  true
+                      },
+                      {
+                          "name":  "Focus",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Draw 2 cards.",
+                          "starter":  true,
+                          "fade":  true
+                      },
+                      {
+                          "name":  "Mana Petal",
+                          "cost":  0,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 1 mana.",
+                          "starter":  true,
+                          "fade":  true
+                      },
+                      {
+                          "name":  "Guard",
+                          "cost":  1,
+                          "rarity":  "Starter",
+                          "effects":  "Gain 8 Block.",
+                          "starter":  true,
+                          "fade":  true
+                      }
+                  ]
+    }
 ];

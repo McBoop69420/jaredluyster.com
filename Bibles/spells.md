@@ -4,15 +4,31 @@ Full spell reference organized by type. All values sourced from `js/data/spells.
 
 **Conventions:**
 - *(S)* = Starter card (part of a class's starting 10-card deck)
-- *Fade* = Card is exiled on play (removed from deck permanently)
+- *Fade* = Exhaust after use for the current combat
 - *On hit* = Reactive effect that triggers when the enemy's attack deals damage through your block
 - Multi-hit spells list each hit separately (e.g. "Twice" = effects listed once, apply twice)
 
 ---
 
+## Spell Tiers
+
+Every **colored** spell exists in three handcrafted versions. Tier is shown as a suffix on the card name:
+
+| Tier | Suffix | Description |
+|---|---|---|
+| Minus | `SpellName−` | Weaker starting version. All colored **starter** cards begin at this tier. |
+| Regular | `SpellName` | Standard version. All **reward and shop** spells are this tier. |
+| Plus | `SpellName+` | Upgraded version. Capped — cannot be upgraded further. |
+
+Each tier is a separate ScriptableObject with its own explicit values (no formula). The minus/plus variants of a spell cross-reference each other via `downgradedVersion` / `upgradedVersion` fields on `SpellData`.
+
+**Neutral/Fade starters** (Focus, Guard, Amplify, Mana Petal) are tier-less and never change.
+
+---
+
 ## Fire 🔥
 
-**Class status:** Char — DoT equal to stacks, ticks at end of enemy turn, decays -1 after ticking.
+**Class status:** Char — DoT equal to stacks, ticks after the player ends their turn and before the enemy acts, decays -1 after ticking.
 
 **Signature buff:** Inferno Core — doubles all Char applied this turn. Single-turn only.
 
@@ -35,20 +51,20 @@ Full spell reference organized by type. All values sourced from `js/data/spells.
 
 ## Water 🌊
 
-**Class status:** Drown — DoT equal to stacks, ticks at end of enemy turn. No decay (permanent).
+**Class status:** Drown — DoT equal to stacks, ticks after the player ends their turn and before the enemy acts. No decay (permanent).
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
 | Wavecrash *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Drown. |
 | Soothing Wave *(S)* | 1 | Starter | Heal 4 HP. Apply 2 Drown. |
 | Drown Surge *(S)* | 2 | Starter | Deal 8 damage. Apply 5 Drown. |
-| Riptide *(S)* | 2 | Starter | Deal 4 damage. Apply 2 Drown. Gain 1 mana next turn. |
+| Riptide *(S)* | 2 | Starter | Deal 4 damage. Apply 2 Drown. |
 | Water Bolt | 1 | Common | Deal 7 damage. |
 | Tidal Shield | 1 | Common | Gain 10 Block. |
 | Tidal Wave | 2 | Common | Deal 12 damage. |
-| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. Gain 1 mana next turn. |
+| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. |
 | Healing Rain | 2 | Common | Heal 12 HP. |
-| Mana Spring | 0 | Uncommon | Gain 1 mana. Draw 1. |
+| Mana Spring | 0 | Uncommon | Draw 1. |
 | Whirlpool | 2 | Uncommon | Deal 14 damage. Apply 3 Drown. |
 | Deep Current | 3 | Rare | Deal 20 damage. Heal 8 HP. |
 
@@ -83,12 +99,12 @@ Full spell reference organized by type. All values sourced from `js/data/spells.
 | Spark Strike *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Shock. |
 | Static Charge *(S)* | 1 | Starter | Deal 4 damage. Apply 2 Shock. |
 | Chain Lightning *(S)* | 2 | Starter | Deal 4 damage three times. Apply 2 Shock. |
-| Surge Engine *(S)* | 2 | Starter | Gain 2 mana next turn. Apply 3 Shock. |
+| Surge Engine *(S)* | 2 | Starter | Apply 3 Shock. |
 | Spark | 1 | Common | Deal 7 damage. Apply 1 Shock. |
 | Arc Surge | 1 | Common | Deal 6 damage. Draw 1. |
 | Chain Bolt | 2 | Common | Deal 10 damage. Apply 2 Shock. |
 | Static Field | 1 | Common | Gain 6 Block. On hit: apply 1 Shock to attacker. |
-| Overcharge | 0 | Uncommon | Gain 2 mana. Discard 1 card. |
+| Overcharge | 0 | Uncommon | Discard 1 card. |
 | Thunderstrike | 2 | Uncommon | Deal 18 damage. |
 | Storm Call | 3 | Rare | Deal 10 damage three times. |
 
@@ -122,9 +138,9 @@ Full spell reference organized by type. All values sourced from `js/data/spells.
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
 | Shadow Strike *(S)* | 1 | Starter | Deal 5 damage. Lifesteal 2. |
-| Curse Touch *(S)* | 1 | Starter | Lifesteal 4. |
-| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 8. |
-| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 12. |
+| Curse Touch *(S)* | 1 | Starter | Lifesteal 3. |
+| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 5. |
+| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 8. |
 | Shadow Bolt | 1 | Common | Deal 9 damage. |
 | Shadow Step | 1 | Common | Gain 8 Block. |
 | Curse | 1 | Common | Lifesteal 6. |
@@ -179,7 +195,7 @@ Full spell reference organized by type. All values sourced from `js/data/spells.
 
 ## Neutral (Universal Starters — All Classes)
 
-All four universal starters are **Fade**. They match the wizard's element color in-game but are Neutral type for damage purposes.
+All four universal starters are normal Neutral cards in the starting deck. They are drawn, played, discarded, and exhausted by Fade like other cards. They match the wizard's element color in-game but are Neutral type for damage purposes.
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
@@ -200,4 +216,4 @@ All four universal starters are **Fade**. They match the wizard's element color 
 
 **Cleanse** (starter Purify): Removes Char, Freeze, Shock, Drown, Root, and Daze from the player. Does not remove Blind or Lifesteal.
 
-**gainMana vs. gainManaNextTurn:** `gainMana` (Mana Petal, Mana Spring, Overcharge) adds mana immediately and can exceed your base max. `gainManaNextTurn` (Riptide, Tidal Flow, Surge Engine) adds bonus mana at the start of your next turn; multiple stack additively.
+**Mana effects:** `gainMana` grants mana immediately. `gainManaNextTurn` queues bonus mana for the next player turn.
