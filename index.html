@@ -511,7 +511,7 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="#" data-route="">
+            <a class="brand" href="index.html">
                 <img class="brand-mark" src="wizard-hat.png" alt="Wizard Battle icon">
                 <div class="brand-copy">
                     <strong>Wizard Battle</strong>
@@ -519,11 +519,11 @@
                 </div>
             </a>
             <nav class="nav" id="main-nav">
-                <a href="#" data-route="">Home</a>
-                <a href="#keywords" data-route="keywords">Keywords</a>
-                <a href="#type-chart" data-route="type-chart">Type Chart</a>
-                <a href="#cards" data-route="cards">Cards</a>
-                <a href="https://github.com/McBoop69420/jaredluyster.com/releases/download/wizard-battle-windows-2026-05-27/WizardBattle-Windows.zip">Download</a>
+                <a class="active" href="index.html">Home</a>
+                <a href="keywords.html">Keywords</a>
+                <a href="type-chart.html">Type Chart</a>
+                <a href="cards.html">Cards</a>
+                <a href="download.html">Download</a>
                 <button class="nav-refresh" onclick="location.reload()" title="Refresh">↺</button>
             </nav>
         </div>
@@ -550,11 +550,11 @@
                                 <h1>Wizard Battle</h1>
                                 <p class="lead">Wizard Battle is a roguelike deckbuilder where elemental matchups matter, every route reshapes your deck, and each wizard pushes a different style of spellcraft.</p>
                                 <div class="cta-row">
-                                    <a class="button button-primary" href="#keywords">Browse Keywords</a>
-                                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/download/wizard-battle-windows-2026-05-27/WizardBattle-Windows.zip">Download Windows Build</a>
+                                    <a class="button button-primary" href="keywords.html">Browse Keywords</a>
+                                    <a class="button button-secondary" href="download.html">Download Windows Build</a>
                                     <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
-                                    <a class="button button-secondary" href="#type-chart">View Type Chart</a>
-                                    <a class="button button-secondary" href="#cards">View All Cards</a>
+                                    <a class="button button-secondary" href="type-chart.html">View Type Chart</a>
+                                    <a class="button button-secondary" href="cards.html">View All Cards</a>
                                 </div>
                                 <div class="hero-stats">
                                     <div class="stat" style="--stat-color:var(--plum)"><strong>8</strong><span>Wizard classes</span></div>
@@ -906,7 +906,7 @@
         };
 
         function getRoute() {
-            return location.hash.replace(/^#\/?/, '');
+            return '';
         }
 
         function render() {
@@ -916,10 +916,6 @@
             document.getElementById('app').innerHTML = page.render();
             window.scrollTo(0, 0);
 
-            // Update active nav link
-            document.querySelectorAll('#main-nav a').forEach(a => {
-                a.classList.toggle('active', a.dataset.route === (pages[route] ? route : ''));
-            });
         }
 
         window.addEventListener('hashchange', render);

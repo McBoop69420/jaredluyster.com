@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle elemental type chart and matchup reference.">
+    <title>Wizard Battle — Type Chart</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="reference-pages.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="index.html">
+                <img class="brand-mark" src="wizard-hat.png" alt="Wizard Battle icon">
+                <div class="brand-copy">
+                    <strong>Wizard Battle</strong>
+                    <span>Roguelike Deckbuilder</span>
+                </div>
+            </a>
+            <nav class="nav" id="main-nav">
+                <a href="index.html">Home</a>
+                <a href="keywords.html">Keywords</a>
+                <a class="active" href="type-chart.html">Type Chart</a>
+                <a href="cards.html">Cards</a>
+                <a href="download.html">Download</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page-narrow">
+        <h1 class="page-title">Type Chart</h1>
+        <p class="subtitle">Click a type to highlight its matchups. Rows are attackers, columns are defenders.</p>
+        <div style="display:flex;justify-content:center;margin-bottom:40px;">
+            <svg id="wheelSvg" style="width:340px;height:360px;overflow:visible;" viewBox="-175 -150 350 360">
+                <defs>
+                    <marker id="arr-super" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                        <path d="M0,0 L0,6 L8,3 z" fill="#66ff99" opacity="0.85"></path>
+                    </marker>
+                </defs>
+                <g id="arrowLayer"></g>
+                <g id="nodeLayer"></g>
+            </svg>
+        </div>
+        <table>
+            <thead>
+                <tr><th></th><th>Fire</th><th>Water</th><th>Rock</th><th>Arc</th><th>Ice</th><th>Shadow</th><th>Light</th><th>Grass</th></tr>
+            </thead>
+            <tbody>
+                <tr><th>Fire</th><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td></tr>
+                <tr><th>Water</th><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
+                <tr><th>Rock</th><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
+                <tr><th>Arc</th><td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
+                <tr><th>Ice</th><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td></tr>
+                <tr><th>Shadow</th><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td></tr>
+                <tr><th>Light</th><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td></tr>
+                <tr><th>Grass</th><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td></tr>
+            </tbody>
+        </table>
+    </main>
+
+    <footer class="shell footer">
+        Public reference pages for Wizard Battle live in this site repository.
+    </footer>
+
+    <script>
+        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
+        const TYPE_ICONS = { Fire:'TypeIcons/icon_fire.png', Water:'TypeIcons/icon_water.png', Rock:'TypeIcons/icon_rock.png', Arc:'TypeIcons/icon_arc.png', Ice:'TypeIcons/icon_ice.png', Shadow:'TypeIcons/icon_shadow.png', Light:'TypeIcons/icon_light.png', Grass:'TypeIcons/icon_grass.png' };
+        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#33aa55' };
+        const EFF = {
+            Fire: { Fire:1, Water:0.5, Rock:0.5, Arc:0.5, Ice:2, Shadow:2, Light:1, Grass:2 },
+            Water: { Fire:2, Water:1, Rock:2, Arc:0.5, Ice:1, Shadow:0.5, Light:2, Grass:0.5 },
+            Rock: { Fire:2, Water:0.5, Rock:1, Arc:2, Ice:0.5, Shadow:1, Light:2, Grass:0.5 },
+            Arc: { Fire:2, Water:2, Rock:0.5, Arc:1, Ice:0.5, Shadow:2, Light:0.5, Grass:1 },
+            Ice: { Fire:0.5, Water:1, Rock:2, Arc:2, Ice:1, Shadow:2, Light:0.5, Grass:0.5 },
+            Shadow: { Fire:0.5, Water:2, Rock:1, Arc:0.5, Ice:0.5, Shadow:1, Light:2, Grass:2 },
+            Light: { Fire:1, Water:0.5, Rock:0.5, Arc:2, Ice:2, Shadow:0.5, Light:1, Grass:2 },
+            Grass: { Fire:0.5, Water:2, Rock:2, Arc:1, Ice:2, Shadow:0.5, Light:0.5, Grass:1 },
+        };
+
+        const radius = 110;
+        const hexOrder = ['Fire','Grass','Ice','Rock','Arc','Water'];
+        const positions = {};
+        hexOrder.forEach((type, i) => {
+            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+            positions[type] = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+        });
+        positions.Shadow = { x: -75, y: 160 };
+        positions.Light = { x: 75, y: 160 };
+
+        const arrowLayer = document.getElementById('arrowLayer');
+        const nodeLayer = document.getElementById('nodeLayer');
+
+        function shortenLine(x1, y1, x2, y2, amount) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            return { x1: x1 + dx / length * amount, y1: y1 + dy / length * amount, x2: x2 - dx / length * amount, y2: y2 - dy / length * amount };
+        }
+
+        TYPES.forEach(attacker => {
+            TYPES.forEach(defender => {
+                if (EFF[attacker][defender] !== 2) return;
+                const p1 = positions[attacker];
+                const p2 = positions[defender];
+                const lineCoords = shortenLine(p1.x, p1.y, p2.x, p2.y, 36);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', lineCoords.x1);
+                line.setAttribute('y1', lineCoords.y1);
+                line.setAttribute('x2', lineCoords.x2);
+                line.setAttribute('y2', lineCoords.y2);
+                line.setAttribute('stroke', '#66ff99');
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('opacity', '0.65');
+                line.setAttribute('marker-end', 'url(#arr-super)');
+                line.setAttribute('class', `arrow from-${attacker} to-${defender}`);
+                arrowLayer.appendChild(line);
+            });
+        });
+
+        let selectedType = null;
+        Object.keys(positions).forEach(type => {
+            const pos = positions[type];
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'type-node');
+            group.setAttribute('data-type', type);
+            group.setAttribute('transform', `translate(${pos.x},${pos.y})`);
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', '32');
+            circle.setAttribute('fill', TYPE_COLORS[type] + '22');
+            circle.setAttribute('stroke', TYPE_COLORS[type]);
+            circle.setAttribute('stroke-width', '2.5');
+
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            icon.setAttribute('href', TYPE_ICONS[type]);
+            icon.setAttribute('x', '-12');
+            icon.setAttribute('y', '-24');
+            icon.setAttribute('width', '24');
+            icon.setAttribute('height', '24');
+            icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dominant-baseline', 'central');
+            label.setAttribute('y', '14');
+            label.setAttribute('font-size', '8');
+            label.setAttribute('fill', TYPE_COLORS[type]);
+            label.setAttribute('font-weight', '700');
+            label.setAttribute('letter-spacing', '0.04em');
+            label.textContent = type.toUpperCase();
+
+            group.appendChild(circle);
+            group.appendChild(icon);
+            group.appendChild(label);
+            group.addEventListener('click', () => {
+                selectedType = selectedType === type ? null : type;
+                nodeLayer.querySelectorAll('.type-node').forEach(node => {
+                    node.setAttribute('opacity', !selectedType || node.getAttribute('data-type') === selectedType ? '1' : '0.25');
+                });
+                arrowLayer.querySelectorAll('line').forEach(line => {
+                    const cls = line.getAttribute('class') || '';
+                    line.setAttribute('opacity', !selectedType || cls.includes(`from-${selectedType}`) || cls.includes(`to-${selectedType}`) ? '1' : '0.05');
+                });
+            });
+            nodeLayer.appendChild(group);
+        });
+    </script>
+</body>
+</html>

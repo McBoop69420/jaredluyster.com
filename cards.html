@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle spell card reference for all elements, starters, and draft cards.">
+    <title>Wizard Battle — Card Reference</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="reference-pages.css">
+    <script src="tagify.js"></script>
+    <script src="cards-data.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="index.html">
+                <img class="brand-mark" src="wizard-hat.png" alt="Wizard Battle icon">
+                <div class="brand-copy">
+                    <strong>Wizard Battle</strong>
+                    <span>Roguelike Deckbuilder</span>
+                </div>
+            </a>
+            <nav class="nav" id="main-nav">
+                <a href="index.html">Home</a>
+                <a href="keywords.html">Keywords</a>
+                <a href="type-chart.html">Type Chart</a>
+                <a class="active" href="cards.html">Cards</a>
+                <a href="download.html">Download</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1 class="page-title">Card Reference</h1>
+        <p class="subtitle">Full spell list for every element, including class starters and shared neutral cards.</p>
+        <div class="cards-toolbar">
+            <div class="cards-meta" id="pool-filter"></div>
+            <input class="cards-search" id="card-search" type="search" placeholder="Search cards, effects, or keywords">
+        </div>
+        <div class="elem-filter" id="elem-filter"></div>
+        <div id="card-sections"></div>
+    </main>
+
+    <footer class="shell footer">
+        Public reference pages for Wizard Battle live in this site repository.
+    </footer>
+
+    <script>
+        const CYCLE_ORDER = ['fire','grass','ice','rock','arc','water','shadow','light','neutral'];
+        const byKey = Object.fromEntries(CARD_REFERENCE.map(element => [element.key, element]));
+        const elements = CYCLE_ORDER.map(key => byKey[key]).filter(Boolean);
+        const allCards = elements.flatMap(element => element.cards);
+        const draftableCount = allCards.filter(card => !card.starter).length;
+        const starterCount = allCards.filter(card => card.starter).length;
+        const fadeCount = allCards.filter(card => card.fade).length;
+        const rarityOrder = { Starter: 0, Common: 1, Uncommon: 2, Rare: 3 };
+
+        function iconHTML(element, cls = 'type-icon') {
+            return element.icon.endsWith('.png')
+                ? `<img class="${cls}" src="${element.icon}" alt="${element.label}">`
+                : `<span class="${cls}">${element.icon}</span>`;
+        }
+
+        function sortedCards(cards) {
+            return [...cards].sort((a, b) => (rarityOrder[a.rarity] ?? 99) - (rarityOrder[b.rarity] ?? 99));
+        }
+
+        function cardHTML(card, color) {
+            const rarityClass = 'rarity-' + card.rarity.toLowerCase();
+            const effects = card.effects + (card.fade ? ' Fade.' : '');
+            return `<article class="spell-card" style="--c:${color}" data-name="${card.name}" data-effects="${effects}" data-starter="${card.starter ? '1' : '0'}" data-fade="${card.fade ? '1' : '0'}">
+                <div class="card-header">
+                    <div class="card-name" style="color:${color}">${card.name}</div>
+                    <div class="card-cost">${card.cost}</div>
+                </div>
+                <div class="card-desc">${tagify(effects)}</div>
+                <div class="card-footer">
+                    ${card.starter ? '<span class="starter-badge">Starter Deck</span>' : `<span class="rarity ${rarityClass}">${card.rarity}</span>`}
+                </div>
+            </article>`;
+        }
+
+        document.getElementById('pool-filter').innerHTML = `
+            <button class="meta-pill" data-pool="all"><strong>${allCards.length}</strong>Total cards</button>
+            <button class="meta-pill" data-pool="draft"><strong>${draftableCount}</strong>Draft pool</button>
+            <button class="meta-pill" data-pool="starter"><strong>${starterCount}</strong>Starter cards</button>
+            <button class="meta-pill" data-pool="fade"><strong>${fadeCount}</strong>Fade cards</button>
+        `;
+
+        document.getElementById('elem-filter').innerHTML = `
+            <button class="elem-btn active" data-elem="all">All</button>
+            ${elements.map(element => `<button class="elem-btn" data-elem="${element.key}">${iconHTML(element, 'type-icon small')} ${element.label}</button>`).join('')}
+        `;
+
+        document.getElementById('card-sections').innerHTML = elements.map(element => `
+            <section class="elem-section" data-elem="${element.key}">
+                <div class="elem-header" style="--elem-color:${element.color}">${iconHTML(element)} ${element.label}</div>
+                <div class="card-grid">${sortedCards(element.cards).map(card => cardHTML(card, element.color)).join('')}</div>
+            </section>
+        `).join('');
+
+        const filter = document.getElementById('elem-filter');
+        const search = document.getElementById('card-search');
+        let activeElement = 'all';
+        let activePool = 'all';
+
+        function updateCards() {
+            const query = (search.value || '').trim().toLowerCase();
+            document.querySelectorAll('.elem-section').forEach(section => {
+                const matchesElement = activeElement === 'all' || section.dataset.elem === activeElement;
+                let visibleCards = 0;
+
+                section.querySelectorAll('.spell-card').forEach(card => {
+                    const haystack = `${card.dataset.name} ${card.dataset.effects}`.toLowerCase();
+                    const matchesQuery = !query || haystack.includes(query);
+                    const isStarter = card.dataset.starter === '1';
+                    const isFade = card.dataset.fade === '1';
+                    const matchesPool =
+                        activePool === 'all' ? true :
+                        activePool === 'draft' ? !isStarter :
+                        activePool === 'starter' ? isStarter :
+                        activePool === 'fade' ? isFade : true;
+                    const show = matchesElement && matchesQuery && matchesPool;
+                    card.hidden = !show;
+                    if (show) visibleCards += 1;
+                });
+
+                section.hidden = visibleCards === 0 || !matchesElement;
+            });
+        }
+
+        filter.addEventListener('click', event => {
+            const button = event.target.closest('.elem-btn');
+            if (!button) return;
+            activeElement = button.dataset.elem;
+            document.querySelectorAll('.elem-btn').forEach(btn => btn.classList.toggle('active', btn === button));
+            updateCards();
+        });
+
+        document.getElementById('pool-filter').addEventListener('click', event => {
+            const button = event.target.closest('.meta-pill');
+            if (!button) return;
+            const pool = button.dataset.pool;
+            activePool = activePool === pool ? 'all' : pool;
+            document.querySelectorAll('.meta-pill').forEach(btn => btn.classList.toggle('active', btn.dataset.pool === activePool));
+            updateCards();
+        });
+
+        search.addEventListener('input', updateCards);
+        updateCards();
+    </script>
+</body>
+</html>
