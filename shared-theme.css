@@ -126,6 +126,12 @@ button {
     font-size: 1.5rem;
 }
 
+.brand-mark {
+    padding: 0;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.04);
+}
+
 .brand-copy strong {
     display: block;
     font-size: 0.9rem;
