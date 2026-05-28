@@ -6,7 +6,6 @@
     <meta name="description" content="Wizard Battle is a roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.">
     <title>Wizard Battle</title>
     <link rel="stylesheet" href="shared-theme.css">
-    <script src="tagify.js"></script>
     <style>
         body {
             overflow-x: hidden;
@@ -483,29 +482,6 @@
             .keyword-grid { grid-template-columns: 1fr; }
         }
 
-        .nav-refresh {
-            display: grid;
-            place-items: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 236, 209, 0.12);
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--muted);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: color 0.15s, background 0.15s, transform 0.2s;
-            margin-left: 6px;
-        }
-
-        .nav-refresh:hover {
-            color: var(--ink);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .nav-refresh:active {
-            transform: rotate(180deg);
-        }
     </style>
 </head>
 <body>
@@ -524,7 +500,6 @@
                 <a href="type-chart.html">Type Chart</a>
                 <a href="cards.html">Cards</a>
                 <a href="download.html">Download</a>
-                <button class="nav-refresh" onclick="location.reload()" title="Refresh">↺</button>
             </nav>
         </div>
     </header>
@@ -535,7 +510,6 @@
         Public reference pages for Wizard Battle live in this site repository.
     </footer>
 
-    <script src="cards-data.js"></script>
     <script>
         const pages = {
             '': {
@@ -550,11 +524,11 @@
                                 <h1>Wizard Battle</h1>
                                 <p class="lead">Wizard Battle is a roguelike deckbuilder where elemental matchups matter, every route reshapes your deck, and each wizard pushes a different style of spellcraft.</p>
                                 <div class="cta-row">
-                                    <a class="button button-primary" href="keywords.html">Browse Keywords</a>
-                                    <a class="button button-secondary" href="download.html">Download Windows Build</a>
-                                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
+                                    <a class="button button-primary" href="download.html">Download Windows Build</a>
+                                    <a class="button button-secondary" href="keywords.html">Browse Keywords</a>
                                     <a class="button button-secondary" href="type-chart.html">View Type Chart</a>
                                     <a class="button button-secondary" href="cards.html">View All Cards</a>
+                                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
                                 </div>
                                 <div class="hero-stats">
                                     <div class="stat" style="--stat-color:var(--plum)"><strong>8</strong><span>Wizard classes</span></div>
@@ -610,315 +584,15 @@
                         </div>
                     </section>`;
                 }
-            },
-
-            'keywords': {
-                title: 'Wizard Battle — Keywords',
-                render() {
-                    document.getElementById('site-footer').hidden = true;
-                    return `
-                    <div class="page-centered">
-                        <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.06em;">Keywords</h1>
-                        <p class="subtitle" style="letter-spacing:.05em;">Reference page for the game's core mechanics and status terms.</p>
-                        <div class="keyword-grid">
-                            ${[
-                                { color:'#94a3b8', icon:'🛡️', name:'Block',     short:'Damage absorption', desc:'Absorbs incoming damage before HP. Player Block resets to 0 at the start of each player turn.' },
-                                { color:'#c4b5fd', icon:'🪄', name:'Fade',      short:'Combat exhaust',     desc:'After this card is played, it goes to the exhaust pile and does not return for the current combat.' },
-                                { color:'#ff6633', icon:'🔥', name:'Char',      short:'Burning damage',     desc:'After you end your turn, the enemy takes damage equal to its Char stacks before acting, then loses 1 stack.' },
-                                { color:'#66ddff', icon:'❄️', name:'Freeze',    short:'Turn denial',        desc:'At 5 stacks, the enemy skips its action and all Freeze stacks are consumed.' },
-                                { color:'#ffdd00', icon:'⚡', name:'Shock',     short:'Arc amplifier',      desc:'Arc attacks deal ×1.25 damage per Shock stack. Shock decays by 1 each turn.' },
-                                { color:'#4488ff', icon:'🌊', name:'Drown',     short:'Persistent damage',  desc:'After you end your turn, the enemy takes damage equal to its Drown stacks before acting. Drown does not decay.' },
-                                { color:'#44cc66', icon:'🌿', name:'Root',      short:'Burst on hit',       desc:'When the target takes damage, Root detonates for 2× current stacks as bonus damage, then all Root is consumed.' },
-                                { color:'#cc6666', icon:'💔', name:'Weak',      short:'Damage reduction',   desc:'The afflicted target deals 25% less damage while Weak remains. Weak decays by 1 each turn.' },
-                                { color:'#d4af37', icon:'💪', name:'Strength',  short:'Damage bonus',       desc:'Adds flat bonus damage to attacks and spell damage. Strength does not decay.' },
-                                { color:'#cc9944', icon:'💫', name:'Daze',      short:'Action confusion',   desc:'50% chance the enemy repeats its previous action instead of its intended one. Daze decays by 1 each turn.' },
-                                { color:'#f2f2f2', icon:'✨', name:'Blind',     short:'Miss chance',        desc:'50% chance the enemy attack misses entirely. Blind decays by 1 each turn.' },
-                                { color:'#cc66ff', icon:'🌙', name:'Lifesteal', short:'HP drain',           desc:'Shadow drain effects damage the enemy and heal the player for the drained amount, capped by max HP.' },
-                            ].map(k => `<article class="keyword-card" style="--kw-color:${k.color}"><div class="keyword-icon">${k.icon}</div><div><div class="keyword-header"><div class="keyword-name">${k.name}</div><div class="keyword-short">${k.short}</div></div><div class="keyword-desc">${tagify(k.desc)}</div></div></article>`).join('')}
-                        </div>
-                    </div>`;
-                }
-            },
-
-            'type-chart': {
-                title: 'Wizard Battle — Type Chart',
-                render() {
-                    document.getElementById('site-footer').hidden = true;
-                    setTimeout(() => {
-                        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
-                        const TYPE_ICONS = { Fire:'TypeIcons/icon_fire.png', Water:'TypeIcons/icon_water.png', Rock:'TypeIcons/icon_rock.png', Arc:'TypeIcons/icon_arc.png', Ice:'TypeIcons/icon_ice.png', Shadow:'TypeIcons/icon_shadow.png', Light:'TypeIcons/icon_light.png', Grass:'TypeIcons/icon_grass.png' };
-                        const TYPE_COLORS = { Fire:'#ff4422', Water:'#2277ff', Rock:'#a87832', Arc:'#f97316', Ice:'#88ddff', Shadow:'#bb33ee', Light:'#facc15', Grass:'#33aa55' };
-                        // Revised 8-type chart from Wizard Battle's TypeChart.cs.
-                        // Each type has 3 strengths, 3 weaknesses, and 1 neutral pair.
-                        const EFF = {
-                            Fire:   { Fire:1,   Water:0.5, Rock:0.5, Arc:0.5, Ice:2,   Shadow:2,   Light:1,   Grass:2   },
-                            Water:  { Fire:2,   Water:1,   Rock:2,   Arc:0.5, Ice:1,   Shadow:0.5, Light:2,   Grass:0.5 },
-                            Rock:   { Fire:2,   Water:0.5, Rock:1,   Arc:2,   Ice:0.5, Shadow:1,   Light:2,   Grass:0.5 },
-                            Arc:    { Fire:2,   Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Shadow:2,   Light:0.5, Grass:1   },
-                            Ice:    { Fire:0.5, Water:1,   Rock:2,   Arc:2,   Ice:1,   Shadow:2,   Light:0.5, Grass:0.5 },
-                            Shadow: { Fire:0.5, Water:2,   Rock:1,   Arc:0.5, Ice:0.5, Shadow:1,   Light:2,   Grass:2   },
-                            Light:  { Fire:1,   Water:0.5, Rock:0.5, Arc:2,   Ice:2,   Shadow:0.5, Light:1,   Grass:2   },
-                            Grass:  { Fire:0.5, Water:2,   Rock:2,   Arc:1,   Ice:2,   Shadow:0.5, Light:0.5, Grass:1   },
-                        };
-
-                        // Hexagon: Fire(top) → Grass → Ice → Rock → Arc → Water → back to Fire
-                        // Clockwise starting at top
-                        const R = 110;
-                        const hexOrder = ['Fire','Grass','Ice','Rock','Arc','Water'];
-                        const positions = {};
-                        hexOrder.forEach((t, i) => {
-                            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                            positions[t] = { x: Math.cos(angle) * R, y: Math.sin(angle) * R };
-                        });
-                        positions.Shadow = { x: -75, y: 160 };
-                        positions.Light  = { x:  75, y: 160 };
-
-                        const svg = document.getElementById('wheelSvg');
-                        const arrowLayer = document.getElementById('arrowLayer');
-                        const nodeLayer  = document.getElementById('nodeLayer');
-
-                        function shortenLine(x1,y1,x2,y2,amt) {
-                            const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
-                            return { x1:x1+dx/len*amt, y1:y1+dy/len*amt, x2:x2-dx/len*amt, y2:y2-dy/len*amt };
-                        }
-
-                        const OFFSET = 9;
-                        function hasBoth(a,b) {
-                            const fv=EFF[a][b], rv=EFF[b][a];
-                            return (fv>=2||fv<=0.5)&&(rv>=2||rv<=0.5);
-                        }
-                        function pairOffset(from,to,val) {
-                            const pa=positions[from], pb=positions[to];
-                            const dx=pb.x-pa.x, dy=pb.y-pa.y, len=Math.sqrt(dx*dx+dy*dy);
-                            const nx=-dy/len, ny=dx/len;
-                            const mx=(pa.x+pb.x)/2, my=(pa.y+pb.y)/2;
-                            const outward=(mx*nx+my*ny)>0?1:-1;
-                            const side=val>=2?outward:-outward;
-                            return { ox:nx*OFFSET*side, oy:ny*OFFSET*side };
-                        }
-                        // Draw all super-effective relationships from the current 8-type chart.
-                        TYPES.forEach(attacker => {
-                            TYPES.forEach(defender => {
-                                if (EFF[attacker][defender] !== 2) return;
-                                const p1=positions[attacker], p2=positions[defender];
-                                const s=shortenLine(p1.x,p1.y,p2.x,p2.y,36);
-                                const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-                                line.setAttribute('x1',s.x1); line.setAttribute('y1',s.y1);
-                                line.setAttribute('x2',s.x2); line.setAttribute('y2',s.y2);
-                                line.setAttribute('stroke','#66ff99'); line.setAttribute('stroke-width','2');
-                                line.setAttribute('opacity','0.65');
-                                line.setAttribute('marker-end','url(#arr-super)');
-                                line.setAttribute('class',`arrow from-${attacker} to-${defender}`);
-                                arrowLayer.appendChild(line);
-                            });
-                        });
-                        let selectedType=null;
-                        Object.keys(positions).forEach(t => {
-                            const pos=positions[t];
-                            const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-                            g.setAttribute('class','type-node'); g.setAttribute('data-type',t);
-                            g.setAttribute('transform',`translate(${pos.x},${pos.y})`);
-                            g.style.cursor='pointer';
-                            const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
-                            circle.setAttribute('r','32');
-                            circle.setAttribute('fill',TYPE_COLORS[t]+'22');
-                            circle.setAttribute('stroke',TYPE_COLORS[t]);
-                            circle.setAttribute('stroke-width','2.5');
-                            const icon=document.createElementNS('http://www.w3.org/2000/svg','image');
-                            icon.setAttribute('href',TYPE_ICONS[t]);
-                            icon.setAttribute('x','-12'); icon.setAttribute('y','-24');
-                            icon.setAttribute('width','24'); icon.setAttribute('height','24');
-                            icon.setAttribute('preserveAspectRatio','xMidYMid meet');
-                            const label=document.createElementNS('http://www.w3.org/2000/svg','text');
-                            label.setAttribute('text-anchor','middle'); label.setAttribute('dominant-baseline','central');
-                            label.setAttribute('y','14'); label.setAttribute('font-size','8');
-                            label.setAttribute('fill',TYPE_COLORS[t]); label.setAttribute('font-weight','700');
-                            label.setAttribute('letter-spacing','0.04em');
-                            label.textContent=t.toUpperCase();
-                            g.appendChild(circle); g.appendChild(icon); g.appendChild(label);
-                            g.addEventListener('click', () => {
-                                if (selectedType===t) {
-                                    selectedType=null;
-                                    nodeLayer.querySelectorAll('.type-node').forEach(n=>n.setAttribute('opacity','1'));
-                                    arrowLayer.querySelectorAll('line,path').forEach(l=>l.setAttribute('opacity','0.6'));
-                                    return;
-                                }
-                                selectedType=t;
-                                nodeLayer.querySelectorAll('.type-node').forEach(n => {
-                                    n.setAttribute('opacity', n.getAttribute('data-type')===t ? '1' : '0.25');
-                                });
-                                arrowLayer.querySelectorAll('line,path').forEach(l => {
-                                    const cls=l.getAttribute('class')||'';
-                                    l.setAttribute('opacity', cls.includes(`from-${t}`)||cls.includes(`to-${t}`) ? '1' : '0.05');
-                                });
-                            });
-                            nodeLayer.appendChild(g);
-                        });
-                    }, 0);
-
-                    return `
-                    <div class="page-narrow">
-                        <h1 class="page-title" style="font-size:clamp(1.6rem,4vw,2.4rem);">Type Chart</h1>
-                        <p class="subtitle">Click a type to highlight its matchups. Rows are attackers, columns are defenders.</p>
-                        <div style="display:flex;justify-content:center;margin-bottom:40px;">
-                          <svg id="wheelSvg" style="width:340px;height:360px;overflow:visible;" viewBox="-175 -150 350 360">
-                            <defs>
-                              <marker id="arr-super"    markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#66ff99" opacity="0.85"/></marker>
-                              <marker id="arr-self"     markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff7755" opacity="0.9"/></marker>
-                              <marker id="arr-self-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff4444" opacity="0.9"/></marker>
-                            </defs>
-                            <g id="arrowLayer"></g>
-                            <g id="nodeLayer"></g>
-                          </svg>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr><th></th><th>Fire</th><th>Water</th><th>Rock</th><th>Arc</th><th>Ice</th><th>Shadow</th><th>Light</th><th>Grass</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><th>Fire</th>  <td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td></tr>
-                                <tr><th>Water</th> <td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
-                                <tr><th>Rock</th>  <td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td></tr>
-                                <tr><th>Arc</th>   <td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td></tr>
-                                <tr><th>Ice</th>   <td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td></tr>
-                                <tr><th>Shadow</th><td class="bad">0.5x</td><td class="good">2x</td><td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td><td class="good">2x</td></tr>
-                                <tr><th>Light</th> <td>1x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td class="bad">0.5x</td><td>1x</td><td class="good">2x</td></tr>
-                                <tr><th>Grass</th> <td class="bad">0.5x</td><td class="good">2x</td><td class="good">2x</td><td>1x</td><td class="good">2x</td><td class="bad">0.5x</td><td class="bad">0.5x</td><td>1x</td></tr>
-                            </tbody>
-                        </table>
-                    </div>`;
-                }
-            },
-
-            'cards': {
-                title: 'Wizard Battle — Card Reference',
-                render() {
-                    document.getElementById('site-footer').hidden = true;
-                    const CYCLE_ORDER = ['fire','grass','ice','rock','arc','water','shadow','light','neutral'];
-                    const byKey = Object.fromEntries(CARD_REFERENCE.map(el => [el.key, el]));
-                    const iconHTML = (el, cls='type-icon') => el.icon.endsWith('.png') ? `<img class="${cls}" src="${el.icon}" alt="${el.label}">` : `<span class="${cls}">${el.icon}</span>`;
-                    const elements = CYCLE_ORDER.map(k => byKey[k]).filter(Boolean);
-                    const allCards = elements.flatMap(el => el.cards);
-                    const draftableCount = allCards.filter(card => !card.starter).length;
-                    const starterCount = allCards.filter(card => card.starter).length;
-                    const fadeCount = allCards.filter(card => card.fade).length;
-
-                    const RARITY_ORDER = { Starter: 0, Common: 1, Uncommon: 2, Rare: 3 };
-                    function sortedCards(cards) {
-                        return [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 99) - (RARITY_ORDER[b.rarity] ?? 99));
-                    }
-
-                    function cardHTML(c, color) {
-                        const rarityClass = 'rarity-' + c.rarity.toLowerCase();
-                        return `<article class="spell-card" style="--c:${color}" data-name="${c.name}" data-effects="${c.effects}${c.fade ? ' Fade.' : ''}" data-starter="${c.starter ? '1' : '0'}" data-fade="${c.fade ? '1' : '0'}">
-                            <div class="card-header">
-                                <div class="card-name" style="color:${color}">${c.name}</div>
-                                <div class="card-cost">${c.cost}</div>
-                            </div>
-                            <div class="card-desc">${tagify(c.effects + (c.fade ? ' Fade.' : ''))}</div>
-                            <div class="card-footer">
-                                ${c.starter ? '<span class="starter-badge">Starter Deck</span>' : `<span class="rarity ${rarityClass}">${c.rarity}</span>`}
-                            </div>
-                        </article>`;
-                    }
-
-                    const sectionsHTML = elements.map(el => `
-                        <section class="elem-section" data-elem="${el.key}">
-                            <div class="elem-header" style="--elem-color:${el.color}">${iconHTML(el)} ${el.label}</div>
-                            <div class="card-grid">${sortedCards(el.cards).map(c => cardHTML(c, el.color)).join('')}</div>
-                        </section>
-                    `).join('');
-
-                    const filterHTML = `<div class="elem-filter" id="elem-filter">
-                        <button class="elem-btn active" data-elem="all">All</button>
-                        ${elements.map(el => `<button class="elem-btn" data-elem="${el.key}">${iconHTML(el, 'type-icon small')} ${el.label}</button>`).join('')}
-                    </div>`;
-
-                    setTimeout(() => {
-                        const filter = document.getElementById('elem-filter');
-                        const search = document.getElementById('card-search');
-                        let activeElement = 'all';
-                        let activePool = 'all'; // 'all' | 'draft' | 'starter' | 'fade'
-
-                        function updateCards() {
-                            const query = (search.value || '').trim().toLowerCase();
-                            document.querySelectorAll('.elem-section').forEach(section => {
-                                const matchesElement = activeElement === 'all' || section.dataset.elem === activeElement;
-                                let visibleCards = 0;
-
-                                section.querySelectorAll('.spell-card').forEach(card => {
-                                    const haystack = `${card.dataset.name} ${card.dataset.effects}`.toLowerCase();
-                                    const matchesQuery = !query || haystack.includes(query);
-                                    const isStarter = card.dataset.starter === '1';
-                                    const isFade = card.dataset.fade === '1';
-                                    const matchesPool =
-                                        activePool === 'all' ? true :
-                                        activePool === 'draft' ? !isStarter :
-                                        activePool === 'starter' ? isStarter :
-                                        activePool === 'fade' ? isFade : true;
-                                    const show = matchesElement && matchesQuery && matchesPool;
-                                    card.hidden = !show;
-                                    if (show) visibleCards += 1;
-                                });
-
-                                section.hidden = visibleCards === 0 || !matchesElement;
-                            });
-                        }
-
-                        filter.addEventListener('click', e => {
-                            const btn = e.target.closest('.elem-btn');
-                            if (!btn) return;
-                            activeElement = btn.dataset.elem;
-                            document.querySelectorAll('.elem-btn').forEach(b => b.classList.toggle('active', b === btn));
-                            updateCards();
-                        });
-
-                        document.getElementById('pool-filter').addEventListener('click', e => {
-                            const btn = e.target.closest('.meta-pill');
-                            if (!btn) return;
-                            const pool = btn.dataset.pool;
-                            activePool = activePool === pool ? 'all' : pool;
-                            document.querySelectorAll('.meta-pill').forEach(b => b.classList.toggle('active', b.dataset.pool === activePool));
-                            updateCards();
-                        });
-
-                        search.addEventListener('input', updateCards);
-                        updateCards();
-                    }, 0);
-
-                    return `
-                    <div class="page">
-                        <h1 class="page-title">Card Reference</h1>
-                        <p class="subtitle">Full spell list for every element, including class starters and shared neutral cards.</p>
-                        <div class="cards-toolbar">
-                            <div class="cards-meta" id="pool-filter">
-                                <button class="meta-pill" data-pool="all"><strong>${allCards.length}</strong>Total cards</button>
-                                <button class="meta-pill" data-pool="draft"><strong>${draftableCount}</strong>Draft pool</button>
-                                <button class="meta-pill" data-pool="starter"><strong>${starterCount}</strong>Starter cards</button>
-                            </div>
-                            <input class="cards-search" id="card-search" type="search" placeholder="Search cards, effects, or keywords">
-                        </div>
-                        ${filterHTML}
-                        ${sectionsHTML}
-                    </div>`;
-                }
             }
         };
 
-        function getRoute() {
-            return '';
-        }
-
         function render() {
-            const route = getRoute();
-            const page = pages[route] || pages[''];
+            const page = pages[''];
             document.title = page.title;
             document.getElementById('app').innerHTML = page.render();
-            window.scrollTo(0, 0);
-
         }
 
-        window.addEventListener('hashchange', render);
         render();
     </script>
 </body>
