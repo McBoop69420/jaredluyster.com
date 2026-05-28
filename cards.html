@@ -30,14 +30,23 @@
         </div>
     </header>
 
-    <main class="page">
-        <h1 class="page-title">Card Reference</h1>
-        <p class="subtitle">Full spell list for every element, including class starters and shared neutral cards.</p>
-        <div class="cards-toolbar">
-            <div class="cards-meta" id="pool-filter"></div>
-            <input class="cards-search" id="card-search" type="search" placeholder="Search cards, effects, or keywords">
+    <main class="page cards-page">
+        <div class="cards-hero">
+            <div>
+                <div class="eyebrow">Spell Library</div>
+                <h1 class="page-title">Card Reference</h1>
+                <p class="subtitle">Full spell list for every element, including class starters and shared neutral cards.</p>
+            </div>
+            <div class="cards-summary">
+                <strong id="total-card-count">0</strong>
+                <span>Total Cards</span>
+            </div>
         </div>
-        <div class="elem-filter" id="elem-filter"></div>
+        <div class="cards-toolbar">
+            <input class="cards-search" id="card-search" type="search" placeholder="Search cards, effects, or keywords">
+            <div class="cards-meta" id="pool-filter"></div>
+            <div class="elem-filter" id="elem-filter"></div>
+        </div>
         <div id="card-sections"></div>
     </main>
 
@@ -54,6 +63,7 @@
         const starterCount = allCards.filter(card => card.starter).length;
         const fadeCount = allCards.filter(card => card.fade).length;
         const rarityOrder = { Starter: 0, Common: 1, Uncommon: 2, Rare: 3 };
+        document.getElementById('total-card-count').textContent = allCards.length;
 
         function iconHTML(element, cls = 'type-icon') {
             return element.icon.endsWith('.png')
@@ -81,7 +91,7 @@
         }
 
         document.getElementById('pool-filter').innerHTML = `
-            <button class="meta-pill" data-pool="all"><strong>${allCards.length}</strong>Total cards</button>
+            <button class="meta-pill active" data-pool="all"><strong>${allCards.length}</strong>Total cards</button>
             <button class="meta-pill" data-pool="draft"><strong>${draftableCount}</strong>Draft pool</button>
             <button class="meta-pill" data-pool="starter"><strong>${starterCount}</strong>Starter cards</button>
             <button class="meta-pill" data-pool="fade"><strong>${fadeCount}</strong>Fade cards</button>
@@ -94,7 +104,10 @@
 
         document.getElementById('card-sections').innerHTML = elements.map(element => `
             <section class="elem-section" data-elem="${element.key}">
-                <div class="elem-header" style="--elem-color:${element.color}">${iconHTML(element)} ${element.label}</div>
+                <div class="elem-header" style="--elem-color:${element.color}">
+                    <span>${iconHTML(element)} ${element.label}</span>
+                    <span class="elem-count">${element.cards.length} cards</span>
+                </div>
                 <div class="card-grid">${sortedCards(element.cards).map(card => cardHTML(card, element.color)).join('')}</div>
             </section>
         `).join('');
