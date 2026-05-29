@@ -433,30 +433,18 @@
             circle.setAttribute('stroke', color);
             circle.setAttribute('stroke-width', '2.5');
 
-            // Icon image
+            // Icon image (centred in node, no label)
             const icon = document.createElementNS('http://www.w3.org/2000/svg', 'image');
             icon.setAttribute('href', TYPE_ICONS[type]);
-            icon.setAttribute('x', '-12');
-            icon.setAttribute('y', '-24');
-            icon.setAttribute('width', '24');
-            icon.setAttribute('height', '24');
+            icon.setAttribute('x', '-14');
+            icon.setAttribute('y', '-14');
+            icon.setAttribute('width', '28');
+            icon.setAttribute('height', '28');
             icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-
-            // Label
-            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            label.setAttribute('text-anchor', 'middle');
-            label.setAttribute('dominant-baseline', 'central');
-            label.setAttribute('y', '14');
-            label.setAttribute('font-size', '8');
-            label.setAttribute('fill', color);
-            label.setAttribute('font-weight', '700');
-            label.setAttribute('letter-spacing', '0.05em');
-            label.textContent = type.toUpperCase();
 
             g.appendChild(glow);
             g.appendChild(circle);
             g.appendChild(icon);
-            g.appendChild(label);
 
             g.addEventListener('mouseenter', e => {
                 hoveredType = type;
