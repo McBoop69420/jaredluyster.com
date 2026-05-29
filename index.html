@@ -506,16 +506,11 @@
 
     <main id="app"></main>
 
-    <footer class="shell footer" id="site-footer" hidden>
-        Public reference pages for Wizard Battle live in this site repository.
-    </footer>
-
     <script>
         const pages = {
             '': {
                 title: 'Wizard Battle',
                 render() {
-                    document.getElementById('site-footer').hidden = false;
                     return `
                     <section class="hero">
                         <div class="shell hero-grid">
