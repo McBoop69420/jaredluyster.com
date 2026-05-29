@@ -231,7 +231,7 @@
         /* ── Responsive ──────────────────────────────────── */
         @media (max-width: 600px) {
             .chart-panel { padding: 16px 12px; }
-            #wheelSvg { width: 280px !important; height: 280px !important; }
+            #wheelSvg { width: 300px !important; height: 300px !important; }
         }
     </style>
 </head>
@@ -263,7 +263,7 @@
             <p class="chart-section-label">Relationship Map</p>
             <div class="chart-panel">
                 <div class="graph-wrap">
-                    <svg id="wheelSvg" style="width:320px;height:320px;overflow:visible;" viewBox="-160 -160 320 320">
+                    <svg id="wheelSvg" style="width:420px;height:420px;overflow:visible;" viewBox="-210 -210 420 420">
                         <defs>
                             <marker id="arr-marker" markerWidth="10" markerHeight="10"
                                     refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
@@ -345,7 +345,7 @@
         //   Fire↔Light, Water↔Ice, Rock↔Shadow, Arc↔Grass
         // Placing those pairs diametrically opposite on a regular octagon
         // means every drawn edge spans ≤3 positions, minimising crossings.
-        const RADIUS = 110;
+        const RADIUS = 148;
         const octOrder = ['Fire','Water','Rock','Arc','Light','Ice','Shadow','Grass'];
         const positions = {};
         octOrder.forEach((type, i) => {
