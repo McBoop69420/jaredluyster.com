@@ -231,7 +231,7 @@
         /* ── Responsive ──────────────────────────────────── */
         @media (max-width: 600px) {
             .chart-panel { padding: 16px 12px; }
-            #wheelSvg { width: 280px !important; height: 300px !important; }
+            #wheelSvg { width: 280px !important; height: 280px !important; }
         }
     </style>
 </head>
@@ -263,7 +263,7 @@
             <p class="chart-section-label">Relationship Map</p>
             <div class="chart-panel">
                 <div class="graph-wrap">
-                    <svg id="wheelSvg" style="width:320px;height:340px;overflow:visible;" viewBox="-175 -150 350 360">
+                    <svg id="wheelSvg" style="width:320px;height:320px;overflow:visible;" viewBox="-160 -160 320 320">
                         <defs>
                             <marker id="arr-marker" markerWidth="10" markerHeight="10"
                                     refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
@@ -341,18 +341,20 @@
         };
 
         // ── Node positions ────────────────────────────────────
+        // The only non-edges (no 2x in either direction) are:
+        //   Fire↔Light, Water↔Ice, Rock↔Shadow, Arc↔Grass
+        // Placing those pairs diametrically opposite on a regular octagon
+        // means every drawn edge spans ≤3 positions, minimising crossings.
         const RADIUS = 110;
-        const hexOrder = ['Fire','Grass','Ice','Rock','Arc','Water'];
+        const octOrder = ['Fire','Water','Rock','Arc','Light','Ice','Shadow','Grass'];
         const positions = {};
-        hexOrder.forEach((type, i) => {
-            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        octOrder.forEach((type, i) => {
+            const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
             positions[type] = {
                 x: Math.cos(angle) * RADIUS,
                 y: Math.sin(angle) * RADIUS,
             };
         });
-        positions.Shadow = { x: -75, y: 160 };
-        positions.Light  = { x:  75, y: 160 };
 
         const NODE_R = 32;
 
