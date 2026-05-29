@@ -44,7 +44,7 @@
         .download-block {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 24px;
         }
 
         .cta-row {
@@ -54,10 +54,72 @@
             gap: 12px;
         }
 
-        .footer {
-            padding: 36px 0 48px;
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .meta-chip {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 4px 12px;
+        }
+
+        /* ── Requirements + Notes ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .info-panel {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 20px 22px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .info-panel-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .info-panel ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-panel li {
             font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.5;
+            padding-left: 14px;
+            position: relative;
+        }
+
+        .info-panel li::before {
+            content: "—";
+            position: absolute;
+            left: 0;
+            color: var(--line-strong);
+        }
+
+        @media (max-width: 560px) {
+            .info-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 560px) {
@@ -90,9 +152,37 @@
         <h1 class="page-title">Download Wizard Battle</h1>
 
         <div class="download-block">
-            <div class="cta-row">
-                <a class="button button-primary" href="https://github.com/McBoop69420/jaredluyster.com/releases/download/wizard-battle-windows-2026-05-27/WizardBattle-Windows.zip">Download Windows Build</a>
-                <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
+            <div>
+                <div class="cta-row">
+                    <a class="button button-primary" href="https://github.com/McBoop69420/jaredluyster.com/releases/download/wizard-battle-windows-2026-05-27/WizardBattle-Windows.zip">Download Windows Build</a>
+                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
+                </div>
+            </div>
+            <div class="meta-row">
+                <span class="meta-chip">Build: May 27 2026</span>
+                <span class="meta-chip">Windows 10+</span>
+                <span class="meta-chip">~103 MB</span>
+                <span class="meta-chip">No install required</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-panel">
+                    <div class="info-panel-label">What's in this build</div>
+                    <ul>
+                        <li>8 wizard classes across all elements</li>
+                        <li>57 draftable spells + class starter decks</li>
+                        <li>12-floor roguelike runs with branching routes</li>
+                        <li>Full elemental type chart with 2× / 0.5× matchups</li>
+                    </ul>
+                </div>
+                <div class="info-panel">
+                    <div class="info-panel-label">System requirements</div>
+                    <ul>
+                        <li>Windows 10 or later (64-bit)</li>
+                        <li>DirectX 12 compatible GPU</li>
+                        <li>4 GB RAM</li>
+                        <li>Unzip and run — no installer needed</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </main>

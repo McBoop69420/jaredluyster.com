@@ -3,12 +3,6 @@ body {
     padding-bottom: 64px;
 }
 
-.footer {
-    padding: 36px 0 48px;
-    color: var(--muted);
-    font-size: 0.88rem;
-}
-
 .page {
     max-width: 1280px;
     margin: 0 auto;

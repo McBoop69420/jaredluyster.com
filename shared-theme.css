@@ -112,8 +112,7 @@ button {
     text-transform: uppercase;
 }
 
-.brand-mark,
-.hero-badge-icon {
+.brand-mark {
     width: 42px;
     height: 42px;
     border-radius: 14px;

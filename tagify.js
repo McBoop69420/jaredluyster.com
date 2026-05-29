@@ -12,7 +12,6 @@
         Daze:       '#cc9944',
         Blind:      '#f2f2f2',
         Lifesteal:  '#cc66ff',
-        Foresight:  '#b8d0f5',
     };
 
     const TYPES = {
