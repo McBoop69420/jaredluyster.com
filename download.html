@@ -54,65 +54,6 @@
             gap: 12px;
         }
 
-        /* ── Checksum ── */
-        .checksum-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 16px;
-            border-radius: 14px;
-            border: 1px solid var(--line);
-            background: var(--card);
-        }
-
-        .checksum-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--muted);
-            white-space: nowrap;
-            flex: 0 0 auto;
-        }
-
-        .checksum-hash {
-            font-family: Consolas, "Liberation Mono", monospace;
-            font-size: 0.78rem;
-            color: var(--gold);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1 1 0;
-            min-width: 0;
-        }
-
-        .copy-btn {
-            flex: 0 0 auto;
-            padding: 4px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--line);
-            background: transparent;
-            color: var(--muted);
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            cursor: pointer;
-            font-family: inherit;
-            transition: color 0.15s, border-color 0.15s, background 0.15s;
-        }
-
-        .copy-btn:hover {
-            color: var(--ink);
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.06);
-        }
-
-        .copy-btn.copied {
-            color: var(--moss);
-            border-color: var(--moss);
-        }
-
         .footer {
             padding: 36px 0 48px;
             color: var(--muted);
@@ -121,7 +62,6 @@
 
         @media (max-width: 560px) {
             .download-page { padding-top: 36px; }
-            .checksum-hash { display: none; }
         }
     </style>
 </head>
@@ -154,29 +94,8 @@
                 <a class="button button-primary" href="https://github.com/McBoop69420/jaredluyster.com/releases/download/wizard-battle-windows-2026-05-27/WizardBattle-Windows.zip">Download Windows Build</a>
                 <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
             </div>
-
-            <div class="checksum-row">
-                <span class="checksum-label">SHA-256</span>
-                <span class="checksum-hash" id="hash-text">6a32a77e833967fccef768176c4a895e9d93457ff3d1348b4b65172bb73173f0</span>
-                <button class="copy-btn" id="copy-btn" onclick="copyHash()">Copy</button>
-            </div>
         </div>
     </main>
 
-
-    <script>
-        function copyHash() {
-            const hash = document.getElementById('hash-text').textContent;
-            navigator.clipboard.writeText(hash).then(() => {
-                const btn = document.getElementById('copy-btn');
-                btn.textContent = 'Copied';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
-    </script>
 </body>
 </html>
