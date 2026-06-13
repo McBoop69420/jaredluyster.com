@@ -138,6 +138,24 @@ h1 {
   display: none;
 }
 
+.tile.dfc {
+  position: relative;
+}
+
+.tile.dfc::after {
+  content: "⟳";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(10, 7, 16, 0.82);
+  color: var(--gold);
+  font-size: 0.85rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 190, 99, 0.35);
+  pointer-events: none;
+}
+
 .empty {
   margin-top: 80px;
   text-align: center;
@@ -196,20 +214,21 @@ h1 {
 
 .lb-flip {
   flex-shrink: 0;
-  padding: 6px 14px;
+  padding: 10px 22px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(18, 13, 25, 0.9);
+  border: 1px solid rgba(240, 190, 99, 0.5);
+  background: rgba(240, 190, 99, 0.12);
   color: var(--gold);
-  font-size: 0.82rem;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease;
 }
 
 .lb-flip:hover {
-  background: rgba(40, 28, 55, 0.95);
-  border-color: rgba(240, 190, 99, 0.4);
+  background: rgba(240, 190, 99, 0.22);
+  border-color: rgba(240, 190, 99, 0.7);
 }
 
 .lb-flip[hidden] {
