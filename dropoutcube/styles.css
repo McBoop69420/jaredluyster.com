@@ -63,13 +63,7 @@ img {
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(16px);
-  background: rgba(8, 6, 10, 0.45);
-  border-bottom: 1px solid rgba(255, 236, 209, 0.08);
-  padding: 20px 0 16px;
+  padding: 28px 0 0;
 }
 
 .eyebrow {
