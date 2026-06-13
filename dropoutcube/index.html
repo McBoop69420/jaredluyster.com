@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dropout Cube</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Image Archive</p>
+          <h1>Dropout Cube</h1>
+        </div>
+        <p class="count" id="count"></p>
+      </header>
+
+      <div class="gallery" id="gallery">
+        <p class="empty" id="empty" hidden>No images yet.</p>
+      </div>
+    </main>
+
+    <div class="lightbox" id="lightbox" hidden aria-modal="true" role="dialog">
+      <button class="lb-close" id="lb-close" aria-label="Close">✕</button>
+      <div class="lb-inner">
+        <img id="lb-img" alt="">
+        <div class="lb-footer">
+          <p class="lb-caption" id="lb-caption"></p>
+          <button class="lb-flip" id="lb-flip" hidden>⟳ Flip</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./gallery.js"></script>
+  </body>
+</html>
