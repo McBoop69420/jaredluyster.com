@@ -3,8 +3,7 @@
 const IMAGES = [
   { src: "images/Hazy Memory.jpg", caption: "Hazy Memory" },
   { src: "images/No Problem.jpg", caption: "No Problem" },
-  { src: "images/I'm Sowwee.png", caption: "I'm Sowwee" },
-  { src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter" },
+{ src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter" },
   { src: "images/Pasta_Noche.png", caption: "Pasta Noche" },
   {
     src: "images/Beedo_Mee-Maw_1.jpg",
