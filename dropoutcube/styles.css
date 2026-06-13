@@ -145,15 +145,17 @@ h1 {
 .tile.dfc::after {
   content: "⟳";
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(10, 7, 16, 0.82);
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 7, 16, 0.88);
   color: var(--gold);
-  font-size: 0.85rem;
-  padding: 3px 8px;
+  font-size: 1.3rem;
+  padding: 5px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(240, 190, 99, 0.35);
+  border: 1px solid rgba(240, 190, 99, 0.45);
   pointer-events: none;
+  white-space: nowrap;
 }
 
 .empty {
