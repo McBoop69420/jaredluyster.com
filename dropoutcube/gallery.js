@@ -5,6 +5,9 @@ const IMAGES = [
   { src: "images/No Problem.jpg", caption: "No Problem" },
 { src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter" },
   { src: "images/Pasta_Noche.png", caption: "Pasta Noche" },
+  { src: "images/Bayou_Peanut_Butter_Swamp.png", caption: "Peanut Butter Swamp" },
+  { src: "images/Mountport.jpeg", caption: "Mountport" },
+  { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket" },
   {
     src: "images/Beedo_Mee-Maw_1.jpg",
     caption: "Beedo Mee-Maw",
