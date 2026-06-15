@@ -40,9 +40,7 @@ function makeTile(card) {
   img.src = card.src;
   img.alt = card.caption;
   img.loading = "lazy";
-  const cap = document.createElement("figcaption");
-  cap.textContent = card.caption;
-  fig.append(img, cap);
+  fig.append(img);
   fig.addEventListener("click", () => openLightbox(card));
   return fig;
 }
