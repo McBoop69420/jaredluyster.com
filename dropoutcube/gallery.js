@@ -5,7 +5,7 @@ const IMAGES = [
   { src: "images/Hazy Memory.jpg", caption: "Hazy Memory", color: "U" },
   { src: "images/No Problem.jpg", caption: "No Problem", color: "Gold" },
   { src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter", color: "B" },
-  { src: "images/Pasta_Noche.png", caption: "Pasta Noche", color: "W" },
+  { src: "images/Pasta_Noche.png", caption: "Pasta Noche", color: "Gold" },
   { src: "images/Bayou_Peanut_Butter_Swamp.png", caption: "Peanut Butter Swamp", color: "Land" },
   { src: "images/Mountport.jpeg", caption: "Mountport", color: "Land" },
   { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket", color: "Gold" },
