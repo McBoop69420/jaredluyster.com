@@ -2,7 +2,7 @@
 // Single-faced:  { src: "images/foo.jpg", caption: "Card Name", color: "W" }
 // Double-faced:  { src: "images/foo.jpg", caption: "Front", back: "images/foo_back.jpg", backCaption: "Back", color: "U" }
 const IMAGES = [
-  { src: "images/Hazy Memory.jpg", caption: "Hazy Memory", color: "W" },
+  { src: "images/Hazy Memory.jpg", caption: "Hazy Memory", color: "U" },
   { src: "images/No Problem.jpg", caption: "No Problem", color: "Gold" },
   { src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter", color: "B" },
   { src: "images/Pasta_Noche.png", caption: "Pasta Noche", color: "W" },
@@ -14,7 +14,7 @@ const IMAGES = [
     caption: "Beedo Mee-Maw",
     back: "images/Beedo_Mee-Maw_Knife_Witch.jpg",
     backCaption: "Beedo Mee-Maw — Knife Witch",
-    color: "Gold",
+    color: "R",
   },
 ];
 
