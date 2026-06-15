@@ -21,7 +21,9 @@ body {
 
 .page-title {
     font-size: clamp(1.6rem, 4vw, 2.4rem);
-    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
     margin-bottom: 6px;
     text-align: center;
 }
@@ -46,6 +48,7 @@ body {
     height: 1.05em;
 }
 
+/* ── Keywords ── */
 .keyword-grid {
     width: 100%;
     max-width: 780px;
@@ -56,9 +59,9 @@ body {
 }
 
 .keyword-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 16px 18px;
     display: grid;
     grid-template-columns: 40px 1fr;
@@ -75,8 +78,8 @@ body {
     height: 40px;
     display: grid;
     place-items: center;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--kw-color, var(--gold)) 15%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--kw-color, var(--text)) 12%, transparent);
 }
 
 .keyword-header {
@@ -92,8 +95,8 @@ body {
 }
 
 .keyword-short {
-    font-size: 0.78rem;
-    color: var(--kw-color, var(--gold));
+    font-size: 0.72rem;
+    color: var(--kw-color, var(--muted));
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -104,6 +107,7 @@ body {
     line-height: 1.55;
 }
 
+/* ── Type chart table ── */
 table {
     width: 100%;
     border-collapse: separate;
@@ -111,11 +115,10 @@ table {
     table-layout: fixed;
 }
 
-th,
-td {
+th, td {
     padding: 10px 4px;
     text-align: center;
-    border-radius: 10px;
+    border-radius: 8px;
     width: 11.1%;
 }
 
@@ -127,16 +130,17 @@ th {
 }
 
 td {
-    background: var(--card);
-    border: 1px solid var(--line);
+    background: var(--surface);
+    border: 1px solid var(--border);
     font-weight: 700;
 }
 
 .good { color: #9be48b; }
-.bad { color: #ffb28f; }
+.bad  { color: #ffb28f; }
 .type-node { cursor: pointer; transition: filter 0.15s; }
 .type-node:hover { filter: brightness(1.3); }
 
+/* ── Cards page ── */
 .cards-page {
     max-width: 1180px;
 }
@@ -148,12 +152,10 @@ td {
     gap: 24px;
     margin-bottom: 18px;
     padding: 26px 28px;
-    border: 1px solid var(--line);
-    border-radius: 24px;
-    background:
-        linear-gradient(135deg, rgba(240, 190, 99, 0.10), rgba(134, 184, 255, 0.05)),
-        rgba(18, 13, 25, 0.66);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
 }
 
 .cards-page .page-title,
@@ -163,8 +165,8 @@ td {
 
 .cards-page .page-title {
     margin: 14px 0 8px;
-    font-size: clamp(2.1rem, 5vw, 3.6rem);
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1;
 }
 
 .cards-page .subtitle {
@@ -176,17 +178,18 @@ td {
 .cards-summary {
     min-width: 132px;
     padding: 16px 18px;
-    border-radius: 18px;
-    border: 1px solid rgba(240, 190, 99, 0.24);
-    background: rgba(0, 0, 0, 0.18);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
     text-align: center;
+    flex-shrink: 0;
 }
 
 .cards-summary strong {
     display: block;
-    color: var(--gold);
-    font-family: Georgia, "Times New Roman", serif;
+    color: var(--text);
     font-size: 2rem;
+    font-weight: 600;
     line-height: 1;
 }
 
@@ -195,7 +198,7 @@ td {
     margin-top: 8px;
     color: var(--muted);
     font-size: 0.75rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
@@ -204,10 +207,10 @@ td {
     gap: 14px;
     margin-bottom: 34px;
     padding: 18px;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: rgba(10, 8, 14, 0.52);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
 }
 
 .cards-meta {
@@ -219,8 +222,8 @@ td {
 
 .meta-pill,
 .elem-btn {
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--muted);
     cursor: pointer;
     font-family: inherit;
@@ -228,7 +231,7 @@ td {
 }
 
 .meta-pill {
-    padding: 9px 13px;
+    padding: 8px 13px;
     border-radius: 999px;
     font-size: 0.78rem;
     letter-spacing: 0.06em;
@@ -237,19 +240,19 @@ td {
 
 .meta-pill:hover,
 .elem-btn:hover {
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    border-color: var(--border-strong);
 }
 
 .meta-pill.active,
 .elem-btn.active {
-    background: rgba(240, 190, 99, 0.14);
-    color: #fff;
-    border-color: rgba(240, 190, 99, 0.34);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border-color: var(--border-strong);
 }
 
 .meta-pill strong {
-    color: #fff;
+    color: var(--text);
     margin-right: 6px;
 }
 
@@ -257,16 +260,18 @@ td {
     width: 100%;
     margin: 0 auto;
     display: block;
-    padding: 15px 18px;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    background: rgba(6, 5, 9, 0.72);
-    color: #fff;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
     font: inherit;
-    font-size: 1rem;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 120ms;
 }
 
+.cards-search:focus { border-color: var(--border-strong); }
 .cards-search::placeholder { color: var(--muted); }
 
 .elem-filter {
@@ -303,15 +308,15 @@ td {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--elem-color, var(--muted));
     margin-bottom: 14px;
     padding: 12px 0 12px 14px;
-    border-bottom: 1px solid var(--line);
-    border-left: 4px solid var(--elem-color, var(--line));
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--elem-color, var(--border));
 }
 
 .elem-header > span:first-child {
@@ -335,17 +340,15 @@ td {
 
 .spell-card {
     min-height: 112px;
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--c, var(--plum)) 7%, transparent), transparent 54%),
-        rgba(16, 10, 20, 0.82);
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--c, var(--line));
+    background: color-mix(in srgb, var(--c, var(--border)) 8%, var(--surface));
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--c, var(--border));
     padding: 14px 15px 12px;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+    box-shadow: var(--shadow);
 }
 
 .card-header {
@@ -356,7 +359,7 @@ td {
 }
 
 .card-name {
-    font-size: 0.98rem;
+    font-size: 0.95rem;
     font-weight: 700;
 }
 
@@ -364,14 +367,14 @@ td {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--c, var(--plum)) 20%, transparent);
-    border: 1px solid color-mix(in srgb, var(--c, var(--plum)) 40%, transparent);
+    background: color-mix(in srgb, var(--c, var(--border)) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c, var(--border)) 40%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 800;
-    color: var(--c, #c8aaff);
+    color: var(--c, var(--muted));
 }
 
 .card-desc {
@@ -394,14 +397,14 @@ td {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 2px 7px;
-    border-radius: 7px;
+    border-radius: 6px;
 }
 
-.rarity-common { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
-.rarity-uncommon { background: rgba(129, 140, 248, 0.18); color: #a5b4fc; }
-.rarity-rare { background: rgba(240, 190, 99, 0.18); color: #f0be63; }
-.rarity-starter { background: rgba(134, 184, 255, 0.15); color: #86b8ff; }
-.starter-badge { background: rgba(255, 255, 255, 0.07); color: var(--muted); }
+.rarity-common   { background: rgba(156, 163, 175, 0.12); color: #9ca3af; }
+.rarity-uncommon { background: rgba(129, 140, 248, 0.14); color: #a5b4fc; }
+.rarity-rare     { background: rgba(250, 204, 21,  0.12); color: #fbbf24; }
+.rarity-starter  { background: rgba(134, 184, 255, 0.12); color: #93c5fd; }
+.starter-badge   { background: rgba(255, 255, 255, 0.06); color: var(--muted); }
 
 @media (max-width: 720px) {
     .page,

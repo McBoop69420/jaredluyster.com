@@ -3,302 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Wizard Battle is a roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.">
-    <title>Wizard Battle</title>
-    <link rel="stylesheet" href="shared-theme.css">
+    <meta name="description" content="Jared Luyster — games, tools, and things in progress.">
+    <title>Jared Luyster</title>
     <style>
-        body {
-            overflow-x: hidden;
-            padding-bottom: 64px;
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #0e0e0e;
+            --surface: #161616;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f0f0f0;
+            --muted: #888;
         }
 
-        /* ── Home ── */
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(14, 14, 14, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        /* Hero */
         .hero {
-            padding: 72px 0 48px;
-        }
-
-        .hero-copy,
-        .panel,
-        .wizard {
-            border: 1px solid var(--line);
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .hero-copy {
-            position: relative;
-            overflow: hidden;
-            border-radius: 30px;
-            padding: 36px;
-        }
-
-        .hero-copy::before {
-            content: "";
-            position: absolute;
-            inset: auto -12% -36% auto;
-            width: 340px;
-            height: 340px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(240, 190, 99, 0.22), transparent 68%);
-            pointer-events: none;
+            padding: 96px 0 72px;
         }
 
         h1 {
-            margin: 18px 0 12px;
-            font-size: clamp(3.2rem, 10vw, 6rem);
-            line-height: 0.92;
+            margin: 0 0 16px;
+            font-size: clamp(2.4rem, 6vw, 4rem);
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
         }
 
-        h2 {
+        .lead {
             margin: 0;
-            font-size: clamp(2rem, 5vw, 3rem);
-        }
-
-        .section-head p,
-        .panel p,
-        .wizard p {
+            max-width: 36rem;
             color: var(--muted);
+            font-size: 1rem;
             line-height: 1.7;
         }
 
-        .cta-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin: 28px 0 24px;
+        /* Projects */
+        .projects {
+            padding-bottom: 80px;
         }
 
-        .hero-stats {
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .project-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
-            margin-top: 18px;
         }
 
-        .stat {
-            border-radius: 18px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.04);
-            border-left: 3px solid var(--stat-color, rgba(255,255,255,0.08));
+        .project-card {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            background: var(--surface);
+            transition: border-color 120ms;
         }
 
-        .stat strong {
-            display: block;
-            font-size: 1.8rem;
-            font-family: Georgia, "Times New Roman", serif;
-            color: var(--stat-color, var(--ink));
+        .project-card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
         }
 
-        .stat span {
-            display: block;
-            margin-top: 6px;
-            color: var(--muted);
-            font-size: 0.82rem;
+        .project-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            object-fit: cover;
+        }
+
+        .project-logo {
+            width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+            object-position: left;
+            margin-bottom: 16px;
+        }
+
+        .project-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
         }
 
-        section { padding: 26px 0 10px; }
-
-        .section-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: end;
-            gap: 18px;
-            margin-bottom: 18px;
+        .project-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 8px;
         }
 
-        .section-head p { max-width: 34rem; }
-
-        .feature-grid,
-        .wizard-grid {
-            display: grid;
-            gap: 16px;
+        .project-desc {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin: 0;
+            flex: 1;
         }
 
-        .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .wizard-grid  { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-        .panel,
-        .wizard {
-            border-radius: 24px;
-            padding: 24px;
-        }
-
-        .panel strong,
-        .wizard-top strong {
+        .project-arrow {
             display: block;
-            margin-bottom: 10px;
-            font-size: 1.15rem;
-        }
-
-        .panel .accent {
-            color: var(--gold);
-            font-size: 0.82rem;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-        }
-
-        .wizard-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        .wizard-top span {
+            margin-top: 20px;
             font-size: 0.8rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+            color: var(--muted);
+            transition: color 120ms;
         }
 
-        .sigil {
-            display: inline-grid;
-            place-items: center;
-            width: 54px;
-            height: 54px;
-            margin-bottom: 14px;
-            border-radius: 16px;
-            font-size: 1.7rem;
-            background: rgba(255, 255, 255, 0.05);
+        .project-card:hover .project-arrow { color: var(--text); }
+
+        .project-card--wip {
+            opacity: 0.5;
+            cursor: default;
         }
 
-        .sigil img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
+        .project-card--wip:hover {
+            border-color: var(--border);
+            transform: none;
         }
 
-        /* ── Responsive ── */
-        @media (max-width: 980px) {
-            .feature-grid,
-            .wizard-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        @media (max-width: 860px) {
+            .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        @media (max-width: 720px) {
-            .section-head,
-            .feature-grid,
-            .wizard-grid,
-            .hero-stats {
-                display: grid;
-                grid-template-columns: 1fr;
-            }
-
-            .hero { padding-top: 36px; }
-            .hero-copy, .panel, .wizard { padding: 22px; border-radius: 24px; }
+        @media (max-width: 560px) {
+            .project-grid { grid-template-columns: 1fr; }
+            .hero { padding: 56px 0 48px; }
+            .shell { padding: 0 16px; }
         }
-
     </style>
 </head>
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="index.html">
-                <img class="brand-mark" src="wizard-battle-logo.png" alt="Wizard Battle logo">
-                <div class="brand-copy">
-                    <strong>Wizard Battle</strong>
-                    <span>Roguelike Deckbuilder</span>
-                </div>
-            </a>
-            <nav class="nav" id="main-nav">
-                <a class="active" href="index.html">Home</a>
-                <a href="keywords.html">Keywords</a>
-                <a href="type-chart.html">Type Chart</a>
-                <a href="cards.html">Cards</a>
-                <a href="download.html">Download</a>
-            </nav>
+            <a class="brand" href="index.html">Jared Luyster</a>
         </div>
     </header>
 
-    <main id="app"></main>
+    <main>
+        <section class="hero">
+            <div class="shell">
+                <h1>Things I'm building.</h1>
+            </div>
+        </section>
 
-    <script>
-        const pages = {
-            '': {
-                title: 'Wizard Battle',
-                render() {
-                    return `
-                    <section class="hero">
-                        <div class="shell hero-grid">
-                            <div class="hero-copy">
-                                <div class="eyebrow">Wizard Battle</div>
-                                <h1>Every decision reveals something.</h1>
-                                <p class="lead">Choose a wizard, build a deck, and uncover the hidden relationships between newly awakened magical forces. Adapt to what you learn, question what you think you know, and shape your strategy one decision at a time.</p>
-                                <div class="cta-row">
-                                    <a class="button button-primary" href="download.html">Download Windows Build</a>
-                                    <a class="button button-secondary" href="keywords.html">Browse Keywords</a>
-                                    <a class="button button-secondary" href="type-chart.html">View Type Chart</a>
-                                    <a class="button button-secondary" href="cards.html">View All Cards</a>
-                                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
-                                </div>
-                                <div class="hero-stats">
-                                    <div class="stat" style="--stat-color:var(--plum)"><strong>8</strong><span>Wizard classes</span></div>
-                                    <div class="stat" style="--stat-color:var(--ember)"><strong>57</strong><span>Spells to draft</span></div>
-                                    <div class="stat" style="--stat-color:var(--sky)"><strong>12</strong><span>Floors per journey</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="features">
-                        <div class="shell">
-                            <div class="section-head">
-                                <h2>Built Around Sharp Decisions</h2>
-                                <p>Wizard Battle rewards players who plan ahead and adapt on the fly. Every choice builds or breaks your run.</p>
-                            </div>
-                            <div class="feature-grid">
-                                <article class="panel">
-                                    <div class="accent">Elemental Matchups</div>
-                                    <strong>Type advantages change every fight</strong>
-                                    <p>The right spell can end a fight early. The wrong one can stall your whole run.</p>
-                                </article>
-                                <article class="panel">
-                                    <div class="accent">Map Routing</div>
-                                    <strong>Each node is a commitment</strong>
-                                    <p>Safer paths buy time. Harder ones offer bigger rewards. Shops and rest sites keep runs alive.</p>
-                                </article>
-                                <article class="panel">
-                                    <div class="accent">Deckbuilding</div>
-                                    <strong>Every reward changes your line</strong>
-                                    <p>Add tools, trim greed, and build around the wizard you picked at the start of your journey.</p>
-                                </article>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="wizards">
-                        <div class="shell">
-                            <div class="section-head">
-                                <h2>Choose Your Wizard</h2>
-                                <p>Each wizard approaches the journey differently. Same rules, different pressure.</p>
-                            </div>
-                            <div class="wizard-grid">
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_fire.png" alt="Fire"></div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_water.png" alt="Water"></div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, draw, and Drown control.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_rock.png" alt="Rock"></div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_arc.png" alt="Arc"></div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_ice.png" alt="Ice"></div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_shadow.png" alt="Shadow"></div><div class="wizard-top"><strong>Shadowblade</strong><span>Shadow</span></div><p>Lifesteal, curses, and Weak.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_light.png" alt="Light"></div><div class="wizard-top"><strong>Dawnmage</strong><span>Light</span></div><p>Shields, heals, and Blind.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_grass.png" alt="Grass"></div><div class="wizard-top"><strong>Verdantmaker</strong><span>Grass</span></div><p>Root stacks with exponential burst damage.</p></article>
-                            </div>
-                        </div>
-                    </section>`;
-                }
-            }
-        };
-
-        function render() {
-            const page = pages[''];
-            document.title = page.title;
-            document.getElementById('app').innerHTML = page.render();
-        }
-
-        render();
-    </script>
+        <div class="projects">
+            <div class="shell">
+<div class="project-grid">
+                    <a class="project-card" href="wizard-battle.html">
+                        <img class="project-icon" src="wizard-battle-logo.png" alt="Wizard Battle">
+                        <div class="project-tag">Game</div>
+                        <p class="project-name">Wizard Battle</p>
+                        <p class="project-desc">A roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.</p>
+                        <span class="project-arrow">Explore →</span>
+                    </a>
+                    <a class="project-card" href="https://www.bluegrasscybersecurity.com/">
+                        <img class="project-logo" src="bcs-logo-t.png" alt="Bluegrass Cybersecurity Solutions">
+                        <div class="project-tag">Cybersecurity</div>
+                        <p class="project-name">Bluegrass Cybersecurity Solutions</p>
+                        <p class="project-desc">Cybersecurity services for businesses in the Bluegrass region.</p>
+                        <span class="project-arrow">Visit →</span>
+                    </a>
+                    <div class="project-card project-card--wip">
+                        <img class="project-logo" src="bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
+                        <div class="project-tag">In Development</div>
+                        <p class="project-name">Bluegrass Memorabilia & Collectibles</p>
+                        <p class="project-desc">Coming soon.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 </body>
 </html>
