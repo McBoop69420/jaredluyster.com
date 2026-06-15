@@ -1,4 +1,4 @@
-// Colors: "W" "U" "B" "R" "G" "Gold" "Land"
+// Colors: "W" "U" "B" "R" "G" "Gold" "C" "Land"
 // Single-faced:  { src: "images/foo.jpg", caption: "Card Name", color: "W" }
 // Double-faced:  { src: "images/foo.jpg", caption: "Front", back: "images/foo_back.jpg", backCaption: "Back", color: "U" }
 const IMAGES = [
@@ -8,7 +8,7 @@ const IMAGES = [
   { src: "images/Pasta_Noche.png", caption: "Pasta Noche", color: "Gold" },
   { src: "images/Bayou_Peanut_Butter_Swamp.png", caption: "Peanut Butter Swamp", color: "Land" },
   { src: "images/Mountport.jpeg", caption: "Mountport", color: "Land" },
-  { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket", color: "Gold" },
+  { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket", color: "C" },
   {
     src: "images/Beedo_Mee-Maw_1.jpg",
     caption: "Beedo Mee-Maw",
@@ -19,7 +19,7 @@ const IMAGES = [
 ];
 
 const COLOR_ORDER = ["W", "U", "B", "R", "G"];
-const COLOR_LABELS = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", Gold: "Multicolor", Land: "Land" };
+const COLOR_LABELS = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", Gold: "Multicolor", C: "Colorless", Land: "Land" };
 
 const gallery   = document.getElementById("gallery");
 const emptyMsg  = document.getElementById("empty");
@@ -54,10 +54,11 @@ if (IMAGES.length === 0) {
 
   // Group cards by color
   const groups = {};
-  [...COLOR_ORDER, "Gold", "Land"].forEach(c => (groups[c] = []));
+  [...COLOR_ORDER, "Gold", "C", "Land"].forEach(c => (groups[c] = []));
   IMAGES.forEach(card => {
     const key = COLOR_ORDER.includes(card.color) ? card.color
               : card.color === "Land" ? "Land"
+              : card.color === "C" ? "C"
               : "Gold";
     groups[key].push(card);
   });
@@ -82,7 +83,7 @@ if (IMAGES.length === 0) {
   gallery.appendChild(colSection);
 
   // ── Gold and Land row sections ──
-  ["Gold", "Land"].forEach(key => {
+  ["Gold", "C", "Land"].forEach(key => {
     if (groups[key].length === 0) return;
     const section = document.createElement("div");
     section.className = "color-section";

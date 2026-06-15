@@ -107,6 +107,12 @@ h1 {
   border-color: rgba(200, 160, 32, 0.28);
 }
 
+.color-section[data-color="C"] .section-header {
+  background: rgba(160, 160, 160, 0.1);
+  color: #c0c0c0;
+  border-color: rgba(160, 160, 160, 0.28);
+}
+
 .color-section[data-color="Land"] .section-header {
   background: rgba(140, 120, 90, 0.1);
   color: #c0b090;
