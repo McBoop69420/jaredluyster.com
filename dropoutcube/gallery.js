@@ -1,50 +1,104 @@
-// Single-faced:  { src: "images/foo.jpg", caption: "Card Name" }
-// Double-faced:  { src: "images/foo.jpg", caption: "Front Name", back: "images/foo_back.jpg", backCaption: "Back Name" }
+// Colors: "W" "U" "B" "R" "G" "Gold" "Land"
+// Single-faced:  { src: "images/foo.jpg", caption: "Card Name", color: "W" }
+// Double-faced:  { src: "images/foo.jpg", caption: "Front", back: "images/foo_back.jpg", backCaption: "Back", color: "U" }
 const IMAGES = [
-  { src: "images/Hazy Memory.jpg", caption: "Hazy Memory" },
-  { src: "images/No Problem.jpg", caption: "No Problem" },
-{ src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter" },
-  { src: "images/Pasta_Noche.png", caption: "Pasta Noche" },
-  { src: "images/Bayou_Peanut_Butter_Swamp.png", caption: "Peanut Butter Swamp" },
-  { src: "images/Mountport.jpeg", caption: "Mountport" },
-  { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket" },
+  { src: "images/Hazy Memory.jpg", caption: "Hazy Memory", color: "W" },
+  { src: "images/No Problem.jpg", caption: "No Problem", color: "Gold" },
+  { src: "images/Vichicular_Manslaughter_1.png", caption: "Vehicular Manslaughter", color: "B" },
+  { src: "images/Pasta_Noche.png", caption: "Pasta Noche", color: "W" },
+  { src: "images/Bayou_Peanut_Butter_Swamp.png", caption: "Peanut Butter Swamp", color: "Land" },
+  { src: "images/Mountport.jpeg", caption: "Mountport", color: "Land" },
+  { src: "images/Brooklyn_Supermarket_.png", caption: "Brooklyn Supermarket", color: "Gold" },
   {
     src: "images/Beedo_Mee-Maw_1.jpg",
     caption: "Beedo Mee-Maw",
     back: "images/Beedo_Mee-Maw_Knife_Witch.jpg",
     backCaption: "Beedo Mee-Maw — Knife Witch",
+    color: "Gold",
   },
 ];
 
-const gallery = document.getElementById("gallery");
-const emptyMsg = document.getElementById("empty");
-const countEl = document.getElementById("count");
-const lightbox = document.getElementById("lightbox");
-const lbImg = document.getElementById("lb-img");
+const COLOR_ORDER = ["W", "U", "B", "R", "G"];
+const COLOR_LABELS = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", Gold: "Multicolor", Land: "Land" };
+
+const gallery   = document.getElementById("gallery");
+const emptyMsg  = document.getElementById("empty");
+const countEl   = document.getElementById("count");
+const lightbox  = document.getElementById("lightbox");
+const lbImg     = document.getElementById("lb-img");
 const lbCaption = document.getElementById("lb-caption");
-const lbFlip = document.getElementById("lb-flip");
+const lbFlip    = document.getElementById("lb-flip");
 
 let currentCard = null;
 let showingBack = false;
+
+function makeTile(card) {
+  const fig = document.createElement("figure");
+  fig.className = "tile";
+  if (card.back) fig.classList.add("dfc");
+  const img = document.createElement("img");
+  img.src = card.src;
+  img.alt = card.caption;
+  img.loading = "lazy";
+  const cap = document.createElement("figcaption");
+  cap.textContent = card.caption;
+  fig.append(img, cap);
+  fig.addEventListener("click", () => openLightbox(card));
+  return fig;
+}
 
 if (IMAGES.length === 0) {
   emptyMsg.hidden = false;
 } else {
   countEl.textContent = `${IMAGES.length} card${IMAGES.length !== 1 ? "s" : ""}`;
 
-  IMAGES.forEach((card) => {
-    const fig = document.createElement("figure");
-    fig.className = "tile";
-    if (card.back) fig.classList.add("dfc");
-    const img = document.createElement("img");
-    img.src = card.src;
-    img.alt = card.caption;
-    img.loading = "lazy";
-    const cap = document.createElement("figcaption");
-    cap.textContent = card.caption;
-    fig.append(img, cap);
-    fig.addEventListener("click", () => openLightbox(card));
-    gallery.appendChild(fig);
+  // Group cards by color
+  const groups = {};
+  [...COLOR_ORDER, "Gold", "Land"].forEach(c => (groups[c] = []));
+  IMAGES.forEach(card => {
+    const key = COLOR_ORDER.includes(card.color) ? card.color
+              : card.color === "Land" ? "Land"
+              : "Gold";
+    groups[key].push(card);
+  });
+
+  // ── WUBRG 5-column section ──
+  const colSection = document.createElement("div");
+  colSection.className = "wubrg-columns";
+
+  COLOR_ORDER.forEach(color => {
+    const col = document.createElement("div");
+    col.className = "color-col";
+    col.dataset.color = color;
+
+    const hdr = document.createElement("div");
+    hdr.className = "color-header";
+    hdr.textContent = COLOR_LABELS[color];
+    col.appendChild(hdr);
+
+    groups[color].forEach(card => col.appendChild(makeTile(card)));
+    colSection.appendChild(col);
+  });
+  gallery.appendChild(colSection);
+
+  // ── Gold and Land row sections ──
+  ["Gold", "Land"].forEach(key => {
+    if (groups[key].length === 0) return;
+    const section = document.createElement("div");
+    section.className = "color-section";
+    section.dataset.color = key;
+
+    const hdr = document.createElement("div");
+    hdr.className = "section-header";
+    hdr.textContent = COLOR_LABELS[key];
+    section.appendChild(hdr);
+
+    const row = document.createElement("div");
+    row.className = "section-row";
+    groups[key].forEach(card => row.appendChild(makeTile(card)));
+    section.appendChild(row);
+
+    gallery.appendChild(section);
   });
 }
 
