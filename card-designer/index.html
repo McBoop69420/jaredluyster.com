@@ -674,12 +674,12 @@ h1 {
 
     <div class="field">
         <label>Card Name</label>
-        <input id="f-name" type="text" placeholder="Lightning Bolt" >
+        <input autocomplete="off" id="f-name" type="text" placeholder="Lightning Bolt" >
     </div>
 
     <div class="field">
         <label>Mana Cost &nbsp;<span style="font-weight:400;color:#6e7681">(e.g. 3RR or {2}{W})</span></label>
-        <input id="f-cost" type="text" placeholder="2WW" >
+        <input autocomplete="off" id="f-cost" type="text" placeholder="2WW" >
     </div>
 
     <div class="field">
@@ -746,21 +746,21 @@ h1 {
     <div id="adv-fields" style="display:none;margin-top:4px">
         <div class="field">
             <label>Adventure Name</label>
-            <input id="f-adv-name" type="text" placeholder="Lightning Arrow">
+            <input autocomplete="off" id="f-adv-name" type="text" placeholder="Lightning Arrow">
         </div>
         <div class="two-col">
             <div class="field">
                 <label>Adventure Cost</label>
-                <input id="f-adv-cost" type="text" placeholder="1R">
+                <input autocomplete="off" id="f-adv-cost" type="text" placeholder="1R">
             </div>
             <div class="field">
                 <label>Type</label>
-                <input id="f-adv-type" type="text" placeholder="Instant" value="Instant">
+                <input autocomplete="off" id="f-adv-type" type="text" placeholder="Instant" value="Instant">
             </div>
         </div>
         <div class="field">
             <label>Adventure Text</label>
-            <textarea id="f-adv-text" rows="2" placeholder="Deal 3 damage to any target."></textarea>
+            <textarea autocomplete="off" id="f-adv-text" rows="2" placeholder="Deal 3 damage to any target."></textarea>
         </div>
     </div>
 
@@ -768,7 +768,7 @@ h1 {
     <div id="battle-fields" style="display:none;margin-top:4px">
         <div class="field">
             <label>Defense</label>
-            <input id="f-def" type="text" placeholder="7" value="7">
+            <input autocomplete="off" id="f-def" type="text" placeholder="7" value="7">
         </div>
     </div>
 
@@ -776,21 +776,21 @@ h1 {
     <div id="prep-fields" style="display:none;margin-top:4px">
         <div class="field">
             <label>Prepared Name</label>
-            <input id="f-prep-name" type="text" placeholder="Regrowth">
+            <input autocomplete="off" id="f-prep-name" type="text" placeholder="Regrowth">
         </div>
         <div class="two-col">
             <div class="field">
                 <label>Prepared Cost</label>
-                <input id="f-prep-cost" type="text" placeholder="1G">
+                <input autocomplete="off" id="f-prep-cost" type="text" placeholder="1G">
             </div>
             <div class="field">
                 <label>Type</label>
-                <input id="f-prep-type" type="text" placeholder="Sorcery" value="Sorcery">
+                <input autocomplete="off" id="f-prep-type" type="text" placeholder="Sorcery" value="Sorcery">
             </div>
         </div>
         <div class="field">
             <label>Prepared Text</label>
-            <textarea id="f-prep-text" rows="2" placeholder="Return target card from your graveyard to your hand."></textarea>
+            <textarea autocomplete="off" id="f-prep-text" rows="2" placeholder="Return target card from your graveyard to your hand."></textarea>
         </div>
     </div>
 
@@ -799,11 +799,11 @@ h1 {
     <div class="field">
         <label>Supertypes</label>
         <div class="st-row">
-            <label><input type="checkbox" id="st-leg"> Legendary</label>
-            <label><input type="checkbox" id="st-bas"> Basic</label>
-            <label><input type="checkbox" id="st-sno"> Snow</label>
-            <label><input type="checkbox" id="st-wor"> World</label>
-            <label><input type="checkbox" id="st-tri"> Kindred</label>
+            <label><input autocomplete="off" type="checkbox" id="st-leg"> Legendary</label>
+            <label><input autocomplete="off" type="checkbox" id="st-bas"> Basic</label>
+            <label><input autocomplete="off" type="checkbox" id="st-sno"> Snow</label>
+            <label><input autocomplete="off" type="checkbox" id="st-wor"> World</label>
+            <label><input autocomplete="off" type="checkbox" id="st-tri"> Kindred</label>
         </div>
     </div>
 
@@ -825,7 +825,7 @@ h1 {
         </div>
         <div class="field">
             <label>Subtype</label>
-            <input id="f-sub" type="text" placeholder="Elf Druid" >
+            <input autocomplete="off" id="f-sub" type="text" placeholder="Elf Druid" >
         </div>
     </div>
 
@@ -833,7 +833,7 @@ h1 {
 
     <div class="field">
         <label>Image URL</label>
-        <input id="f-img" type="text" placeholder="https://…  (paste any image URL)">
+        <input autocomplete="off" id="f-img" type="text" placeholder="https://…  (paste any image URL)">
     </div>
 
     <div class="section-title">Text</div>
@@ -859,12 +859,12 @@ h1 {
             <button class="sbtn" onclick="insertSym('f-rules','{P}')" title="{P} Phyrexian"><i class="ms ms-p ms-cost"></i></button>
             <button class="sbtn" onclick="insertSym('f-rules','{S}')" title="{S} Snow"><i class="ms ms-s ms-cost"></i></button>
         </div>
-        <textarea id="f-rules" rows="4"></textarea>
+        <textarea autocomplete="off" id="f-rules" rows="4"></textarea>
     </div>
 
     <div class="field">
         <label>Flavor Text</label>
-        <textarea id="f-flavor" rows="2"></textarea>
+        <textarea autocomplete="off" id="f-flavor" rows="2"></textarea>
     </div>
 
     <div class="section-title">Stats &amp; Info</div>
@@ -872,15 +872,15 @@ h1 {
     <div class="three-col">
         <div class="field">
             <label>Power</label>
-            <input id="f-pow" type="text" placeholder="*" >
+            <input autocomplete="off" id="f-pow" type="text" placeholder="*" >
         </div>
         <div class="field">
             <label>Toughness</label>
-            <input id="f-tou" type="text" placeholder="*" >
+            <input autocomplete="off" id="f-tou" type="text" placeholder="*" >
         </div>
         <div class="field">
             <label>Loyalty</label>
-            <input id="f-loy" type="text" placeholder="4">
+            <input autocomplete="off" id="f-loy" type="text" placeholder="4">
         </div>
     </div>
 
@@ -908,17 +908,17 @@ h1 {
     <div class="two-col">
         <div class="field">
             <label>Artist</label>
-            <input id="f-art" type="text" placeholder="Artist Name" >
+            <input autocomplete="off" id="f-art" type="text" placeholder="Artist Name" >
         </div>
         <div class="field">
             <label>Number</label>
-            <input id="f-num" type="text" placeholder="042/250" >
+            <input autocomplete="off" id="f-num" type="text" placeholder="042/250" >
         </div>
     </div>
 
     <div class="field">
         <label>Set Name</label>
-        <input id="f-set" type="text" placeholder="Custom Set" >
+        <input autocomplete="off" id="f-set" type="text" placeholder="Custom Set" >
     </div>
 
     <button class="export-btn" onclick="exportCard()">Export Card as PNG</button>
