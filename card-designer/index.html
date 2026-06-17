@@ -807,6 +807,78 @@ h1 {
 }
 
 /* ── Adventure ── */
+.asset-card-layer { display: none; }
+.card.layout-adventure,
+.card.layout-prepared,
+.card.layout-battle {
+    padding: 0;
+    border: 0;
+    background: #0b0906;
+    overflow: hidden;
+}
+.card.layout-adventure .frame-chrome,
+.card.layout-adventure .corner,
+.card.layout-adventure .card-inner,
+.card.layout-prepared .frame-chrome,
+.card.layout-prepared .corner,
+.card.layout-prepared .card-inner,
+.card.layout-battle .frame-chrome,
+.card.layout-battle .corner,
+.card.layout-battle .card-inner { display: none; }
+.card.layout-adventure #adventure-layer,
+.card.layout-prepared #prepared-layer,
+.card.layout-battle #battle-layer { display: block; }
+.card.layout-battle { width: 523px; height: 375px; }
+.asset-card-layer {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border-radius: 18px; overflow: hidden;
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+}
+.asset-frame-img { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
+.asset-art { position: absolute; z-index: 1; object-fit: cover; background: #11111f; pointer-events: none; }
+.asset-stamp { position: absolute; display: block; pointer-events: none; }
+.asset-card-layer .art-placeholder { position: absolute; z-index: 1; }
+.asset-text, .asset-title, .asset-mana, .asset-type, .asset-set-symbol, .asset-stat {
+    position: absolute; z-index: 6; color: #17100b;
+}
+.asset-title, .asset-type {
+    font-family: 'Beleren Bold', Georgia, serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.asset-mana { display: flex; justify-content: flex-end; gap: 1px; }
+.asset-mana .ms { font-size: 18px; }
+.asset-text { font-size: 12.5px; line-height: 1.25; overflow: hidden; }
+.asset-text .ms { font-size: 11px; }
+.asset-set-symbol { display: flex; align-items: center; justify-content: flex-end; }
+.asset-set-symbol img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.asset-stat { font-family: 'Beleren Bold', Georgia, serif; text-align: center; }
+.adventure-art, .prepared-art { left: 7.67%; top: 11.29%; width: 84.76%; height: 44.29%; }
+.adventure-layer .art-placeholder, .prepared-layer .art-placeholder { left: 7.67%; top: 11.29%; width: 84.76%; height: 44.29%; }
+.adventure-title, .prepared-title { left: 8.54%; top: 5.22%; width: 73%; height: 5.43%; font-size: 14px; line-height: 28px; }
+.adventure-mana, .prepared-mana { right: 8.3%; top: 5.95%; height: 4%; }
+.adventure-type, .prepared-type { left: 8.54%; top: 56.64%; width: 73%; height: 5.43%; font-size: 11px; line-height: 28px; }
+.adventure-set-symbol, .prepared-set-symbol { right: 7.4%; top: 58.7%; width: 10%; height: 4.1%; }
+.adventure-stat, .prepared-stat { right: 7.2%; top: 90%; width: 14%; height: 4%; font-size: 15px; }
+.adventure-main-rules { left: 52.67%; top: 65%; width: 38.67%; height: 23.58%; }
+.adventure-spell-title { left: 8.14%; top: 63.91%; width: 30%; height: 3%; color: #f6f1dc; font-size: 11px; line-height: 16px; }
+.adventure-spell-mana { left: 8.14%; top: 63.91%; width: 40%; height: 3%; color: #f6f1dc; }
+.adventure-spell-type { left: 8.14%; top: 68.39%; width: 40%; height: 3%; color: #f6f1dc; font-size: 10px; line-height: 16px; }
+.adventure-spell-rules { left: 8.54%; top: 73.58%; width: 39.47%; height: 15%; color: #17100b; }
+.prepared-main-rules { left: 8.6%; top: 63.03%; width: 40.2%; height: 28.75%; }
+.prepared-spell-title { left: 51.84%; top: 63.91%; width: 27%; height: 3%; color: #f6f1dc; font-size: 11px; line-height: 16px; }
+.prepared-spell-mana { left: 65.62%; top: 63.91%; width: 27.36%; height: 3%; color: #f6f1dc; }
+.prepared-spell-type { left: 51.84%; top: 68.66%; width: 40%; height: 3%; color: #f6f1dc; font-size: 10px; line-height: 16px; }
+.prepared-spell-rules { left: 51.49%; top: 73.17%; width: 39.47%; height: 15.57%; color: #17100b; }
+.battle-art { left: 7.95%; top: 4%; width: 89.19%; height: 91.4%; }
+.battle-layer .art-placeholder { left: 7.95%; top: 4%; width: 89.19%; height: 91.4%; }
+.battle-title { left: 18.43%; top: 5.4%; width: 73.67%; height: 7.6%; font-size: 17px; line-height: 29px; }
+.battle-mana { right: 6.8%; top: 6.6%; height: 5%; }
+.battle-type { left: 12.76%; top: 58.2%; width: 79.38%; height: 7.6%; font-size: 14px; line-height: 29px; }
+.battle-rules { left: 12.95%; top: 67.2%; width: 79.1%; height: 27.6%; font-size: 14px; }
+.battle-defense { right: 4.5%; bottom: 3.8%; width: 7%; height: 10%; color: white; font-size: 20px; line-height: 37px; }
+.battle-set-symbol { right: 7.5%; top: 61.6%; width: 8.5%; height: 5.7%; }
+.battle-stamp { left: 4.9%; top: 43.8%; width: 4.43%; height: 12.4%; z-index: 6; }
+
 .card-textbox.adv-mode { flex: none; height: 90px; min-height: 0; border-radius: 3px 3px 0 0; }
 .adv-box {
     flex-shrink: 0; padding: 5px 7px;
@@ -1221,6 +1293,48 @@ h1 {
                 <div class="saga-set-symbol" id="saga-set-symbol"></div>
                 <img class="saga-stamp" src="frames/saga/stamp.png" alt="">
             </div>
+            <div class="asset-card-layer adventure-layer" id="adventure-layer">
+                <img class="asset-art adventure-art" id="adventure-art" alt="Card art">
+                <div class="art-placeholder" id="adventure-art-placeholder"></div>
+                <img class="asset-frame-img" id="adventure-frame" alt="">
+                <div class="asset-title adventure-title" id="adventure-title"></div>
+                <div class="asset-mana adventure-mana mana-cost" id="adventure-mana"></div>
+                <div class="asset-type adventure-type" id="adventure-type"></div>
+                <div class="asset-set-symbol adventure-set-symbol" id="adventure-set-symbol"></div>
+                <div class="asset-text adventure-main-rules" id="adventure-main-rules"></div>
+                <div class="asset-title adventure-spell-title" id="adventure-spell-title"></div>
+                <div class="asset-mana adventure-spell-mana mana-cost" id="adventure-spell-mana"></div>
+                <div class="asset-type adventure-spell-type" id="adventure-spell-type"></div>
+                <div class="asset-text adventure-spell-rules" id="adventure-spell-rules"></div>
+                <div class="asset-stat adventure-stat" id="adventure-stat"></div>
+            </div>
+            <div class="asset-card-layer prepared-layer" id="prepared-layer">
+                <img class="asset-art prepared-art" id="prepared-art" alt="Card art">
+                <div class="art-placeholder" id="prepared-art-placeholder"></div>
+                <img class="asset-frame-img" id="prepared-frame" alt="">
+                <div class="asset-title prepared-title" id="prepared-title"></div>
+                <div class="asset-mana prepared-mana mana-cost" id="prepared-mana"></div>
+                <div class="asset-type prepared-type" id="prepared-type"></div>
+                <div class="asset-set-symbol prepared-set-symbol" id="prepared-set-symbol"></div>
+                <div class="asset-text prepared-main-rules" id="prepared-main-rules"></div>
+                <div class="asset-title prepared-spell-title" id="prepared-spell-title"></div>
+                <div class="asset-mana prepared-spell-mana mana-cost" id="prepared-spell-mana"></div>
+                <div class="asset-type prepared-spell-type" id="prepared-spell-type"></div>
+                <div class="asset-text prepared-spell-rules" id="prepared-spell-rules"></div>
+                <div class="asset-stat prepared-stat" id="prepared-stat"></div>
+            </div>
+            <div class="asset-card-layer battle-layer" id="battle-layer">
+                <img class="asset-art battle-art" id="battle-art" alt="Card art">
+                <div class="art-placeholder" id="battle-art-placeholder"></div>
+                <img class="asset-frame-img" id="battle-frame" alt="">
+                <img class="asset-stamp battle-stamp" src="frames/battle/holostamp.png" alt="">
+                <div class="asset-title battle-title" id="battle-title"></div>
+                <div class="asset-mana battle-mana mana-cost" id="battle-mana"></div>
+                <div class="asset-type battle-type" id="battle-type"></div>
+                <div class="asset-set-symbol battle-set-symbol" id="battle-set-symbol"></div>
+                <div class="asset-text battle-rules" id="battle-rules"></div>
+                <div class="asset-stat battle-defense" id="battle-defense"></div>
+            </div>
         </div>
 
     </div>
@@ -1252,6 +1366,39 @@ const SAGA_FRAME_ASSETS = {
     fl: 'frames/saga/regular/l.png',
     fm: 'frames/saga/regular/sagaFrameM.png',
     default: 'frames/saga/regular/sagaFrameM.png',
+};
+const ADVENTURE_FRAME_ASSETS = {
+    fw: 'frames/adventure/regular/w.png',
+    fu: 'frames/adventure/regular/u.png',
+    fb: 'frames/adventure/regular/b.png',
+    fr: 'frames/adventure/regular/r.png',
+    fg: 'frames/adventure/regular/g.png',
+    fa: 'frames/adventure/regular/a.png',
+    fl: 'frames/adventure/regular/l.png',
+    fm: 'frames/adventure/regular/m.png',
+    default: 'frames/adventure/regular/m.png',
+};
+const PREPARED_FRAME_ASSETS = {
+    fw: 'frames/prepare/regular/w.png',
+    fu: 'frames/prepare/regular/u.png',
+    fb: 'frames/prepare/regular/b.png',
+    fr: 'frames/prepare/regular/r.png',
+    fg: 'frames/prepare/regular/g.png',
+    fa: 'frames/prepare/regular/a.png',
+    fl: 'frames/prepare/regular/l.png',
+    fm: 'frames/prepare/regular/m.png',
+    default: 'frames/prepare/regular/m.png',
+};
+const BATTLE_FRAME_ASSETS = {
+    fw: 'frames/battle/w.png',
+    fu: 'frames/battle/u.png',
+    fb: 'frames/battle/b.png',
+    fr: 'frames/battle/r.png',
+    fg: 'frames/battle/g.png',
+    fa: 'frames/battle/a.png',
+    fl: 'frames/battle/l.png',
+    fm: 'frames/battle/m.png',
+    default: 'frames/battle/m.png',
 };
 
 // ──────────────────────────────────────────────
@@ -1459,6 +1606,7 @@ function render() {
         advBoxEl.style.display = 'none';
 
     } else if (cardLayout === 'adventure') {
+        renderAdventureFrame({ name, cost, imgUrl, type, typeLine, rules, pow, tou, setSymbol, rarity: rar });
         textboxEl.className = 'card-textbox adv-mode';
         textboxEl.innerHTML = `<div class="card-rules" id="c-rules"></div>
             <div class="flavor-divider" id="c-fdiv"></div>
@@ -1478,6 +1626,7 @@ function render() {
             rulesHTML(document.getElementById('f-adv-text').value || '');
 
     } else if (cardLayout === 'prepared') {
+        renderPreparedFrame({ name, cost, imgUrl, type, typeLine, rules, pow, tou, setSymbol, rarity: rar });
         textboxEl.className = 'card-textbox prep-mode';
         textboxEl.innerHTML = `
             <div class="prep-main">
@@ -1522,6 +1671,7 @@ function render() {
     // ── stat box ──
     const statEl = document.getElementById('c-stat');
     if (cardLayout === 'battle') {
+        renderBattleFrame({ name, cost, imgUrl, typeLine, rules, setSymbol, rarity: rar });
         const def = document.getElementById('f-def').value || '7';
         statEl.innerHTML = `<div class="defense-box">${def}</div>`;
     } else if (type === 'Planeswalker' && loy) {
@@ -1637,6 +1787,49 @@ function placeholderHTML() {
         No image</div>`;
 }
 
+function assetFrameSrc(map) {
+    return map[frameClass] || map.default;
+}
+
+function renderAssetArt(prefix, imgUrl) {
+    const artImg = document.getElementById(`${prefix}-art`);
+    const artPlaceholder = document.getElementById(`${prefix}-art-placeholder`);
+    artPlaceholder.innerHTML = placeholderHTML().replace(/^<div class="art-placeholder">|<\/div>$/g, '');
+    if (imgUrl) {
+        artImg.style.display = '';
+        artPlaceholder.style.display = 'none';
+        artImg.src = imgUrl;
+        artImg.onerror = () => {
+            artImg.style.display = 'none';
+            artPlaceholder.style.display = '';
+        };
+    } else {
+        artImg.removeAttribute('src');
+        artImg.style.display = 'none';
+        artPlaceholder.style.display = '';
+    }
+}
+
+function renderAssetSetSymbol(prefix, symbol, rarity) {
+    const el = document.getElementById(`${prefix}-set-symbol`);
+    if (symbol.startsWith('svg:')) {
+        el.className = `asset-set-symbol ${prefix}-set-symbol`;
+        el.innerHTML = SVG_SYMS[symbol] || '';
+    } else {
+        el.className = `asset-set-symbol ${prefix}-set-symbol set-sym rar-${rarity}`;
+        el.textContent = symbol;
+    }
+}
+
+function renderPowerToughness(prefix, type, pow, tou) {
+    const el = document.getElementById(`${prefix}-stat`);
+    if (['Creature','Enchantment Creature','Artifact Creature'].includes(type) && (pow !== '' || tou !== '')) {
+        el.textContent = `${pow}/${tou}`;
+    } else {
+        el.textContent = '';
+    }
+}
+
 function setActiveToggle(kind, value) {
     document.querySelectorAll(`.tog-btn[data-${kind}]`).forEach(btn => {
         btn.classList.toggle('active', btn.dataset[kind] === value);
@@ -1704,6 +1897,56 @@ function initFrameResources() {
 // ──────────────────────────────────────────────
 // Color & hybrid button clicks (unified)
 // ──────────────────────────────────────────────
+function renderAdventureFrame({ name, cost, imgUrl, type, typeLine, rules, pow, tou, setSymbol, rarity }) {
+    document.getElementById('adventure-frame').src = assetFrameSrc(ADVENTURE_FRAME_ASSETS);
+    renderAssetArt('adventure', imgUrl);
+    document.getElementById('adventure-title').textContent = name || '';
+    document.getElementById('adventure-mana').innerHTML = parseMana(cost).map(manaHTML).join('');
+    document.getElementById('adventure-type').textContent = typeLine;
+    renderAssetSetSymbol('adventure', setSymbol, rarity);
+    document.getElementById('adventure-main-rules').innerHTML = rulesHTML(rules);
+    document.getElementById('adventure-spell-title').textContent =
+        document.getElementById('f-adv-name').value || 'Adventure';
+    document.getElementById('adventure-spell-mana').innerHTML =
+        parseMana(document.getElementById('f-adv-cost').value || '').map(manaHTML).join('');
+    document.getElementById('adventure-spell-type').textContent =
+        document.getElementById('f-adv-type').value || 'Instant';
+    document.getElementById('adventure-spell-rules').innerHTML =
+        rulesHTML(document.getElementById('f-adv-text').value || '');
+    renderPowerToughness('adventure', type, pow, tou);
+}
+
+function renderPreparedFrame({ name, cost, imgUrl, type, typeLine, rules, pow, tou, setSymbol, rarity }) {
+    document.getElementById('prepared-frame').src = assetFrameSrc(PREPARED_FRAME_ASSETS);
+    renderAssetArt('prepared', imgUrl);
+    document.getElementById('prepared-title').textContent = name || '';
+    document.getElementById('prepared-mana').innerHTML = parseMana(cost).map(manaHTML).join('');
+    document.getElementById('prepared-type').textContent = typeLine;
+    renderAssetSetSymbol('prepared', setSymbol, rarity);
+    document.getElementById('prepared-main-rules').innerHTML = rulesHTML(rules);
+    document.getElementById('prepared-spell-title').textContent =
+        document.getElementById('f-prep-name').value || 'Prepared';
+    document.getElementById('prepared-spell-mana').innerHTML =
+        parseMana(document.getElementById('f-prep-cost').value || '').map(manaHTML).join('');
+    document.getElementById('prepared-spell-type').textContent =
+        document.getElementById('f-prep-type').value || 'Sorcery';
+    document.getElementById('prepared-spell-rules').innerHTML =
+        rulesHTML(document.getElementById('f-prep-text').value || '');
+    renderPowerToughness('prepared', type, pow, tou);
+}
+
+function renderBattleFrame({ name, cost, imgUrl, typeLine, rules, setSymbol, rarity }) {
+    document.getElementById('battle-frame').src = assetFrameSrc(BATTLE_FRAME_ASSETS);
+    renderAssetArt('battle', imgUrl);
+    document.getElementById('battle-title').textContent = name || '';
+    document.getElementById('battle-mana').innerHTML = parseMana(cost).map(manaHTML).join('');
+    document.getElementById('battle-type').textContent = typeLine;
+    renderAssetSetSymbol('battle', setSymbol, rarity);
+    const battleRules = rules.trim() || '(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it is defeated, exile it, then cast it transformed.)';
+    document.getElementById('battle-rules').innerHTML = rulesHTML(battleRules);
+    document.getElementById('battle-defense').textContent = document.getElementById('f-def').value || '7';
+}
+
 function setFrameColor(col, activeBtn) {
     document.querySelectorAll('.cbtn, .hbtn').forEach(b => b.classList.remove('active'));
     activeBtn.classList.add('active');
