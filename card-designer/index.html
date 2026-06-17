@@ -11,14 +11,14 @@
 <style>
 @font-face {
     font-family: 'Beleren Bold';
-    src: url('https://cdn.jsdelivr.net/npm/@regularwave/beleren-bold-woff2@1.0.1/fonts/Beleren-Bold-w2.woff2') format('woff2');
+    src: url('fonts/Beleren-Bold.woff2') format('woff2');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
     font-family: 'Beleren Small Caps';
-    src: url('https://cdn.jsdelivr.net/npm/@regularwave/beleren-bold-woff2@1.0.1/fonts/Beleren-SmallCaps-Bold-w2.woff2') format('woff2');
+    src: url('fonts/Beleren-SmallCaps-Bold.woff2') format('woff2');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
@@ -1386,25 +1386,28 @@ function doExport() {
 // ──────────────────────────────────────────────
 // Live updates — bind all inputs
 // ──────────────────────────────────────────────
+let renderEnabled = false;
 document.querySelectorAll('.panel-form input, .panel-form select, .panel-form textarea').forEach(el => {
-    el.addEventListener('input', render);
-    el.addEventListener('change', render);
+    el.addEventListener('input',  () => { if (renderEnabled) render(); });
+    el.addEventListener('change', () => { if (renderEnabled) render(); });
 });
 
-// Reset all fields on load to prevent browser form-state restore from showing stale data
-['f-name','f-cost','f-sub','f-rules','f-flavor','f-pow','f-tou','f-loy','f-art','f-num','f-set','f-img'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-});
-['st-leg','st-bas','st-sno','st-wor','st-tri'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.checked = false;
-});
-frameClass = '';
-document.querySelectorAll('.cbtn, .hbtn').forEach(b => b.classList.remove('active'));
+function initBlankCard() {
+    ['f-name','f-cost','f-sub','f-rules','f-flavor','f-pow','f-tou','f-loy','f-art','f-num','f-set','f-img'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    ['st-leg','st-bas','st-sno','st-wor','st-tri'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+    });
+    frameClass = '';
+    document.querySelectorAll('.cbtn, .hbtn').forEach(b => b.classList.remove('active'));
+    render();
+    setTimeout(() => { renderEnabled = true; }, 300);
+}
 
-// Initial render
-render();
+window.addEventListener('pageshow', initBlankCard);
 </script>
 </body>
 </html>
