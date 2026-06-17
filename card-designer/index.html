@@ -550,6 +550,12 @@ h1 {
 }
 .tog-btn:hover { background: rgba(255,255,255,0.1); color: #cdd9e5; }
 .tog-btn.active { background: #1f6feb; border-color: #388bfd; color: white; }
+.frame-source-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.frame-source-note {
+    color: #6e7681;
+    font-size: 11px;
+    line-height: 1.35;
+}
 
 /* ═══════════════════════════════════════════
    FRAME ERAS
@@ -727,6 +733,18 @@ h1 {
     </div>
 
     <div class="section-title">Frame Era</div>
+    <div class="frame-source-grid">
+        <div class="field">
+            <label>Card Conjurer Frame Group</label>
+            <select id="f-frame-group"></select>
+        </div>
+        <div class="field">
+            <label>Frame Pack</label>
+            <select id="f-frame-pack"></select>
+        </div>
+        <div class="frame-source-note" id="frame-source-note"></div>
+    </div>
+
     <div class="toggle-row">
         <button class="tog-btn active" data-era="modern">Modern</button>
         <button class="tog-btn" data-era="classic">Classic</button>
@@ -1037,6 +1055,64 @@ let frameEra   = 'modern';
 let cardLayout = 'normal';
 let setSymbol  = 'svg:d-silver';
 let scale = 1.0;
+let appliedFrameType = null;
+let appliedFrameSupertype = null;
+
+const FRAME_GROUPS = [
+    {
+        label: 'Regular',
+        value: 'Standard-3',
+        packs: [
+            { label: 'Regular Frames', value: 'M15Regular-1', era: 'modern', layout: 'normal', note: 'Default M15-style Card Conjurer regular frame pack.' },
+            { label: 'Enchantment Frames (Nyx)', value: 'M15Nyx', era: 'modern', layout: 'normal', note: 'Use for enchantment or enchantment-creature cards.' },
+            { label: 'Lands', value: 'M15Lands', era: 'modern', layout: 'normal', type: 'Land', note: 'Modern land frame pack.' },
+            { label: 'Prepare (Secrets of Strixhaven)', value: 'Prepare', era: 'modern', layout: 'prepared', note: 'Maps to this designer\'s Prepared split-text layout.' },
+            { label: 'Battle (March of the Machine)', value: 'Battle', era: 'modern', layout: 'battle', type: 'Battle', note: 'Maps to the Battle layout and defense counter.' },
+            { label: 'Adventures (Eldraine)', value: 'Adventure', era: 'modern', layout: 'adventure', note: 'Maps to the Adventure spell inset.' },
+            { label: 'Snow (Kaldheim)', value: 'M15Snow', era: 'modern', layout: 'normal', supertype: 'st-sno', note: 'Turns on the Snow supertype.' },
+            { label: 'Class (D&D)', value: 'Class', era: 'modern', layout: 'saga', type: 'Enchantment', note: 'Uses the chaptered layout as the closest local equivalent.' },
+            { label: 'Prototype (Brothers\' War)', value: 'Prototype', era: 'modern', layout: 'normal', note: 'Prototype frame option; local rendering keeps the standard text frame.' },
+            { label: 'Spree (Outlaws of Thunder Junction)', value: 'Spree', era: 'modern', layout: 'normal', note: 'Spree frame option; local rendering keeps the standard spell frame.' },
+            { label: 'Omen (Tarkir Dragonstorm)', value: 'Omen', era: 'modern', layout: 'normal', note: 'Omen frame option; local rendering keeps the standard spell frame.' },
+        ],
+    },
+    {
+        label: 'Sagas',
+        value: 'Saga-1',
+        packs: [
+            { label: 'Saga Frames', value: 'SagaRegular', era: 'modern', layout: 'saga', type: 'Enchantment', note: 'Chaptered Saga layout.' },
+            { label: 'Saga Showcase', value: 'SagaShowcase', era: 'future', layout: 'saga', type: 'Enchantment', note: 'Uses Future Sight styling as a local showcase treatment.' },
+        ],
+    },
+    {
+        label: 'Showcase Frames',
+        value: 'Showcase-5',
+        packs: [
+            { label: 'Japan Showcase', value: 'JapanShowcase', era: 'future', layout: 'normal', note: 'Angular showcase treatment using this designer\'s Future Sight era.' },
+            { label: 'Vault (BIG)', value: 'Vault', era: 'future', layout: 'normal', note: 'Showcase option mapped to the local angular frame.' },
+            { label: 'Circuit', value: 'Circuit', era: 'future', layout: 'normal', note: 'Custom/showcase option mapped to the local angular frame.' },
+        ],
+    },
+    {
+        label: 'Old/Misc',
+        value: 'Misc-2',
+        packs: [
+            { label: 'Seventh Edition', value: 'Seventh', era: 'classic', layout: 'normal', note: 'Classic pre-modern frame treatment.' },
+            { label: 'Eighth Edition', value: '8th', era: 'modern', layout: 'normal', note: 'Early modern frame treatment.' },
+            { label: 'Future Sight', value: 'FutureSight', era: 'future', layout: 'normal', note: 'Future-shifted local frame treatment.' },
+            { label: 'Colorshifted (Planar Chaos)', value: 'Colorshifted', era: 'future', layout: 'normal', note: 'Planar Chaos-inspired alternate frame treatment.' },
+        ],
+    },
+    {
+        label: 'Accurate Frames',
+        value: 'Accurate',
+        packs: [
+            { label: 'Regular (Accurate)', value: 'M15RegularNew', era: 'modern', layout: 'normal', note: 'Card Conjurer accurate regular frame option.' },
+            { label: 'Full Art (Accurate)', value: 'FullArtNew', era: 'modern', layout: 'normal', note: 'Accurate full-art option; local art box remains editable.' },
+            { label: 'Universes Beyond (Accurate)', value: 'UBNew', era: 'modern', layout: 'normal', note: 'Universes Beyond accurate option; local rendering keeps standard structure.' },
+        ],
+    },
+];
 
 // ──────────────────────────────────────────────
 // Mana parsing
@@ -1275,6 +1351,70 @@ function placeholderHTML() {
         No image</div>`;
 }
 
+function setActiveToggle(kind, value) {
+    document.querySelectorAll(`.tog-btn[data-${kind}]`).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset[kind] === value);
+    });
+}
+
+function setLayout(value) {
+    cardLayout = value;
+    setActiveToggle('layout', value);
+    document.getElementById('saga-fields').style.display   = cardLayout === 'saga'      ? '' : 'none';
+    document.getElementById('adv-fields').style.display    = cardLayout === 'adventure' ? '' : 'none';
+    document.getElementById('battle-fields').style.display = cardLayout === 'battle'    ? '' : 'none';
+    document.getElementById('prep-fields').style.display   = cardLayout === 'prepared'  ? '' : 'none';
+}
+
+function applyFramePack(pack) {
+    frameEra = pack.era || 'modern';
+    setActiveToggle('era', frameEra);
+    setLayout(pack.layout || 'normal');
+    const typeInput = document.getElementById('f-type');
+    if (pack.type) {
+        typeInput.value = pack.type;
+        appliedFrameType = pack.type;
+    } else if (appliedFrameType && typeInput.value === appliedFrameType) {
+        typeInput.value = 'Creature';
+        appliedFrameType = null;
+    }
+    if (pack.supertype) {
+        document.getElementById(pack.supertype).checked = true;
+        appliedFrameSupertype = pack.supertype;
+    } else if (appliedFrameSupertype) {
+        const supertypeInput = document.getElementById(appliedFrameSupertype);
+        if (supertypeInput) supertypeInput.checked = false;
+        appliedFrameSupertype = null;
+    }
+    document.getElementById('frame-source-note').textContent = pack.note || '';
+    render();
+}
+
+function populateFramePacks() {
+    const groupSelect = document.getElementById('f-frame-group');
+    const packSelect = document.getElementById('f-frame-pack');
+    const group = FRAME_GROUPS.find(item => item.value === groupSelect.value) || FRAME_GROUPS[0];
+    packSelect.innerHTML = group.packs
+        .map(pack => `<option value="${pack.value}">${pack.label}</option>`)
+        .join('');
+    applyFramePack(group.packs[0]);
+}
+
+function initFrameResources() {
+    const groupSelect = document.getElementById('f-frame-group');
+    const packSelect = document.getElementById('f-frame-pack');
+    groupSelect.innerHTML = FRAME_GROUPS
+        .map(group => `<option value="${group.value}">${group.label}</option>`)
+        .join('');
+    groupSelect.addEventListener('change', populateFramePacks);
+    packSelect.addEventListener('change', () => {
+        const group = FRAME_GROUPS.find(item => item.value === groupSelect.value) || FRAME_GROUPS[0];
+        const pack = group.packs.find(item => item.value === packSelect.value) || group.packs[0];
+        applyFramePack(pack);
+    });
+    populateFramePacks();
+}
+
 // ──────────────────────────────────────────────
 // Color & hybrid button clicks (unified)
 // ──────────────────────────────────────────────
@@ -1297,9 +1437,8 @@ document.querySelectorAll('.hbtn').forEach(btn => {
 // ──────────────────────────────────────────────
 document.querySelectorAll('.tog-btn[data-era]').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tog-btn[data-era]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         frameEra = btn.dataset.era;
+        setActiveToggle('era', frameEra);
         render();
     });
 });
@@ -1309,13 +1448,7 @@ document.querySelectorAll('.tog-btn[data-era]').forEach(btn => {
 // ──────────────────────────────────────────────
 document.querySelectorAll('.tog-btn[data-layout]').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tog-btn[data-layout]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        cardLayout = btn.dataset.layout;
-        document.getElementById('saga-fields').style.display   = cardLayout === 'saga'      ? '' : 'none';
-        document.getElementById('adv-fields').style.display    = cardLayout === 'adventure' ? '' : 'none';
-        document.getElementById('battle-fields').style.display = cardLayout === 'battle'    ? '' : 'none';
-        document.getElementById('prep-fields').style.display   = cardLayout === 'prepared'  ? '' : 'none';
+        setLayout(btn.dataset.layout);
         render();
     });
 });
@@ -1403,10 +1536,14 @@ function initBlankCard() {
     });
     frameClass = '';
     document.querySelectorAll('.cbtn, .hbtn').forEach(b => b.classList.remove('active'));
+    const group = FRAME_GROUPS.find(item => item.value === document.getElementById('f-frame-group').value) || FRAME_GROUPS[0];
+    const pack = group.packs.find(item => item.value === document.getElementById('f-frame-pack').value) || group.packs[0];
+    applyFramePack(pack);
     render();
     setTimeout(() => { renderEnabled = true; }, 300);
 }
 
+initFrameResources();
 window.addEventListener('pageshow', initBlankCard);
 </script>
 </body>
