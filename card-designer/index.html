@@ -629,6 +629,183 @@ h1 {
 }
 .saga-ch:last-child { border-bottom: none; }
 
+/* Real Saga frame */
+.saga-card-layer { display: none; }
+.card.layout-saga {
+    padding: 0;
+    border: 0;
+    background: #0b0906;
+    overflow: hidden;
+}
+.card.layout-saga .frame-chrome,
+.card.layout-saga .corner,
+.card.layout-saga .card-inner { display: none; }
+.card.layout-saga .saga-card-layer {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+}
+.saga-frame-img,
+.saga-art-panel,
+.saga-mid-stripe,
+.saga-stamp {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+.saga-frame-img { inset: 0; width: 100%; height: 100%; z-index: 4; }
+.saga-art-panel {
+    left: 50%;
+    top: 11.24%;
+    width: 42.47%;
+    height: 72.53%;
+    z-index: 1;
+    object-fit: cover;
+    background: #11111f;
+}
+.saga-card-layer .art-placeholder {
+    position: absolute;
+    left: 50%;
+    top: 11.24%;
+    width: 42.47%;
+    height: 72.53%;
+    z-index: 1;
+}
+.saga-title,
+.saga-mana,
+.saga-reminder,
+.saga-ability,
+.saga-type,
+.saga-set-symbol {
+    position: absolute;
+    z-index: 6;
+    color: #17100b;
+}
+.saga-title {
+    left: 8.54%;
+    top: 5.22%;
+    width: 73%;
+    height: 5.43%;
+    font-family: 'Beleren Bold', Georgia, serif;
+    font-size: 14px;
+    line-height: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.saga-mana {
+    right: 8.3%;
+    top: 5.95%;
+    height: 4%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1px;
+}
+.saga-mana .ms { font-size: 18px; }
+.saga-reminder {
+    left: 8.67%;
+    top: 11.29%;
+    width: 40.4%;
+    height: 17.72%;
+    font-size: 11.5px;
+    line-height: 1.2;
+    font-style: italic;
+    color: #23170f;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.75);
+    overflow: hidden;
+}
+.saga-abilities {
+    position: absolute;
+    left: 8.7%;
+    top: 28.96%;
+    width: 40%;
+    height: 55.5%;
+    z-index: 6;
+}
+.saga-ability {
+    left: 11.8%;
+    width: 87%;
+    padding: 4px 4px 3px 0;
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: #160d08;
+    overflow: hidden;
+}
+.saga-divider {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    object-fit: fill;
+    z-index: 7;
+    pointer-events: none;
+}
+.saga-chapter-mark {
+    position: absolute;
+    left: -8.7%;
+    width: 19.7%;
+    height: 11.2%;
+    z-index: 8;
+    transform: translateY(-50%);
+}
+.saga-chapter-mark img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.saga-chapter-mark span {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 1px;
+    font-family: 'Beleren Bold', Georgia, serif;
+    font-size: 10px;
+    color: #2a190b;
+}
+.saga-type {
+    left: 8.54%;
+    top: 84.81%;
+    width: 72%;
+    height: 5.43%;
+    font-family: 'Beleren Bold', Georgia, serif;
+    font-size: 11px;
+    line-height: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.saga-set-symbol {
+    right: 7.3%;
+    top: 86.55%;
+    width: 10%;
+    height: 3.8%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.saga-set-symbol img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.saga-mid-stripe {
+    left: 7.27%;
+    top: 30.58%;
+    width: 0.87%;
+    height: 47.62%;
+    z-index: 5;
+}
+.saga-stamp {
+    left: 43.8%;
+    top: 91.2%;
+    width: 12.4%;
+    height: 3.72%;
+    z-index: 6;
+}
+
 /* ── Adventure ── */
 .card-textbox.adv-mode { flex: none; height: 90px; min-height: 0; border-radius: 3px 3px 0 0; }
 .adv-box {
@@ -1025,6 +1202,25 @@ h1 {
                 </div>
 
             </div>
+
+            <div class="saga-card-layer" id="saga-layer">
+                <img class="saga-art-panel" id="saga-art" alt="Card art">
+                <div class="art-placeholder" id="saga-art-placeholder">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    No image
+                </div>
+                <img class="saga-frame-img" id="saga-frame" alt="">
+                <img class="saga-mid-stripe" id="saga-mid-stripe" src="frames/saga/sagaMidStripe.png" alt="">
+                <div class="saga-title" id="saga-title"></div>
+                <div class="saga-mana mana-cost" id="saga-mana"></div>
+                <div class="saga-reminder" id="saga-reminder"></div>
+                <div class="saga-abilities" id="saga-abilities"></div>
+                <div class="saga-type" id="saga-type"></div>
+                <div class="saga-set-symbol" id="saga-set-symbol"></div>
+                <img class="saga-stamp" src="frames/saga/stamp.png" alt="">
+            </div>
         </div>
 
     </div>
@@ -1045,6 +1241,17 @@ const SVG_SYMS = {
 'svg:d-black':  '<img src="symbols/dropout-common.png"   style="width:100%;height:100%;object-fit:contain;display:block">',
 'svg:d-red':    '<img src="symbols/dropout-mythic.png"   style="width:100%;height:100%;object-fit:contain;display:block">',
 'svg:d-gold':   '<img src="symbols/dropout-rare.png"     style="width:100%;height:100%;object-fit:contain;display:block">'
+};
+const SAGA_FRAME_ASSETS = {
+    fw: 'frames/saga/regular/sagaFrameW.png',
+    fu: 'frames/saga/regular/sagaFrameU.png',
+    fb: 'frames/saga/regular/sagaFrameB.png',
+    fr: 'frames/saga/regular/sagaFrameR.png',
+    fg: 'frames/saga/regular/sagaFrameG.png',
+    fa: 'frames/saga/regular/sagaFrameA.png',
+    fl: 'frames/saga/regular/l.png',
+    fm: 'frames/saga/regular/sagaFrameM.png',
+    default: 'frames/saga/regular/sagaFrameM.png',
 };
 
 // ──────────────────────────────────────────────
@@ -1196,7 +1403,7 @@ function render() {
     ].filter(Boolean);
 
     // frame class + era
-    document.getElementById('card').className = `card ${frameClass} era-${frameEra}`;
+    document.getElementById('card').className = `card ${frameClass} era-${frameEra} layout-${cardLayout}`;
 
     // name
     document.getElementById('c-name').textContent = name;
@@ -1237,7 +1444,18 @@ function render() {
 
     if (cardLayout === 'saga') {
         const chCount = parseInt(document.getElementById('f-chapters').value) || 3;
-        renderSaga(textboxEl, rules, chCount);
+        renderSaga({
+            name,
+            cost,
+            imgUrl,
+            typeLine,
+            rules,
+            chCount,
+            setSymbol,
+            rarity: rar,
+        });
+        textboxEl.className = 'card-textbox';
+        textboxEl.innerHTML = '';
         advBoxEl.style.display = 'none';
 
     } else if (cardLayout === 'adventure') {
@@ -1322,25 +1540,93 @@ function render() {
 // ──────────────────────────────────────────────
 // Saga renderer
 // ──────────────────────────────────────────────
-function renderSaga(el, rulesText, chCount) {
-    const numerals = ['I','II','III','IV','V'];
-    const chapters = rulesText.split(/\n?---\n?/).slice(0, chCount);
-    while (chapters.length < chCount) chapters.push('');
+function renderSaga({ name, cost, imgUrl, typeLine, rules, chCount, setSymbol, rarity }) {
+    const frameKey = SAGA_FRAME_ASSETS[frameClass] ? frameClass :
+        (['fw','fu','fb','fr','fg','fa','fl','fm'].includes(frameClass) ? frameClass : 'default');
+    document.getElementById('saga-frame').src = SAGA_FRAME_ASSETS[frameKey] || SAGA_FRAME_ASSETS.default;
+    document.getElementById('saga-mid-stripe').style.display =
+        ['fm', 'fwu','fub','fbr','frg','fgw','fwb','fur','fbg','frw','fgu'].includes(frameClass) ? '' : 'none';
 
-    const sidebarHTML = numerals.slice(0, chCount).map((n, i) =>
-        (i > 0 ? '<div class="saga-gap"></div>' : '') +
-        `<div class="saga-lore">${n}</div>`
-    ).join('');
+    const artImg = document.getElementById('saga-art');
+    const artPlaceholder = document.getElementById('saga-art-placeholder');
+    if (imgUrl) {
+        artImg.style.display = '';
+        artPlaceholder.style.display = 'none';
+        artImg.src = imgUrl;
+        artImg.onerror = () => {
+            artImg.style.display = 'none';
+            artPlaceholder.style.display = '';
+        };
+    } else {
+        artImg.removeAttribute('src');
+        artImg.style.display = 'none';
+        artPlaceholder.style.display = '';
+    }
 
-    const contentHTML = chapters.map(ch => {
-        const inner = ch.trim()
-            ? ch.trim().replace(/\{([^}]+)\}/g, (_, s) => inlineSym(s))
-            : '&nbsp;';
-        return `<div class="saga-ch">${inner}</div>`;
+    document.getElementById('saga-title').textContent = name || '';
+    document.getElementById('saga-mana').innerHTML = parseMana(cost).map(manaHTML).join('');
+    document.getElementById('saga-type').textContent = typeLine || 'Enchantment';
+
+    const sagaSymbol = document.getElementById('saga-set-symbol');
+    if (setSymbol.startsWith('svg:')) {
+        sagaSymbol.className = 'saga-set-symbol';
+        sagaSymbol.innerHTML = SVG_SYMS[setSymbol] || '';
+    } else {
+        sagaSymbol.className = `saga-set-symbol set-sym rar-${rarity}`;
+        sagaSymbol.textContent = setSymbol;
+    }
+
+    document.getElementById('saga-reminder').innerHTML =
+        rulesHTML('(As this Saga enters and after your draw step, add a lore counter. Sacrifice after ' + romanNumeral(chCount) + '.)');
+
+    const rawChapters = rules.split(/\n?---\n?/).slice(0, 4);
+    while (rawChapters.length < chCount) rawChapters.push('');
+    const chapters = rawChapters.slice(0, Math.max(1, Math.min(4, chCount)));
+    const weights = chapters.map(ch => {
+        const wordCount = ch.replace(/\([^)]*\)/g, '').trim().split(/\s+/).filter(Boolean).length;
+        return Math.max(1, wordCount);
+    });
+    const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
+    const minHeight = 16;
+    const flexibleHeight = Math.max(0, 100 - chapters.length * minHeight);
+    let cursor = 0;
+    let chapterNumber = 1;
+
+    const abilitiesHTML = chapters.map((chapter, index) => {
+        const height = minHeight + (weights[index] / totalWeight) * flexibleHeight;
+        const top = cursor;
+        cursor += height;
+        const body = chapter.trim() ? rulesHTML(chapter.trim()) : '&nbsp;';
+        const divider = index === 0 ? '' :
+            `<img class="saga-divider" src="frames/saga/sagaDivider.png" style="top:${top.toFixed(2)}%" alt="">`;
+        const markTop = top + height / 2;
+        const numeral = romanNumeral(chapterNumber++);
+        return `${divider}
+            <div class="saga-chapter-mark" style="top:${markTop.toFixed(2)}%">
+                <img src="frames/saga/sagaChapter.png" alt="">
+                <span>${numeral}</span>
+            </div>
+            <div class="saga-ability" style="top:${top.toFixed(2)}%;height:${height.toFixed(2)}%">${body}</div>`;
     }).join('');
+    document.getElementById('saga-abilities').innerHTML = abilitiesHTML;
+}
 
-    el.className = 'card-textbox saga-mode';
-    el.innerHTML = `<div class="saga-bar">${sidebarHTML}</div><div class="saga-content">${contentHTML}</div>`;
+function romanNumeral(input) {
+    const numerals = [
+        [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+        [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+        [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+    ];
+    let value = parseInt(input, 10);
+    if (!value || value < 1) return String(input || '');
+    let out = '';
+    numerals.forEach(([amount, glyph]) => {
+        while (value >= amount) {
+            out += glyph;
+            value -= amount;
+        }
+    });
+    return out;
 }
 
 function placeholderHTML() {
