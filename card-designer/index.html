@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTG Card Designer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #0d1117;
+    color: #cdd9e5;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ───────────── LAYOUT ───────────── */
+.panel-form {
+    width: 370px;
+    min-width: 370px;
+    background: #161b22;
+    border-right: 1px solid #30363d;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.panel-preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a2540 0%, #0d1117 100%);
+    position: relative;
+}
+
+/* ───────────── FORM UI ───────────── */
+h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+    letter-spacing: -0.3px;
+}
+
+.section-title {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6e7681;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #21262d;
+    margin-top: 2px;
+}
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 11.5px; color: #8b949e; font-weight: 500; }
+
+.field input,
+.field select,
+.field textarea {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #cdd9e5;
+    padding: 5px 9px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #58a6ff; }
+.field textarea { resize: vertical; min-height: 58px; line-height: 1.5; }
+.field select option { background: #1c2128; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* Color picker buttons */
+.color-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+.cbtn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer; font-weight: 700; font-size: 13px;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+    background: none; padding: 0;
+}
+.cbtn.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 0 12px rgba(255,255,255,0.5);
+    transform: scale(1.15);
+}
+.c-W { background: radial-gradient(circle at 35% 35%, #fff8e0, #c8a840); color: #3a2a00; }
+.c-U { background: radial-gradient(circle at 35% 35%, #90c0f0, #1060a8); color: white; }
+.c-B { background: radial-gradient(circle at 35% 35%, #6a6a6a, #111); color: #c0c0c0; }
+.c-R { background: radial-gradient(circle at 35% 35%, #f09060, #c02020); color: white; }
+.c-G { background: radial-gradient(circle at 35% 35%, #78d078, #186830); color: white; }
+.c-M { background: radial-gradient(circle at 35% 35%, #f0d860, #a07810); color: #3a2a00; }
+.c-A { background: radial-gradient(circle at 35% 35%, #c0c8d8, #607090); color: white; }
+.c-L { background: radial-gradient(circle at 35% 35%, #c0a880, #604830); color: white; }
+
+/* Supertype checkboxes */
+.st-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.st-row label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #cdd9e5; cursor: pointer; }
+.st-row input[type=checkbox] { accent-color: #58a6ff; }
+
+/* Symbol picker buttons */
+.sym-picker { display: flex; gap: 4px; flex-wrap: nowrap; }
+.sym-btn {
+    width: 35px; height: 35px; border-radius: 7px;
+    border: 2px solid transparent; cursor: pointer;
+    background: rgba(255,255,255,0.06); padding: 4px;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.sym-btn:hover { background: rgba(255,255,255,0.13); transform: scale(1.1); border-color: rgba(255,255,255,0.2); }
+.sym-btn.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 0 10px rgba(255,255,255,0.4); transform: scale(1.12); }
+.sym-btn svg, .sym-btn img { width: 25px; height: 25px; }
+
+/* Symbol insert bar */
+.sym-bar { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 4px; }
+.sbtn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    cursor: pointer; font-size: 17px;
+    padding: 2px 3px;
+    transition: transform 0.1s, border-color 0.1s;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+}
+.sbtn:hover { transform: scale(1.2); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.12); }
+
+/* Export button */
+.export-btn {
+    background: #238636; border: 1px solid #2ea043; color: white;
+    border-radius: 6px; padding: 8px 14px; cursor: pointer;
+    font-size: 13px; font-weight: 600; width: 100%; transition: background 0.15s;
+}
+.export-btn:hover { background: #2ea043; }
+
+/* ═══════════════════════════════════════════
+   CARD STYLES
+   ═══════════════════════════════════════════ */
+.card-wrap { transform-origin: center; transition: transform 0.2s; }
+
+.card {
+    width: 375px;
+    height: 523px;
+    border-radius: 18px;
+    position: relative;
+    border: 4px solid #17140f;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 20px 60px rgba(0,0,0,0.7);
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+
+    /* defaults overridden by color class */
+    --bg: linear-gradient(145deg, #d8c870 0%, #a08020 35%, #d8c060 65%, #b89030 100%);
+    --bg2: #f0e4a0;
+    --bar: linear-gradient(to right, #d0b848, #906010, #c8a838);
+    --tb: #fdf5dd;
+    --tc: #0a0600;
+    --fc: rgba(0,0,0,0.55);
+
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 35%, transparent 55%),
+        linear-gradient(315deg, rgba(0,0,0,0.1) 0%, transparent 40%),
+        var(--texture, var(--bg));
+    background-size: cover;
+    background-position: center;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: Georgia, 'Times New Roman', 'Book Antiqua', serif;
+}
+
+/* ── color themes ── */
+.card.fw {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgWhite.webp');
+    --stroke-0: #c8a840;
+    --bg:  linear-gradient(145deg, #f0e0a8 0%, #c8a840 20%, #ecdea0 50%, #d4b050 75%, #e8d888 100%);
+    --bg2: #fdf8ee;
+    --bar: linear-gradient(to right, #dcd080, #b89030, #ccc060);
+    --tb:  #fdf6e8;
+    --tc:  #0a0800;
+    --fc:  rgba(0,0,0,0.5);
+}
+.card.fu {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgBlue.webp');
+    --stroke-0: #1860a8;
+    --bg:  linear-gradient(145deg, #6898d0 0%, #185898 25%, #5888c8 55%, #104888 80%, #5080c0 100%);
+    --bg2: #d8eaf8;
+    --bar: linear-gradient(to right, #3070b8, #1050a0, #2868b0);
+    --tb:  #eaf3fd;
+    --tc:  #f0f4fc;
+    --fc:  rgba(255,255,255,0.8);
+}
+.card.fb {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgBlack.webp');
+    --stroke-0: #403232;
+    --bg:  linear-gradient(145deg, #484848 0%, #141414 25%, #404040 55%, #0e0e0e 80%, #383838 100%);
+    --bg2: #202020;
+    --bar: linear-gradient(to right, #303030, #101010, #282828);
+    --tb:  #c8c0b4;
+    --tc:  #f4f0ec;
+    --fc:  rgba(255,255,255,0.65);
+}
+.card.fr {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgRed.webp');
+    --stroke-0: #c5432b;
+    --bg:  linear-gradient(145deg, #d86040 0%, #882018 25%, #c85838 55%, #801810 80%, #c05030 100%);
+    --bg2: #f8d8bc;
+    --bar: linear-gradient(to right, #c03020, #880810, #b02818);
+    --tb:  #feeee4;
+    --tc:  #f8ece4;
+    --fc:  rgba(255,255,255,0.78);
+}
+.card.fg {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgGreen.webp');
+    --stroke-0: #324f33;
+    --bg:  linear-gradient(145deg, #508848 0%, #104818 25%, #488040 55%, #0c4010 80%, #407838 100%);
+    --bg2: #c8e0b0;
+    --bar: linear-gradient(to right, #205828, #0c3810, #1a5020);
+    --tb:  #e8f4e0;
+    --tc:  #eef8e4;
+    --fc:  rgba(255,255,255,0.78);
+}
+.card.fm {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgGold.webp');
+    --stroke-0: #d9cc71;
+    --bg:  linear-gradient(145deg, #d8c058 0%, #907008 25%, #d8c858 55%, #886808 80%, #c8b848 100%);
+    --bg2: #f8e898;
+    --bar: linear-gradient(to right, #c0a028, #886808, #b89820);
+    --tb:  #fdf2d4;
+    --tc:  #0a0800;
+    --fc:  rgba(0,0,0,0.5);
+}
+.card.fa {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgArtifact.webp');
+    --stroke-0: #a0a8b0;
+    --bg:  linear-gradient(145deg, #9098a8 0%, #5c6470 25%, #8890a0 55%, #505860 80%, #8090a0 100%);
+    --bg2: #c8d4e0;
+    --bar: linear-gradient(to right, #607080, #404c58, #586878);
+    --tb:  #e4eaf2;
+    --tc:  #f0f4f8;
+    --fc:  rgba(255,255,255,0.72);
+}
+.card.fl {
+    --texture: url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgLand.webp');
+    --stroke-0: #785040;
+    --bg:  linear-gradient(145deg, #907858 0%, #503828 25%, #887050 55%, #483020 80%, #806848 100%);
+    --bg2: #dcc8a0;
+    --bar: linear-gradient(to right, #785040, #402818, #705038);
+    --tb:  #f2e4cc;
+    --tc:  #0a0600;
+    --fc:  rgba(0,0,0,0.52);
+}
+
+/* card inner wrapper — visible as the inner frame color */
+.card-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: var(--bg2);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.35),
+        inset 0 -1px 0 rgba(0,0,0,0.3),
+        inset 0 0 0 1px rgba(0,0,0,0.4),
+        inset 1px 0 0 rgba(255,255,255,0.12);
+    position: relative;
+    z-index: 1;
+}
+
+/* ── title bar ── */
+.card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.1) 40%, rgba(0,0,0,0.08) 100%),
+        var(--bar);
+    border-radius: 4px 4px 3px 3px;
+    padding: 0 7px;
+    height: 32px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.25);
+}
+
+.card-name {
+    font-size: 13.5px;
+    font-weight: bold;
+    color: var(--tc);
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding-right: 6px;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+/* ── mana cost ── */
+.mana-cost {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    flex-shrink: 0;
+}
+/* mana font sizing for the title bar cost pips */
+.mana-cost .ms { font-size: 19px; vertical-align: middle; }
+
+/* ── art box ── */
+.card-art {
+    height: 213px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    background: #0d0d1a;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1.5px rgba(0,0,0,0.92),
+        0 0 0 3px rgba(255,255,255,0.06),
+        inset 0 0 0 1px rgba(255,255,255,0.05),
+        inset 0 0 18px rgba(0,0,0,0.4);
+}
+.card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.art-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px; color: rgba(255,255,255,0.12);
+    font-size: 12px; font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+}
+.art-placeholder svg { width: 38px; height: 38px; opacity: 0.18; }
+
+/* ── type line ── */
+.card-type {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 45%, rgba(0,0,0,0.06) 100%),
+        var(--bar);
+    border-radius: 3px;
+    padding: 0 7px;
+    height: 25px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.2);
+}
+.card-type-text {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--tc);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+.set-sym {
+    font-size: 15px;
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+    filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));
+}
+.set-sym svg, .set-sym img { width: 20px; height: 20px; display: block; margin: 0 auto; }
+.rar-c  { color: #909090; }
+.rar-u  { color: #c0cedd; filter: drop-shadow(0 0 3px rgba(192,206,221,0.7)); }
+.rar-r  { color: #d4a820; filter: drop-shadow(0 0 4px rgba(212,168,32,0.8)); }
+.rar-m  { color: #e07010; filter: drop-shadow(0 0 5px rgba(224,112,16,0.9)); }
+
+/* ── text box ── */
+.card-textbox {
+    flex: 1;
+    background:
+        linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0.03) 100%),
+        var(--tb);
+    border-radius: 3px;
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,0.18),
+        inset 0 1px 3px rgba(0,0,0,0.1),
+        inset 0 -1px 2px rgba(0,0,0,0.06);
+    min-height: 0;
+}
+.card-rules {
+    font-size: 11px;
+    line-height: 1.55;
+    color: #1a1008;
+    flex: 1;
+    overflow: hidden;
+}
+.card-rules p { margin-bottom: 2px; }
+.card-rules p:last-child { margin-bottom: 0; }
+.flavor-divider { height: 1px; background: rgba(0,0,0,0.18); margin: 4px 0; }
+.card-flavor {
+    font-size: 10px;
+    font-style: italic;
+    color: #3d2e14;
+    line-height: 1.4;
+}
+
+/* mana font sizing for inline rules text */
+.card-rules .ms { font-size: 12px; vertical-align: middle; position: relative; top: -1px; margin: 0 1px; }
+
+/* ── footer ── */
+.card-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 22px;
+    flex-shrink: 0;
+    padding: 0 1px;
+}
+.footer-left { display: flex; flex-direction: column; gap: 1px; }
+.artist-line  { font-size: 7.5px; color: var(--fc); font-family: 'Segoe UI', sans-serif; }
+.coll-line    { font-size: 7px;   color: var(--fc); font-family: 'Segoe UI', sans-serif; opacity: 0.75; }
+
+.pt-box {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 50%, rgba(0,0,0,0.1) 100%),
+        var(--bar);
+    border: 1.5px solid rgba(0,0,0,0.5);
+    border-radius: 10px;
+    padding: 0 8px;
+    height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold; color: var(--tc);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+    min-width: 44px;
+    font-family: Georgia, serif;
+}
+.loyalty-box {
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.1) 100%),
+        var(--bar);
+    border: 2px solid rgba(0,0,0,0.5);
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: bold; color: var(--tc);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.28);
+    font-family: Georgia, serif;
+}
+
+/* ── frame chrome overlay ── */
+.frame-chrome {
+    position: absolute;
+    inset: 4px;
+    pointer-events: none;
+    z-index: 10;
+}
+.frame-chrome svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── scale controls ── */
+.preview-controls {
+    position: absolute; bottom: 14px; right: 14px;
+    display: flex; gap: 6px; align-items: center;
+}
+.preview-controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #cdd9e5; border-radius: 5px;
+    padding: 4px 10px; cursor: pointer; font-size: 14px;
+}
+.preview-controls button:hover { background: rgba(255,255,255,0.15); }
+#scale-label { font-size: 11px; color: rgba(255,255,255,0.4); min-width: 36px; text-align: center; }
+
+/* ═══════════════════════════════════════════
+   HYBRID / TWO-COLOR GUILD FRAMES
+   ═══════════════════════════════════════════ */
+/* Allied pairs */
+.card.fwu { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgGold.webp'); --stroke-0:#b8a030; --bg:linear-gradient(145deg,#e8d888 0%,#c0a840 20%,#5888c8 60%,#1050a0 100%); --bg2:#d0e0ec; --bar:linear-gradient(to right,#c8a838,#4878b8,#1050a0); --tb:#edf3fa; --tc:#080c20; --fc:rgba(0,0,0,0.5); }
+.card.fub { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgUB.webp'); --stroke-0:#1c3050; --bg:linear-gradient(145deg,#4888d0 0%,#1058a0 30%,#383838 65%,#0e0e0e 100%); --bg2:#202c38; --bar:linear-gradient(to right,#2868a8,#1c2038,#0e0e0e); --tb:#c0ccd8; --tc:#e0e8f8; --fc:rgba(255,255,255,0.78); }
+.card.fbr { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgBR.webp'); --stroke-0:#602020; --bg:linear-gradient(145deg,#404040 0%,#161616 30%,#b83828 65%,#801010 100%); --bg2:#241414; --bar:linear-gradient(to right,#242424,#783020,#801010); --tb:#ccc0bc; --tc:#f4ece8; --fc:rgba(255,255,255,0.72); }
+.card.frg { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgRG.webp'); --stroke-0:#885020; --bg:linear-gradient(145deg,#c85838 0%,#881818 25%,#508848 60%,#104818 100%); --bg2:#c0a868; --bar:linear-gradient(to right,#a83818,#786028,#206838); --tb:#ede0c0; --tc:#0a0800; --fc:rgba(0,0,0,0.5); }
+.card.fgw { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgGW.webp'); --stroke-0:#608840; --bg:linear-gradient(145deg,#488840 0%,#104818 30%,#e8d888 65%,#c0a038 100%); --bg2:#ccdeb8; --bar:linear-gradient(to right,#206830,#889850,#b89830); --tb:#eaf4e2; --tc:#060c04; --fc:rgba(0,0,0,0.5); }
+/* Enemy pairs */
+.card.fwb { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgWB.webp'); --stroke-0:#988060; --bg:linear-gradient(145deg,#e8d888 0%,#c0a038 25%,#484848 65%,#141414 100%); --bg2:#bab0a8; --bar:linear-gradient(to right,#c0a858,#707068,#282828); --tb:#ddd5cc; --tc:#100808; --fc:rgba(0,0,0,0.5); }
+.card.fur { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgUR.webp'); --stroke-0:#602868; --bg:linear-gradient(145deg,#3878c0 0%,#1058a0 30%,#b84020 65%,#801010 100%); --bg2:#b0b0c0; --bar:linear-gradient(to right,#2060a0,#804030,#801010); --tb:#d0d4e0; --tc:#f0f2f8; --fc:rgba(255,255,255,0.78); }
+.card.fbg { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgBG.webp'); --stroke-0:#204830; --bg:linear-gradient(145deg,#484848 0%,#141414 30%,#488040 65%,#104818 100%); --bg2:#182818; --bar:linear-gradient(to right,#242424,#204828,#104818); --tb:#bcc8b8; --tc:#e0f0d8; --fc:rgba(255,255,255,0.72); }
+.card.frw { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgRW.webp'); --stroke-0:#c08028; --bg:linear-gradient(145deg,#c85838 0%,#881818 30%,#e8d888 65%,#c0a038 100%); --bg2:#d8b898; --bar:linear-gradient(to right,#a83818,#b89040,#c0a038); --tb:#f8eee4; --tc:#0a0604; --fc:rgba(0,0,0,0.5); }
+.card.fgu { --texture:url('https://cdn.jsdelivr.net/gh/FeSens/mtg-card@main/src/assets/bgGU.webp'); --stroke-0:#207060; --bg:linear-gradient(145deg,#488840 0%,#104818 30%,#3878c0 65%,#1058a0 100%); --bg2:#a0c0bc; --bar:linear-gradient(to right,#206830,#208070,#1058a0); --tb:#d8ece8; --tc:#040c10; --fc:rgba(0,0,0,0.5); }
+
+/* Hybrid picker buttons */
+.hybrid-row { display:flex; gap:4px; flex-wrap:wrap; margin-top:5px; }
+.hbtn {
+    height:30px; padding:0 5px; border-radius:15px;
+    border:2px solid transparent; cursor:pointer;
+    background:rgba(255,255,255,0.07);
+    display:flex; align-items:center; gap:1px;
+    transition:all 0.15s;
+}
+.hbtn:hover { background:rgba(255,255,255,0.15); transform:scale(1.08); }
+.hbtn.active { border-color:#fff; box-shadow:0 0 8px rgba(255,255,255,0.5); transform:scale(1.12); }
+.hbtn .ms { font-size:16px; }
+
+/* ═══════════════════════════════════════════
+   ERA & LAYOUT TOGGLE BUTTONS
+   ═══════════════════════════════════════════ */
+.toggle-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.tog-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid #30363d; color: #8b949e;
+    border-radius: 5px; padding: 4px 10px; cursor: pointer; font-size: 12px;
+    font-weight: 500; transition: all 0.15s; font-family: 'Segoe UI', sans-serif;
+}
+.tog-btn:hover { background: rgba(255,255,255,0.1); color: #cdd9e5; }
+.tog-btn.active { background: #1f6feb; border-color: #388bfd; color: white; }
+
+/* ═══════════════════════════════════════════
+   FRAME ERAS
+   ═══════════════════════════════════════════ */
+
+/* ── Classic (pre-8th) ── */
+.card.era-classic { border-radius: 12px; padding: 10px; }
+.card.era-classic .card-inner { border-radius: 6px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.5); }
+.card.era-classic .card-title { border-radius: 2px; height: 30px; }
+.card.era-classic .card-type  { border-radius: 2px; height: 23px; }
+.card.era-classic .card-textbox { border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); }
+/* Corner ornaments */
+.corner {
+    position: absolute; width: 18px; height: 18px;
+    border: 2.5px solid rgba(0,0,0,0.55); pointer-events: none;
+    opacity: 0; z-index: 5; transition: opacity 0.2s;
+}
+.era-classic .corner { opacity: 1; }
+.corner.tl { top: 3px; left: 3px;   border-right: none; border-bottom: none; }
+.corner.tr { top: 3px; right: 3px;  border-left: none;  border-bottom: none; }
+.corner.bl { bottom: 3px; left: 3px;  border-right: none; border-top: none; }
+.corner.br { bottom: 3px; right: 3px; border-left: none;  border-top: none; }
+
+/* ── Future Sight ── */
+.card.era-future { border-radius: 6px; padding: 8px; }
+.card.era-future .card-inner { border-radius: 3px; background: color-mix(in srgb, var(--bg2) 92%, #7799ff 8%); }
+.card.era-future .card-art {
+    border-radius: 2px;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+.card.era-future .card-title {
+    border-radius: 2px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+.card.era-future .card-type {
+    border-radius: 2px;
+    clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
+}
+.card.era-future .card-textbox {
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--tb) 88%, #aaccff 12%);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ═══════════════════════════════════════════
+   SPECIAL LAYOUTS
+   ═══════════════════════════════════════════ */
+
+/* ── Saga ── */
+.card-textbox.saga-mode { flex-direction: row; padding: 0; overflow: hidden; }
+.saga-bar {
+    width: 34px; min-width: 34px; background: var(--bar);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 3px 6px; gap: 0;
+    border-right: 1px solid rgba(0,0,0,0.25);
+}
+.saga-lore {
+    width: 26px; height: 26px; border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 9.5px; font-weight: bold; color: var(--tc); font-family: 'Times New Roman', serif;
+    flex-shrink: 0; opacity: 0.9;
+}
+.saga-gap { flex: 1; min-height: 4px; }
+.saga-content { flex: 1; padding: 4px 6px; display: flex; flex-direction: column; overflow: hidden; }
+.saga-ch {
+    font-size: 10.5px; line-height: 1.5; color: #1a1008;
+    flex: 1; min-height: 0; padding: 2px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+.saga-ch:last-child { border-bottom: none; }
+
+/* ── Adventure ── */
+.card-textbox.adv-mode { flex: none; height: 90px; min-height: 0; border-radius: 3px 3px 0 0; }
+.adv-box {
+    flex-shrink: 0; padding: 5px 7px;
+    background: linear-gradient(135deg, #1a4020, #0e2812);
+    border-radius: 0 0 3px 3px;
+    border: 1px solid rgba(0,0,0,0.3); border-top: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.adv-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.adv-name { font-size: 11px; font-weight: bold; color: #d8f0c8; font-family: Georgia, serif; }
+.adv-cost.mana-cost .ms { font-size: 14px; }
+.adv-type-line { font-size: 9px; color: rgba(216,240,200,0.7); margin-bottom: 3px; font-family: Georgia, serif; font-weight: bold; }
+.adv-rules-text { font-size: 10.5px; color: #d8f0c8; line-height: 1.45; font-family: Georgia, serif; }
+.adv-rules-text .ms { font-size: 11px; }
+
+/* ── Battle defense counter ── */
+.defense-box {
+    background: var(--bar); border: 2px solid rgba(0,0,0,0.4);
+    width: 32px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: bold; color: var(--tc);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5); font-family: Georgia, serif;
+    clip-path: polygon(50% 0%, 100% 18%, 100% 75%, 50% 100%, 0% 75%, 0% 18%);
+}
+
+/* ── Prepared ── */
+.card-textbox.prep-mode { flex-direction: row; padding: 0; overflow: hidden; gap: 0; }
+.prep-main {
+    flex: 1; padding: 5px 6px;
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(0,0,0,0.22);
+    overflow: hidden;
+}
+.prep-spell {
+    width: 40%; min-width: 40%;
+    background: rgba(0,0,0,0.07);
+    padding: 4px 5px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+.prep-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(0,0,0,0.18);
+    margin-bottom: 2px;
+}
+.prep-name { font-size: 10px; font-weight: bold; color: #1a1008; font-family: Georgia, serif; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.prep-cost.mana-cost .ms { font-size: 12px; }
+.prep-type { font-size: 9px; font-weight: bold; color: #1a1008; font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.15); padding-bottom: 2px; margin-bottom: 2px; }
+.prep-rules { font-size: 10px; line-height: 1.4; color: #1a1008; flex: 1; overflow: hidden; font-family: Georgia, serif; }
+.prep-rules p { margin-bottom: 1px; }
+.prep-rules .ms { font-size: 11px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════ FORM PANEL ════════════ -->
+<div class="panel-form">
+    <h1>MTG Card Designer</h1>
+
+    <div class="section-title">Identity</div>
+
+    <div class="field">
+        <label>Card Name</label>
+        <input id="f-name" type="text" placeholder="Lightning Bolt" value="Storm Dragon">
+    </div>
+
+    <div class="field">
+        <label>Mana Cost &nbsp;<span style="font-weight:400;color:#6e7681">(e.g. 3RR or {2}{W})</span></label>
+        <input id="f-cost" type="text" placeholder="2WW" value="4RR">
+    </div>
+
+    <div class="field">
+        <label>Frame Color</label>
+        <div class="color-buttons">
+            <button class="cbtn" data-col="fw" title="White"><i class="ms ms-w ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn" data-col="fu" title="Blue"><i class="ms ms-u ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn" data-col="fb" title="Black"><i class="ms ms-b ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn active" data-col="fr" title="Red"><i class="ms ms-r ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn" data-col="fg" title="Green"><i class="ms ms-g ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn c-M" data-col="fm" title="Gold/Multi">M</button>
+            <button class="cbtn" data-col="fa" title="Colorless/Artifact"><i class="ms ms-c ms-cost" style="font-size:24px"></i></button>
+            <button class="cbtn c-L" data-col="fl" title="Land">L</button>
+        </div>
+        <!-- Allied pairs -->
+        <div class="hybrid-row">
+            <button class="hbtn" data-col="fwu" title="Azorius W/U"><i class="ms ms-w ms-cost"></i><i class="ms ms-u ms-cost"></i></button>
+            <button class="hbtn" data-col="fub" title="Dimir U/B"><i class="ms ms-u ms-cost"></i><i class="ms ms-b ms-cost"></i></button>
+            <button class="hbtn" data-col="fbr" title="Rakdos B/R"><i class="ms ms-b ms-cost"></i><i class="ms ms-r ms-cost"></i></button>
+            <button class="hbtn" data-col="frg" title="Gruul R/G"><i class="ms ms-r ms-cost"></i><i class="ms ms-g ms-cost"></i></button>
+            <button class="hbtn" data-col="fgw" title="Selesnya G/W"><i class="ms ms-g ms-cost"></i><i class="ms ms-w ms-cost"></i></button>
+        </div>
+        <!-- Enemy pairs -->
+        <div class="hybrid-row">
+            <button class="hbtn" data-col="fwb" title="Orzhov W/B"><i class="ms ms-w ms-cost"></i><i class="ms ms-b ms-cost"></i></button>
+            <button class="hbtn" data-col="fur" title="Izzet U/R"><i class="ms ms-u ms-cost"></i><i class="ms ms-r ms-cost"></i></button>
+            <button class="hbtn" data-col="fbg" title="Golgari B/G"><i class="ms ms-b ms-cost"></i><i class="ms ms-g ms-cost"></i></button>
+            <button class="hbtn" data-col="frw" title="Boros R/W"><i class="ms ms-r ms-cost"></i><i class="ms ms-w ms-cost"></i></button>
+            <button class="hbtn" data-col="fgu" title="Simic G/U"><i class="ms ms-g ms-cost"></i><i class="ms ms-u ms-cost"></i></button>
+        </div>
+    </div>
+
+    <div class="section-title">Frame Era</div>
+    <div class="toggle-row">
+        <button class="tog-btn active" data-era="modern">Modern</button>
+        <button class="tog-btn" data-era="classic">Classic</button>
+        <button class="tog-btn" data-era="future">Future Sight</button>
+    </div>
+
+    <div class="section-title">Layout</div>
+    <div class="toggle-row">
+        <button class="tog-btn active" data-layout="normal">Normal</button>
+        <button class="tog-btn" data-layout="saga">Saga</button>
+        <button class="tog-btn" data-layout="adventure">Adventure</button>
+        <button class="tog-btn" data-layout="battle">Battle</button>
+        <button class="tog-btn" data-layout="prepared">Prepared</button>
+    </div>
+
+    <!-- Saga fields -->
+    <div id="saga-fields" style="display:none">
+        <div class="field" style="margin-top:4px">
+            <label>Chapters</label>
+            <select id="f-chapters">
+                <option value="2">2 chapters</option>
+                <option value="3" selected>3 chapters</option>
+                <option value="4">4 chapters</option>
+                <option value="5">5 chapters</option>
+            </select>
+        </div>
+        <div style="font-size:11px;color:#6e7681;margin-top:3px">Separate chapters with <code style="background:#0d1117;padding:1px 5px;border-radius:3px;color:#8b949e">---</code> on its own line</div>
+    </div>
+
+    <!-- Adventure fields -->
+    <div id="adv-fields" style="display:none;margin-top:4px">
+        <div class="field">
+            <label>Adventure Name</label>
+            <input id="f-adv-name" type="text" placeholder="Lightning Arrow">
+        </div>
+        <div class="two-col">
+            <div class="field">
+                <label>Adventure Cost</label>
+                <input id="f-adv-cost" type="text" placeholder="1R">
+            </div>
+            <div class="field">
+                <label>Type</label>
+                <input id="f-adv-type" type="text" placeholder="Instant" value="Instant">
+            </div>
+        </div>
+        <div class="field">
+            <label>Adventure Text</label>
+            <textarea id="f-adv-text" rows="2" placeholder="Deal 3 damage to any target."></textarea>
+        </div>
+    </div>
+
+    <!-- Battle fields -->
+    <div id="battle-fields" style="display:none;margin-top:4px">
+        <div class="field">
+            <label>Defense</label>
+            <input id="f-def" type="text" placeholder="7" value="7">
+        </div>
+    </div>
+
+    <!-- Prepared fields -->
+    <div id="prep-fields" style="display:none;margin-top:4px">
+        <div class="field">
+            <label>Prepared Name</label>
+            <input id="f-prep-name" type="text" placeholder="Regrowth">
+        </div>
+        <div class="two-col">
+            <div class="field">
+                <label>Prepared Cost</label>
+                <input id="f-prep-cost" type="text" placeholder="1G">
+            </div>
+            <div class="field">
+                <label>Type</label>
+                <input id="f-prep-type" type="text" placeholder="Sorcery" value="Sorcery">
+            </div>
+        </div>
+        <div class="field">
+            <label>Prepared Text</label>
+            <textarea id="f-prep-text" rows="2" placeholder="Return target card from your graveyard to your hand."></textarea>
+        </div>
+    </div>
+
+    <div class="section-title">Type Line</div>
+
+    <div class="field">
+        <label>Supertypes</label>
+        <div class="st-row">
+            <label><input type="checkbox" id="st-leg"> Legendary</label>
+            <label><input type="checkbox" id="st-bas"> Basic</label>
+            <label><input type="checkbox" id="st-sno"> Snow</label>
+            <label><input type="checkbox" id="st-wor"> World</label>
+            <label><input type="checkbox" id="st-tri"> Kindred</label>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="field">
+            <label>Card Type</label>
+            <select id="f-type">
+                <option selected>Creature</option>
+                <option>Instant</option>
+                <option>Sorcery</option>
+                <option>Enchantment</option>
+                <option>Artifact</option>
+                <option>Land</option>
+                <option>Planeswalker</option>
+                <option>Battle</option>
+                <option>Enchantment Creature</option>
+                <option>Artifact Creature</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Subtype</label>
+            <input id="f-sub" type="text" placeholder="Elf Druid" value="Dragon">
+        </div>
+    </div>
+
+    <div class="section-title">Art</div>
+
+    <div class="field">
+        <label>Image URL</label>
+        <input id="f-img" type="text" placeholder="https://…  (paste any image URL)">
+    </div>
+
+    <div class="section-title">Text</div>
+
+    <div class="field">
+        <label>Rules Text</label>
+        <div class="sym-bar">
+            <button class="sbtn" onclick="insertSym('f-rules','{W}')" title="{W}"><i class="ms ms-w ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{U}')" title="{U}"><i class="ms ms-u ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{B}')" title="{B}"><i class="ms ms-b ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{R}')" title="{R}"><i class="ms ms-r ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{G}')" title="{G}"><i class="ms ms-g ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{C}')" title="{C}"><i class="ms ms-c ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{T}')" title="{T} Tap"><i class="ms ms-tap ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{Q}')" title="{Q} Untap"><i class="ms ms-untap ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{X}')" title="{X}"><i class="ms ms-x ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{0}')" title="{0}"><i class="ms ms-0 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{1}')" title="{1}"><i class="ms ms-1 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{2}')" title="{2}"><i class="ms ms-2 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{3}')" title="{3}"><i class="ms ms-3 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{4}')" title="{4}"><i class="ms ms-4 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{5}')" title="{5}"><i class="ms ms-5 ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{P}')" title="{P} Phyrexian"><i class="ms ms-p ms-cost"></i></button>
+            <button class="sbtn" onclick="insertSym('f-rules','{S}')" title="{S} Snow"><i class="ms ms-s ms-cost"></i></button>
+        </div>
+        <textarea id="f-rules" rows="4">Flying
+
+{T}: Storm Dragon deals 3 damage to any target.</textarea>
+    </div>
+
+    <div class="field">
+        <label>Flavor Text</label>
+        <textarea id="f-flavor" rows="2">"Its wings blot out the sun before it arrives."</textarea>
+    </div>
+
+    <div class="section-title">Stats &amp; Info</div>
+
+    <div class="three-col">
+        <div class="field">
+            <label>Power</label>
+            <input id="f-pow" type="text" placeholder="*" value="5">
+        </div>
+        <div class="field">
+            <label>Toughness</label>
+            <input id="f-tou" type="text" placeholder="*" value="5">
+        </div>
+        <div class="field">
+            <label>Loyalty</label>
+            <input id="f-loy" type="text" placeholder="4">
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="field">
+            <label>Rarity</label>
+            <select id="f-rar">
+                <option value="c">Common</option>
+                <option value="u">Uncommon</option>
+                <option value="r" selected>Rare</option>
+                <option value="m">Mythic Rare</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Set Symbol</label>
+            <div class="sym-picker">
+                <button class="sym-btn active" data-sym="svg:d-silver" title="Silver"></button>
+                <button class="sym-btn" data-sym="svg:d-black" title="Black"></button>
+                <button class="sym-btn" data-sym="svg:d-red" title="Red"></button>
+                <button class="sym-btn" data-sym="svg:d-gold" title="Gold"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="field">
+            <label>Artist</label>
+            <input id="f-art" type="text" placeholder="Artist Name" value="Milivoj Ćeran">
+        </div>
+        <div class="field">
+            <label>Number</label>
+            <input id="f-num" type="text" placeholder="042/250" value="042/250">
+        </div>
+    </div>
+
+    <div class="field">
+        <label>Set Name</label>
+        <input id="f-set" type="text" placeholder="Custom Set" value="Storms of Eternity">
+    </div>
+
+    <button class="export-btn" onclick="exportCard()">Export Card as PNG</button>
+</div>
+
+<!-- ════════════ PREVIEW PANEL ════════════ -->
+<div class="panel-preview">
+    <div class="card-wrap" id="cardWrap">
+
+        <div class="card fr" id="card">
+            <!-- Classic frame corner ornaments -->
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+
+            <!-- Authentic frame chrome border -->
+            <div class="frame-chrome">
+                <svg preserveAspectRatio="none" viewBox="0 0 606 831" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14.5675 4.5L13.5633 3.51005C13.3313 3.2813 13.3287 2.90778 13.5574 2.67576C13.6683 2.56331 13.8196 2.5 13.9775 2.5H592.022C592.18 2.5 592.332 2.56331 592.443 2.67577C592.671 2.90778 592.669 3.2813 592.437 3.51005L591.433 4.5M14.5675 4.5C13.1432 3.09587 13.1425 3.09657 13.1418 3.0973L13.1402 3.09897L13.1362 3.10302L13.1255 3.11398L13.0934 3.14727C13.0674 3.17452 13.032 3.21189 12.988 3.25934C12.9 3.35423 12.7773 3.48948 12.625 3.66485C12.3204 4.01551 11.8968 4.52697 11.3943 5.19711C10.3896 6.53694 9.06716 8.51441 7.74992 11.1124C5.1129 16.3133 2.5 23.9963 2.5 34C2.5 44.0037 5.1129 51.6867 7.74992 56.8876C9.06716 59.4856 10.3896 61.4631 11.3943 62.8029C11.8968 63.473 12.3204 63.9845 12.625 64.3352C12.7773 64.5105 12.9 64.6458 12.988 64.7407C13.032 64.7881 13.0674 64.8255 13.0934 64.8527L13.1255 64.886L13.1362 64.897L13.1402 64.901L13.1418 64.9027C13.1425 64.9034 13.1432 64.9041 14.5675 63.5M14.5675 4.5C14.5675 4.5 4.5 14.7115 4.5 34C4.5 53.2885 14.5675 63.5 14.5675 63.5M14.5675 4.5H591.433M14.5675 63.5L13.5633 64.49C13.3313 64.7187 13.3287 65.0922 13.5574 65.3242L13.5714 65.3384C13.6733 65.4418 13.8124 65.5 13.9576 65.5C14.2572 65.5 14.5 65.7428 14.5 66.0424V484.981C14.5 485.269 14.2667 485.502 13.979 485.502C13.8458 485.502 13.7177 485.553 13.621 485.645L13.607 485.658C13.3786 485.874 13.3685 486.234 13.5845 486.463L14.5 487.431C13.1933 486.049 13.1926 486.05 13.1919 486.051L13.1902 486.052L13.1753 486.066L13.1428 486.098C13.1165 486.123 13.0809 486.159 13.0366 486.203C12.948 486.292 12.8247 486.419 12.6717 486.583C12.3657 486.911 11.9404 487.39 11.436 488.017C10.4277 489.271 9.0998 491.122 7.77679 493.554C5.12792 498.424 2.5 505.625 2.5 515.002C2.5 524.38 5.12792 531.581 7.77679 536.451C9.0998 538.883 10.4277 540.734 11.436 541.988C11.9404 542.615 12.3657 543.093 12.6717 543.422C12.8247 543.586 12.948 543.713 13.0366 543.802C13.0809 543.846 13.1165 543.881 13.1428 543.907L13.1753 543.938L13.1862 543.949L13.1902 543.953L13.1919 543.954C13.1926 543.955 13.1933 543.956 14.5 542.574L13.5845 543.542C13.3685 543.77 13.3786 544.131 13.607 544.347L13.621 544.36C13.7177 544.451 13.8458 544.502 13.979 544.502C14.2667 544.502 14.5 544.736 14.5 545.023V826.502C14.5 827.607 15.3954 828.502 16.5 828.502H590.5C591.605 828.502 592.5 827.607 592.5 826.502V544.373C592.5 544.291 592.533 544.214 592.592 544.158C592.711 544.046 592.716 543.86 592.604 543.741L592.5 543.631M14.5675 63.5H590.596C591.131 63.5 591.638 63.2913 591.985 62.8839C594.092 60.4126 601.5 50.5459 601.5 34C601.5 14.7115 591.433 4.5 591.433 4.5M591.433 4.5C592.857 3.09587 592.857 3.09657 592.858 3.0973L592.86 3.09897L592.864 3.10302L592.874 3.11398L592.907 3.14727C592.933 3.17452 592.968 3.21189 593.012 3.25934C593.1 3.35423 593.223 3.48948 593.375 3.66485C593.68 4.01551 594.103 4.52697 594.606 5.19711C595.61 6.53694 596.933 8.51441 598.25 11.1124C600.887 16.3133 603.5 23.9963 603.5 34C603.5 44.0037 600.887 51.6867 598.25 56.8876C596.933 59.4856 595.61 61.4631 594.606 62.8029C594.103 63.473 593.68 63.9845 593.375 64.3352C593.223 64.5105 593.1 64.6458 593.012 64.7407C592.968 64.7881 592.933 64.8255 592.907 64.8527L592.874 64.886L592.864 64.897L592.86 64.901L592.858 64.9027C592.858 64.9032 592.857 64.9037 592.5 64.5523M592.5 64.5523L592.605 64.6562C592.744 64.7931 592.746 65.0167 592.609 65.1557L592.604 65.1608C592.537 65.2282 592.5 65.3191 592.5 65.4138V485.632C592.5 485.713 592.533 485.791 592.592 485.847C592.711 485.958 592.716 486.145 592.604 486.264L592.5 486.374M592.5 64.5523C592.5 64.5522 592.5 64.5522 592.5 64.5523ZM592.5 543.631C592.807 543.955 592.808 543.955 592.808 543.954L592.81 543.953L592.814 543.949L592.825 543.938L592.857 543.907L592.895 543.87C592.915 543.85 592.938 543.828 592.963 543.802C593.052 543.713 593.175 543.586 593.328 543.422C593.634 543.093 594.06 542.615 594.564 541.988C595.572 540.734 596.9 538.883 598.223 536.451C600.872 531.581 603.5 524.38 603.5 515.002C603.5 505.625 600.872 498.424 598.223 493.554C596.9 491.122 595.572 489.271 594.564 488.017C594.06 487.39 593.634 486.911 593.328 486.583C593.175 486.419 593.052 486.292 592.963 486.203C592.919 486.159 592.883 486.123 592.857 486.098L592.825 486.066L592.814 486.056L592.81 486.052L592.808 486.051C592.808 486.05 592.807 486.05 592.5 486.374M592.5 543.631C592.5 543.631 592.5 543.631 592.5 543.631ZM592.5 486.374C592.5 486.374 592.5 486.374 592.5 486.374ZM4.5 515.002C4.5 499.562 11.9239 490.361 14.0215 488.069C14.3665 487.692 14.8522 487.502 15.3633 487.502H590.637C591.148 487.502 591.633 487.692 591.979 488.069C594.076 490.361 601.5 499.562 601.5 515.002C601.5 530.443 594.076 539.644 591.979 541.935C591.633 542.312 591.148 542.502 590.637 542.502H15.3633C14.8522 542.502 14.3665 542.312 14.0215 541.935C11.9239 539.644 4.5 530.443 4.5 515.002ZM590.5 824.502V546.502C590.5 545.398 589.605 544.502 588.5 544.502H18.5C17.3954 544.502 16.5 545.398 16.5 546.502V824.502C16.5 825.607 17.3954 826.502 18.5 826.502H588.5C589.605 826.502 590.5 825.607 590.5 824.502ZM16.5 483.502V68.5024C16.5 67.3978 17.3954 66.5024 18.5 66.5024H588.5C589.605 66.5024 590.5 67.3978 590.5 68.5024V483.502C590.5 484.607 589.605 485.502 588.5 485.502H18.5C17.3954 485.502 16.5 484.607 16.5 483.502Z" stroke="var(--stroke-0, #c8a840)" stroke-width="5"/>
+                </svg>
+            </div>
+
+            <div class="card-inner">
+
+                <!-- title -->
+                <div class="card-title">
+                    <div class="card-name" id="c-name">Storm Dragon</div>
+                    <div class="mana-cost" id="c-cost"></div>
+                </div>
+
+                <!-- art -->
+                <div class="card-art" id="c-art">
+                    <div class="art-placeholder">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                        </svg>
+                        No image
+                    </div>
+                </div>
+
+                <!-- type line -->
+                <div class="card-type">
+                    <div class="card-type-text" id="c-type">Legendary Creature — Dragon</div>
+                    <div class="set-sym rar-r" id="c-sym">◆</div>
+                </div>
+
+                <!-- text box -->
+                <div class="card-textbox" id="c-textbox">
+                    <div class="card-rules" id="c-rules"></div>
+                    <div class="flavor-divider" id="c-fdiv"></div>
+                    <div class="card-flavor" id="c-flavor"></div>
+                </div>
+
+                <!-- adventure box (hidden unless adventure layout) -->
+                <div class="adv-box" id="c-adv-box" style="display:none">
+                    <div class="adv-header">
+                        <div class="adv-name" id="c-adv-name">Adventure</div>
+                        <div class="adv-cost mana-cost" id="c-adv-cost"></div>
+                    </div>
+                    <div class="adv-type-line" id="c-adv-type">Instant</div>
+                    <div class="adv-rules-text" id="c-adv-rules"></div>
+                </div>
+
+                <!-- footer -->
+                <div class="card-footer">
+                    <div class="footer-left">
+                        <div class="artist-line" id="c-artist"></div>
+                        <div class="coll-line" id="c-coll"></div>
+                    </div>
+                    <div id="c-stat"></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="preview-controls">
+        <button onclick="zoom(-0.1)">−</button>
+        <span id="scale-label">100%</span>
+        <button onclick="zoom(+0.1)">+</button>
+    </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// SVG set symbols
+// ──────────────────────────────────────────────
+const SVG_SYMS = {
+'svg:d-silver': `<img src="symbols/dropout-uncommon.png" style="width:100%;height:100%;object-fit:contain;display:block">`,
+'svg:d-black':  `<img src="symbols/dropout-common.png"   style="width:100%;height:100%;object-fit:contain;display:block">`,
+'svg:d-red':    `<img src="symbols/dropout-mythic.png"   style="width:100%;height:100%;object-fit:contain;display:block">`,
+'svg:d-gold':   `<img src="symbols/dropout-rare.png"     style="width:100%;height:100%;object-fit:contain;display:block">`
+};
+
+// ──────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────
+let frameClass = 'fr';
+let frameEra   = 'modern';
+let cardLayout = 'normal';
+let setSymbol  = 'svg:d-silver';
+let scale = 1.0;
+
+// ──────────────────────────────────────────────
+// Mana parsing
+// ──────────────────────────────────────────────
+function parseMana(s) {
+    if (!s) return [];
+    s = s.trim();
+    const out = [];
+    if (s.includes('{')) {
+        (s.match(/\{[^}]+\}/g) || []).forEach(m => out.push(m.slice(1, -1).toUpperCase()));
+    } else {
+        (s.toUpperCase().match(/\d{1,2}|[WUBRGCTPSX]/g) || []).forEach(m => out.push(m));
+    }
+    return out;
+}
+
+function manaSymCls(sym) {
+    const s = sym.toUpperCase();
+    if      (s === 'W')       return 'ms-w';
+    else if (s === 'U')       return 'ms-u';
+    else if (s === 'B')       return 'ms-b';
+    else if (s === 'R')       return 'ms-r';
+    else if (s === 'G')       return 'ms-g';
+    else if (s === 'C')       return 'ms-c';
+    else if (s === 'X')       return 'ms-x';
+    else if (s === 'Y')       return 'ms-y';
+    else if (s === 'Z')       return 'ms-z';
+    else if (s === 'T')       return 'ms-tap';
+    else if (s === 'Q')       return 'ms-untap';
+    else if (s === 'S')       return 'ms-s';
+    else if (s === 'P')       return 'ms-p';
+    else if (/^\d+$/.test(s)) return `ms-${parseInt(s)}`;
+    else                      return 'ms-x';
+}
+
+function manaHTML(sym) {
+    return `<i class="ms ${manaSymCls(sym)} ms-cost ms-shadow"></i>`;
+}
+
+// ──────────────────────────────────────────────
+// Inline symbol rendering inside rules text
+// ──────────────────────────────────────────────
+function inlineSym(sym) {
+    return `<i class="ms ${manaSymCls(sym)} ms-cost"></i>`;
+}
+
+function rulesHTML(text) {
+    if (!text.trim()) return '';
+    return text.split('\n').map(line => {
+        if (!line.trim()) return '<p style="height:5px"></p>';
+        const html = line.replace(/\{([^}]+)\}/g, (_, s) => inlineSym(s));
+        return `<p>${html}</p>`;
+    }).join('');
+}
+
+// ──────────────────────────────────────────────
+// Render card
+// ──────────────────────────────────────────────
+function render() {
+    const name    = document.getElementById('f-name').value  || 'Card Name';
+    const cost    = document.getElementById('f-cost').value  || '';
+    const type    = document.getElementById('f-type').value  || 'Creature';
+    const sub     = document.getElementById('f-sub').value   || '';
+    const imgUrl  = document.getElementById('f-img').value   || '';
+    const rules   = document.getElementById('f-rules').value || '';
+    const flavor  = document.getElementById('f-flavor').value|| '';
+    const pow     = document.getElementById('f-pow').value   || '';
+    const tou     = document.getElementById('f-tou').value   || '';
+    const loy     = document.getElementById('f-loy').value   || '';
+    const rar     = document.getElementById('f-rar').value;
+    const artist  = document.getElementById('f-art').value   || '';
+    const num     = document.getElementById('f-num').value   || '';
+    const setName = document.getElementById('f-set').value   || '';
+
+    const supers = [
+        document.getElementById('st-leg').checked ? 'Legendary' : '',
+        document.getElementById('st-bas').checked ? 'Basic' : '',
+        document.getElementById('st-sno').checked ? 'Snow' : '',
+        document.getElementById('st-wor').checked ? 'World' : '',
+        document.getElementById('st-tri').checked ? 'Kindred' : '',
+    ].filter(Boolean);
+
+    // frame class + era
+    document.getElementById('card').className = `card ${frameClass} era-${frameEra}`;
+
+    // name
+    document.getElementById('c-name').textContent = name;
+
+    // mana cost
+    document.getElementById('c-cost').innerHTML = parseMana(cost).map(manaHTML).join('');
+
+    // art
+    const artEl = document.getElementById('c-art');
+    if (imgUrl) {
+        const img = document.createElement('img');
+        img.alt = 'Card art';
+        img.onload  = () => { artEl.innerHTML = ''; artEl.appendChild(img); };
+        img.onerror = () => { artEl.innerHTML = placeholderHTML(); };
+        img.src = imgUrl;
+    } else {
+        artEl.innerHTML = placeholderHTML();
+    }
+
+    // type line
+    let typeLine = [...supers, type].join(' ');
+    if (sub.trim()) typeLine += ' — ' + sub.trim();
+    document.getElementById('c-type').textContent = typeLine;
+
+    // set symbol
+    const symEl = document.getElementById('c-sym');
+    if (setSymbol.startsWith('svg:')) {
+        symEl.className = 'set-sym';
+        symEl.innerHTML = SVG_SYMS[setSymbol] || '';
+    } else {
+        symEl.textContent = setSymbol;
+        symEl.className = `set-sym rar-${rar}`;
+    }
+
+    // ── textbox & special layouts ──
+    const textboxEl = document.getElementById('c-textbox');
+    const advBoxEl  = document.getElementById('c-adv-box');
+
+    if (cardLayout === 'saga') {
+        const chCount = parseInt(document.getElementById('f-chapters').value) || 3;
+        renderSaga(textboxEl, rules, chCount);
+        advBoxEl.style.display = 'none';
+
+    } else if (cardLayout === 'adventure') {
+        textboxEl.className = 'card-textbox adv-mode';
+        textboxEl.innerHTML = `<div class="card-rules" id="c-rules"></div>
+            <div class="flavor-divider" id="c-fdiv"></div>
+            <div class="card-flavor" id="c-flavor"></div>`;
+        document.getElementById('c-rules').innerHTML = rulesHTML(rules);
+        const hf = flavor.trim() !== '';
+        document.getElementById('c-fdiv').style.display = hf ? '' : 'none';
+        document.getElementById('c-flavor').textContent = hf ? flavor : '';
+        advBoxEl.style.display = '';
+        document.getElementById('c-adv-name').textContent =
+            document.getElementById('f-adv-name').value || 'Adventure';
+        document.getElementById('c-adv-cost').innerHTML =
+            parseMana(document.getElementById('f-adv-cost').value || '').map(manaHTML).join('');
+        document.getElementById('c-adv-type').textContent =
+            document.getElementById('f-adv-type').value || 'Instant';
+        document.getElementById('c-adv-rules').innerHTML =
+            rulesHTML(document.getElementById('f-adv-text').value || '');
+
+    } else if (cardLayout === 'prepared') {
+        textboxEl.className = 'card-textbox prep-mode';
+        textboxEl.innerHTML = `
+            <div class="prep-main">
+                <div class="card-rules" id="c-rules"></div>
+                <div class="flavor-divider" id="c-fdiv"></div>
+                <div class="card-flavor" id="c-flavor"></div>
+            </div>
+            <div class="prep-spell">
+                <div class="prep-header">
+                    <div class="prep-name" id="c-prep-name"></div>
+                    <div class="prep-cost mana-cost" id="c-prep-cost"></div>
+                </div>
+                <div class="prep-type" id="c-prep-type"></div>
+                <div class="prep-rules" id="c-prep-rules"></div>
+            </div>`;
+        document.getElementById('c-rules').innerHTML = rulesHTML(rules);
+        const hfp = flavor.trim() !== '';
+        document.getElementById('c-fdiv').style.display = hfp ? '' : 'none';
+        document.getElementById('c-flavor').textContent = hfp ? flavor : '';
+        advBoxEl.style.display = 'none';
+        document.getElementById('c-prep-name').textContent =
+            document.getElementById('f-prep-name').value || 'Prepared';
+        document.getElementById('c-prep-cost').innerHTML =
+            parseMana(document.getElementById('f-prep-cost').value || '').map(manaHTML).join('');
+        document.getElementById('c-prep-type').textContent =
+            document.getElementById('f-prep-type').value || 'Sorcery';
+        document.getElementById('c-prep-rules').innerHTML =
+            rulesHTML(document.getElementById('f-prep-text').value || '');
+
+    } else {
+        textboxEl.className = 'card-textbox';
+        textboxEl.innerHTML = `<div class="card-rules" id="c-rules"></div>
+            <div class="flavor-divider" id="c-fdiv"></div>
+            <div class="card-flavor" id="c-flavor"></div>`;
+        document.getElementById('c-rules').innerHTML = rulesHTML(rules);
+        const hf = flavor.trim() !== '';
+        document.getElementById('c-fdiv').style.display = hf ? '' : 'none';
+        document.getElementById('c-flavor').textContent = hf ? flavor : '';
+        advBoxEl.style.display = 'none';
+    }
+
+    // ── stat box ──
+    const statEl = document.getElementById('c-stat');
+    if (cardLayout === 'battle') {
+        const def = document.getElementById('f-def').value || '7';
+        statEl.innerHTML = `<div class="defense-box">${def}</div>`;
+    } else if (type === 'Planeswalker' && loy) {
+        statEl.innerHTML = `<div class="loyalty-box">${loy}</div>`;
+    } else if (['Creature','Enchantment Creature','Artifact Creature'].includes(type) && (pow !== '' || tou !== '')) {
+        statEl.innerHTML = `<div class="pt-box">${pow}/${tou}</div>`;
+    } else {
+        statEl.innerHTML = '';
+    }
+
+    // footer text
+    document.getElementById('c-artist').textContent = artist ? `Illus. ${artist}` : '';
+    document.getElementById('c-coll').textContent = [num, setName].filter(Boolean).join(' • ');
+}
+
+// ──────────────────────────────────────────────
+// Saga renderer
+// ──────────────────────────────────────────────
+function renderSaga(el, rulesText, chCount) {
+    const numerals = ['I','II','III','IV','V'];
+    const chapters = rulesText.split(/\n?---\n?/).slice(0, chCount);
+    while (chapters.length < chCount) chapters.push('');
+
+    const sidebarHTML = numerals.slice(0, chCount).map((n, i) =>
+        (i > 0 ? '<div class="saga-gap"></div>' : '') +
+        `<div class="saga-lore">${n}</div>`
+    ).join('');
+
+    const contentHTML = chapters.map(ch => {
+        const inner = ch.trim()
+            ? ch.trim().replace(/\{([^}]+)\}/g, (_, s) => inlineSym(s))
+            : '&nbsp;';
+        return `<div class="saga-ch">${inner}</div>`;
+    }).join('');
+
+    el.className = 'card-textbox saga-mode';
+    el.innerHTML = `<div class="saga-bar">${sidebarHTML}</div><div class="saga-content">${contentHTML}</div>`;
+}
+
+function placeholderHTML() {
+    return `<div class="art-placeholder">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+        </svg>
+        No image</div>`;
+}
+
+// ──────────────────────────────────────────────
+// Color & hybrid button clicks (unified)
+// ──────────────────────────────────────────────
+function setFrameColor(col, activeBtn) {
+    document.querySelectorAll('.cbtn, .hbtn').forEach(b => b.classList.remove('active'));
+    activeBtn.classList.add('active');
+    frameClass = col;
+    render();
+}
+
+document.querySelectorAll('.cbtn').forEach(btn => {
+    btn.addEventListener('click', () => setFrameColor(btn.dataset.col, btn));
+});
+document.querySelectorAll('.hbtn').forEach(btn => {
+    btn.addEventListener('click', () => setFrameColor(btn.dataset.col, btn));
+});
+
+// ──────────────────────────────────────────────
+// Era button clicks
+// ──────────────────────────────────────────────
+document.querySelectorAll('.tog-btn[data-era]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tog-btn[data-era]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        frameEra = btn.dataset.era;
+        render();
+    });
+});
+
+// ──────────────────────────────────────────────
+// Layout button clicks
+// ──────────────────────────────────────────────
+document.querySelectorAll('.tog-btn[data-layout]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tog-btn[data-layout]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cardLayout = btn.dataset.layout;
+        document.getElementById('saga-fields').style.display   = cardLayout === 'saga'      ? '' : 'none';
+        document.getElementById('adv-fields').style.display    = cardLayout === 'adventure' ? '' : 'none';
+        document.getElementById('battle-fields').style.display = cardLayout === 'battle'    ? '' : 'none';
+        document.getElementById('prep-fields').style.display   = cardLayout === 'prepared'  ? '' : 'none';
+        render();
+    });
+});
+
+// ──────────────────────────────────────────────
+// Symbol picker button clicks
+// ──────────────────────────────────────────────
+document.querySelectorAll('.sym-btn').forEach(btn => {
+    btn.innerHTML = SVG_SYMS[btn.dataset.sym] || '';
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.sym-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        setSymbol = btn.dataset.sym;
+        render();
+    });
+});
+
+// ──────────────────────────────────────────────
+// Symbol insert helper
+// ──────────────────────────────────────────────
+function insertSym(fieldId, sym) {
+    const el = document.getElementById(fieldId);
+    const s = el.selectionStart, e = el.selectionEnd;
+    el.value = el.value.slice(0, s) + sym + el.value.slice(e);
+    el.selectionStart = el.selectionEnd = s + sym.length;
+    el.focus();
+    render();
+}
+
+// ──────────────────────────────────────────────
+// Zoom
+// ──────────────────────────────────────────────
+function zoom(delta) {
+    scale = Math.max(0.4, Math.min(1.6, parseFloat((scale + delta).toFixed(1))));
+    document.getElementById('cardWrap').style.transform = `scale(${scale})`;
+    document.getElementById('scale-label').textContent = Math.round(scale * 100) + '%';
+}
+
+// ──────────────────────────────────────────────
+// PNG Export via canvas
+// ──────────────────────────────────────────────
+async function exportCard() {
+    // Try html2canvas via CDN if available, otherwise guide user
+    if (typeof html2canvas === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+        script.onload = () => doExport();
+        script.onerror = () => alert('Export requires an internet connection to load html2canvas.\nTry: right-click the card → "Save image as…"');
+        document.head.appendChild(script);
+    } else {
+        doExport();
+    }
+}
+
+function doExport() {
+    html2canvas(document.getElementById('card'), {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = (document.getElementById('f-name').value || 'card') + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+
+// ──────────────────────────────────────────────
+// Live updates — bind all inputs
+// ──────────────────────────────────────────────
+document.querySelectorAll('.panel-form input, .panel-form select, .panel-form textarea').forEach(el => {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+});
+
+// Initial render
+render();
+</script>
+</body>
+</html>
