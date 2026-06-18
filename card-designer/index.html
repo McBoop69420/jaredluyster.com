@@ -340,7 +340,13 @@ h1 {
     flex-shrink: 0;
 }
 /* mana font sizing for the title bar cost pips */
-.mana-cost .ms { font-size: 19px; vertical-align: middle; }
+.mana-cost .ms {
+    font-size: 20px;
+    vertical-align: middle;
+    display: inline-block;
+    /* Create a visible border ring that works on dark and light backgrounds */
+    filter: drop-shadow(0 0 1.5px rgba(0,0,0,0.95)) drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+}
 
 /* ── art box ── */
 .card-art {
@@ -441,6 +447,33 @@ h1 {
 
 /* mana font sizing for inline rules text */
 .card-rules .ms { font-size: 12px; vertical-align: middle; position: relative; top: -1px; margin: 0 1px; }
+
+/* ── nickname banner ── */
+.card-nickname {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 100%),
+        var(--bar);
+    border-radius: 3px;
+    padding: 0 10px;
+    height: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.18);
+}
+.card-nickname-text {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 11.5px;
+    font-style: italic;
+    color: var(--tc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.88;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.12);
+    letter-spacing: 0.02em;
+}
 
 /* ── footer ── */
 .card-footer {
@@ -963,6 +996,11 @@ h1 {
     </div>
 
     <div class="field">
+        <label>Nickname <span style="font-weight:400;color:#6e7681">(optional — shows italic banner below name)</span></label>
+        <input autocomplete="off" id="f-nickname" type="text" placeholder="e.g. Baby Jace, The Bolt">
+    </div>
+
+    <div class="field">
         <label>Frame Color</label>
         <div class="color-buttons">
             <button class="cbtn" data-col="fw" title="White"><i class="ms ms-w ms-cost" style="font-size:24px"></i></button>
@@ -1231,6 +1269,11 @@ h1 {
                 <div class="card-title">
                     <div class="card-name" id="c-name"></div>
                     <div class="mana-cost" id="c-cost"></div>
+                </div>
+
+                <!-- nickname banner (shown when f-nickname is filled) -->
+                <div class="card-nickname" id="c-nickname" style="display:none">
+                    <div class="card-nickname-text" id="c-nickname-text"></div>
                 </div>
 
                 <!-- art -->
@@ -1590,6 +1633,16 @@ function render() {
 
     // name
     document.getElementById('c-name').textContent = name;
+
+    // nickname banner
+    const nickname = document.getElementById('f-nickname').value.trim();
+    const nicknameEl = document.getElementById('c-nickname');
+    if (nickname) {
+        nicknameEl.style.display = '';
+        document.getElementById('c-nickname-text').textContent = nickname;
+    } else {
+        nicknameEl.style.display = 'none';
+    }
 
     // mana cost
     document.getElementById('c-cost').innerHTML = parseMana(cost).map(manaHTML).join('');
@@ -2108,7 +2161,7 @@ document.querySelectorAll('.panel-form input, .panel-form select, .panel-form te
 });
 
 function initBlankCard() {
-    ['f-name','f-cost','f-sub','f-rules','f-flavor','f-pow','f-tou','f-loy','f-art','f-num','f-set','f-img'].forEach(id => {
+    ['f-name','f-cost','f-sub','f-rules','f-flavor','f-pow','f-tou','f-loy','f-art','f-num','f-set','f-img','f-nickname'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
