@@ -16,6 +16,14 @@ const IMAGES = [
     backCaption: "Beedo Mee-Maw — Knife Witch",
     color: "R",
   },
+  { src: "images/I'm Sowwee.png", caption: "I'm Sowwee", color: "W" },
+  { src: "images/Councils_Judgment_Vote_Out.png", caption: "Vote Out", color: "W" },
+  { src: "images/Thalia_Heretic_Cathar_Paul_Refereeno.png", caption: "Paul Refereeno", color: "W" },
+  { src: "images/Roast_Roast_Sam.png", caption: "Roast Sam", color: "R" },
+  { src: "images/Get_the_Horns.png", caption: "Get the Horns", color: "Gold" },
+  { src: "images/Jordan_the_Gastronaut.png", caption: "Jordan the Gastronaut", color: "G" },
+  { src: "images/Next_Stop_Palm_Springs.png", caption: "Next Stop Palm Springs", color: "G" },
+  { src: "images/Dubious_Delicacy_Lemon_Parmesan__1.png", caption: "Lemon Parmesan", color: "C" },
 ];
 
 const COLOR_ORDER = ["W", "U", "B", "R", "G"];
