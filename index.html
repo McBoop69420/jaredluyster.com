@@ -5,23 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Jared Luyster — games, tools, and things in progress.">
     <title>Jared Luyster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
         :root {
-            --bg: #0e0e0e;
-            --surface: #161616;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
             --text: #f0f0f0;
-            --muted: #888;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
         }
 
         html, body {
             margin: 0;
             background: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         a { color: inherit; text-decoration: none; }
@@ -37,8 +45,9 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            background: rgba(14, 14, 14, 0.88);
-            backdrop-filter: blur(12px);
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
         }
 
@@ -46,77 +55,170 @@
             height: 56px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
         }
 
         .brand {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .topbar-status {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
         }
 
         /* Hero */
         .hero {
-            padding: 96px 0 72px;
+            padding: 100px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.15);
+            color: var(--accent);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-bottom: 28px;
         }
 
         h1 {
-            margin: 0 0 16px;
-            font-size: clamp(2.4rem, 6vw, 4rem);
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
+            margin: 0 0 20px;
+            font-size: clamp(2.6rem, 6vw, 4.2rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .lead {
             margin: 0;
-            max-width: 36rem;
+            max-width: 34rem;
             color: var(--muted);
-            font-size: 1rem;
+            font-size: 1.05rem;
             line-height: 1.7;
         }
 
-        /* Projects */
-        .projects {
-            padding-bottom: 80px;
+        /* Section */
+        .section {
+            padding-bottom: 96px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .section-label {
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             color: var(--muted);
-            margin: 0 0 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
         }
 
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Project Grid */
         .project-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
+            gap: 16px;
         }
 
         .project-card {
+            position: relative;
             display: flex;
             flex-direction: column;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 16px;
+            padding: 28px;
             background: var(--surface);
-            transition: border-color 120ms;
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(129, 140, 248, 0.06), transparent 40%);
+            transition: opacity 280ms;
+            pointer-events: none;
         }
 
         .project-card:hover {
-            border-color: rgba(255, 255, 255, 0.18);
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
         }
 
         .project-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            margin-bottom: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             object-fit: cover;
+            border: 1px solid var(--border);
         }
 
         .project-logo {
@@ -124,50 +226,139 @@
             max-height: 80px;
             object-fit: contain;
             object-position: left;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .project-tag {
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
+            display: inline-block;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 6px;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: fit-content;
         }
 
         .project-name {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             margin: 0 0 8px;
+            letter-spacing: -0.01em;
         }
 
         .project-desc {
             font-size: 0.875rem;
             color: var(--muted);
-            line-height: 1.6;
+            line-height: 1.65;
             margin: 0;
             flex: 1;
         }
 
         .project-arrow {
-            display: block;
-            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 24px;
             font-size: 0.8rem;
+            font-weight: 500;
             color: var(--muted);
-            transition: color 120ms;
+            transition: all 200ms;
         }
 
-        .project-card:hover .project-arrow { color: var(--text); }
+        .project-arrow svg {
+            transition: transform 200ms;
+        }
+
+        .project-card:hover .project-arrow {
+            color: var(--accent);
+        }
+
+        .project-card:hover .project-arrow svg {
+            transform: translateX(3px);
+        }
 
         .project-card--wip {
-            opacity: 0.5;
+            opacity: 0.45;
             cursor: default;
         }
 
         .project-card--wip:hover {
             border-color: var(--border);
+            background: var(--surface);
             transform: none;
+            box-shadow: none;
+        }
+
+        .project-card--wip:hover::before {
+            opacity: 0;
+        }
+
+        .project-card--wip .project-tag {
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-links a {
+            font-size: 0.78rem;
+            color: var(--muted);
+            transition: color 200ms;
+        }
+
+        .footer-links a:hover {
+            color: var(--text);
+        }
+
+        /* Entrance animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(16px);
+            animation: fadeUp 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .fade-up:nth-child(1) { animation-delay: 0ms; }
+        .fade-up:nth-child(2) { animation-delay: 80ms; }
+        .fade-up:nth-child(3) { animation-delay: 160ms; }
+
+        .hero-eyebrow { animation: fadeUp 500ms 100ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        h1 { animation: fadeUp 500ms 180ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .lead { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 860px) {
@@ -176,8 +367,9 @@
 
         @media (max-width: 560px) {
             .project-grid { grid-template-columns: 1fr; }
-            .hero { padding: 56px 0 48px; }
+            .hero { padding: 64px 0 56px; }
             .shell { padding: 0 16px; }
+            .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
         }
     </style>
 </head>
@@ -185,34 +377,44 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="index.html">Jared Luyster</a>
+            <div class="topbar-status">
+                <span class="status-dot"></span>
+                building things
+            </div>
         </div>
     </header>
 
     <main>
         <section class="hero">
-            <div class="shell">
-                <h1>Things I'm building.</h1>
+            <div class="shell hero-content">
+                <div class="hero-eyebrow">// portfolio</div>
+                <h1><span class="text-gradient">Things I'm building.</span></h1>
+                <p class="lead">Games, tools, and ventures — all in various stages of coming together.</p>
             </div>
         </section>
 
-        <div class="projects">
+        <section class="section">
             <div class="shell">
-<div class="project-grid">
-                    <a class="project-card" href="wizard-battle.html">
+                <div class="section-header">
+                    <span class="section-label">Projects</span>
+                    <div class="section-line"></div>
+                </div>
+                <div class="project-grid">
+                    <a class="project-card fade-up" href="wizard-battle.html">
                         <img class="project-icon" src="wizard-battle-logo.png" alt="Wizard Battle">
                         <div class="project-tag">Game</div>
                         <p class="project-name">Wizard Battle</p>
                         <p class="project-desc">A roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.</p>
-                        <span class="project-arrow">Explore →</span>
+                        <span class="project-arrow">Explore <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://www.bluegrasscybersecurity.com/">
+                    <a class="project-card fade-up" href="https://www.bluegrasscybersecurity.com/">
                         <img class="project-logo" src="bcs-logo-t.png" alt="Bluegrass Cybersecurity Solutions">
                         <div class="project-tag">Cybersecurity</div>
                         <p class="project-name">Bluegrass Cybersecurity Solutions</p>
                         <p class="project-desc">Cybersecurity services for businesses in the Bluegrass region.</p>
-                        <span class="project-arrow">Visit →</span>
+                        <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <div class="project-card project-card--wip">
+                    <div class="project-card project-card--wip fade-up">
                         <img class="project-logo" src="bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
                         <div class="project-tag">In Development</div>
                         <p class="project-name">Bluegrass Memorabilia & Collectibles</p>
@@ -220,7 +422,23 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
+
+    <footer class="footer">
+        <div class="shell footer-inner">
+            <span class="footer-copy">&copy; 2026 Jared Luyster</span>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+            });
+        });
+    </script>
 </body>
 </html>
