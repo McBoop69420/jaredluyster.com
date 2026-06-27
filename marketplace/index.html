@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Marketplace — Bluegrass Memorabilia & Collectibles</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #0e0e0e;
+            --surface: #161616;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f0f0f0;
+            --muted: #888;
+            --accent: #c9a84c;
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(14, 14, 14, 0.88);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        /* Hero — compact */
+        .hero {
+            padding: 36px 0 16px;
+        }
+
+        .hero-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .lead {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Trust bar */
+        .trust-bar {
+            display: flex;
+            gap: 6px 20px;
+            flex-wrap: wrap;
+            padding: 12px 0 0;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .trust-bar span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trust-bar span::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        /* Controls block */
+        .controls {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 24px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            flex: 1;
+            min-width: 180px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            color: var(--text);
+            font-size: 0.84rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 120ms;
+        }
+
+        .search-bar::placeholder { color: var(--muted); }
+        .search-bar:focus { border-color: rgba(255, 255, 255, 0.22); }
+
+        .sort-select, .set-select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            color: var(--text);
+            font-size: 0.8rem;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Card Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 14px;
+            padding-bottom: 64px;
+        }
+
+        .listing {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            overflow: hidden;
+            transition: border-color 120ms, transform 120ms;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .listing:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+        }
+
+        .listing-img-wrap {
+            position: relative;
+            aspect-ratio: 488 / 680;
+            background: #111;
+            overflow: hidden;
+        }
+
+        .listing-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Missing image placeholder */
+        .listing-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            color: #444;
+        }
+
+        .listing-placeholder svg {
+            opacity: 0.35;
+        }
+
+        .listing-placeholder span {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+        }
+
+        /* Badges */
+        .listing-badges {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            display: flex;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .badge {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            line-height: 1;
+        }
+
+        .badge-foil {
+            color: var(--accent);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+        }
+
+        .badge-qty {
+            color: var(--text);
+        }
+
+        /* Card info */
+        .listing-info {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .listing-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin: 0 0 2px;
+            line-height: 1.3;
+        }
+
+        .listing-set {
+            font-size: 0.68rem;
+            color: #555;
+            margin: 0 0 10px;
+            letter-spacing: 0.02em;
+        }
+
+        .listing-bottom {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+
+        .listing-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .listing-condition {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 9px;
+            margin-top: 10px;
+            background: rgba(201, 168, 76, 0.08);
+            border: 1px solid rgba(201, 168, 76, 0.25);
+            border-radius: 8px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 120ms;
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+
+        .add-to-cart-btn:hover {
+            background: rgba(201, 168, 76, 0.15);
+            border-color: var(--accent);
+        }
+
+        .add-to-cart-btn.added {
+            background: rgba(76, 184, 122, 0.1);
+            color: #4cb87a;
+            border-color: rgba(76, 184, 122, 0.35);
+        }
+
+        /* Featured Lands Section */
+        .featured-section {
+            border: 1px solid rgba(201, 168, 76, 0.25);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(201, 168, 76, 0.06) 0%, rgba(14, 14, 14, 0) 60%);
+            padding: 28px 28px 24px;
+            margin-bottom: 32px;
+        }
+
+        .featured-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .featured-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .featured-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            background: rgba(201, 168, 76, 0.12);
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+
+        .featured-price-tag {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .featured-price-tag span {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .lands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .land-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            overflow: hidden;
+            transition: border-color 120ms, transform 120ms;
+        }
+
+        .land-card:hover {
+            border-color: rgba(201, 168, 76, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .land-card-img {
+            aspect-ratio: 488 / 680;
+            background: #111;
+            overflow: hidden;
+        }
+
+        .land-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .land-card-info {
+            padding: 8px 10px 10px;
+        }
+
+        .land-card-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .land-card-set {
+            font-size: 0.68rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* Contact Section */
+        .contact {
+            border-top: 1px solid var(--border);
+            padding: 48px 0 64px;
+        }
+
+        .contact-inner {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .contact-text {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .contact-text h2 {
+            margin: 0 0 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .contact-text p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .contact-methods {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: border-color 120ms;
+        }
+
+        .contact-link:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Loading / empty */
+        .status-msg {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 48px 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 560px) {
+            .hero { padding: 28px 0 20px; }
+            .shell { padding: 0 16px; }
+            .controls { padding: 10px 12px; }
+            .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .listing-info { padding: 10px; }
+            .listing-name { font-size: 0.8rem; }
+            .listing-price { font-size: 0.95rem; }
+            .featured-section { padding: 18px 14px 16px; margin-bottom: 24px; }
+            .lands-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+            .land-card-info { padding: 6px 8px 8px; }
+            .land-card-name { font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="/">Bluegrass Memorabilia</a>
+            <nav style="display:flex;gap:16px;align-items:center;font-size:0.85rem;">
+                <span style="color:var(--muted)" id="stats"></span>
+                <a href="/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:#000;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
+                <a href="/orders" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">My Orders</a>
+                <span id="auth-link"></span>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="shell">
+                <div class="hero-row">
+                    <h1>MTG Singles</h1>
+                    <p class="lead"></p>
+                </div>
+            </div>
+        </section>
+
+        <div class="shell">
+            <div class="controls">
+                <div class="controls-row">
+                    <input class="search-bar" type="text" placeholder="Search by name or set..." id="search">
+                    <select class="set-select" id="set-filter">
+                        <option value="all">All Sets</option>
+                    </select>
+                    <select class="sort-select" id="sort">
+                        <option value="name-asc">Name A–Z</option>
+                        <option value="name-desc">Name Z–A</option>
+                        <option value="price-asc">Price low–high</option>
+                        <option value="price-desc">Price high–low</option>
+                        <option value="set">Set</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="lands-section" class="featured-section" style="display:none">
+                <div class="featured-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <span class="featured-label">Featured</span>
+                        <h2>Full Art Lands</h2>
+                    </div>
+                    <span class="featured-price-tag"><span>$0.50</span> each</span>
+                </div>
+                <div class="lands-grid" id="lands-grid"></div>
+            </div>
+
+            <div class="card-grid" id="card-grid">
+                <div class="status-msg">Loading available cards...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        var inventory = [];
+        var currentFilter = 'all';
+        var currentSort = 'name-asc';
+
+        var CONDITIONS_SHORT = {
+            'Near Mint': 'NM', 'Lightly Played': 'LP',
+            'Moderately Played': 'MP', 'Heavily Played': 'HP', 'Damaged': 'DMG'
+        };
+
+        var PLACEHOLDER_SVG = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+
+        fetch('lands.json')
+            .then(function(r) { return r.json(); })
+            .then(function(lands) {
+                if (!lands.length) return;
+                var section = document.getElementById('lands-section');
+                section.style.display = '';
+                var html = '';
+                lands.forEach(function(land) {
+                    var imgHtml = land.image_url
+                        ? '<img src="' + land.image_url + '" alt="' + land.name.replace(/"/g, '&quot;') + '" loading="lazy">'
+                        : '';
+                    var setLabel = land.set_code ? land.set_code.toUpperCase() + (land.collector_number ? ' #' + land.collector_number : '') : '';
+                    var qtyBadge = land.quantity > 1 ? '<div class="listing-badges"><span class="badge badge-qty">' + land.quantity + ' avail</span></div>' : '';
+                    html += '<div class="land-card">' +
+                        '<div class="land-card-img" style="position:relative">' + imgHtml + qtyBadge + '</div>' +
+                        '<div class="land-card-info">' +
+                            '<p class="land-card-name">' + land.name + '</p>' +
+                            (setLabel ? '<p class="land-card-set">' + setLabel + '</p>' : '') +
+                        '</div>' +
+                    '</div>';
+                });
+                document.getElementById('lands-grid').innerHTML = html;
+            })
+            .catch(function() {});
+
+        fetch('inventory.json')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                inventory = data;
+                buildSetFilter();
+                updateStats();
+                render();
+            })
+            .catch(function() {
+                document.getElementById('card-grid').innerHTML =
+                    '<div class="status-msg">Could not load inventory. Try refreshing the page.</div>';
+            });
+
+        document.getElementById('search').addEventListener('input', render);
+        document.getElementById('sort').addEventListener('change', function() {
+            currentSort = this.value;
+            render();
+        });
+        document.getElementById('set-filter').addEventListener('change', function() {
+            currentFilter = this.value;
+            render();
+        });
+
+        function buildSetFilter() {
+            var sets = {};
+            inventory.forEach(function(item) {
+                if (item.set_code) sets[item.set_code] = (sets[item.set_code] || 0) + 1;
+            });
+            var sorted = Object.keys(sets).sort();
+            var select = document.getElementById('set-filter');
+            select.querySelector('option').textContent = 'All Sets (' + inventory.length + ')';
+            sorted.forEach(function(code) {
+                var opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = code.toUpperCase() + ' (' + sets[code] + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        function updateStats() {
+            var total = inventory.reduce(function(s, i) { return s + i.quantity; }, 0);
+            document.getElementById('stats').textContent = total + ' cards';
+        }
+
+        function getPrice(item) {
+            return item.sell_price != null ? item.sell_price : (item.market_price || 0);
+        }
+
+        function render() {
+            var query = document.getElementById('search').value.toLowerCase();
+            var filtered = inventory.filter(function(item) {
+                var matchSearch = !query || item.name.toLowerCase().indexOf(query) !== -1 ||
+                    item.set_code.toLowerCase().indexOf(query) !== -1;
+                var matchFilter = currentFilter === 'all' || item.set_code === currentFilter;
+                return matchSearch && matchFilter;
+            });
+
+            filtered.sort(function(a, b) {
+                switch (currentSort) {
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'price-desc': return getPrice(b) - getPrice(a);
+                    case 'price-asc': return getPrice(a) - getPrice(b);
+                    case 'set': return a.set_code.localeCompare(b.set_code) || a.name.localeCompare(b.name);
+                    default: return 0;
+                }
+            });
+
+            var grid = document.getElementById('card-grid');
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="status-msg">No cards match your search.</div>';
+                return;
+            }
+
+            var html = '';
+            filtered.forEach(function(item) {
+                var price = getPrice(item);
+                var cond = CONDITIONS_SHORT[item.condition] || item.condition;
+                var imgContent = item.image_url
+                    ? '<img src="' + item.image_url + '" alt="' + item.name.replace(/"/g, '&quot;') + '" loading="lazy">'
+                    : '<div class="listing-placeholder">' + PLACEHOLDER_SVG + '<span>No image</span></div>';
+                var displayName = item.name + (item.foil ? ' (Foil)' : '') + (item.notes ? ' (' + item.notes + ')' : '');
+
+                var badges = '';
+                if (item.quantity > 1) badges += '<span class="badge badge-qty">' + item.quantity + ' avail</span>';
+                if (item.foil) badges += '<span class="badge badge-foil">Foil</span>';
+
+                html += '<div class="listing">' +
+                    '<div class="listing-img-wrap">' + imgContent +
+                        (badges ? '<div class="listing-badges">' + badges + '</div>' : '') +
+                    '</div>' +
+                    '<div class="listing-info">' +
+                        '<p class="listing-name">' + displayName + '</p>' +
+                        '<p class="listing-set">' + item.set_code.toUpperCase() + ' #' + item.collector_number + '</p>' +
+                        '<div class="listing-bottom">' +
+                            '<span class="listing-price">$' + price.toFixed(2) + '</span>' +
+                            '<span class="listing-condition" title="' + item.condition + '">' + cond + '</span>' +
+                        '</div>' +
+                        '<button class="add-to-cart-btn" onclick="addToCart(' + item.id + ', this)">Add to Cart</button>' +
+                    '</div>' +
+                '</div>';
+            });
+            grid.innerHTML = html;
+        }
+
+        var isLoggedIn = false;
+
+        fetch('/api/me').then(function(r) { return r.json(); }).then(function(data) {
+            var authLink = document.getElementById('auth-link');
+            var badge = document.getElementById('cart-badge');
+            if (data.logged_in) {
+                isLoggedIn = true;
+                authLink.innerHTML = '<a href="#" onclick="doLogout()" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">' + data.name + ' (logout)</a>';
+                if (data.is_admin) {
+                    authLink.innerHTML += ' <a href="/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
+                }
+                if (data.cart_count > 0) {
+                    badge.textContent = data.cart_count;
+                    badge.style.display = '';
+                }
+            } else {
+                authLink.innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+            }
+        }).catch(function() {});
+
+        function addToCart(id, btn) {
+            if (!isLoggedIn) { location.href = '/login'; return; }
+            fetch('/api/cart/add', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, quantity: 1})
+            }).then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.ok) {
+                    btn.textContent = 'Added!';
+                    btn.classList.add('added');
+                    var badge = document.getElementById('cart-badge');
+                    badge.textContent = data.cart_count;
+                    badge.style.display = '';
+                    setTimeout(function() {
+                        btn.textContent = 'Add to Cart';
+                        btn.classList.remove('added');
+                    }, 1500);
+                }
+            });
+        }
+
+        function doLogout() {
+            fetch('/api/logout', {method:'POST'}).then(function() { location.reload(); });
+        }
+    </script>
+</body>
+</html>

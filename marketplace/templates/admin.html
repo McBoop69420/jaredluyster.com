@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Admin — Packing Dashboard{% endblock %}
+{% block extra_css %}
+.admin-toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.admin-toolbar .btn.active { background: rgba(255,255,255,0.06); color: var(--text);
+    border-color: rgba(255,255,255,0.2); }
+.orders-list { padding-bottom: 80px; display: flex; flex-direction: column; gap: 16px; }
+.order-card { padding: 0; overflow: hidden; }
+.order-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+}
+.order-id { font-weight: 700; font-size: 1rem; }
+.order-customer { font-size: 0.85rem; color: var(--accent); margin-left: 8px; }
+.order-email { font-size: 0.78rem; color: var(--muted); margin-left: 4px; }
+.order-date { font-size: 0.8rem; color: var(--muted); }
+.order-body { padding: 0 20px; }
+.order-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-top: 1px solid var(--border);
+}
+.order-total .price { color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+.order-notes, .order-admin-notes { font-size: 0.82rem; padding: 0 20px 10px; }
+.order-notes { color: var(--muted); font-style: italic; }
+.order-admin-notes { color: var(--blue); }
+.order-actions {
+    display: flex; gap: 8px; padding: 0 20px 16px; flex-wrap: wrap; align-items: center;
+}
+.order-actions select { padding: 6px 10px; font-size: 0.8rem; }
+.packing-check {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.packing-check input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+}
+.packing-check.checked td { color: var(--muted); text-decoration: line-through; }
+.admin-notes-input {
+    width: 100%; margin-top: 8px; resize: vertical; min-height: 40px;
+    font-size: 0.82rem; padding: 8px 12px;
+}
+.stats-bar {
+    display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; min-width: 120px;
+}
+.stat-num { font-size: 1.6rem; font-weight: 700; }
+.stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.04em; margin-top: 2px; }
+.stat-pending .stat-num { color: var(--accent); }
+.stat-packing .stat-num { color: var(--blue); }
+.stat-shipped .stat-num { color: var(--green); }
+.print-btn { float: right; }
+@media print {
+    .topbar, .admin-toolbar, .order-actions, .stats-bar, .print-btn,
+    .admin-notes-input, .nav-links { display: none !important; }
+    .card { break-inside: avoid; border: 1px solid #ccc; }
+    body { background: #fff; color: #000; }
+    .order-header, td, th { color: #000 !important; }
+    .status-badge { border: 1px solid #999; }
+}
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="shell">
+        <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Packing Dashboard</h1>
+            <button class="btn btn-sm print-btn" onclick="window.print()">Print Packing List</button>
+        </div>
+
+        {% set all_orders = orders %}
+        {% set pending = all_orders | selectattr('order.status', 'equalto', 'pending') | list %}
+        {% set packing = all_orders | selectattr('order.status', 'equalto', 'packing') | list %}
+        {% set shipped = all_orders | selectattr('order.status', 'equalto', 'shipped') | list %}
+
+        <div class="stats-bar">
+            <div class="stat-card stat-pending">
+                <div class="stat-num">{{ pending | length }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card stat-packing">
+                <div class="stat-num">{{ packing | length }}</div>
+                <div class="stat-label">Packing</div>
+            </div>
+            <div class="stat-card stat-shipped">
+                <div class="stat-num">{{ shipped | length }}</div>
+                <div class="stat-label">Shipped</div>
+            </div>
+        </div>
+
+        <div class="admin-toolbar">
+            <a class="btn btn-sm {% if not current_status %}active{% endif %}" href="/admin">All</a>
+            <a class="btn btn-sm {% if current_status == 'pending' %}active{% endif %}" href="/admin?status=pending">Pending</a>
+            <a class="btn btn-sm {% if current_status == 'packing' %}active{% endif %}" href="/admin?status=packing">Packing</a>
+            <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/admin?status=shipped">Shipped</a>
+            <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/admin?status=completed">Completed</a>
+            <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/admin?status=cancelled">Cancelled</a>
+        </div>
+
+        <details class="card" style="margin-bottom:24px; padding:0;">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Email Settings
+                <span id="smtp-status" style="font-size:0.72rem; margin-left:auto;"></span>
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
+                    <div class="field">
+                        <label>SMTP Host</label>
+                        <input type="text" id="smtp-host" placeholder="smtp.gmail.com" style="width:100%">
+                    </div>
+                    <div class="field">
+                        <label>SMTP Port</label>
+                        <input type="text" id="smtp-port" placeholder="587" style="width:100%">
+                    </div>
+                    <div class="field">
+                        <label>Gmail Address</label>
+                        <input type="email" id="smtp-user" placeholder="you@gmail.com" style="width:100%">
+                    </div>
+                    <div class="field">
+                        <label>App Password</label>
+                        <input type="password" id="smtp-pass" placeholder="Paste app password" style="width:100%">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+                    <button class="btn btn-accent btn-sm" onclick="saveSmtp()">Save</button>
+                    <button class="btn btn-sm" onclick="testSmtp()">Send Test Email</button>
+                    <span id="smtp-msg" style="font-size:0.82rem; margin-left:8px;"></span>
+                </div>
+            </div>
+        </details>
+
+        {% if orders %}
+        <div class="orders-list">
+            {% for o in orders %}
+            {% set order = o.order %}
+            {% set items = o.line_items %}
+            {% set acct = o.account %}
+            <div class="card order-card" id="order-{{ order.id }}">
+                <div class="order-header">
+                    <div>
+                        <span class="order-id">Order #{{ order.id }}</span>
+                        <span class="order-customer">{{ acct.name if acct else 'Unknown' }}</span>
+                        <span class="order-email">({{ acct.email if acct else '' }})</span>
+                        <span class="order-date">{{ order.created_at[:10] }}</span>
+                    </div>
+                    <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
+                </div>
+
+                {% if order.notes %}
+                <div class="order-notes">Customer note: {{ order.notes }}</div>
+                {% endif %}
+
+                <div class="order-body">
+                    <table>
+                        <thead>
+                            <tr><th style="width:30px"></th><th>Card</th><th>Set</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr class="packing-row">
+                                <td><input type="checkbox" class="pack-check" onchange="this.closest('tr').classList.toggle('checked')"></td>
+                                <td>{{ item.name }}{% if item.foil %} <span style="color:var(--accent);font-size:0.72rem">FOIL</span>{% endif %}</td>
+                                <td style="color:var(--muted)">{{ item.set_code | upper }} #{{ item.collector_number }}</td>
+                                <td style="text-align:center; font-weight:600">{{ item.quantity }}</td>
+                                <td style="text-align:right">${{ "%.2f" | format(item.unit_price * item.quantity) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% set ns = namespace(total=0) %}
+                {% for item in items %}{% set ns.total = ns.total + item.unit_price * item.quantity %}{% endfor %}
+                <div class="order-total">
+                    <span>Total: <span class="price">${{ "%.2f" | format(ns.total) }}</span></span>
+                </div>
+
+                <div class="order-actions">
+                    <select onchange="updateStatus({{ order.id }}, this.value)" style="min-width:130px">
+                        {% for s in ['pending','packing','shipped','completed','cancelled'] %}
+                        <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                    <textarea class="admin-notes-input" placeholder="Admin notes..."
+                        onblur="saveNotes({{ order.id }}, this.value)">{{ order.admin_notes }}</textarea>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:64px 0; color:var(--muted);">
+            <p style="font-size:1.2rem;">No orders{% if current_status %} with status "{{ current_status }}"{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(orderId, status) {
+    fetch('/api/admin/orders/' + orderId + '/status', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: status})
+    }).then(function() {
+        var badge = document.querySelector('#order-' + orderId + ' .status-badge');
+        badge.className = 'status-badge status-' + status;
+        badge.textContent = status;
+    });
+}
+
+function saveNotes(orderId, notes) {
+    fetch('/api/admin/orders/' + orderId + '/notes', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({notes: notes})
+    });
+}
+
+fetch('/api/admin/settings').then(function(r) { return r.json(); }).then(function(d) {
+    document.getElementById('smtp-host').value = d.smtp_host || '';
+    document.getElementById('smtp-port').value = d.smtp_port || '';
+    document.getElementById('smtp-user').value = d.smtp_user || '';
+    document.getElementById('smtp-pass').value = d.smtp_pass || '';
+    var status = document.getElementById('smtp-status');
+    if (d.smtp_user && d.smtp_pass) {
+        status.textContent = 'Configured';
+        status.style.color = 'var(--green)';
+    } else {
+        status.textContent = 'Not configured';
+        status.style.color = 'var(--red)';
+    }
+});
+
+function saveSmtp() {
+    var msg = document.getElementById('smtp-msg');
+    msg.textContent = '';
+    fetch('/api/admin/settings', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            smtp_host: document.getElementById('smtp-host').value,
+            smtp_port: document.getElementById('smtp-port').value,
+            smtp_user: document.getElementById('smtp-user').value,
+            smtp_pass: document.getElementById('smtp-pass').value
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        msg.textContent = 'Saved!';
+        msg.style.color = 'var(--green)';
+        var status = document.getElementById('smtp-status');
+        status.textContent = 'Configured';
+        status.style.color = 'var(--green)';
+    });
+}
+
+function testSmtp() {
+    var msg = document.getElementById('smtp-msg');
+    msg.textContent = 'Sending...';
+    msg.style.color = 'var(--muted)';
+    fetch('/api/admin/settings/test-email', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}
+    }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        if (res.ok) {
+            msg.textContent = res.data.message;
+            msg.style.color = 'var(--green)';
+        } else {
+            msg.textContent = res.data.error;
+            msg.style.color = 'var(--red)';
+        }
+    });
+}
+</script>
+{% endblock %}

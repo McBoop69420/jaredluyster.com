@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Marketplace{% endblock %} — Bluegrass Memorabilia & Collectibles</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        :root {
+            --bg: #0e0e0e; --surface: #161616; --border: rgba(255,255,255,0.08);
+            --text: #f0f0f0; --muted: #888; --accent: #c9a84c;
+            --green: #4cb87a; --red: #e55; --blue: #5b9bd5;
+        }
+        html, body {
+            margin: 0; background: var(--bg); color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+        }
+        a { color: inherit; text-decoration: none; }
+        .shell { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            background: rgba(14,14,14,0.88); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar-inner {
+            height: 56px; display: flex; align-items: center;
+            justify-content: space-between; gap: 16px;
+        }
+        .brand { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
+        .nav-links { display: flex; gap: 16px; align-items: center; font-size: 0.85rem; }
+        .nav-links a { color: var(--muted); transition: color 120ms; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links .active { color: var(--accent); }
+        .badge {
+            background: var(--accent); color: #000; font-size: 0.65rem;
+            font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+        }
+        .page-header { padding: 48px 0 32px; }
+        .page-header h1 {
+            margin: 0; font-size: 1.8rem; font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); color: var(--text);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 16px; font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; transition: all 120ms; font-family: inherit;
+        }
+        .btn:hover { border-color: rgba(255,255,255,0.2); }
+        .btn-accent {
+            background: var(--accent); color: #000; border-color: var(--accent);
+        }
+        .btn-accent:hover { background: #b8932f; }
+        .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+        .btn-red { background: transparent; color: var(--red); border-color: var(--red); }
+        .btn-red:hover { background: rgba(238,85,85,0.1); }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px;
+        }
+        .status-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-pending { background: rgba(201,168,76,0.15); color: var(--accent); }
+        .status-packing { background: rgba(91,155,213,0.15); color: var(--blue); }
+        .status-shipped { background: rgba(76,184,122,0.15); color: var(--green); }
+        .status-completed { background: rgba(255,255,255,0.06); color: var(--muted); }
+        .status-cancelled { background: rgba(238,85,85,0.1); color: var(--red); }
+        input, select, textarea {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; color: var(--text);
+            font-size: 0.875rem; font-family: inherit; outline: none;
+            transition: border-color 120ms;
+        }
+        input:focus, select:focus, textarea:focus { border-color: rgba(255,255,255,0.2); }
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+        .error-msg { color: var(--red); font-size: 0.85rem; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+             letter-spacing: 0.06em; color: var(--muted); padding: 8px 12px;
+             border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+        tr:last-child td { border-bottom: none; }
+        @media (max-width: 560px) {
+            .shell { padding: 0 16px; }
+            .page-header { padding: 32px 0 24px; }
+        }
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="/">Bluegrass Memorabilia</a>
+            <nav class="nav-links" id="nav">
+                <a href="/">Shop</a>
+                <a href="/cart">Cart<span class="badge" id="cart-badge" style="display:none">0</span></a>
+                <a href="/orders">My Orders</a>
+                {% if account and account.is_admin %}
+                    <a href="/admin" style="color: var(--accent)">Admin</a>
+                {% endif %}
+                <span id="auth-link"></span>
+            </nav>
+        </div>
+    </header>
+    {% block content %}{% endblock %}
+    <script>
+        fetch('/api/me').then(r => r.json()).then(data => {
+            var authLink = document.getElementById('auth-link');
+            var badge = document.getElementById('cart-badge');
+            if (data.logged_in) {
+                authLink.innerHTML = '<a href="#" onclick="logout()" style="color:var(--muted)">' + data.name + ' (logout)</a>';
+                if (data.cart_count > 0) {
+                    badge.textContent = data.cart_count;
+                    badge.style.display = '';
+                }
+            } else {
+                authLink.innerHTML = '<a href="/login">Sign In</a>';
+            }
+        });
+        function logout() {
+            fetch('/api/logout', {method:'POST'}).then(() => location.href = '/');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

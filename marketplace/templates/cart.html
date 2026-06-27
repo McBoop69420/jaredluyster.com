@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Cart{% endblock %}
+{% block extra_css %}
+.cart-layout { display: flex; gap: 24px; padding-bottom: 80px; }
+.cart-main { flex: 1; }
+.cart-summary { width: 300px; flex-shrink: 0; }
+.cart-summary .card { position: sticky; top: 80px; }
+.cart-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item-img {
+    width: 60px; height: 84px; border-radius: 6px; object-fit: cover;
+    background: #111; flex-shrink: 0;
+}
+.cart-item-info { flex: 1; }
+.cart-item-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+.cart-item-set { font-size: 0.75rem; color: var(--muted); }
+.cart-item-foil { color: var(--accent); font-size: 0.72rem; font-weight: 600; }
+.cart-item-price { font-weight: 700; color: var(--accent); font-size: 1rem; white-space: nowrap; }
+.cart-item-qty {
+    display: flex; align-items: center; gap: 6px; margin-top: 6px;
+}
+.cart-item-qty button {
+    width: 28px; height: 28px; border-radius: 6px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text); cursor: pointer;
+    font-size: 1rem; display: flex; align-items: center; justify-content: center;
+}
+.cart-item-qty span { font-size: 0.9rem; min-width: 24px; text-align: center; }
+.summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; }
+.summary-total { font-size: 1.2rem; font-weight: 700; color: var(--accent);
+    border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.empty-cart { text-align: center; padding: 64px 0; color: var(--muted); }
+.notes-field { width: 100%; margin: 12px 0; resize: vertical; min-height: 60px; }
+@media (max-width: 700px) {
+    .cart-layout { flex-direction: column; }
+    .cart-summary { width: 100%; }
+}
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="shell">
+        <div class="page-header"><h1>Your Cart</h1></div>
+
+        {% if items %}
+        <div class="cart-layout">
+            <div class="cart-main card">
+                {% for item in items %}
+                <div class="cart-item" data-id="{{ item.id }}">
+                    {% if item.image_url %}
+                        <img class="cart-item-img" src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">
+                    {% else %}
+                        <div class="cart-item-img"></div>
+                    {% endif %}
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">{{ item.name }}</div>
+                        <div class="cart-item-set">{{ item.set_code | upper }} #{{ item.collector_number }}</div>
+                        {% if item.foil %}<div class="cart-item-foil">FOIL</div>{% endif %}
+                        <div class="cart-item-qty">
+                            <button onclick="updateQty({{ item.id }}, {{ item.cart_qty - 1 }})">-</button>
+                            <span>{{ item.cart_qty }}</span>
+                            <button onclick="updateQty({{ item.id }}, {{ item.cart_qty + 1 }})">+</button>
+                            <button onclick="updateQty({{ item.id }}, 0)" style="margin-left:8px; color:var(--red); border-color:var(--red)">Remove</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-price">${{ "%.2f" | format(item.price * item.cart_qty) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="cart-summary">
+                <div class="card">
+                    <div class="summary-row">
+                        <span>Items</span>
+                        <span>{{ items | sum(attribute='cart_qty') }}</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span>${{ "%.2f" | format(total) }}</span>
+                    </div>
+                    <textarea class="notes-field" id="order-notes" placeholder="Any notes (shipping address, special requests...)"></textarea>
+                    <button class="btn btn-accent" style="width:100%; justify-content:center; margin-top:8px;" onclick="submitOrder()">
+                        Submit Order
+                    </button>
+                    <div id="order-error" class="error-msg" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            <p style="font-size:1.2rem; margin-bottom:8px;">Your cart is empty</p>
+            <p>Browse the <a href="/" style="color:var(--accent)">shop</a> to add cards.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQty(id, qty) {
+    fetch('/api/cart/update', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id: id, quantity: qty})
+    }).then(function() { location.reload(); });
+}
+
+function submitOrder() {
+    var err = document.getElementById('order-error');
+    err.style.display = 'none';
+    fetch('/api/orders', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({notes: document.getElementById('order-notes').value})
+    }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        if (res.ok) { location.href = '/orders'; }
+        else { err.textContent = res.data.error; err.style.display = ''; }
+    });
+}
+</script>
+{% endblock %}

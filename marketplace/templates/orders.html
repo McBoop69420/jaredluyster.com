@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}My Orders{% endblock %}
+{% block extra_css %}
+.orders-list { padding-bottom: 80px; display: flex; flex-direction: column; gap: 16px; }
+.order-card { padding: 0; overflow: hidden; }
+.order-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+}
+.order-id { font-weight: 700; font-size: 1rem; }
+.order-date { font-size: 0.8rem; color: var(--muted); }
+.order-body { padding: 0 20px; }
+.order-total {
+    display: flex; justify-content: space-between; padding: 14px 20px;
+    border-top: 1px solid var(--border); font-weight: 600;
+}
+.order-total .price { color: var(--accent); }
+.order-notes { font-size: 0.82rem; color: var(--muted); padding: 0 20px 14px;
+    font-style: italic; }
+.empty-state { text-align: center; padding: 64px 0; color: var(--muted); }
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="shell">
+        <div class="page-header"><h1>My Orders</h1></div>
+
+        {% if orders %}
+        <div class="orders-list">
+            {% for o in orders %}
+            {% set order = o.order %}
+            {% set items = o.line_items %}
+            <div class="card order-card">
+                <div class="order-header">
+                    <div>
+                        <span class="order-id">Order #{{ order.id }}</span>
+                        <span class="order-date">{{ order.created_at[:10] }}</span>
+                    </div>
+                    <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
+                </div>
+                <div class="order-body">
+                    <table>
+                        <thead>
+                            <tr><th>Card</th><th>Set</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.name }}{% if item.foil %} <span style="color:var(--accent);font-size:0.72rem">FOIL</span>{% endif %}</td>
+                                <td style="color:var(--muted)">{{ item.set_code | upper }} #{{ item.collector_number }}</td>
+                                <td style="text-align:center">{{ item.quantity }}</td>
+                                <td style="text-align:right">${{ "%.2f" | format(item.unit_price * item.quantity) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if order.notes %}
+                <div class="order-notes">{{ order.notes }}</div>
+                {% endif %}
+                {% set ns = namespace(total=0) %}
+                {% for item in items %}{% set ns.total = ns.total + item.unit_price * item.quantity %}{% endfor %}
+                <div class="order-total">
+                    <span>Total</span>
+                    <span class="price">${{ "%.2f" | format(ns.total) }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p style="font-size:1.2rem; margin-bottom:8px;">No orders yet</p>
+            <p>Browse the <a href="/" style="color:var(--accent)">shop</a> to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}
