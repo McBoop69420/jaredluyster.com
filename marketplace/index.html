@@ -552,6 +552,7 @@
         var inventory = [];
         var currentFilter = 'all';
         var currentSort = 'name-asc';
+        var BASIC_LANDS = {'Plains':1,'Island':1,'Mountain':1,'Swamp':1,'Forest':1,'Wastes':1};
 
         var CONDITIONS_SHORT = {
             'Near Mint': 'NM', 'Lightly Played': 'LP',
@@ -588,7 +589,7 @@
         fetch('inventory.json')
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                inventory = data;
+                inventory = data.filter(function(item) { return !BASIC_LANDS[item.name]; });
                 buildSetFilter();
                 updateStats();
                 render();
