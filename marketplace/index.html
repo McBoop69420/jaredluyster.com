@@ -708,7 +708,9 @@
             } else {
                 authLink.innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
             }
-        }).catch(function() {});
+        }).catch(function() {
+            document.getElementById('auth-link').innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+        });
 
         function addToCart(id, btn) {
             if (!isLoggedIn) { location.href = '/login'; return; }

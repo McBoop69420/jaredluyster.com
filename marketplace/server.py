@@ -5,9 +5,12 @@ import os
 import secrets
 import smtplib
 import threading
+import time
 from email.mime.text import MIMEText
 from pathlib import Path
 from functools import wraps
+
+import requests
 
 from flask import (Flask, request, session, redirect, url_for,
                    render_template, jsonify, send_from_directory)
@@ -446,6 +449,160 @@ def api_admin_test_email():
         return jsonify(ok=True, message=f"Test email sent to {account['email']}")
     except Exception as e:
         return jsonify(error=str(e)), 500
+
+
+# -- admin quick-add API ------------------------------------------------------
+
+_SCRYFALL_HEADERS = {"User-Agent": "BluegrassMemorabiliaMarketplace/1.0"}
+
+
+def _scryfall_get(url, params=None):
+    r = requests.get(url, params=params, headers=_SCRYFALL_HEADERS, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+
+def _scryfall_find_card(name, collector_number, foil=False):
+    fuzzy = _scryfall_get("https://api.scryfall.com/cards/named", {"fuzzy": name})
+    time.sleep(0.08)
+
+    exact_name = fuzzy["name"]
+
+    search_url = "https://api.scryfall.com/cards/search"
+    query = f'!"{exact_name}"'
+    printings = []
+    page_url = search_url
+    params = {"q": query, "unique": "prints", "order": "released"}
+
+    while page_url:
+        data = _scryfall_get(page_url, params)
+        printings.extend(data.get("data", []))
+        if data.get("has_more"):
+            page_url = data["next_page"]
+            params = None
+        else:
+            break
+        time.sleep(0.08)
+
+    for p in printings:
+        if p.get("collector_number") == collector_number:
+            prices = p.get("prices", {})
+            if foil:
+                price = float(prices.get("usd_foil") or prices.get("usd") or 0)
+            else:
+                price = float(prices.get("usd") or prices.get("usd_foil") or 0)
+            image = (p.get("image_uris") or {}).get("normal")
+            if not image and p.get("card_faces"):
+                image = (p["card_faces"][0].get("image_uris") or {}).get("normal")
+            return {
+                "name": p["name"],
+                "set_code": p["set"],
+                "collector_number": p["collector_number"],
+                "foil": foil,
+                "market_price": price,
+                "sell_price": _quarter(price),
+                "image_url": image,
+            }
+
+    available = [f"{p['set'].upper()}#{p['collector_number']}" for p in printings[:8]]
+    return {"error": f"No #{collector_number} printing. Try: {', '.join(available)}"}
+
+
+@app.route("/api/admin/quick-add/lookup", methods=["POST"])
+@admin_required
+def api_admin_quick_add_lookup():
+    data = request.get_json()
+    lines = [l.strip() for l in (data.get("lines") or "").splitlines() if l.strip()]
+    if not lines:
+        return jsonify(error="No input."), 400
+
+    results = []
+    errors = []
+
+    for line in lines:
+        tokens = line.split()
+        qty = 1
+        foil = False
+
+        if tokens[0].isdigit():
+            qty = int(tokens.pop(0))
+        if tokens and tokens[0].lower() == "foil":
+            foil = True
+            tokens.pop(0)
+        if len(tokens) < 2:
+            errors.append({"line": line, "error": "Need at least card name + collector number"})
+            continue
+
+        collector_num = tokens.pop()
+        name = " ".join(tokens)
+
+        try:
+            result = _scryfall_find_card(name, collector_num, foil)
+        except Exception as e:
+            errors.append({"line": line, "error": str(e)})
+            continue
+
+        if "error" in result:
+            errors.append({"line": line, "error": result["error"]})
+        else:
+            result["qty"] = qty
+            result["line_total"] = result["sell_price"] * qty
+            results.append(result)
+
+    return jsonify(results=results, errors=errors)
+
+
+@app.route("/api/admin/quick-add/add", methods=["POST"])
+@admin_required
+def api_admin_quick_add_add():
+    data = request.get_json()
+    cards = data.get("cards", [])
+    if not cards:
+        return jsonify(error="No cards to add."), 400
+
+    with _inventory_lock:
+        inventory = _load_inventory()
+        max_id = max((item["id"] for item in inventory), default=0)
+
+        for card in cards:
+            existing = None
+            for item in inventory:
+                if (item["set_code"] == card["set_code"]
+                        and item["collector_number"] == card["collector_number"]
+                        and item.get("foil", False) == card.get("foil", False)):
+                    existing = item
+                    break
+
+            if existing:
+                existing["quantity"] += card.get("qty", 1)
+                if card.get("sell_price"):
+                    existing["sell_price"] = card["sell_price"]
+                if card.get("market_price"):
+                    existing["market_price"] = card["market_price"]
+                if card.get("image_url"):
+                    existing["image_url"] = card["image_url"]
+            else:
+                max_id += 1
+                inventory.append({
+                    "id": max_id,
+                    "name": card["name"],
+                    "set_code": card["set_code"],
+                    "collector_number": card["collector_number"],
+                    "foil": card.get("foil", False),
+                    "condition": "Near Mint",
+                    "quantity": card.get("qty", 1),
+                    "category": "MTG Card",
+                    "sell_price": card.get("sell_price"),
+                    "market_price": card.get("market_price", 0),
+                    "image_url": card.get("image_url"),
+                    "notes": None,
+                })
+
+        inventory.sort(key=lambda x: (x["name"].lower(), x["set_code"]))
+        _save_inventory(inventory)
+
+    total_cards = sum(c.get("qty", 1) for c in cards)
+    return jsonify(ok=True, added=total_cards, inventory_count=len(inventory))
 
 
 if __name__ == "__main__":
