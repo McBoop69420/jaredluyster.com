@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 DB_PATH = Path(__file__).resolve().parent / "marketplace.db"
 
-ADMIN_EMAIL = "doctormcboop@gmail.com"
+ADMIN_EMAIL = "jared.luyster@gmail.com"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
 
