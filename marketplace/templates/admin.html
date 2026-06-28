@@ -93,12 +93,12 @@
         </div>
 
         <div class="admin-toolbar">
-            <a class="btn btn-sm {% if not current_status %}active{% endif %}" href="/admin">All</a>
-            <a class="btn btn-sm {% if current_status == 'pending' %}active{% endif %}" href="/admin?status=pending">Pending</a>
-            <a class="btn btn-sm {% if current_status == 'packing' %}active{% endif %}" href="/admin?status=packing">Packing</a>
-            <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/admin?status=shipped">Shipped</a>
-            <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/admin?status=completed">Completed</a>
-            <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/admin?status=cancelled">Cancelled</a>
+            <a class="btn btn-sm {% if not current_status %}active{% endif %}" href="/marketplace/admin">All</a>
+            <a class="btn btn-sm {% if current_status == 'pending' %}active{% endif %}" href="/marketplace/admin?status=pending">Pending</a>
+            <a class="btn btn-sm {% if current_status == 'packing' %}active{% endif %}" href="/marketplace/admin?status=packing">Packing</a>
+            <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/marketplace/admin?status=shipped">Shipped</a>
+            <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/marketplace/admin?status=completed">Completed</a>
+            <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
         </div>
 
         <details class="card" style="margin-bottom:24px; padding:0;" id="quick-add-section">
@@ -243,7 +243,7 @@
 {% block extra_js %}
 <script>
 function updateStatus(orderId, status) {
-    fetch('/api/admin/orders/' + orderId + '/status', {
+    fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({status: status})
     }).then(function() {
@@ -254,13 +254,13 @@ function updateStatus(orderId, status) {
 }
 
 function saveNotes(orderId, notes) {
-    fetch('/api/admin/orders/' + orderId + '/notes', {
+    fetch('/marketplace/api/admin/orders/' + orderId + '/notes', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({notes: notes})
     });
 }
 
-fetch('/api/admin/settings').then(function(r) { return r.json(); }).then(function(d) {
+fetch('/marketplace/api/admin/settings').then(function(r) { return r.json(); }).then(function(d) {
     document.getElementById('smtp-host').value = d.smtp_host || '';
     document.getElementById('smtp-port').value = d.smtp_port || '';
     document.getElementById('smtp-user').value = d.smtp_user || '';
@@ -278,7 +278,7 @@ fetch('/api/admin/settings').then(function(r) { return r.json(); }).then(functio
 function saveSmtp() {
     var msg = document.getElementById('smtp-msg');
     msg.textContent = '';
-    fetch('/api/admin/settings', {
+    fetch('/marketplace/api/admin/settings', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             smtp_host: document.getElementById('smtp-host').value,
@@ -305,7 +305,7 @@ function qaLookup() {
     msg.style.color = 'var(--muted)';
     _qaCards = [];
 
-    fetch('/api/admin/quick-add/lookup', {
+    fetch('/marketplace/api/admin/quick-add/lookup', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({lines: input})
     }).then(function(r) { return r.json(); }).then(function(d) {
@@ -372,7 +372,7 @@ function qaAdd() {
     btn.disabled = true;
     btn.textContent = 'Adding...';
 
-    fetch('/api/admin/quick-add/add', {
+    fetch('/marketplace/api/admin/quick-add/add', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({cards: selected})
     }).then(function(r) { return r.json(); }).then(function(d) {
@@ -398,7 +398,7 @@ function testSmtp() {
     var msg = document.getElementById('smtp-msg');
     msg.textContent = 'Sending...';
     msg.style.color = 'var(--muted)';
-    fetch('/api/admin/settings/test-email', {
+    fetch('/marketplace/api/admin/settings/test-email', {
         method: 'POST', headers: {'Content-Type': 'application/json'}
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {

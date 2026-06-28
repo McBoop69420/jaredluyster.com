@@ -18,6 +18,7 @@ from flask import (Flask, request, session, redirect, url_for,
 from store import Store
 
 ROOT = Path(__file__).resolve().parent
+SITE_ROOT = ROOT.parent
 INVENTORY_PATH = ROOT / "inventory.json"
 
 app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
@@ -99,36 +100,50 @@ def _quarter(price):
     return round(price * 4) / 4 if price else 0
 
 
-# -- pages --------------------------------------------------------------------
+# -- main site ----------------------------------------------------------------
 
 @app.route("/")
+def home_page():
+    return send_from_directory(str(SITE_ROOT), "index.html")
+
+
+@app.route("/<path:filename>")
+def site_static(filename):
+    if os.path.isfile(SITE_ROOT / filename):
+        return send_from_directory(str(SITE_ROOT), filename)
+    return "Not found", 404
+
+
+# -- marketplace pages --------------------------------------------------------
+
+@app.route("/marketplace/")
 def shop_page():
     return send_from_directory(str(ROOT), "index.html")
 
 
-@app.route("/inventory.json")
+@app.route("/marketplace/inventory.json")
 def inventory_json():
     return send_from_directory(str(ROOT), "inventory.json")
 
 
-@app.route("/lands.json")
+@app.route("/marketplace/lands.json")
 def lands_json():
     return send_from_directory(str(ROOT), "lands.json")
 
 
-@app.route("/login")
+@app.route("/marketplace/login")
 def login_page():
     if "account_id" in session:
         return redirect(url_for("shop_page"))
     return render_template("login.html")
 
 
-@app.route("/forgot-password")
+@app.route("/marketplace/forgot-password")
 def forgot_password_page():
     return render_template("forgot_password.html")
 
 
-@app.route("/reset-password/<token>")
+@app.route("/marketplace/reset-password/<token>")
 def reset_password_page(token):
     row = store.validate_reset_token(token)
     if not row:
@@ -136,7 +151,7 @@ def reset_password_page(token):
     return render_template("reset_password.html", valid=True, token=token)
 
 
-@app.route("/cart")
+@app.route("/marketplace/cart")
 @login_required
 def cart_page():
     cart = session.get("cart", {})
@@ -152,7 +167,7 @@ def cart_page():
     return render_template("cart.html", items=items, total=total, account=account)
 
 
-@app.route("/orders")
+@app.route("/marketplace/orders")
 @login_required
 def orders_page():
     orders = store.get_orders_for_account(session["account_id"])
@@ -160,7 +175,7 @@ def orders_page():
     return render_template("orders.html", orders=orders, account=account)
 
 
-@app.route("/admin")
+@app.route("/marketplace/admin")
 @admin_required
 def admin_page():
     status_filter = request.args.get("status", "")
@@ -174,7 +189,7 @@ def admin_page():
 
 # -- auth API ----------------------------------------------------------------
 
-@app.route("/api/signup", methods=["POST"])
+@app.route("/marketplace/api/signup", methods=["POST"])
 def api_signup():
     data = request.get_json()
     email = (data.get("email") or "").strip().lower()
@@ -189,7 +204,7 @@ def api_signup():
     return jsonify(ok=True, name=account["name"])
 
 
-@app.route("/api/login", methods=["POST"])
+@app.route("/marketplace/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
     account = store.authenticate(data.get("email", ""), data.get("password", ""))
@@ -199,7 +214,7 @@ def api_login():
     return jsonify(ok=True, name=account["name"], is_admin=bool(account["is_admin"]))
 
 
-@app.route("/api/forgot-password", methods=["POST"])
+@app.route("/marketplace/api/forgot-password", methods=["POST"])
 def api_forgot_password():
     data = request.get_json()
     email = (data.get("email") or "").strip().lower()
@@ -208,7 +223,7 @@ def api_forgot_password():
     token = store.create_reset_token(email)
     cfg = _smtp_config()
     if token and cfg["user"] and cfg["password"]:
-        reset_url = request.host_url.rstrip("/") + f"/reset-password/{token}"
+        reset_url = request.host_url.rstrip("/") + f"/marketplace/reset-password/{token}"
         try:
             _send_reset_email(email, reset_url)
         except Exception:
@@ -216,7 +231,7 @@ def api_forgot_password():
     return jsonify(ok=True, message="If that email exists, a reset link has been sent.")
 
 
-@app.route("/api/reset-password", methods=["POST"])
+@app.route("/marketplace/api/reset-password", methods=["POST"])
 def api_reset_password():
     data = request.get_json()
     token = data.get("token", "")
@@ -228,13 +243,13 @@ def api_reset_password():
     return jsonify(error="Invalid or expired reset link."), 400
 
 
-@app.route("/api/logout", methods=["POST"])
+@app.route("/marketplace/api/logout", methods=["POST"])
 def api_logout():
     session.clear()
     return jsonify(ok=True)
 
 
-@app.route("/api/me")
+@app.route("/marketplace/api/me")
 def api_me():
     if "account_id" not in session:
         return jsonify(logged_in=False)
@@ -249,13 +264,13 @@ def api_me():
 
 # -- cart API -----------------------------------------------------------------
 
-@app.route("/api/cart", methods=["GET"])
+@app.route("/marketplace/api/cart", methods=["GET"])
 @login_required
 def api_cart_get():
     return jsonify(cart=session.get("cart", {}))
 
 
-@app.route("/api/cart/add", methods=["POST"])
+@app.route("/marketplace/api/cart/add", methods=["POST"])
 @login_required
 def api_cart_add():
     data = request.get_json()
@@ -275,7 +290,7 @@ def api_cart_add():
     return jsonify(ok=True, cart_count=sum(cart.values()))
 
 
-@app.route("/api/cart/update", methods=["POST"])
+@app.route("/marketplace/api/cart/update", methods=["POST"])
 @login_required
 def api_cart_update():
     data = request.get_json()
@@ -290,7 +305,7 @@ def api_cart_update():
     return jsonify(ok=True, cart_count=sum(cart.values()))
 
 
-@app.route("/api/cart/clear", methods=["POST"])
+@app.route("/marketplace/api/cart/clear", methods=["POST"])
 @login_required
 def api_cart_clear():
     session["cart"] = {}
@@ -299,7 +314,7 @@ def api_cart_clear():
 
 # -- order API ----------------------------------------------------------------
 
-@app.route("/api/orders", methods=["POST"])
+@app.route("/marketplace/api/orders", methods=["POST"])
 @login_required
 def api_order_submit():
     cart = session.get("cart", {})
@@ -343,7 +358,7 @@ def api_order_submit():
 
 # -- admin API ----------------------------------------------------------------
 
-@app.route("/api/admin/orders/<int:order_id>/status", methods=["POST"])
+@app.route("/marketplace/api/admin/orders/<int:order_id>/status", methods=["POST"])
 @admin_required
 def api_admin_update_status(order_id):
     data = request.get_json()
@@ -401,7 +416,7 @@ def _deduct_order_stock(line_items):
     _save_inventory(inventory)
 
 
-@app.route("/api/admin/orders/<int:order_id>/notes", methods=["POST"])
+@app.route("/marketplace/api/admin/orders/<int:order_id>/notes", methods=["POST"])
 @admin_required
 def api_admin_update_notes(order_id):
     data = request.get_json()
@@ -409,7 +424,7 @@ def api_admin_update_notes(order_id):
     return jsonify(ok=True)
 
 
-@app.route("/api/admin/settings", methods=["GET"])
+@app.route("/marketplace/api/admin/settings", methods=["GET"])
 @admin_required
 def api_admin_settings_get():
     return jsonify(
@@ -420,7 +435,7 @@ def api_admin_settings_get():
     )
 
 
-@app.route("/api/admin/settings", methods=["POST"])
+@app.route("/marketplace/api/admin/settings", methods=["POST"])
 @admin_required
 def api_admin_settings_save():
     data = request.get_json()
@@ -430,7 +445,7 @@ def api_admin_settings_save():
     return jsonify(ok=True)
 
 
-@app.route("/api/admin/settings/test-email", methods=["POST"])
+@app.route("/marketplace/api/admin/settings/test-email", methods=["POST"])
 @admin_required
 def api_admin_test_email():
     account = store.get_account(session["account_id"])
@@ -508,7 +523,7 @@ def _scryfall_find_card(name, collector_number, foil=False):
     return {"error": f"No #{collector_number} printing. Try: {', '.join(available)}"}
 
 
-@app.route("/api/admin/quick-add/lookup", methods=["POST"])
+@app.route("/marketplace/api/admin/quick-add/lookup", methods=["POST"])
 @admin_required
 def api_admin_quick_add_lookup():
     data = request.get_json()
@@ -552,7 +567,7 @@ def api_admin_quick_add_lookup():
     return jsonify(results=results, errors=errors)
 
 
-@app.route("/api/admin/quick-add/add", methods=["POST"])
+@app.route("/marketplace/api/admin/quick-add/add", methods=["POST"])
 @admin_required
 def api_admin_quick_add_add():
     data = request.get_json()
@@ -609,4 +624,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Marketplace server running at http://localhost:{port}")
     from waitress import serve
-    serve(app, host="127.0.0.1", port=port)
+    serve(app, host="0.0.0.0", port=port)

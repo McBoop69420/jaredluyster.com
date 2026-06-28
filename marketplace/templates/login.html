@@ -44,7 +44,7 @@
             </div>
             <div id="login-error" class="error-msg" style="display:none"></div>
             <button class="btn btn-accent" onclick="doLogin()">Sign In</button>
-            <a href="/forgot-password" style="display:block; text-align:center; margin-top:14px; color:var(--muted); font-size:0.82rem;">Forgot password?</a>
+            <a href="/marketplace/forgot-password" style="display:block; text-align:center; margin-top:14px; color:var(--muted); font-size:0.82rem;">Forgot password?</a>
         </div>
 
         <div id="signup-form" class="form-section">
@@ -80,7 +80,7 @@ function showTab(tab) {
 function doLogin() {
     var err = document.getElementById('login-error');
     err.style.display = 'none';
-    fetch('/api/login', {
+    fetch('/marketplace/api/login', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             email: document.getElementById('login-email').value,
@@ -88,7 +88,7 @@ function doLogin() {
         })
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/'; }
+        if (res.ok) { location.href = '/marketplace/'; }
         else { err.textContent = res.data.error; err.style.display = ''; }
     });
 }
@@ -96,7 +96,7 @@ function doLogin() {
 function doSignup() {
     var err = document.getElementById('signup-error');
     err.style.display = 'none';
-    fetch('/api/signup', {
+    fetch('/marketplace/api/signup', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: document.getElementById('signup-name').value,
@@ -105,7 +105,7 @@ function doSignup() {
         })
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/'; }
+        if (res.ok) { location.href = '/marketplace/'; }
         else { err.textContent = res.data.error; err.style.display = ''; }
     });
 }

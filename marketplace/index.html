@@ -493,11 +493,11 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="/">Bluegrass Memorabilia</a>
+            <a class="brand" href="/marketplace/">Bluegrass Memorabilia</a>
             <nav style="display:flex;gap:16px;align-items:center;font-size:0.85rem;">
                 <span style="color:var(--muted)" id="stats"></span>
-                <a href="/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:#000;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
-                <a href="/orders" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">My Orders</a>
+                <a href="/marketplace/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:#000;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
+                <a href="/marketplace/orders" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">My Orders</a>
                 <span id="auth-link"></span>
             </nav>
         </div>
@@ -693,29 +693,29 @@
 
         var isLoggedIn = false;
 
-        fetch('/api/me').then(function(r) { return r.json(); }).then(function(data) {
+        fetch('/marketplace/api/me').then(function(r) { return r.json(); }).then(function(data) {
             var authLink = document.getElementById('auth-link');
             var badge = document.getElementById('cart-badge');
             if (data.logged_in) {
                 isLoggedIn = true;
                 authLink.innerHTML = '<a href="#" onclick="doLogout()" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">' + data.name + ' (logout)</a>';
                 if (data.is_admin) {
-                    authLink.innerHTML += ' <a href="/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
+                    authLink.innerHTML += ' <a href="/marketplace/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
                 }
                 if (data.cart_count > 0) {
                     badge.textContent = data.cart_count;
                     badge.style.display = '';
                 }
             } else {
-                authLink.innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+                authLink.innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
             }
         }).catch(function() {
-            document.getElementById('auth-link').innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+            document.getElementById('auth-link').innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
         });
 
         function addToCart(id, btn) {
-            if (!isLoggedIn) { location.href = '/login'; return; }
-            fetch('/api/cart/add', {
+            if (!isLoggedIn) { location.href = '/marketplace/login'; return; }
+            fetch('/marketplace/api/cart/add', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: id, quantity: 1})
             }).then(function(r) { return r.json(); })
@@ -735,7 +735,7 @@
         }
 
         function doLogout() {
-            fetch('/api/logout', {method:'POST'}).then(function() { location.reload(); });
+            fetch('/marketplace/api/logout', {method:'POST'}).then(function() { location.reload(); });
         }
     </script>
 </body>

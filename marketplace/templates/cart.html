@@ -100,7 +100,7 @@
 {% block extra_js %}
 <script>
 function updateQty(id, qty) {
-    fetch('/api/cart/update', {
+    fetch('/marketplace/api/cart/update', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({id: id, quantity: qty})
     }).then(function() { location.reload(); });
@@ -109,12 +109,12 @@ function updateQty(id, qty) {
 function submitOrder() {
     var err = document.getElementById('order-error');
     err.style.display = 'none';
-    fetch('/api/orders', {
+    fetch('/marketplace/api/orders', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({notes: document.getElementById('order-notes').value})
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/orders'; }
+        if (res.ok) { location.href = '/marketplace/orders'; }
         else { err.textContent = res.data.error; err.style.display = ''; }
     });
 }

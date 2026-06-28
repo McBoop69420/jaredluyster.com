@@ -96,13 +96,13 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="/">Bluegrass Memorabilia</a>
+            <a class="brand" href="/marketplace/">Bluegrass Memorabilia</a>
             <nav class="nav-links" id="nav">
-                <a href="/">Shop</a>
-                <a href="/cart">Cart<span class="badge" id="cart-badge" style="display:none">0</span></a>
-                <a href="/orders">My Orders</a>
+                <a href="/marketplace/">Shop</a>
+                <a href="/marketplace/cart">Cart<span class="badge" id="cart-badge" style="display:none">0</span></a>
+                <a href="/marketplace/orders">My Orders</a>
                 {% if account and account.is_admin %}
-                    <a href="/admin" style="color: var(--accent)">Admin</a>
+                    <a href="/marketplace/admin" style="color: var(--accent)">Admin</a>
                 {% endif %}
                 <span id="auth-link"></span>
             </nav>
@@ -110,7 +110,7 @@
     </header>
     {% block content %}{% endblock %}
     <script>
-        fetch('/api/me').then(r => r.json()).then(data => {
+        fetch('/marketplace/api/me').then(r => r.json()).then(data => {
             var authLink = document.getElementById('auth-link');
             var badge = document.getElementById('cart-badge');
             if (data.logged_in) {
@@ -120,11 +120,11 @@
                     badge.style.display = '';
                 }
             } else {
-                authLink.innerHTML = '<a href="/login">Sign In</a>';
+                authLink.innerHTML = '<a href="/marketplace/login">Sign In</a>';
             }
         });
         function logout() {
-            fetch('/api/logout', {method:'POST'}).then(() => location.href = '/');
+            fetch('/marketplace/api/logout', {method:'POST'}).then(() => location.href = '/marketplace/');
         }
     </script>
     {% block extra_js %}{% endblock %}
