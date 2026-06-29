@@ -28,7 +28,11 @@
             height: 56px; display: flex; align-items: center;
             justify-content: space-between; gap: 16px;
         }
-        .brand { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
+        .brand {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em;
+        }
+        .brand-logo { height: 36px; width: auto; }
         .nav-links { display: flex; gap: 16px; align-items: center; font-size: 0.85rem; }
         .nav-links a { color: var(--muted); transition: color 120ms; }
         .nav-links a:hover { color: var(--text); }
@@ -96,7 +100,10 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="/marketplace/">Bluegrass Memorabilia</a>
+            <a class="brand" href="/marketplace/">
+                <img class="brand-logo" src="/bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
+                <span>Bluegrass Memorabilia</span>
+            </a>
             <nav class="nav-links" id="nav">
                 <a href="/marketplace/">Shop</a>
                 <a href="/marketplace/cart">Cart<span class="badge" id="cart-badge" style="display:none">0</span></a>
