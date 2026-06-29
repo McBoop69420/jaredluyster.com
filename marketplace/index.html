@@ -606,6 +606,30 @@
             color: var(--muted);
             font-size: 0.9rem;
         }
+        .skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .skeleton-card { text-align: left; }
+        .skeleton-img {
+            width: 100%; aspect-ratio: 5/7;
+            background: var(--card-bg, #1a1a1a);
+            border-radius: 8px;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+        .skeleton-text {
+            height: 12px; margin-top: 10px; border-radius: 4px;
+            background: var(--card-bg, #1a1a1a);
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+        .skeleton-text.short { width: 50%; }
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
 
         @media (max-width: 560px) {
             .hero { padding: 28px 0 20px; }
@@ -679,7 +703,18 @@
             </div>
 
             <div class="card-grid" id="card-grid">
-                <div class="status-msg">Loading available cards...</div>
+                <div class="status-msg" id="loading-msg">
+                    <div class="skeleton-grid">
+                        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    </div>
+                </div>
+                <noscript>
+                    <p style="color:var(--muted);text-align:center;padding:40px 0">
+                        JavaScript is required to browse the marketplace. Please enable JavaScript to view cards, search inventory, and place orders.
+                    </p>
+                </noscript>
             </div>
         </div>
 
