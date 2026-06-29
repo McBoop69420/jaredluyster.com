@@ -743,6 +743,7 @@
                     filter: function() {
                         document.getElementById('search').value = '';
                         currentFilter = 'all';
+                        document.getElementById('set-filter').value = 'all';
                         inventory = landsData.map(function(l) {
                             var inv = findLandInInventory(l);
                             return { id: inv ? inv.id : null, name: l.name, set_code: l.set_code, collector_number: l.collector_number,
@@ -774,6 +775,7 @@
                         document.getElementById('search').value = '';
                         inventory = allInventory.filter(function(i) { return !BASIC_LANDS[i.name]; });
                         currentFilter = 'all';
+                        document.getElementById('set-filter').value = 'all';
                         currentSort = 'price-asc';
                         document.getElementById('sort').value = 'price-asc';
                         render();
@@ -799,6 +801,7 @@
                         document.getElementById('search').value = 'foil';
                         inventory = allInventory.filter(function(i) { return !BASIC_LANDS[i.name]; });
                         currentFilter = 'all';
+                        document.getElementById('set-filter').value = 'all';
                         render();
                     }
                 });
@@ -825,6 +828,7 @@
                         document.getElementById('search').value = '';
                         inventory = allInventory.filter(function(i) { return !BASIC_LANDS[i.name]; });
                         currentFilter = 'all';
+                        document.getElementById('set-filter').value = 'all';
                         currentSort = 'price-asc';
                         document.getElementById('sort').value = 'price-asc';
                         render();
@@ -850,6 +854,7 @@
                         document.getElementById('search').value = '';
                         inventory = allInventory.filter(function(i) { return !BASIC_LANDS[i.name]; });
                         currentFilter = 'all';
+                        document.getElementById('set-filter').value = 'all';
                         currentSort = 'newest';
                         document.getElementById('sort').value = 'name-asc';
                         render();
