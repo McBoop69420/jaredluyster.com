@@ -714,7 +714,18 @@
         function buildFeaturedTabs() {
             featuredTabs = [];
 
-            // Full Art Lands
+            // Full Art Lands — match to inventory items for real IDs
+            function findLandInInventory(l) {
+                for (var i = 0; i < allInventory.length; i++) {
+                    if (allInventory[i].name === l.name &&
+                        allInventory[i].set_code === l.set_code &&
+                        allInventory[i].collector_number === l.collector_number) {
+                        return allInventory[i];
+                    }
+                }
+                return null;
+            }
+
             if (landsData.length > 0) {
                 var sample = landsData.slice().sort(function() { return 0.5 - Math.random(); }).slice(0, 8);
                 featuredTabs.push({
@@ -723,15 +734,18 @@
                     title: 'Full Art Lands',
                     sub: 'Great-looking basics for decks, cubes, and binders.',
                     cards: sample.map(function(l) {
+                        var inv = findLandInInventory(l);
                         return { name: l.name, set_code: l.set_code, collector_number: l.collector_number,
-                                 image_url: l.image_url, price: 0.50, quantity: l.quantity };
+                                 image_url: l.image_url, price: 0.50, quantity: l.quantity,
+                                 id: inv ? inv.id : null };
                     }),
                     cta: 'View all full art lands',
                     filter: function() {
                         document.getElementById('search').value = '';
                         currentFilter = 'all';
                         inventory = landsData.map(function(l) {
-                            return { id: 0, name: l.name, set_code: l.set_code, collector_number: l.collector_number,
+                            var inv = findLandInInventory(l);
+                            return { id: inv ? inv.id : null, name: l.name, set_code: l.set_code, collector_number: l.collector_number,
                                      image_url: l.image_url, sell_price: 0.50, market_price: 0.50,
                                      quantity: l.quantity, condition: 'Near Mint', foil: false, notes: null };
                         });
@@ -836,7 +850,7 @@
                         document.getElementById('search').value = '';
                         inventory = allInventory.filter(function(i) { return !BASIC_LANDS[i.name]; });
                         currentFilter = 'all';
-                        currentSort = 'name-asc';
+                        currentSort = 'newest';
                         document.getElementById('sort').value = 'name-asc';
                         render();
                     }
@@ -994,6 +1008,7 @@
                     case 'price-desc': return getPrice(b) - getPrice(a);
                     case 'price-asc': return getPrice(a) - getPrice(b);
                     case 'set': return a.set_code.localeCompare(b.set_code) || a.name.localeCompare(b.name);
+                    case 'newest': return (b.id || 0) - (a.id || 0);
                     default: return 0;
                 }
             });
@@ -1028,7 +1043,7 @@
                             '<span class="listing-price">$' + price.toFixed(2) + '</span>' +
                             '<span class="listing-condition" title="' + item.condition + '">' + cond + '</span>' +
                         '</div>' +
-                        '<button class="add-to-cart-btn" onclick="addToCart(' + item.id + ', this)">Add to Cart</button>' +
+                        (item.id ? '<button class="add-to-cart-btn" onclick="addToCart(' + item.id + ', this)">Add to Cart</button>' : '') +
                     '</div>' +
                 '</div>';
             });
@@ -1058,7 +1073,7 @@
         });
 
         function addToCart(id, btn) {
-            if (!isLoggedIn) { location.href = '/marketplace/login'; return; }
+            if (!isLoggedIn) { location.href = '/marketplace/login?return_to=' + encodeURIComponent(location.pathname); return; }
             fetch('/marketplace/api/cart/add', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: id, quantity: 1})

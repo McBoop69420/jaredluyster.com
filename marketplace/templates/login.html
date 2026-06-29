@@ -80,6 +80,8 @@ function showTab(tab) {
     document.getElementById('signup-form').classList.toggle('active', tab === 'signup');
 }
 
+var returnTo = new URLSearchParams(location.search).get('return_to') || '/marketplace/';
+
 function doLogin() {
     var err = document.getElementById('login-error');
     err.style.display = 'none';
@@ -91,7 +93,7 @@ function doLogin() {
         })
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/marketplace/'; }
+        if (res.ok) { location.href = returnTo; }
         else { err.textContent = res.data.error; err.style.display = ''; }
     });
 }
@@ -108,7 +110,7 @@ function doSignup() {
         })
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/marketplace/'; }
+        if (res.ok) { location.href = returnTo; }
         else { err.textContent = res.data.error; err.style.display = ''; }
     });
 }
