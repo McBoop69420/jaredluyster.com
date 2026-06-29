@@ -5,180 +5,508 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Wizard Battle is a roguelike deckbuilder where eight elemental wizards journey through a world where magic replaced technology.">
     <title>Wizard Battle</title>
-    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body {
-            overflow-x: hidden;
-            padding-bottom: 64px;
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --text: #f0f0f0;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
         }
 
-        /* ── Home ── */
-        .hero {
-            padding: 72px 0 48px;
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .hero-copy,
-        .panel,
-        .wizard {
+        a { color: inherit; text-decoration: none; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
             border: 1px solid var(--border);
-            background: var(--surface);
-            box-shadow: var(--shadow);
         }
 
-        .hero-copy {
-            border-radius: 16px;
-            padding: 36px;
+        .brand-copy strong {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-copy span {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.02em;
+        }
+
+        .nav {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav a {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 200ms;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 100px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.15);
+            color: var(--accent);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-bottom: 28px;
         }
 
         h1 {
-            margin: 18px 0 12px;
-            font-size: clamp(2.4rem, 7vw, 5rem);
-            line-height: 1;
+            margin: 0 0 20px;
+            font-size: clamp(2.6rem, 6vw, 4.2rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
         }
 
-        h2 {
-            margin: 0;
-            font-size: clamp(1.5rem, 3vw, 2.4rem);
+        .text-gradient {
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .section-head p,
-        .panel p,
-        .wizard p {
+        .lead {
+            margin: 0 0 32px;
+            max-width: 34rem;
             color: var(--muted);
+            font-size: 1.05rem;
             line-height: 1.7;
         }
 
         .cta-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 14px;
-            margin: 28px 0 24px;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 200ms;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .button-primary:hover {
+            background: #6366f1;
+            box-shadow: 0 4px 16px rgba(129, 140, 248, 0.3);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .button-secondary:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .hero-stats {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
-            margin-top: 18px;
         }
 
         .stat {
-            border-radius: 10px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.04);
+            position: relative;
+            border-radius: 12px;
+            padding: 20px;
+            background: var(--surface);
             border: 1px solid var(--border);
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .stat::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(129, 140, 248, 0.06), transparent 40%);
+            transition: opacity 280ms;
+            pointer-events: none;
+        }
+
+        .stat:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
+        }
+
+        .stat:hover::before {
+            opacity: 1;
         }
 
         .stat strong {
             display: block;
             font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--text);
+            font-weight: 700;
+            letter-spacing: -0.03em;
         }
 
         .stat span {
             display: block;
-            margin-top: 6px;
-            color: var(--muted);
-            font-size: 0.82rem;
+            margin-top: 4px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.65rem;
+            font-weight: 500;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            color: var(--muted);
         }
 
-        section { padding: 26px 0 10px; }
+        /* Section */
+        .section {
+            padding-bottom: 80px;
+        }
 
-        .section-head {
+        .section-header {
             display: flex;
-            justify-content: space-between;
-            align-items: end;
-            gap: 18px;
-            margin-bottom: 18px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .section-head p { max-width: 34rem; }
+        .section-label {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
 
-        .feature-grid,
-        .wizard-grid {
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .section-desc {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.65;
+            margin: -12px 0 24px;
+            max-width: 34rem;
+        }
+
+        /* Feature cards */
+        .feature-grid {
             display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 16px;
         }
 
-        .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .wizard-grid  { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-        .panel,
-        .wizard {
-            border-radius: 24px;
-            padding: 24px;
+        .feature-card {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            background: var(--surface);
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
         }
 
-        .panel strong,
-        .wizard-top strong {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.15rem;
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(129, 140, 248, 0.06), transparent 40%);
+            transition: opacity 280ms;
+            pointer-events: none;
         }
 
-        .panel .accent {
-            color: var(--muted);
-            font-size: 0.72rem;
+        .feature-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+            font-weight: 500;
             letter-spacing: 0.1em;
             text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 14px;
         }
 
-        .wizard-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 12px;
+        .feature-card h3 {
+            margin: 0 0 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        /* Wizard grid */
+        .wizard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .wizard-card {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            background: var(--surface);
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .wizard-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(129, 140, 248, 0.06), transparent 40%);
+            transition: opacity 280ms;
+            pointer-events: none;
+        }
+
+        .wizard-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
+        }
+
+        .wizard-card:hover::before {
+            opacity: 1;
+        }
+
+        .wizard-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: contain;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 6px;
+        }
+
+        .wizard-type {
+            display: inline-block;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 3px 8px;
+            border-radius: 4px;
             margin-bottom: 10px;
         }
 
-        .wizard-top span {
-            font-size: 0.8rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+        .wizard-card h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
 
-        .sigil {
-            display: inline-grid;
-            place-items: center;
-            width: 54px;
-            height: 54px;
-            margin-bottom: 14px;
-            border-radius: 16px;
-            font-size: 1.7rem;
-            background: rgba(255, 255, 255, 0.05);
+        .wizard-card p {
+            margin: 0;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.6;
         }
 
-        .sigil img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
         }
 
-        /* ── Responsive ── */
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        /* Entrance animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(16px);
+            animation: fadeUp 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .fade-up:nth-child(1) { animation-delay: 0ms; }
+        .fade-up:nth-child(2) { animation-delay: 80ms; }
+        .fade-up:nth-child(3) { animation-delay: 160ms; }
+        .fade-up:nth-child(4) { animation-delay: 240ms; }
+        .fade-up:nth-child(5) { animation-delay: 320ms; }
+        .fade-up:nth-child(6) { animation-delay: 400ms; }
+        .fade-up:nth-child(7) { animation-delay: 480ms; }
+        .fade-up:nth-child(8) { animation-delay: 560ms; }
+
+        .hero-eyebrow { animation: fadeUp 500ms 100ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        h1 { animation: fadeUp 500ms 180ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .lead { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .cta-row { animation: fadeUp 500ms 340ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .hero-stats { animation: fadeUp 500ms 420ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 980px) {
-            .feature-grid,
-            .wizard-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+            .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .wizard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        @media (max-width: 720px) {
-            .section-head,
+        @media (max-width: 560px) {
             .feature-grid,
             .wizard-grid,
-            .hero-stats {
-                display: grid;
-                grid-template-columns: 1fr;
-            }
-
-            .hero { padding-top: 36px; }
-            .hero-copy, .panel, .wizard { padding: 22px; border-radius: 24px; }
+            .hero-stats { grid-template-columns: 1fr; }
+            .hero { padding: 64px 0 56px; }
+            .shell { padding: 0 16px; }
+            .nav { gap: 2px; }
+            .nav a { padding: 6px 8px; font-size: 0.72rem; }
+            .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
         }
-
     </style>
 </head>
 <body>
@@ -191,7 +519,7 @@
                     <span>Roguelike Deckbuilder</span>
                 </div>
             </a>
-            <nav class="nav" id="main-nav">
+            <nav class="nav">
                 <a class="active" href="wizard-battle.html">Home</a>
                 <a href="keywords.html">Keywords</a>
                 <a href="type-chart.html">Type Chart</a>
@@ -201,91 +529,89 @@
         </div>
     </header>
 
-    <main id="app"></main>
+    <main>
+        <section class="hero">
+            <div class="shell hero-content">
+                <div class="hero-eyebrow">Wizard Battle</div>
+                <h1><span class="text-gradient">Every decision reveals something.</span></h1>
+                <p class="lead">Choose a wizard, build a deck, and uncover the hidden relationships between newly awakened magical forces. Adapt to what you learn, question what you think you know, and shape your strategy one decision at a time.</p>
+                <div class="cta-row">
+                    <a class="button button-primary" href="download.html">Download Windows Build</a>
+                    <a class="button button-secondary" href="keywords.html">Browse Keywords</a>
+                    <a class="button button-secondary" href="type-chart.html">View Type Chart</a>
+                    <a class="button button-secondary" href="cards.html">View All Cards</a>
+                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat"><strong>8</strong><span>Wizard classes</span></div>
+                    <div class="stat"><strong>57</strong><span>Spells to draft</span></div>
+                    <div class="stat"><strong>12</strong><span>Floors per journey</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="shell">
+                <div class="section-header">
+                    <span class="section-label">Features</span>
+                    <div class="section-line"></div>
+                </div>
+                <p class="section-desc">Wizard Battle rewards players who plan ahead and adapt on the fly. Every choice builds or breaks your run.</p>
+                <div class="feature-grid">
+                    <article class="feature-card fade-up">
+                        <div class="feature-tag">Elemental Matchups</div>
+                        <h3>Type advantages change every fight</h3>
+                        <p>The right spell can end a fight early. The wrong one can stall your whole run.</p>
+                    </article>
+                    <article class="feature-card fade-up">
+                        <div class="feature-tag">Map Routing</div>
+                        <h3>Each node is a commitment</h3>
+                        <p>Safer paths buy time. Harder ones offer bigger rewards. Shops and rest sites keep runs alive.</p>
+                    </article>
+                    <article class="feature-card fade-up">
+                        <div class="feature-tag">Deckbuilding</div>
+                        <h3>Every reward changes your line</h3>
+                        <p>Add tools, trim greed, and build around the wizard you picked at the start of your journey.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="shell">
+                <div class="section-header">
+                    <span class="section-label">Wizards</span>
+                    <div class="section-line"></div>
+                </div>
+                <p class="section-desc">Each wizard approaches the journey differently. Same rules, different pressure.</p>
+                <div class="wizard-grid">
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_fire.png" alt="Fire"><div class="wizard-type">Fire</div><h3>Pyromancer</h3><p>Char stacks and relentless damage pressure.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_water.png" alt="Water"><div class="wizard-type">Water</div><h3>Tidecaller</h3><p>Healing, draw, and Drown control.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_rock.png" alt="Rock"><div class="wizard-type">Rock</div><h3>Stonewarden</h3><p>Max defense — outlast every enemy with Daze.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_arc.png" alt="Arc"><div class="wizard-type">Arc</div><h3>Stormseeker</h3><p>Fast chains and Shock combos.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_ice.png" alt="Ice"><div class="wizard-type">Ice</div><h3>Frostweaver</h3><p>Freeze stacks to deny enemy turns.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_shadow.png" alt="Shadow"><div class="wizard-type">Shadow</div><h3>Shadowblade</h3><p>Lifesteal, curses, and Weak.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_light.png" alt="Light"><div class="wizard-type">Light</div><h3>Dawnmage</h3><p>Shields, heals, and Blind.</p></article>
+                    <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_grass.png" alt="Grass"><div class="wizard-type">Grass</div><h3>Verdantmaker</h3><p>Root stacks with exponential burst damage.</p></article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="shell footer-inner">
+            <span class="footer-copy">&copy; 2026 Jared Luyster</span>
+        </div>
+    </footer>
 
     <script>
-        const pages = {
-            '': {
-                title: 'Wizard Battle',
-                render() {
-                    return `
-                    <section class="hero">
-                        <div class="shell hero-grid">
-                            <div class="hero-copy">
-                                <div class="eyebrow">Wizard Battle</div>
-                                <h1>Every decision reveals something.</h1>
-                                <p class="lead">Choose a wizard, build a deck, and uncover the hidden relationships between newly awakened magical forces. Adapt to what you learn, question what you think you know, and shape your strategy one decision at a time.</p>
-                                <div class="cta-row">
-                                    <a class="button button-primary" href="download.html">Download Windows Build</a>
-                                    <a class="button button-secondary" href="keywords.html">Browse Keywords</a>
-                                    <a class="button button-secondary" href="type-chart.html">View Type Chart</a>
-                                    <a class="button button-secondary" href="cards.html">View All Cards</a>
-                                    <a class="button button-secondary" href="https://github.com/McBoop69420/jaredluyster.com/releases/tag/wizard-battle-windows-2026-05-27">Release Notes</a>
-                                </div>
-                                <div class="hero-stats">
-                                    <div class="stat"><strong>8</strong><span>Wizard classes</span></div>
-                                    <div class="stat"><strong>57</strong><span>Spells to draft</span></div>
-                                    <div class="stat"><strong>12</strong><span>Floors per journey</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="features">
-                        <div class="shell">
-                            <div class="section-head">
-                                <h2>Built Around Sharp Decisions</h2>
-                                <p>Wizard Battle rewards players who plan ahead and adapt on the fly. Every choice builds or breaks your run.</p>
-                            </div>
-                            <div class="feature-grid">
-                                <article class="panel">
-                                    <div class="accent">Elemental Matchups</div>
-                                    <strong>Type advantages change every fight</strong>
-                                    <p>The right spell can end a fight early. The wrong one can stall your whole run.</p>
-                                </article>
-                                <article class="panel">
-                                    <div class="accent">Map Routing</div>
-                                    <strong>Each node is a commitment</strong>
-                                    <p>Safer paths buy time. Harder ones offer bigger rewards. Shops and rest sites keep runs alive.</p>
-                                </article>
-                                <article class="panel">
-                                    <div class="accent">Deckbuilding</div>
-                                    <strong>Every reward changes your line</strong>
-                                    <p>Add tools, trim greed, and build around the wizard you picked at the start of your journey.</p>
-                                </article>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="wizards">
-                        <div class="shell">
-                            <div class="section-head">
-                                <h2>Choose Your Wizard</h2>
-                                <p>Each wizard approaches the journey differently. Same rules, different pressure.</p>
-                            </div>
-                            <div class="wizard-grid">
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_fire.png" alt="Fire"></div><div class="wizard-top"><strong>Pyromancer</strong><span>Fire</span></div><p>Char stacks and relentless damage pressure.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_water.png" alt="Water"></div><div class="wizard-top"><strong>Tidecaller</strong><span>Water</span></div><p>Healing, draw, and Drown control.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_rock.png" alt="Rock"></div><div class="wizard-top"><strong>Stonewarden</strong><span>Rock</span></div><p>Max defense — outlast every enemy with Daze.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_arc.png" alt="Arc"></div><div class="wizard-top"><strong>Stormseeker</strong><span>Arc</span></div><p>Fast chains and Shock combos.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_ice.png" alt="Ice"></div><div class="wizard-top"><strong>Frostweaver</strong><span>Ice</span></div><p>Freeze stacks to deny enemy turns.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_shadow.png" alt="Shadow"></div><div class="wizard-top"><strong>Shadowblade</strong><span>Shadow</span></div><p>Lifesteal, curses, and Weak.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_light.png" alt="Light"></div><div class="wizard-top"><strong>Dawnmage</strong><span>Light</span></div><p>Shields, heals, and Blind.</p></article>
-                                <article class="wizard"><div class="sigil"><img src="TypeIcons/icon_grass.png" alt="Grass"></div><div class="wizard-top"><strong>Verdantmaker</strong><span>Grass</span></div><p>Root stacks with exponential burst damage.</p></article>
-                            </div>
-                        </div>
-                    </section>`;
-                }
-            }
-        };
-
-        function render() {
-            const page = pages[''];
-            document.title = page.title;
-            document.getElementById('app').innerHTML = page.render();
-        }
-
-        render();
+        document.querySelectorAll('.feature-card, .wizard-card, .stat').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+            });
+        });
     </script>
 </body>
 </html>
