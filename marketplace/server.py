@@ -523,6 +523,63 @@ def _scryfall_find_card(name, collector_number, foil=False):
     return {"error": f"No #{collector_number} printing. Try: {', '.join(available)}"}
 
 
+@app.route("/marketplace/api/admin/cards/autocomplete")
+@admin_required
+def api_admin_cards_autocomplete():
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify(names=[])
+    try:
+        data = _scryfall_get("https://api.scryfall.com/cards/autocomplete", {"q": q})
+    except Exception:
+        return jsonify(names=[])
+    return jsonify(names=data.get("data", []))
+
+
+@app.route("/marketplace/api/admin/cards/printings")
+@admin_required
+def api_admin_cards_printings():
+    name = (request.args.get("name") or "").strip()
+    if not name:
+        return jsonify(error="Name is required."), 400
+
+    try:
+        printings = []
+        page_url = "https://api.scryfall.com/cards/search"
+        params = {"q": f'!"{name}"', "unique": "prints", "order": "released"}
+        while page_url:
+            data = _scryfall_get(page_url, params)
+            printings.extend(data.get("data", []))
+            if data.get("has_more"):
+                page_url = data["next_page"]
+                params = None
+            else:
+                break
+            time.sleep(0.08)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+    results = []
+    for p in printings:
+        prices = p.get("prices", {})
+        finishes = p.get("finishes", [])
+        image = (p.get("image_uris") or {}).get("normal")
+        if not image and p.get("card_faces"):
+            image = (p["card_faces"][0].get("image_uris") or {}).get("normal")
+        results.append({
+            "name": p["name"],
+            "set_code": p["set"],
+            "set_name": p.get("set_name", ""),
+            "collector_number": p["collector_number"],
+            "image_url": image,
+            "nonfoil": "nonfoil" in finishes,
+            "foil": "foil" in finishes,
+            "usd": float(prices.get("usd") or 0),
+            "usd_foil": float(prices.get("usd_foil") or 0),
+        })
+    return jsonify(results=results)
+
+
 @app.route("/marketplace/api/admin/quick-add/lookup", methods=["POST"])
 @admin_required
 def api_admin_quick_add_lookup():

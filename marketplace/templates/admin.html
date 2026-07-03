@@ -54,6 +54,25 @@
 .stat-packing .stat-num { color: var(--blue); }
 .stat-shipped .stat-num { color: var(--green); }
 .print-btn { float: right; }
+.fc-search-wrap { position: relative; max-width: 420px; }
+.fc-suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+    background: var(--surface); border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 8px 8px; max-height: 260px; overflow-y: auto; display: none;
+}
+.fc-suggestion-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
+.fc-suggestion-item:hover, .fc-suggestion-item.active { background: rgba(255,255,255,0.06); }
+.fc-printings-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;
+}
+.fc-printing-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px; cursor: pointer;
+    font-size: 0.78rem; text-align: center; transition: border-color 0.15s;
+}
+.fc-printing-card:hover { border-color: rgba(255,255,255,0.3); }
+.fc-printing-card.selected { border-color: var(--accent); }
+.fc-printing-card img { width: 100%; border-radius: 4px; margin-bottom: 6px; }
+.fc-printing-price { color: var(--accent); font-weight: 600; margin-top: 2px; }
 @media print {
     .topbar, .admin-toolbar, .order-actions, .stats-bar, .print-btn,
     .admin-notes-input, .nav-links { display: none !important; }
@@ -100,6 +119,53 @@
             <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/marketplace/admin?status=completed">Completed</a>
             <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
         </div>
+
+        <details class="card" style="margin-bottom:24px; padding:0;" id="find-add-section" open>
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Find &amp; Add Card
+                <span id="fc-status" style="font-size:0.72rem; margin-left:auto; color:var(--muted);"></span>
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div class="fc-search-wrap" style="margin-top:12px;">
+                    <label style="font-size:0.78rem; color:var(--muted);">Card name</label>
+                    <input type="text" id="fc-search" autocomplete="off" placeholder="Start typing a card name..." style="width:100%; margin-top:4px;">
+                    <div id="fc-suggestions" class="fc-suggestions"></div>
+                </div>
+
+                <div id="fc-printings" style="display:none; margin-top:16px;">
+                    <div style="font-size:0.82rem; color:var(--muted); margin-bottom:8px;">Choose a printing:</div>
+                    <div id="fc-printings-grid" class="fc-printings-grid"></div>
+                </div>
+
+                <div id="fc-form" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+                    <div style="display:flex; gap:16px; align-items:flex-start;">
+                        <img id="fc-form-img" src="" alt="" style="width:90px; border-radius:6px; border:1px solid var(--border);">
+                        <div style="flex:1;">
+                            <div id="fc-form-name" style="font-weight:600; margin-bottom:4px;"></div>
+                            <div id="fc-form-set" style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;"></div>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                                <div class="field">
+                                    <label>Qty</label>
+                                    <input type="number" id="fc-form-qty" value="1" min="1" style="width:70px;">
+                                </div>
+                                <div class="field">
+                                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                        <input type="checkbox" id="fc-form-foil" style="width:16px;height:16px;">
+                                        Foil
+                                    </label>
+                                </div>
+                                <div class="field">
+                                    <label>Sell Price</label>
+                                    <input type="number" id="fc-form-price" step="0.01" style="width:90px;">
+                                </div>
+                                <button class="btn btn-sm" id="fc-add-btn" style="background:var(--green); color:var(--bg); font-weight:600;" onclick="fcAdd()">Add to Inventory</button>
+                            </div>
+                            <div id="fc-form-msg" style="font-size:0.82rem; margin-top:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </details>
 
         <details class="card" style="margin-bottom:24px; padding:0;" id="quick-add-section">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
@@ -292,6 +358,183 @@ function saveSmtp() {
         var status = document.getElementById('smtp-status');
         status.textContent = 'Configured';
         status.style.color = 'var(--green)';
+    });
+}
+
+var fcDebounce = null;
+var fcSelectedPrinting = null;
+var fcActiveIndex = -1;
+
+document.getElementById('fc-search').addEventListener('input', function() {
+    var q = this.value.trim();
+    clearTimeout(fcDebounce);
+    fcActiveIndex = -1;
+    var box = document.getElementById('fc-suggestions');
+    if (q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    fcDebounce = setTimeout(function() { fcAutocomplete(q); }, 200);
+});
+
+document.getElementById('fc-search').addEventListener('keydown', function(e) {
+    var box = document.getElementById('fc-suggestions');
+    var items = box.querySelectorAll('.fc-suggestion-item');
+    if (!items.length || box.style.display === 'none') return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        fcActiveIndex = Math.min(fcActiveIndex + 1, items.length - 1);
+        fcHighlight(items);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        fcActiveIndex = Math.max(fcActiveIndex - 1, 0);
+        fcHighlight(items);
+    } else if (e.key === 'Enter' && fcActiveIndex >= 0) {
+        e.preventDefault();
+        items[fcActiveIndex].click();
+    } else if (e.key === 'Escape') {
+        box.style.display = 'none';
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.fc-search-wrap')) {
+        document.getElementById('fc-suggestions').style.display = 'none';
+    }
+});
+
+function fcHighlight(items) {
+    items.forEach(function(el, i) { el.classList.toggle('active', i === fcActiveIndex); });
+    items[fcActiveIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function fcAutocomplete(q) {
+    fetch('/marketplace/api/admin/cards/autocomplete?q=' + encodeURIComponent(q))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var box = document.getElementById('fc-suggestions');
+            box.innerHTML = '';
+            var names = d.names || [];
+            if (!names.length) { box.style.display = 'none'; return; }
+            names.forEach(function(name) {
+                var item = document.createElement('div');
+                item.className = 'fc-suggestion-item';
+                item.textContent = name;
+                item.onclick = function() { fcSelectName(name); };
+                box.appendChild(item);
+            });
+            box.style.display = 'block';
+        });
+}
+
+function fcSelectName(name) {
+    document.getElementById('fc-search').value = name;
+    document.getElementById('fc-suggestions').style.display = 'none';
+    document.getElementById('fc-suggestions').innerHTML = '';
+    document.getElementById('fc-form').style.display = 'none';
+    fcSelectedPrinting = null;
+
+    var status = document.getElementById('fc-status');
+    status.textContent = 'Loading printings...';
+    status.style.color = 'var(--muted)';
+
+    fetch('/marketplace/api/admin/cards/printings?name=' + encodeURIComponent(name))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.error) {
+                status.textContent = d.error;
+                status.style.color = 'var(--red)';
+                document.getElementById('fc-printings').style.display = 'none';
+                return;
+            }
+            var grid = document.getElementById('fc-printings-grid');
+            grid.innerHTML = '';
+            (d.results || []).forEach(function(p) {
+                var card = document.createElement('div');
+                card.className = 'fc-printing-card';
+                var priceStr = p.usd ? '$' + p.usd.toFixed(2)
+                    : (p.usd_foil ? '$' + p.usd_foil.toFixed(2) + ' (foil)' : 'N/A');
+                card.innerHTML =
+                    (p.image_url ? '<img src="' + p.image_url + '">' : '') +
+                    '<div>' + p.set_code.toUpperCase() + ' #' + p.collector_number + '</div>' +
+                    '<div style="color:var(--muted)">' + p.set_name + '</div>' +
+                    '<div class="fc-printing-price">' + priceStr + '</div>';
+                card.onclick = function() { fcSelectPrinting(p, card); };
+                grid.appendChild(card);
+            });
+            document.getElementById('fc-printings').style.display = 'block';
+            status.textContent = (d.results || []).length + ' printings found';
+            status.style.color = 'var(--muted)';
+        });
+}
+
+function fcSelectPrinting(p, cardEl) {
+    document.querySelectorAll('.fc-printing-card.selected').forEach(function(el) { el.classList.remove('selected'); });
+    cardEl.classList.add('selected');
+    fcSelectedPrinting = p;
+
+    var preferFoil = !p.nonfoil && p.foil;
+
+    document.getElementById('fc-form-img').src = p.image_url || '';
+    document.getElementById('fc-form-name').textContent = p.name;
+    document.getElementById('fc-form-set').textContent = p.set_name + ' — ' + p.set_code.toUpperCase() + ' #' + p.collector_number;
+
+    var foilCheck = document.getElementById('fc-form-foil');
+    foilCheck.checked = preferFoil;
+    foilCheck.disabled = !(p.nonfoil && p.foil);
+    foilCheck.onchange = function() { fcUpdatePrice(); };
+
+    fcUpdatePrice();
+
+    document.getElementById('fc-form').style.display = 'block';
+    document.getElementById('fc-form-msg').textContent = '';
+}
+
+function fcUpdatePrice() {
+    if (!fcSelectedPrinting) return;
+    var foil = document.getElementById('fc-form-foil').checked;
+    var price = foil ? (fcSelectedPrinting.usd_foil || fcSelectedPrinting.usd || 0)
+                      : (fcSelectedPrinting.usd || fcSelectedPrinting.usd_foil || 0);
+    document.getElementById('fc-form-price').value = (Math.round(price * 4) / 4).toFixed(2);
+}
+
+function fcAdd() {
+    if (!fcSelectedPrinting) return;
+    var btn = document.getElementById('fc-add-btn');
+    var qty = parseInt(document.getElementById('fc-form-qty').value) || 1;
+    var foil = document.getElementById('fc-form-foil').checked;
+    var sellPrice = parseFloat(document.getElementById('fc-form-price').value) || 0;
+    var marketPrice = foil ? (fcSelectedPrinting.usd_foil || fcSelectedPrinting.usd || 0)
+                            : (fcSelectedPrinting.usd || fcSelectedPrinting.usd_foil || 0);
+
+    var card = {
+        name: fcSelectedPrinting.name,
+        set_code: fcSelectedPrinting.set_code,
+        collector_number: fcSelectedPrinting.collector_number,
+        foil: foil,
+        qty: qty,
+        sell_price: sellPrice,
+        market_price: marketPrice,
+        image_url: fcSelectedPrinting.image_url,
+    };
+
+    var msg = document.getElementById('fc-form-msg');
+    btn.disabled = true;
+    msg.textContent = 'Adding...';
+    msg.style.color = 'var(--muted)';
+
+    fetch('/marketplace/api/admin/quick-add/add', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cards: [card]})
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        btn.disabled = false;
+        if (d.ok) {
+            msg.textContent = 'Added! (' + d.inventory_count + ' items in inventory)';
+            msg.style.color = 'var(--green)';
+            document.getElementById('fc-status').textContent = 'Last: +' + card.qty + ' ' + card.name;
+            document.getElementById('fc-status').style.color = 'var(--green)';
+        } else {
+            msg.textContent = d.error;
+            msg.style.color = 'var(--red)';
+        }
     });
 }
 
