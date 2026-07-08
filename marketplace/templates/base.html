@@ -122,12 +122,12 @@
             var badge = document.getElementById('cart-badge');
             if (data.logged_in) {
                 authLink.innerHTML = '<a href="#" onclick="logout()" style="color:var(--muted)">' + data.name + ' (logout)</a>';
-                if (data.cart_count > 0) {
-                    badge.textContent = data.cart_count;
-                    badge.style.display = '';
-                }
             } else {
                 authLink.innerHTML = '<a href="/marketplace/login">Sign In</a>';
+            }
+            if (data.cart_count > 0) {
+                badge.textContent = data.cart_count;
+                badge.style.display = '';
             }
         });
         function logout() {

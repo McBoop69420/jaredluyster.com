@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 DB_PATH = Path(__file__).resolve().parent / "marketplace.db"
 
 ADMIN_EMAIL = "jared.luyster@gmail.com"
+GUEST_EMAIL = "guest@bluegrass-marketplace.local"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
 
@@ -92,6 +93,9 @@ class Store:
                 status TEXT NOT NULL DEFAULT 'pending',
                 notes TEXT NOT NULL DEFAULT '',
                 admin_notes TEXT NOT NULL DEFAULT '',
+                guest_name TEXT NOT NULL DEFAULT '',
+                guest_email TEXT NOT NULL DEFAULT '',
+                guest_phone TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             );
 
@@ -121,6 +125,18 @@ class Store:
             );
         """)
         self._conn.commit()
+        self._migrate_orders_table()
+
+    def _migrate_orders_table(self):
+        for column in ("guest_name", "guest_email", "guest_phone"):
+            try:
+                self._conn.execute(
+                    f"ALTER TABLE orders ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
+                )
+                self._conn.commit()
+            except Exception as e:
+                if "duplicate column" not in str(e).lower():
+                    raise
 
     # -- accounts -------------------------------------------------------------
 
@@ -153,6 +169,17 @@ class Store:
 
     def get_account_by_email(self, email):
         return self._conn.execute("SELECT * FROM accounts WHERE email = ?", (email,)).fetchone()
+
+    def get_or_create_guest_account(self):
+        account = self.get_account_by_email(GUEST_EMAIL)
+        if account:
+            return account
+        self._conn.execute(
+            "INSERT INTO accounts (email, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?)",
+            (GUEST_EMAIL, "Guest", generate_password_hash(secrets.token_urlsafe(32)), 0, _now()),
+        )
+        self._conn.commit()
+        return self.get_account_by_email(GUEST_EMAIL)
 
     # -- password reset -------------------------------------------------------
 
@@ -195,11 +222,12 @@ class Store:
 
     # -- orders ---------------------------------------------------------------
 
-    def create_order(self, account_id, cart_items, notes=""):
+    def create_order(self, account_id, cart_items, notes="", guest_name="", guest_email="", guest_phone=""):
         now = _now()
         cursor = self._conn.execute(
-            "INSERT INTO orders (account_id, status, notes, created_at) VALUES (?, 'pending', ?, ?)",
-            (account_id, notes, now),
+            """INSERT INTO orders (account_id, status, notes, guest_name, guest_email, guest_phone, created_at)
+               VALUES (?, 'pending', ?, ?, ?, ?, ?)""",
+            (account_id, notes, guest_name, guest_email, guest_phone, now),
         )
         order_id = cursor.lastrowid
         for item in cart_items:

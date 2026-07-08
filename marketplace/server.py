@@ -100,6 +100,16 @@ def _quarter(price):
     return round(price * 4) / 4 if price else 0
 
 
+BASIC_LAND_NAMES = {"Plains", "Island", "Swamp", "Mountain", "Forest", "Wastes"}
+BASIC_LAND_FLAT_PRICE = 0.50
+
+
+def _price_for(item):
+    if item.get("name") in BASIC_LAND_NAMES and not item.get("foil"):
+        return BASIC_LAND_FLAT_PRICE
+    return _quarter(item.get("sell_price") or item.get("market_price") or 0)
+
+
 # -- main site ----------------------------------------------------------------
 
 @app.route("/")
@@ -152,7 +162,6 @@ def reset_password_page(token):
 
 
 @app.route("/marketplace/cart")
-@login_required
 def cart_page():
     cart = session.get("cart", {})
     inv = _inventory_by_id()
@@ -160,10 +169,10 @@ def cart_page():
     for item_id_str, qty in cart.items():
         item = inv.get(int(item_id_str))
         if item:
-            price = _quarter(item.get("sell_price") or item.get("market_price") or 0)
+            price = _price_for(item)
             items.append({**item, "cart_qty": qty, "price": price})
     total = sum(i["price"] * i["cart_qty"] for i in items)
-    account = store.get_account(session["account_id"])
+    account = store.get_account(session["account_id"]) if "account_id" in session else None
     return render_template("cart.html", items=items, total=total, account=account)
 
 
@@ -245,33 +254,32 @@ def api_reset_password():
 
 @app.route("/marketplace/api/logout", methods=["POST"])
 def api_logout():
-    session.clear()
+    session.pop("account_id", None)
     return jsonify(ok=True)
 
 
 @app.route("/marketplace/api/me")
 def api_me():
+    cart_count = sum(session.get("cart", {}).values())
     if "account_id" not in session:
-        return jsonify(logged_in=False)
+        return jsonify(logged_in=False, cart_count=cart_count)
     account = store.get_account(session["account_id"])
     if not account:
-        session.clear()
-        return jsonify(logged_in=False)
+        session.pop("account_id", None)
+        return jsonify(logged_in=False, cart_count=cart_count)
     return jsonify(logged_in=True, name=account["name"],
                    email=account["email"], is_admin=bool(account["is_admin"]),
-                   cart_count=sum(session.get("cart", {}).values()))
+                   cart_count=cart_count)
 
 
 # -- cart API -----------------------------------------------------------------
 
 @app.route("/marketplace/api/cart", methods=["GET"])
-@login_required
 def api_cart_get():
     return jsonify(cart=session.get("cart", {}))
 
 
 @app.route("/marketplace/api/cart/add", methods=["POST"])
-@login_required
 def api_cart_add():
     data = request.get_json()
     item_id = str(data.get("id"))
@@ -291,7 +299,6 @@ def api_cart_add():
 
 
 @app.route("/marketplace/api/cart/update", methods=["POST"])
-@login_required
 def api_cart_update():
     data = request.get_json()
     item_id = str(data.get("id"))
@@ -306,7 +313,6 @@ def api_cart_update():
 
 
 @app.route("/marketplace/api/cart/clear", methods=["POST"])
-@login_required
 def api_cart_clear():
     session["cart"] = {}
     return jsonify(ok=True)
@@ -315,12 +321,26 @@ def api_cart_clear():
 # -- order API ----------------------------------------------------------------
 
 @app.route("/marketplace/api/orders", methods=["POST"])
-@login_required
 def api_order_submit():
     cart = session.get("cart", {})
     if not cart:
         return jsonify(error="Cart is empty."), 400
-    notes = (request.get_json() or {}).get("notes", "")
+    data = request.get_json() or {}
+    notes = data.get("notes", "")
+
+    guest_name = ""
+    guest_email = ""
+    guest_phone = ""
+    if "account_id" in session:
+        account_id = session["account_id"]
+    else:
+        guest_name = (data.get("guest_name") or "").strip()
+        guest_email = (data.get("guest_email") or "").strip().lower()
+        guest_phone = (data.get("guest_phone") or "").strip()
+        if not guest_name or "@" not in guest_email:
+            return jsonify(error="Name and a valid email are required for guest checkout."), 400
+        account_id = store.get_or_create_guest_account()["id"]
+
     with _inventory_lock:
         inventory = _load_inventory()
         inv_by_id = {item["id"]: item for item in inventory}
@@ -335,7 +355,7 @@ def api_order_submit():
             if qty > available:
                 out_of_stock.append(f"{item['name']} (have {available}, want {qty})")
                 continue
-            price = _quarter(item.get("sell_price") or item.get("market_price") or 0)
+            price = _price_for(item)
             items.append({
                 "id": item["id"], "name": item["name"],
                 "set_code": item.get("set_code", ""),
@@ -347,13 +367,15 @@ def api_order_submit():
             return jsonify(error="Insufficient stock: " + "; ".join(out_of_stock)), 400
         if not items:
             return jsonify(error="No valid items in cart."), 400
-        order_id = store.create_order(session["account_id"], items, notes)
+        order_id = store.create_order(account_id, items, notes,
+                                       guest_name, guest_email, guest_phone)
         for order_item in items:
             inv_by_id[order_item["id"]]["quantity"] -= order_item["quantity"]
         inventory = [item for item in inventory if item.get("quantity", 0) > 0]
         _save_inventory(inventory)
     session["cart"] = {}
-    return jsonify(ok=True, order_id=order_id)
+    is_guest = "account_id" not in session
+    return jsonify(ok=True, order_id=order_id, is_guest=is_guest)
 
 
 # -- admin API ----------------------------------------------------------------
@@ -509,13 +531,14 @@ def _scryfall_find_card(name, collector_number, foil=False):
             image = (p.get("image_uris") or {}).get("normal")
             if not image and p.get("card_faces"):
                 image = (p["card_faces"][0].get("image_uris") or {}).get("normal")
+            is_flat_basic = p["name"] in BASIC_LAND_NAMES and not foil
             return {
                 "name": p["name"],
                 "set_code": p["set"],
                 "collector_number": p["collector_number"],
                 "foil": foil,
                 "market_price": price,
-                "sell_price": _quarter(price),
+                "sell_price": BASIC_LAND_FLAT_PRICE if is_flat_basic else _quarter(price),
                 "image_url": image,
             }
 

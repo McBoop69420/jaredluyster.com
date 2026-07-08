@@ -120,6 +120,17 @@
             <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
         </div>
 
+        <div class="card" id="session-log-section" style="margin-bottom:24px; padding:16px 20px; display:none;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                <span style="font-weight:600; font-size:0.9rem;">Added This Session</span>
+                <span style="display:flex; align-items:center; gap:12px;">
+                    <span id="session-log-summary" style="font-size:0.78rem; color:var(--muted);"></span>
+                    <button class="btn btn-sm" onclick="sessionLogClear()">Clear</button>
+                </span>
+            </div>
+            <div id="session-log-list" style="display:flex; flex-direction:column; gap:2px; max-height:280px; overflow-y:auto;"></div>
+        </div>
+
         <details class="card" style="margin-bottom:24px; padding:0;" id="find-add-section" open>
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Find &amp; Add Card
@@ -249,8 +260,9 @@
                 <div class="order-header">
                     <div>
                         <span class="order-id">Order #{{ order.id }}</span>
-                        <span class="order-customer">{{ acct.name if acct else 'Unknown' }}</span>
-                        <span class="order-email">({{ acct.email if acct else '' }})</span>
+                        <span class="order-customer">{{ order.guest_name if order.guest_name else (acct.name if acct else 'Unknown') }}</span>
+                        {% if order.guest_name %}<span class="order-customer" style="color:var(--muted); font-size:0.72rem; text-transform:uppercase;">Guest</span>{% endif %}
+                        <span class="order-email">({{ order.guest_email if order.guest_name else (acct.email if acct else '') }}{% if order.guest_phone %} · {{ order.guest_phone }}{% endif %})</span>
                         <span class="order-date">{{ order.created_at[:10] }}</span>
                     </div>
                     <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
@@ -359,6 +371,65 @@ function saveSmtp() {
         status.textContent = 'Configured';
         status.style.color = 'var(--green)';
     });
+}
+
+var sessionLog = [];
+
+function sessionLogAdd(cards) {
+    var now = new Date();
+    cards.forEach(function(c) {
+        sessionLog.push({
+            name: c.name,
+            set_code: c.set_code,
+            collector_number: c.collector_number,
+            foil: !!c.foil,
+            qty: c.qty,
+            sell_price: c.sell_price,
+            time: now
+        });
+    });
+    sessionLogRender();
+}
+
+function sessionLogRender() {
+    var section = document.getElementById('session-log-section');
+    var list = document.getElementById('session-log-list');
+    var summary = document.getElementById('session-log-summary');
+
+    if (!sessionLog.length) {
+        section.style.display = 'none';
+        list.innerHTML = '';
+        summary.textContent = '';
+        return;
+    }
+
+    section.style.display = 'block';
+    list.innerHTML = '';
+
+    var totalQty = 0, totalValue = 0;
+    for (var i = sessionLog.length - 1; i >= 0; i--) {
+        var e = sessionLog[i];
+        totalQty += e.qty;
+        totalValue += e.qty * e.sell_price;
+        var foilTag = e.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; justify-content:space-between; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
+        row.innerHTML =
+            '<span>' +
+                '<span style="color:var(--muted); font-size:0.72rem;">' + e.time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</span> ' +
+                '<strong>+' + e.qty + '</strong> ' + e.name + foilTag +
+                ' <span style="color:var(--muted)">' + e.set_code.toUpperCase() + ' #' + e.collector_number + '</span>' +
+            '</span>' +
+            '<span style="color:var(--accent); white-space:nowrap;">$' + (e.qty * e.sell_price).toFixed(2) + '</span>';
+        list.appendChild(row);
+    }
+
+    summary.textContent = totalQty + ' items — $' + totalValue.toFixed(2);
+}
+
+function sessionLogClear() {
+    sessionLog = [];
+    sessionLogRender();
 }
 
 var fcDebounce = null;
@@ -488,12 +559,15 @@ function fcSelectPrinting(p, cardEl) {
     document.getElementById('fc-form-msg').textContent = '';
 }
 
+var BASIC_LAND_NAMES = {'Plains':1,'Island':1,'Swamp':1,'Mountain':1,'Forest':1,'Wastes':1};
+
 function fcUpdatePrice() {
     if (!fcSelectedPrinting) return;
     var foil = document.getElementById('fc-form-foil').checked;
     var price = foil ? (fcSelectedPrinting.usd_foil || fcSelectedPrinting.usd || 0)
                       : (fcSelectedPrinting.usd || fcSelectedPrinting.usd_foil || 0);
-    document.getElementById('fc-form-price').value = (Math.round(price * 4) / 4).toFixed(2);
+    var flat = BASIC_LAND_NAMES[fcSelectedPrinting.name] && !foil;
+    document.getElementById('fc-form-price').value = flat ? '0.50' : (Math.round(price * 4) / 4).toFixed(2);
 }
 
 function fcAdd() {
@@ -531,6 +605,7 @@ function fcAdd() {
             msg.style.color = 'var(--green)';
             document.getElementById('fc-status').textContent = 'Last: +' + card.qty + ' ' + card.name;
             document.getElementById('fc-status').style.color = 'var(--green)';
+            sessionLogAdd([card]);
         } else {
             msg.textContent = d.error;
             msg.style.color = 'var(--red)';
@@ -627,6 +702,7 @@ function qaAdd() {
             msg.style.color = 'var(--green)';
             document.getElementById('qa-status').textContent = 'Last: +' + d.added + ' cards';
             document.getElementById('qa-status').style.color = 'var(--green)';
+            sessionLogAdd(selected);
             qaClear();
             msg.textContent = 'Added ' + d.added + ' cards! (' + d.inventory_count + ' items in inventory)';
             msg.style.color = 'var(--green)';

@@ -694,7 +694,8 @@
                 </div>
             </div>
 
-            <div id="featured-section" class="featured-section" style="display:none">
+            <div id="featured-section" class="featured-section" style="display:none"
+                 onmouseenter="hoverPaused = true" onmouseleave="hoverPaused = false">
                 <div class="featured-top">
                     <div style="display:flex;align-items:center;gap:10px">
                         <span class="featured-label">Featured</span>
@@ -740,6 +741,7 @@
         var PLACEHOLDER_SVG = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
 
         function getPrice(item) {
+            if (BASIC_LANDS[item.name] && !item.foil) return 0.50;
             return item.sell_price != null ? item.sell_price : (item.market_price || 0);
         }
 
@@ -749,6 +751,7 @@
         var activeTab = 0;
         var rotateTimer = null;
         var userPaused = false;
+        var hoverPaused = false;
 
         function buildFeaturedTabs() {
             featuredTabs = [];
@@ -775,7 +778,7 @@
                     cards: sample.map(function(l) {
                         var inv = findLandInInventory(l);
                         return { name: l.name, set_code: l.set_code, collector_number: l.collector_number,
-                                 image_url: l.image_url, price: 0.50, quantity: l.quantity,
+                                 image_url: l.image_url, price: inv ? getPrice(inv) : 0.50, quantity: l.quantity,
                                  id: inv ? inv.id : null };
                     }),
                     cta: 'View all full art lands',
@@ -785,8 +788,9 @@
                         document.getElementById('set-filter').value = 'all';
                         inventory = landsData.map(function(l) {
                             var inv = findLandInInventory(l);
+                            var price = inv ? getPrice(inv) : 0.50;
                             return { id: inv ? inv.id : null, name: l.name, set_code: l.set_code, collector_number: l.collector_number,
-                                     image_url: l.image_url, sell_price: 0.50, market_price: 0.50,
+                                     image_url: l.image_url, sell_price: price, market_price: price,
                                      quantity: l.quantity, condition: 'Near Mint', foil: false, notes: null };
                         });
                         render();
@@ -971,7 +975,7 @@
             clearInterval(rotateTimer);
             if (featuredTabs.length <= 1) return;
             rotateTimer = setInterval(function() {
-                if (userPaused) return;
+                if (userPaused || hoverPaused) return;
                 activeTab = (activeTab + 1) % featuredTabs.length;
                 renderFeatured();
             }, 7000);
@@ -1094,30 +1098,26 @@
             grid.innerHTML = html;
         }
 
-        var isLoggedIn = false;
-
         fetch('/marketplace/api/me').then(function(r) { return r.json(); }).then(function(data) {
             var authLink = document.getElementById('auth-link');
             var badge = document.getElementById('cart-badge');
             if (data.logged_in) {
-                isLoggedIn = true;
                 authLink.innerHTML = '<a href="#" onclick="doLogout()" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">' + data.name + ' (logout)</a>';
                 if (data.is_admin) {
                     authLink.innerHTML += ' <a href="/marketplace/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
                 }
-                if (data.cart_count > 0) {
-                    badge.textContent = data.cart_count;
-                    badge.style.display = '';
-                }
             } else {
                 authLink.innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+            }
+            if (data.cart_count > 0) {
+                badge.textContent = data.cart_count;
+                badge.style.display = '';
             }
         }).catch(function() {
             document.getElementById('auth-link').innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
         });
 
         function addToCart(id, btn) {
-            if (!isLoggedIn) { location.href = '/marketplace/login?return_to=' + encodeURIComponent(location.pathname); return; }
             fetch('/marketplace/api/cart/add', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: id, quantity: 1})

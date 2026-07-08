@@ -28,11 +28,21 @@
     font-size: 1rem; display: flex; align-items: center; justify-content: center;
 }
 .cart-item-qty span { font-size: 0.9rem; min-width: 24px; text-align: center; }
+.cart-item-remove {
+    width: auto !important; height: auto !important; padding: 5px 10px;
+    white-space: nowrap;
+}
 .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; }
 .summary-total { font-size: 1.2rem; font-weight: 700; color: var(--accent);
     border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
 .empty-cart { text-align: center; padding: 64px 0; color: var(--muted); }
 .notes-field { width: 100%; margin: 12px 0; resize: vertical; min-height: 60px; }
+.guest-fields { display: none; margin: 4px 0 12px; }
+.guest-fields.active { display: block; }
+.guest-fields input { width: 100%; margin-bottom: 8px; }
+.guest-note { font-size: 0.78rem; color: var(--muted); margin: 0 0 10px; }
+.order-confirm { text-align: center; padding: 48px 0; }
+.order-confirm h2 { margin: 0 0 8px; }
 @media (max-width: 700px) {
     .cart-layout { flex-direction: column; }
     .cart-summary { width: 100%; }
@@ -44,8 +54,14 @@
     <div class="shell">
         <div class="page-header"><h1>Your Cart</h1></div>
 
+        <div id="order-confirm" class="order-confirm" style="display:none">
+            <h2>Order placed!</h2>
+            <p id="order-confirm-msg" style="color:var(--muted)"></p>
+            <a href="/marketplace/" class="btn btn-accent" style="margin-top:16px">Continue shopping</a>
+        </div>
+
         {% if items %}
-        <div class="cart-layout">
+        <div class="cart-layout" id="cart-layout">
             <div class="cart-main card">
                 {% for item in items %}
                 <div class="cart-item" data-id="{{ item.id }}">
@@ -62,7 +78,7 @@
                             <button onclick="updateQty({{ item.id }}, {{ item.cart_qty - 1 }})">-</button>
                             <span>{{ item.cart_qty }}</span>
                             <button onclick="updateQty({{ item.id }}, {{ item.cart_qty + 1 }})">+</button>
-                            <button onclick="updateQty({{ item.id }}, 0)" style="margin-left:8px; color:var(--red); border-color:var(--red)">Remove</button>
+                            <button class="cart-item-remove" onclick="updateQty({{ item.id }}, 0)" style="margin-left:8px; color:var(--red); border-color:var(--red)">Remove</button>
                         </div>
                     </div>
                     <div class="cart-item-price">${{ "%.2f" | format(item.price * item.cart_qty) }}</div>
@@ -80,6 +96,12 @@
                         <span>${{ "%.2f" | format(total) }}</span>
                     </div>
                     <textarea class="notes-field" id="order-notes" placeholder="Any notes (shipping address, special requests...)"></textarea>
+                    <div class="guest-fields" id="guest-fields">
+                        <p class="guest-note">Checking out as a guest — enter your info so I can reach you for pickup. Have an account? <a href="/marketplace/login?return_to=/marketplace/cart" style="color:var(--accent)">Sign in</a>.</p>
+                        <input type="text" id="guest-name" placeholder="Your name">
+                        <input type="email" id="guest-email" placeholder="you@email.com">
+                        <input type="tel" id="guest-phone" placeholder="Phone (optional)">
+                    </div>
                     <button class="btn btn-accent" style="width:100%; justify-content:center; margin-top:8px;" onclick="submitOrder()">
                         Submit Order
                     </button>
@@ -93,7 +115,7 @@
         {% else %}
         <div class="empty-cart">
             <p style="font-size:1.2rem; margin-bottom:8px;">Your cart is empty</p>
-            <p>Browse the <a href="/" style="color:var(--accent)">shop</a> to add cards.</p>
+            <p>Browse the <a href="/marketplace/" style="color:var(--accent)">shop</a> to add cards.</p>
         </div>
         {% endif %}
     </div>
@@ -102,6 +124,14 @@
 
 {% block extra_js %}
 <script>
+var isLoggedIn = false;
+
+fetch('/marketplace/api/me').then(function(r) { return r.json(); }).then(function(data) {
+    isLoggedIn = !!data.logged_in;
+    var guestFields = document.getElementById('guest-fields');
+    if (guestFields) guestFields.classList.toggle('active', !isLoggedIn);
+});
+
 function updateQty(id, qty) {
     fetch('/marketplace/api/cart/update', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -112,13 +142,38 @@ function updateQty(id, qty) {
 function submitOrder() {
     var err = document.getElementById('order-error');
     err.style.display = 'none';
+
+    var payload = {notes: document.getElementById('order-notes').value};
+    if (!isLoggedIn) {
+        var name = document.getElementById('guest-name').value.trim();
+        var email = document.getElementById('guest-email').value.trim();
+        if (!name || !email.includes('@')) {
+            err.textContent = 'Please enter your name and a valid email.';
+            err.style.display = '';
+            return;
+        }
+        payload.guest_name = name;
+        payload.guest_email = email;
+        payload.guest_phone = document.getElementById('guest-phone').value.trim();
+    }
+
     fetch('/marketplace/api/orders', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({notes: document.getElementById('order-notes').value})
+        body: JSON.stringify(payload)
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
-        if (res.ok) { location.href = '/marketplace/orders'; }
-        else { err.textContent = res.data.error; err.style.display = ''; }
+        if (res.ok && res.data.is_guest) {
+            document.getElementById('cart-layout').style.display = 'none';
+            document.getElementById('order-confirm-msg').textContent =
+                'Order #' + res.data.order_id + ' — cash only, pickup Thursdays at the Bluegrass Cube table at Tabletop Tavern. ' +
+                "Reach out to me on Discord (McBoop) if you'd like to make other arrangements.";
+            document.getElementById('order-confirm').style.display = '';
+        } else if (res.ok) {
+            location.href = '/marketplace/orders';
+        } else {
+            err.textContent = res.data.error;
+            err.style.display = '';
+        }
     });
 }
 </script>
