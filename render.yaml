@@ -3,7 +3,7 @@ services:
     name: jaredluyster-com
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: cd marketplace && gunicorn server:app --bind 0.0.0.0:$PORT
+    startCommand: cd marketplace && waitress-serve --host=0.0.0.0 --port=$PORT server:app
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.11"
