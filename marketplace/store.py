@@ -1,5 +1,6 @@
 """Accounts, carts, and orders database for the marketplace."""
 
+import os
 import secrets
 import sqlite3
 from datetime import datetime, timezone, timedelta
@@ -12,12 +13,66 @@ ADMIN_EMAIL = "jared.luyster@gmail.com"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
 
+class _Row(dict):
+    """Dict that also tolerates the odd sqlite3.Row-style habits callers rely on."""
+
+
+class _TursoCursor:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def _wrap(self, row):
+        if row is None:
+            return None
+        cols = [d[0] for d in self._cursor.description]
+        return _Row(zip(cols, row))
+
+    def fetchone(self):
+        return self._wrap(self._cursor.fetchone())
+
+    def fetchall(self):
+        return [self._wrap(r) for r in self._cursor.fetchall()]
+
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+
+class _TursoConnection:
+    """Adapts the libsql client to the subset of the sqlite3 API store.py uses."""
+
+    def __init__(self, url, auth_token):
+        import libsql
+        self._conn = libsql.connect(database=url, auth_token=auth_token)
+
+    def execute(self, sql, params=()):
+        try:
+            return _TursoCursor(self._conn.execute(sql, params))
+        except ValueError as e:
+            if "UNIQUE constraint" in str(e):
+                raise sqlite3.IntegrityError(str(e))
+            raise
+
+    def executescript(self, script):
+        self._conn.executescript(script)
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
 class Store:
     def __init__(self, db_path=DB_PATH):
-        self._conn = sqlite3.connect(db_path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA foreign_keys=ON")
+        turso_url = os.environ.get("TURSO_DATABASE_URL")
+        if turso_url:
+            self._conn = _TursoConnection(turso_url, os.environ.get("TURSO_AUTH_TOKEN"))
+        else:
+            self._conn = sqlite3.connect(db_path, check_same_thread=False)
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA foreign_keys=ON")
         self._create_tables()
 
     def _create_tables(self):

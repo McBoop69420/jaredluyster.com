@@ -3,3 +3,4 @@ waitress
 gunicorn
 requests
 werkzeug
+libsql
