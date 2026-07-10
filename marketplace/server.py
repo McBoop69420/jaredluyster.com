@@ -58,6 +58,33 @@ def _send_reset_email(to_email, reset_url):
         server.send_message(msg)
 
 
+def _send_order_confirmation_email(to_email, order_id, items, total, notes):
+    cfg = _smtp_config()
+    lines = [f"Thanks for your order! Here's a copy for your records.\n", f"Order #{order_id}\n"]
+    for item in items:
+        foil = " (foil)" if item.get("foil") else ""
+        lines.append(
+            f"  {item['quantity']}x {item['name']}{foil} — ${item['price'] * item['quantity']:.2f}"
+        )
+    lines.append(f"\nTotal: ${total:.2f}")
+    if notes:
+        lines.append(f"\nNotes: {notes}")
+    lines.append(
+        "\n\nCash only — no online payments are accepted. "
+        "I'll be at Tabletop Tavern every Thursday to deliver orders. "
+        "Reach out to me on Discord (McBoop) if you'd like to make other arrangements."
+    )
+    body = "\n".join(lines)
+    msg = MIMEText(body)
+    msg["Subject"] = f"Order Confirmation #{order_id} — Bluegrass Memorabilia"
+    msg["From"] = cfg["from"]
+    msg["To"] = to_email
+    with smtplib.SMTP(cfg["host"], cfg["port"]) as server:
+        server.starttls()
+        server.login(cfg["user"], cfg["password"])
+        server.send_message(msg)
+
+
 _inventory_lock = threading.Lock()
 
 
@@ -375,6 +402,19 @@ def api_order_submit():
         _save_inventory(inventory)
     session["cart"] = {}
     is_guest = "account_id" not in session
+
+    confirm_email = guest_email
+    if not confirm_email and "account_id" in session:
+        account = store.get_account(session["account_id"])
+        confirm_email = account["email"] if account else ""
+    cfg = _smtp_config()
+    if confirm_email and cfg["user"] and cfg["password"]:
+        total = sum(item["price"] * item["quantity"] for item in items)
+        try:
+            _send_order_confirmation_email(confirm_email, order_id, items, total, notes)
+        except Exception:
+            pass
+
     return jsonify(ok=True, order_id=order_id, is_guest=is_guest)
 
 
