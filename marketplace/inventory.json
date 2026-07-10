@@ -1,19 +1,5 @@
 [
   {
-    "id": 5,
-    "name": "Accomplished Alchemist",
-    "set_code": "STX",
-    "collector_number": "119",
-    "foil": false,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.5,
-    "image_url": "https://cards.scryfall.io/normal/front/0/d/0d7b7830-b65e-4c53-98e8-152026764e4b.jpg?1629218987",
-    "notes": null
-  },
-  {
     "id": 6,
     "name": "Accumulated Knowledge",
     "set_code": "A25",
@@ -2895,6 +2881,48 @@
     "sell_price": null,
     "market_price": 0.25,
     "image_url": "https://cards.scryfall.io/normal/front/0/e/0e6e2188-7203-4d10-a838-27233f283cd5.jpg?1775938149",
+    "notes": null
+  },
+  {
+    "id": 5,
+    "name": "Accomplished Alchemist",
+    "set_code": "STX",
+    "collector_number": "119",
+    "foil": false,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.5,
+    "image_url": "https://cards.scryfall.io/normal/front/0/d/0d7b7830-b65e-4c53-98e8-152026764e4b.jpg?1629218987",
+    "notes": null
+  },
+  {
+    "id": 3,
+    "name": "Abzan Beastmaster",
+    "set_code": "PLST",
+    "collector_number": "FRF-119",
+    "foil": false,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.25,
+    "image_url": "https://cards.scryfall.io/normal/front/e/c/ec2b30e2-f134-4fd0-bb3b-0e319630fd77.jpg?1723436534",
+    "notes": null
+  },
+  {
+    "id": 36,
+    "name": "Casey Jones, Vigilante",
+    "set_code": "TMT",
+    "collector_number": "88",
+    "foil": true,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.75,
+    "image_url": "https://cards.scryfall.io/normal/front/a/6/a6a3258d-2e9b-4862-b2e3-bbfae9bd4d33.jpg?1769005927",
     "notes": null
   }
 ]
