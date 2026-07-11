@@ -118,6 +118,7 @@
             <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/marketplace/admin?status=shipped">Shipped</a>
             <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/marketplace/admin?status=completed">Completed</a>
             <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
+            <button class="btn btn-sm" style="margin-left:auto; color:var(--red);" onclick="cancelAllPending()">Cancel All Pending</button>
         </div>
 
         <div class="card" id="session-log-section" style="margin-bottom:24px; padding:16px 20px; display:none;">
@@ -328,6 +329,34 @@ function updateStatus(orderId, status) {
         var badge = document.querySelector('#order-' + orderId + ' .status-badge');
         badge.className = 'status-badge status-' + status;
         badge.textContent = status;
+    });
+}
+
+function cancelAllPending() {
+    var cards = document.querySelectorAll('.order-card');
+    var pendingIds = [];
+    cards.forEach(function(card) {
+        var badge = card.querySelector('.status-badge');
+        if (badge && badge.classList.contains('status-pending')) {
+            pendingIds.push(card.id.replace('order-', ''));
+        }
+    });
+    if (!pendingIds.length) { alert('No pending orders on this page.'); return; }
+    if (!confirm('Cancel ' + pendingIds.length + ' pending order(s) and restore their cards to inventory?')) return;
+
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Cancelling...';
+
+    var remaining = pendingIds.length;
+    pendingIds.forEach(function(orderId) {
+        fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: 'cancelled'})
+        }).then(function() {
+            remaining -= 1;
+            if (remaining === 0) window.location.reload();
+        });
     });
 }
 
