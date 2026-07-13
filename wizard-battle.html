@@ -133,6 +133,14 @@
             position: relative;
         }
 
+        .hero-logo {
+            display: block;
+            width: 100%;
+            max-width: 380px;
+            height: auto;
+            margin-bottom: 24px;
+        }
+
         .hero-eyebrow {
             display: inline-flex;
             align-items: center;
@@ -481,6 +489,7 @@
         .fade-up:nth-child(7) { animation-delay: 480ms; }
         .fade-up:nth-child(8) { animation-delay: 560ms; }
 
+        .hero-logo { animation: fadeUp 500ms 60ms cubic-bezier(0.4, 0, 0.2, 1) both; }
         .hero-eyebrow { animation: fadeUp 500ms 100ms cubic-bezier(0.4, 0, 0.2, 1) both; }
         h1 { animation: fadeUp 500ms 180ms cubic-bezier(0.4, 0, 0.2, 1) both; }
         .lead { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
@@ -513,7 +522,7 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="wizard-battle.html">
-                <img class="brand-mark" src="wizard-battle-logo.png" alt="Wizard Battle logo">
+                <img class="brand-mark" src="wizard-battle-logo.svg" alt="Wizard Battle logo">
                 <div class="brand-copy">
                     <strong>Wizard Battle</strong>
                     <span>Roguelike Deckbuilder</span>
@@ -532,6 +541,7 @@
     <main>
         <section class="hero">
             <div class="shell hero-content">
+                <img class="hero-logo" src="wizard-battle-wordmark.svg" alt="Wizard Battle" width="1180" height="380">
                 <div class="hero-eyebrow">Wizard Battle</div>
                 <h1><span class="text-gradient">Every decision reveals something.</span></h1>
                 <p class="lead">Choose a wizard, build a deck, and uncover the hidden relationships between newly awakened magical forces. Adapt to what you learn, question what you think you know, and shape your strategy one decision at a time.</p>
