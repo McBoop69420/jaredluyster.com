@@ -109,13 +109,6 @@
 </head>
 <body data-screen-label="Wizard Battle Icon Reference">
 <div class="wrap">
-  <header>
-    <div class="eyebrow">Wizard Battle · Icon Reference</div>
-    <h1>Every Icon in the Game</h1>
-    <p>A single legend for the whole mark system — the master sigil, the eight wizard classes, the eight schools of magic, every status effect, and the seven map node types with their four states. Each tile shows the glyph and what it represents. Class sprites use the shipped game art from <code>TypeIcons/</code>; other tiles are drawn glyphs in the shared sigil grammar. Colors are the canonical palette from the design bible.</p>
-    <div class="count" id="counts"></div>
-  </header>
-
   <div id="root"></div>
 
   <footer>
@@ -167,15 +160,6 @@
   const Variant = ({ style, id }) => { const C = ICONS[style][id]; return <div className="vicon"><C size={56} /></div>; };
 
   function App() {
-    React.useEffect(() => {
-      const counts = [
-        ["Master Sigil", 1], ["Class Icons", 8], ["Schools", 8],
-        ["Status Effects", 10], ["Node Types", 7], ["Node States", 4],
-      ];
-      document.getElementById("counts").innerHTML = counts.map(([n,v]) =>
-        `<div class="c"><b>${v}</b><span>${n}</span></div>`).join("");
-    }, []);
-
     return (
       <div>
         <section>
