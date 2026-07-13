@@ -2,73 +2,66 @@
 
 ## Map Structure
 
-- **12 floors** of nodes + a boss on floor 12 (floor 0 is the start node)
-- **6 paths** generated per run — paths branch and cross, creating choices
-- **7 columns wide** — nodes placed at column positions 0–6
-- Boss is always centered (column 3)
+> Source: `Assets/Scripts/Map/MapGenerator.cs`. (Note: the file's header comment is stale — it says "6 paths / 7 columns"; the executed constants below are authoritative.)
+
+- **12 floors** of nodes (floors 0–11) plus the **boss on floor 12**. Floor 0 is the run's first node.
+- **4 paths** generated per run — paths drift but never cross (the column array is sorted after each drift step to preserve left→right order)
+- **5 columns wide** — nodes placed at column positions 0–4
+- Boss is always centered (**column 2**)
+- On floors 9–11 the paths get a gentle center-pull so they funnel smoothly into the boss
 
 ---
 
 ## Node Types
 
-| Type | Icon | Color | Description |
+| Type | Icon | Accent Color | Description |
 |---|---|---|---|
-| Start | ⚑ | `#19c37d` | Beginning of run. No event. |
-| Battle | ⚔ | `#cc3333` | Fight a common enemy |
-| Elite | 💀 | `#aa2222` | Fight an elite enemy (harder, more gold reward) |
-| Rest | 🔥 | `#cc7722` | Heal or other rest actions |
-| Shop | 💰 | `#22aa66` | Spend gold on spells and items |
-| Event | ? | `#7744aa` | Random encounter with choices |
-| Boss | ☠ | `#ff2222` | Final boss fight — win = victory |
+| Battle (Combat) | ⚔ | `#dc5a3c` | Fight a common enemy |
+| Elite | 💀 | `#aa50ff` | Fight an elite enemy (harder, more gold reward) |
+| Rest | 🔥 | `#32c864` | Heal, upgrade, or remove a spell |
+| Shop | 💰 | `#f0b932` | Spend gold on spells and items |
+| Event | ? | `#50a0f0` | Random encounter with choices |
+| Boss | ☠ | `#e62828` | Final boss fight — win = victory |
+
+> Code note: the `NodeType` enum is `{ Combat, Elite, Rest, Shop, Event, Boss }` — "Battle" above is `NodeType.Combat`. There is **no dedicated Start node type**; floor 0 is simply a Combat node (the run's first fight).
 
 ---
 
-## Node Spawn Probabilities by Floor
+## Node Placement by Floor
 
-### Floors 1–4 (early)
+Node types are assigned per floor by `MapGenerator.PickNodeType`. Some floors are **fixed**; the rest use a single random roll.
+
+**Fixed floors:**
+
+| Floor(s) | Node Type |
+|---|---|
+| 0 | Combat (the run's first fight) |
+| 4, 9 | 50% Rest / 50% Shop (checkpoint) |
+| 6, 7, 8, 11 | Elite (always) |
+| 12 | Boss |
+
+**Random roll (all other floors — 1, 2, 3, 5, 10):**
+
 | Node | Chance |
 |---|---|
-| Battle | 65% |
-| Event | 15% |
-| Rest | 10% |
-| Shop | 10% |
+| Combat | 45% |
+| Event | 25% |
+| Shop | 15% |
+| Rest | 15% |
 
-### Floors 5, 10 (rest/shop checkpoint)
-Always: 50% Rest / 50% Shop
-
-### Floors 6–9 (mid)
-| Node | Chance |
-|---|---|
-| Battle | 55% |
-| Elite | 15% |
-| Event | 12% |
-| Rest | 9% |
-| Shop | 9% |
-
-### Floors 10–11 (late)
-| Node | Chance |
-|---|---|
-| Battle | 50% |
-| Elite | 18% |
-| Event | 10% |
-| Rest | 10% |
-| Shop | 12% |
-
-### Floor 12
-Always: Boss
+> Note: the code's elite set is `{6, 7, 8, 9, 11}`, but floor 9 is caught first by the rest/shop checkpoint check, so the **effective** Elite floors are **6, 7, 8, and 11**.
 
 ---
 
 ## Enemy Tiers by Floor
 
-| Floor Range | Enemy Pool |
+| Floor | Enemy Pool |
 |---|---|
-| 1–4 | Common only |
-| 6–9 | Common + Elite (at elite nodes) |
-| 11–14 | Common + Elite (at elite nodes) |
-| 12 (boss node) | Boss only |
+| 0–3, 5, 10 (Combat nodes) | Common |
+| 6, 7, 8, 11 (Elite nodes) | Elite |
+| 12 | Boss (one per type, randomly chosen from all 8) |
 
-Boss is always chosen from the boss pool (one per type). Random selection from all 8 boss types.
+Rest/Shop checkpoints (floors 4, 9) have no enemy. Elites never appear on floors 0–5.
 
 ---
 
@@ -86,7 +79,7 @@ Two actions available:
 
 | Action | Effect |
 |---|---|
-| Heal | Restore 30% of max HP (floored). Does not overheal. |
+| Heal | Restore 30% of max HP (rounded to nearest). Does not overheal. |
 | Upgrade a Spell | Choose one card from your deck to upgrade one tier (Minus → Regular, Regular → Plus). Greyed out if no upgradeable cards remain. |
 | Remove a Spell | Choose one card from your deck to permanently exile it. |
 

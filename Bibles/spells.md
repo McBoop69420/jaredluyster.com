@@ -1,9 +1,9 @@
 # Spells Bible
 
-Full spell reference organized by type. All values sourced from `js/data/spells.js`.
+Full spell reference organized by type. All values sourced from `Assets/Editor/CreateGameData.cs` (`CreateSpells`) in the Wizard Battle game project.
 
 **Conventions:**
-- *(S)* = Starter card (part of a class's starting 10-card deck)
+- *(S)* = **Starter rarity** tier. Note this is a rarity, not deck membership: not every Starter-rarity card is in a deck (e.g. Inferno Core), and one deck card is Common rarity (Rock Throw). Actual starting-deck contents live in [starting-decks.md](starting-decks.md).
 - *Fade* = Exhaust after use for the current combat
 - *On hit* = Reactive effect that triggers when the enemy's attack deals damage through your block
 - Multi-hit spells list each hit separately (e.g. "Twice" = effects listed once, apply twice)
@@ -36,7 +36,7 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 |---|---|---|---|
 | Firebolt *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Char. |
 | Ignite *(S)* | 1 | Starter | Deal 4 damage. Apply 2 Char. |
-| Flame Burst *(S)* | 2 | Starter | Deal 5 damage. Apply 2 Char. Twice. |
+| Flame Burst *(S)* | 2 | Starter | Deal 5 damage and apply 2 Char. Twice. |
 | Cauterize *(S)* | 2 | Starter | Gain 10 Block. Apply 3 Char. |
 | Inferno Core *(S)* | 2 | Starter | Char applied this turn is doubled. |
 | Ember Shot | 1 | Common | Deal 8 damage. |
@@ -58,13 +58,13 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 | Wavecrash *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Drown. |
 | Soothing Wave *(S)* | 1 | Starter | Heal 4 HP. Apply 2 Drown. |
 | Drown Surge *(S)* | 2 | Starter | Deal 8 damage. Apply 5 Drown. |
-| Riptide *(S)* | 2 | Starter | Deal 4 damage. Apply 2 Drown. |
+| Riptide *(S)* | 2 | Starter | Deal 4 damage. Apply 2 Drown. +1 mana next turn. |
 | Water Bolt | 1 | Common | Deal 7 damage. |
 | Tidal Shield | 1 | Common | Gain 10 Block. |
 | Tidal Wave | 2 | Common | Deal 12 damage. |
-| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. |
+| Tidal Flow | 2 | Common | Deal 4 damage. Draw 1. +1 mana next turn. |
 | Healing Rain | 2 | Common | Heal 12 HP. |
-| Mana Spring | 0 | Uncommon | Draw 1. |
+| Mana Spring | 0 | Uncommon | Gain 1 mana. Draw 1. |
 | Whirlpool | 2 | Uncommon | Deal 14 damage. Apply 3 Drown. |
 | Deep Current | 3 | Rare | Deal 20 damage. Heal 8 HP. |
 
@@ -98,13 +98,13 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 |---|---|---|---|
 | Spark Strike *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Shock. |
 | Static Charge *(S)* | 1 | Starter | Deal 4 damage. Apply 2 Shock. |
-| Chain Lightning *(S)* | 2 | Starter | Deal 4 damage three times. Apply 2 Shock. |
-| Surge Engine *(S)* | 2 | Starter | Apply 3 Shock. |
+| Chain Lightning *(S)* | 2 | Starter | Deal 4 damage and apply 2 Shock. Three times. |
+| Surge Engine *(S)* | 2 | Starter | Apply 3 Shock. +2 mana next turn. |
 | Spark | 1 | Common | Deal 7 damage. Apply 1 Shock. |
 | Arc Surge | 1 | Common | Deal 6 damage. Draw 1. |
 | Chain Bolt | 2 | Common | Deal 10 damage. Apply 2 Shock. |
 | Static Field | 1 | Common | Gain 6 Block. On hit: apply 1 Shock to attacker. |
-| Overcharge | 0 | Uncommon | Discard 1 card. |
+| Overcharge | 0 | Uncommon | Gain 2 mana. Discard 1 card. |
 | Thunderstrike | 2 | Uncommon | Deal 18 damage. |
 | Storm Call | 3 | Rare | Deal 10 damage three times. |
 
@@ -118,7 +118,7 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 |---|---|---|---|
 | Shardsicle *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Freeze. |
 | Ice Cube *(S)* | 1 | Starter | Gain 8 Block. Apply 2 Freeze. |
-| Blizzard Strike *(S)* | 2 | Starter | Deal 5 damage. Apply 2 Freeze. Twice. |
+| Blizzard Strike *(S)* | 2 | Starter | Deal 5 damage and apply 2 Freeze. Twice. |
 | Frost Armor *(S)* | 2 | Starter | Gain 10 Block. Apply 3 Freeze. |
 | Absolute Zero *(S)* | 2 | Starter | Apply 3 Freeze. Fade. |
 | Chill | 0 | Common | Apply 1 Freeze. Gain 4 Block. |
@@ -138,9 +138,9 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
 | Shadow Strike *(S)* | 1 | Starter | Deal 5 damage. Lifesteal 2. |
-| Curse Touch *(S)* | 1 | Starter | Lifesteal 3. |
-| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 5. |
-| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 8. |
+| Curse Touch *(S)* | 1 | Starter | Lifesteal 4. |
+| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 8. |
+| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 12. |
 | Shadow Bolt | 1 | Common | Deal 9 damage. |
 | Shadow Step | 1 | Common | Gain 8 Block. |
 | Curse | 1 | Common | Lifesteal 6. |
@@ -153,7 +153,7 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 
 ## Light ☀️
 
-**Class status:** Blind — each stack gives 50% miss chance per attack, consuming 1 stack per attack hit or miss.
+**Class status:** Blind — a flat 50% miss chance on each enemy attack (does not scale with stacks), consuming 1 stack per attack whether it hits or misses.
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
@@ -214,6 +214,6 @@ All four universal starters are normal Neutral cards in the starting deck. They 
 
 **On-hit effects** (Flame Shield, Static Field, Thorn Armor): The reactive effect only triggers if the enemy's attack deals damage through your block. The effect is cleared at the start of your next turn.
 
-**Cleanse** (starter Purify): Removes Char, Freeze, Shock, Drown, Root, and Daze from the player. Does not remove Blind or Lifesteal.
+**Cleanse** (both Purify cards): Removes Char, Drown, Shock, Root, Freeze, Daze, and Weak from the player. Does **not** remove Blind or Lifesteal (despite the starter card text "Cleanse all debuffs").
 
 **Mana effects:** `gainMana` grants mana immediately. `gainManaNextTurn` queues bonus mana for the next player turn.

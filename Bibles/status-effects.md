@@ -15,7 +15,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Freeze | `#66ddff` | Skip | Ice | At 5+ stacks: skip action, consume all stacks |
 | Daze | `#cc9944` | Disruption | Rock | 50% chance enemy repeats previous action; decays -1/turn |
 | Blind | `#f2f2f2` | Miss | Light | 50% chance enemy attack misses entirely; decays -1/turn |
-| Weak | `#cc6666` | Debuff | Shadow/various | Reduces all damage dealt by 25%; decays -1/turn |
+| Weak | `#cc6666` | Debuff | Enemy intents | Reduces all damage dealt by 25% (flat, any stack); decays -1/turn |
 | Strength | `#d4af37` | Buff | Enemy buffs | Adds flat bonus to all attacks |
 | Lifesteal | `#cc66ff` | Drain | Shadow | After enemy acts: drains HP from enemy, heals player |
 
@@ -73,18 +73,18 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 ### Blind (Light) `#f2f2f2`
 - **Applied by:** Light spells (e.g. Radiant Bolt)
 - **Ticks:** Each enemy attack
-- **Effect:** 50% chance per Blind stack that the attack misses entirely (no damage)
-- **Decay:** -1 per turn
+- **Effect:** If the enemy has any Blind, a single 50% roll decides whether the attack misses entirely (no damage). The chance is flat 50% — it does **not** scale with stack count.
+- **Decay:** -1 per enemy attack (consumed whether the attack hits or misses), so N stacks covers the next N attacks
 - **Clears at:** 0 stacks
 - **Note:** Probabilistic — does not guarantee safety, but averages well over multiple attacks
 
 ### Weak `#cc6666`
-- **Applied by:** Multiple types (Shadow, Water, Rock)
+- **Applied by:** Enemy intents only (Shade Wraith, Tide Witch, Shadow Stalker, Abyssal Leviathan, Shadow Sovereign). No player spell currently applies Weak.
 - **Ticks:** Each turn
-- **Effect:** All damage dealt by the affected target is reduced by 25% (floor division)
+- **Effect:** All damage dealt by the affected target is multiplied by ×0.75 (floored). This is **flat** — any Weak stack applies the full ×0.75; it does not scale with stack count.
 - **Decay:** -1 per turn
 - **Clears at:** 0 stacks
-- **Note:** Neutral/shared status — crosses type boundaries
+- **Note:** Neutral/shared status — the stack count only controls how many turns it lasts, not the size of the reduction.
 
 ### Strength `#d4af37`
 - **Applied by:** Enemy buff intents; some player spells (Magma Form, Earthen Skin)
@@ -103,10 +103,10 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 
 ## Purify / Cleanse
 
-The spell *Purify* (Dawnmage) removes all negative status effects from the player:
-`Char, Freeze, Shock, Drown, Weak, Root, Daze, Blind, Lifesteal`
+The spell *Purify* (Dawnmage) cleanses this exact set of status effects from the player:
+`Char, Drown, Shock, Root, Freeze, Daze, Weak`
 
-Strength is **not** cleansed (it's a buff, not a debuff — and currently only appears on enemies).
+**Blind, Lifesteal, and Strength are NOT removed.** Despite the starter card reading "Cleanse all debuffs," the implementation (`CleansePlayer`) only clears the seven effects above. Strength is a buff that currently appears only on enemies; Blind and Lifesteal are simply outside the cleanse set.
 
 ---
 

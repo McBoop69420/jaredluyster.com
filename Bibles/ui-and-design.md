@@ -56,11 +56,10 @@ Each elemental type uses its transparent PNG sigil as its primary visual identif
 | Grass | `Assets/Resources/Sprites/TypeIcons/icon_grass.png` | 🌿 |
 | Neutral | none | ⬡ |
 
-**Map Node Icons:**
+**Map Node Icons** (emoji fallbacks; in-game nodes use PNG sprites from `Sprites/NodeIcons/`):
 | Node | Icon |
 |---|---|
-| Start | ⚑ |
-| Battle | ⚔ |
+| Combat | ⚔ |
 | Elite | 💀 |
 | Rest | 🔥 |
 | Shop | 💰 |
@@ -79,15 +78,20 @@ Each elemental type uses its transparent PNG sigil as its primary visual identif
 
 ## Map Node Colors
 
-| Node Type | Color | Hex |
+Node fills are near-black (so PNG icon backgrounds blend in); the **stroke/accent color** is the identifying color. Values below are converted from `Assets/Scripts/UI/MapNodeElement.cs`.
+
+| Node Type | Accent Color | Hex |
 |---|---|---|
-| Start | Green | `#19c37d` |
-| Battle | Red | `#cc3333` |
-| Elite | Dark red | `#aa2222` |
-| Rest | Orange | `#cc7722` |
-| Shop | Teal-green | `#22aa66` |
-| Event | Purple | `#7744aa` |
-| Boss | Bright red | `#ff2222` |
+| Combat | Red-orange | `#dc5a3c` |
+| Elite | Purple | `#aa50ff` |
+| Rest | Green | `#32c864` |
+| Shop | Gold | `#f0b932` |
+| Event | Blue | `#50a0f0` |
+| Boss | Bright red | `#e62828` |
+
+State strokes (applied over the type color): current = `#22dd66`, available = `#f0be63`, hover = `#ffd97a`.
+
+> There is no dedicated Start node type — floor 0 is a Combat node.
 
 ---
 

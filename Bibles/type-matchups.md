@@ -151,19 +151,19 @@ Each enemy's type determines what spell types hit it for 2× or 0.5×.
 | 🗿 Stone Guardian | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Grass | 🔥 Fire, ⚡ Arc, ☀️ Light |
 | 🧝 Thunder Mage | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
 | 💀 Frost Lich | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 🕷 Void Reaper | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
-| 🌳 Ancient Treant | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
-| ⚔️ Radiant Paladin | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
+| 🦇 Shadow Stalker | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
+| 🌳 Thornwood | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| ⚔️ Radiant Knight | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
 
 ### Bosses
 
 | Boss | Type | Weak to | Resists |
 |---|---|---|---|
-| 👁 Mysterious Stranger | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
+| 👁 The Drifter | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
 | 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Grass | 🔥 Fire, 🪨 Rock, ☀️ Light |
 | ⛰️ Mountain Titan | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Grass | 🔥 Fire, ⚡ Arc, ☀️ Light |
 | 🌩️ Storm Sovereign | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 🧊 Glacier Ancient | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 🧊 Glacial Mass | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
 | 🌑 Shadow Sovereign | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
 | ✨ Celestial Arbiter | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
 | 🌲 World Root | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
@@ -174,7 +174,7 @@ Each enemy's type determines what spell types hit it for 2× or 0.5×.
 
 Your class type determines your spell type. Bold = favorable (2×). Italic = unfavorable (0.5×).
 
-| Class | 👁 Stranger (🔥) | 🐉 Leviathan (🌊) | ⛰️ Titan (🪨) | 🌩️ Sovereign (⚡) | 🧊 Glacier (❄️) | 🌑 Shadow Sov (🌑) | ✨ Arbiter (☀️) | 🌲 World Root (🌿) |
+| Class | 👁 Drifter (🔥) | 🐉 Leviathan (🌊) | ⛰️ Titan (🪨) | 🌩️ Sovereign (⚡) | 🧊 Glacial Mass (❄️) | 🌑 Shadow Sov (🌑) | ✨ Arbiter (☀️) | 🌲 World Root (🌿) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 🔥 Pyromancer | 1× | *0.5×* | *0.5×* | *0.5×* | **2×** | **2×** | 1× | **2×** |
 | 🌊 Tidecaller | **2×** | 1× | **2×** | *0.5×* | 1× | *0.5×* | **2×** | *0.5×* |

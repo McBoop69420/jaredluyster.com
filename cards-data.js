@@ -31,7 +31,7 @@ const CARD_REFERENCE = [
                 "name": "Flame Burst",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Deal 5 damage. Apply 2 Char. Twice.",
+                "effects": "Deal 5 damage and apply 2 Char. Twice.",
                 "starter": true
             },
             {
@@ -117,7 +117,7 @@ const CARD_REFERENCE = [
                 "name": "Riptide",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Deal 4 damage. Apply 2 Drown.",
+                "effects": "Deal 4 damage. Apply 2 Drown. +1 mana next turn.",
                 "starter": true
             },
             {
@@ -142,7 +142,7 @@ const CARD_REFERENCE = [
                 "name": "Tidal Flow",
                 "cost": 2,
                 "rarity": "Common",
-                "effects": "Deal 4 damage. Draw 1."
+                "effects": "Deal 4 damage. Draw 1. +1 mana next turn."
             },
             {
                 "name": "Tidal Wave",
@@ -154,7 +154,7 @@ const CARD_REFERENCE = [
                 "name": "Mana Spring",
                 "cost": 0,
                 "rarity": "Uncommon",
-                "effects": "Draw 1."
+                "effects": "Gain 1 mana. Draw 1."
             },
             {
                 "name": "Whirlpool",
@@ -274,14 +274,14 @@ const CARD_REFERENCE = [
                 "name": "Chain Lightning",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Deal 4 damage three times. Apply 2 Shock.",
+                "effects": "Deal 4 damage and apply 2 Shock. Three times.",
                 "starter": true
             },
             {
                 "name": "Surge Engine",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Apply 3 Shock.",
+                "effects": "Apply 3 Shock. +2 mana next turn.",
                 "starter": true
             },
             {
@@ -312,7 +312,7 @@ const CARD_REFERENCE = [
                 "name": "Overcharge",
                 "cost": 0,
                 "rarity": "Uncommon",
-                "effects": "Discard 1 card."
+                "effects": "Gain 2 mana. Discard 1 card."
             },
             {
                 "name": "Thunderstrike",
@@ -361,7 +361,7 @@ const CARD_REFERENCE = [
                 "name": "Blizzard Strike",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Deal 5 damage. Apply 2 Freeze. Twice.",
+                "effects": "Deal 5 damage and apply 2 Freeze. Twice.",
                 "starter": true
             },
             {
@@ -426,7 +426,7 @@ const CARD_REFERENCE = [
                 "name": "Curse Touch",
                 "cost": 1,
                 "rarity": "Starter",
-                "effects": "Lifesteal 3.",
+                "effects": "Lifesteal 4.",
                 "starter": true
             },
             {
@@ -440,14 +440,14 @@ const CARD_REFERENCE = [
                 "name": "Shadow Pact",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Lose 6 HP. Lifesteal 8.",
+                "effects": "Lose 6 HP. Lifesteal 12.",
                 "starter": true
             },
             {
                 "name": "Soul Drain",
                 "cost": 2,
                 "rarity": "Starter",
-                "effects": "Deal 8 damage. Lifesteal 5.",
+                "effects": "Deal 8 damage. Lifesteal 8.",
                 "starter": true
             },
             {

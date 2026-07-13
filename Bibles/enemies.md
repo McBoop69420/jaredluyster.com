@@ -4,9 +4,9 @@ Enemies cycle through their intent pattern in order, repeating from the start wh
 
 ---
 
-## Common Enemies (Floors 1–4, 6–9, 11–14)
+## Common Enemies (Combat nodes — floors 0–3, 5, 10)
 
-One per type. Found at Battle nodes.
+One per type. Found at Combat (Battle) nodes.
 
 | ID | Name | Type | HP | Icon | Pattern |
 |---|---|---|---|---|---|
@@ -22,9 +22,9 @@ One per type. Found at Battle nodes.
 
 ---
 
-## Elite Enemies (Floors 6–9, 11–14)
+## Elite Enemies (Floors 6, 7, 8, 11)
 
-Found at Elite nodes. +15 gold reward over common.
+Found at Elite nodes (fixed floors). +15 gold reward over common.
 
 | ID | Name | Type | HP | Icon | Pattern |
 |---|---|---|---|---|---|
@@ -32,12 +32,10 @@ Found at Elite nodes. +15 gold reward over common.
 | tide_witch | Tide Witch | Water | 50–65 | 🧙 | Defend 12 → Attack 14 → Apply 3 Weak → Attack 18 |
 | stone_guardian | Stone Guardian | Rock | 70–85 | 🗿 | Defend 16 → Attack 16 → Defend 12 → Attack 20 |
 | thunder_mage | Thunder Mage | Arc | 48–62 | 🧝 | Attack 12 → Apply 3 Shock → Attack 18 → Buff +2 Strength |
-| frost_lich | Frost Lich | Ice | 52–68 | 💀 | Apply 2 Freeze → Attack (varies) → ... |
-| shadow_stalker | Shadow Stalker | Shadow | 45–60 | 🦇 | (see data file) |
-| radiant_knight | Radiant Knight | Light | 55–70 | ⚔️ | (see data file) |
-| thornwood | Thornwood | Grass | 50–65 | 🌳 | (see data file) |
-
-> Note: Frost Lich and later elite patterns — see `js/data/enemies.js` for full pattern arrays.
+| frost_lich | Frost Lich | Ice | 52–68 | 💀 | Apply 2 Freeze → Attack 12 → Apply 3 Freeze → Attack 16 → Defend 8 |
+| shadow_stalker | Shadow Stalker | Shadow | 45–60 | 🦇 | Attack 10 → Apply 3 Weak → Attack 14 → Buff +2 Strength |
+| radiant_knight | Radiant Knight | Light | 55–70 | ⚔️ | Defend 14 → Attack 12 → Apply 3 Blind → Attack 16 → Defend 10 |
+| thornwood | Thornwood | Grass | 50–65 | 🌳 | Apply 3 Root → Attack 8 → Apply 4 Root → Attack 12 → Defend 10 |
 
 ---
 
@@ -60,7 +58,7 @@ One boss is randomly chosen per run. Fixed HP (no variance). All bosses have 5-i
 
 ## Boss Strategy Notes
 
-**Mysterious Stranger (Fire):** Third intent applies 4 Char — plan block or Purify before intent 3. Strength buff happens on turn 2, so big hits come after that.
+**The Drifter (Fire):** Third intent applies 4 Char — plan block or Purify before intent 3. Strength buff happens on turn 2, so big hits come after that.
 
 **Abyssal Leviathan (Water):** Heavy on Weak — all your damage is cut 25%. Attack 28 on intent 5 is dangerous; burn it down before that if possible.
 
@@ -68,7 +66,7 @@ One boss is randomly chosen per run. Fixed HP (no variance). All bosses have 5-i
 
 **Storm Sovereign (Arc):** Buffs Strength early (intent 2), then hits with 30 damage on intent 5 with Shock. Don't let Shock stack on you.
 
-**Glacier Ancient (Ice):** Opens with 3 Freeze — if you're Frostweaver vs this boss, their Freeze goes on *you*. Intent 5 adds 4 more Freeze stacks.
+**Glacial Mass (Ice):** Opens with 3 Freeze — if you're Frostweaver vs this boss, their Freeze goes on *you*. Intent 5 adds 4 more Freeze stacks.
 
 **Shadow Sovereign (Shadow):** Applies 4 Weak in turn 1 — Dawnmage's Purify is extremely valuable here. Hits 28 on last intent after buffing Strength.
 
