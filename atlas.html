@@ -271,10 +271,16 @@
         }
 
         /* Tables */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 0 0 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .md table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0 0 20px;
+            margin: 0;
             font-size: 0.9rem;
         }
 
@@ -451,6 +457,70 @@
             to   { transform: rotate(360deg); }
         }
 
+        /* ── Term entry cards (classes, status effects, decks, type matchups) ── */
+        .term-entry {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 0 0 18px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .term-entry h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 10px;
+        }
+
+        .term-entry .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .term-entry .tag {
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 3px 10px;
+        }
+
+        .term-entry .quote {
+            font-style: italic;
+            color: var(--muted);
+            margin: 0 0 12px;
+        }
+
+        .term-entry .matchup-line {
+            margin: 12px 0 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .term-meta {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .type-icon-sm {
+            width: 1.1em;
+            height: 1.1em;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
         /* Empty / loading state */
         .empty-state {
             display: flex;
@@ -549,6 +619,314 @@
         { label: 'Logo Palette', type: 'iframe', src: 'logo-palette.html' },
     ];
 
+    /* ── Type / status metadata — verified against Bibles/ui-and-design.md, */
+    /* status-effects.md, and type-matchups.md; keep in sync if those change ── */
+    const TYPE_META = {
+        Fire:   { hex: '#ff4422', icon: 'TypeIcons/icon_fire.png',   status: 'Char',      className: 'Pyromancer',   strong: ['Grass','Ice','Shadow'],  weak: ['Water','Arc','Rock'],    neutral: 'Light'  },
+        Water:  { hex: '#2277ff', icon: 'TypeIcons/icon_water.png',  status: 'Drown',     className: 'Tidecaller',   strong: ['Fire','Rock','Light'],   weak: ['Arc','Grass','Shadow'],  neutral: 'Ice'    },
+        Rock:   { hex: '#a87832', icon: 'TypeIcons/icon_rock.png',   status: 'Daze',      className: 'Stonewarden',  strong: ['Fire','Arc','Light'],    weak: ['Water','Grass','Ice'],   neutral: 'Shadow' },
+        Arc:    { hex: '#f97316', icon: 'TypeIcons/icon_arc.png',    status: 'Shock',     className: 'Stormseeker',  strong: ['Water','Fire','Shadow'], weak: ['Rock','Light','Ice'],    neutral: 'Grass'  },
+        Ice:    { hex: '#88ddff', icon: 'TypeIcons/icon_ice.png',    status: 'Freeze',    className: 'Frostweaver',  strong: ['Rock','Arc','Shadow'],   weak: ['Fire','Grass','Light'],  neutral: 'Water'  },
+        Shadow: { hex: '#bb33ee', icon: 'TypeIcons/icon_shadow.png', status: 'Lifesteal', className: 'Shadowblade',  strong: ['Water','Grass','Light'], weak: ['Fire','Arc','Ice'],      neutral: 'Rock'   },
+        Light:  { hex: '#facc15', icon: 'TypeIcons/icon_light.png',  status: 'Blind',     className: 'Dawnmage',     strong: ['Grass','Arc','Ice'],     weak: ['Water','Rock','Shadow'], neutral: 'Fire'   },
+        Grass:  { hex: '#22c55e', icon: 'TypeIcons/icon_grass.png',  status: 'Root',      className: 'Verdantmaker', strong: ['Water','Ice','Rock'],    weak: ['Fire','Light','Shadow'], neutral: 'Arc'    },
+    };
+
+    const STATUS_META = {
+        Char:      { hex: '#ff6633', category: 'DoT' },
+        Drown:     { hex: '#4488ff', category: 'DoT' },
+        Shock:     { hex: '#ffdd00', category: 'Amplifier' },
+        Root:      { hex: '#44cc66', category: 'Trap' },
+        Freeze:    { hex: '#66ddff', category: 'Skip' },
+        Daze:      { hex: '#cc9944', category: 'Disruption' },
+        Blind:     { hex: '#f2f2f2', category: 'Miss' },
+        Weak:      { hex: '#cc6666', category: 'Debuff' },
+        Strength:  { hex: '#d4af37', category: 'Buff' },
+        Lifesteal: { hex: '#cc66ff', category: 'Drain' },
+    };
+
+    function slugify(text) {
+        return text.toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    function stripEmoji(text) {
+        return text
+            .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')
+            .replace(/[\u{FE0F}\u{200D}]/gu, '') // variation selectors / zero-width joiners left behind
+            .trim();
+    }
+
+    function typeIconImg(typeName) {
+        const t = TYPE_META[typeName];
+        return t ? `<img class="type-icon-sm" src="${t.icon}" alt="${typeName}">` : '';
+    }
+
+    function splitByH2(text) {
+        const parts = text.split(/^(?=## (?!#))/m);
+        return parts.map(part => {
+            if (part.startsWith('## ')) {
+                const nl = part.indexOf('\n');
+                return {
+                    heading: nl < 0 ? part.slice(3).trim() : part.slice(3, nl).trim(),
+                    content: nl < 0 ? '' : part.slice(nl + 1).trim(),
+                };
+            }
+            return { heading: null, content: part.replace(/^# .+\n?/m, '').trim() };
+        }).filter(s => s.heading !== null || s.content);
+    }
+
+    function splitByH3(text) {
+        const parts = text.split(/^(?=### (?!#))/m);
+        return parts.map(part => {
+            if (part.startsWith('### ')) {
+                const nl = part.indexOf('\n');
+                return {
+                    heading: nl < 0 ? part.slice(4).trim() : part.slice(4, nl).trim(),
+                    content: nl < 0 ? '' : part.slice(nl + 1).trim(),
+                };
+            }
+            return { heading: null, content: part.trim() };
+        }).filter(s => s.heading !== null || s.content);
+    }
+
+    // Strip the leading ID column from enemy tables (implementation detail, not player-facing)
+    function dropIdColumn(text) {
+        return text.split('\n').map(line => {
+            if (!line.trim().startsWith('|')) return line;
+            const parts = line.split('|');
+            if (parts.length >= 4) parts.splice(1, 1);
+            return parts.join('|');
+        }).join('\n');
+    }
+
+    function wrapTables(root) {
+        root.querySelectorAll('table').forEach(table => {
+            if (table.parentElement.classList.contains('table-wrap')) return;
+            const wrap = document.createElement('div');
+            wrap.className = 'table-wrap';
+            table.parentNode.insertBefore(wrap, table);
+            wrap.appendChild(table);
+        });
+    }
+
+    /* ── Section-aware renderers — give the most player-relevant bibles ── */
+    /* (spells, classes, status effects, decks, enemies, type matchups,   */
+    /* lore) dedicated card/anchor treatment. Everything else falls back */
+    /* to renderGeneric, which just wraps each H2 section in an id'd div. */
+
+    function renderGeneric(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const id = slugify(sec.heading);
+            const bodyMd = sec.content.replace(/^### /gm, '#### ');
+            html += `<div id="${id}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+        }
+        return html;
+    }
+
+    function renderSpells(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading.includes('Spell Tiers')) {
+                html += `<div id="spell-tiers"><h3>${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            if (/neutral|universal/i.test(sec.heading)) {
+                html += `<div id="spells-neutral"><h3>⬡ ${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            const typeName = stripEmoji(sec.heading);
+            const type = TYPE_META[typeName];
+            if (type) {
+                html += `<div id="spells-${typeName.toLowerCase()}">
+                    <h3 style="color:${type.hex}">${typeIconImg(typeName)} ${typeName}</h3>
+                    ${marked.parse(sec.content)}
+                </div>`;
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderClasses(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Class Roster') { html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Class Profiles') {
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const className = entry.heading.trim();
+                    const typeKey = Object.keys(TYPE_META).find(k => TYPE_META[k].className === className);
+                    const type = typeKey ? TYPE_META[typeKey] : null;
+                    if (!type) { html += `<div><h3>${className}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    const lines = entry.content.split('\n');
+                    const quoteMatch = (lines[0] || '').match(/\*"([^"]+)"\*/);
+                    const quote = quoteMatch ? quoteMatch[1] : '';
+                    const body = lines.slice(1).join('\n').trim();
+                    html += `<div id="class-${className.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                        <h3 style="color:${type.hex}">${typeIconImg(typeKey)} ${className}</h3>
+                        <div class="meta"><span class="tag">Type: ${typeKey}</span><span class="tag">HP: 70</span><span class="tag">Status: ${type.status}</span></div>
+                        ${quote ? `<p class="quote">&ldquo;${quote}&rdquo;</p>` : ''}
+                        ${marked.parse(body)}
+                        <p class="matchup-line"><strong>Strong vs:</strong> ${type.strong.join(', ')} (2&times;) &nbsp;|&nbsp; <strong>Weak vs:</strong> ${type.weak.join(', ')} (0.5&times;)</p>
+                    </div>`;
+                }
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderStatusEffects(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Quick Reference') { html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`; continue; }
+            if (sec.heading === 'Detailed Mechanics') {
+                html += '<h3>Detailed Mechanics</h3>';
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const nameMatch = entry.heading.match(/^(\w+)/);
+                    const statusName = nameMatch ? nameMatch[1] : null;
+                    const status = statusName ? STATUS_META[statusName] : null;
+                    if (!status) { html += `<div><h3>${entry.heading}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    const typeMatch = entry.heading.match(/\(([^)]+)\)/);
+                    const typeName = typeMatch ? typeMatch[1] : 'Neutral';
+                    html += `<div id="status-${statusName.toLowerCase()}" class="term-entry" style="border-color:${status.hex}">
+                        <h3 style="color:${status.hex}">${statusName} <span class="term-meta">${status.hex} &middot; ${typeName} &middot; ${status.category}</span></h3>
+                        ${marked.parse(entry.content)}
+                    </div>`;
+                }
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderStartingDecks(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (/universal/i.test(sec.heading)) {
+                html += `<div id="deck-universal"><h3>${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            const className = stripEmoji(sec.heading).trim();
+            const typeKey = Object.keys(TYPE_META).find(k => TYPE_META[k].className === className);
+            const type = typeKey ? TYPE_META[typeKey] : null;
+            if (type) {
+                html += `<div id="deck-${className.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                    <h3 style="color:${type.hex}">${typeIconImg(typeKey)} ${className} Starting Deck</h3>
+                    ${marked.parse(sec.content)}
+                </div>`;
+            } else {
+                html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+            }
+        }
+        return html;
+    }
+
+    function renderEnemies(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        const TIER_ID = { Common: 'enemies-common', Elite: 'enemies-elite', Boss: 'enemies-boss' };
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const tierKey = Object.keys(TIER_ID).find(k => new RegExp('^' + k + ' Enemies').test(sec.heading));
+            if (tierKey) {
+                const cleaned = dropIdColumn(sec.content);
+                html += `<div id="${TIER_ID[tierKey]}"><h3>${sec.heading}</h3>${marked.parse(cleaned)}</div>`;
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderTypeMatchups(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Per-Type Breakdown') {
+                html += `<h3>${sec.heading}</h3>`;
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const typeName = stripEmoji(entry.heading);
+                    const type = TYPE_META[typeName];
+                    if (!type) { html += `<div><h3>${entry.heading}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    html += `<div id="matchup-${typeName.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                        <h3 style="color:${type.hex}">${typeIconImg(typeName)} ${typeName}</h3>
+                        ${marked.parse(entry.content)}
+                    </div>`;
+                }
+                continue;
+            }
+            const id = slugify(sec.heading);
+            const bodyMd = sec.content.replace(/^### /gm, '#### ');
+            html += `<div id="${id}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+        }
+        return html;
+    }
+
+    function renderLore(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const sectionId = slugify(sec.heading);
+            if (sec.heading === 'Lore Checklist') {
+                let inner = '';
+                for (const sub of splitByH3(sec.content)) {
+                    if (!sub.heading) { if (sub.content) inner += marked.parse(sub.content); continue; }
+                    inner += `<div id="lore-${slugify(sub.heading)}"><h4>${sub.heading}</h4>${marked.parse(sub.content)}</div>`;
+                }
+                html += `<div id="${sectionId}"><h3>${sec.heading}</h3>${inner}</div>`;
+            } else {
+                const bodyMd = sec.content.replace(/^### /gm, '#### ');
+                html += `<div id="${sectionId}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+            }
+        }
+        return html;
+    }
+
+    const SECTION_RENDERERS = {
+        'spells':          renderSpells,
+        'classes':         renderClasses,
+        'status-effects':  renderStatusEffects,
+        'starting-decks':  renderStartingDecks,
+        'enemies':         renderEnemies,
+        'type-matchups':   renderTypeMatchups,
+        'world-and-lore':  renderLore,
+    };
+
+    function renderBible(content, sectionId) {
+        const renderer = SECTION_RENDERERS[sectionId];
+        try {
+            return renderer ? renderer(content) : renderGeneric(content);
+        } catch (err) {
+            console.error(`[wiki] render error for "${sectionId}":`, err);
+            return `<div class="callout"><strong>Render error:</strong> ${err.message}</div>${marked.parse(content)}`;
+        }
+    }
+
     const fileList     = document.getElementById('fileList');
     const mdContent    = document.getElementById('mdContent');
     const contentTitle = document.getElementById('contentTitle');
@@ -641,14 +1019,16 @@
         try {
             if (isRefresh) delete fileCache[activeFile];
             const text = await fetchFile(activeFile);
-            mdContent.innerHTML = tagify(marked.parse(text));
+            const sectionId = activeFile.replace(/\.md$/, '');
+            mdContent.innerHTML = tagify(renderBible(text, sectionId));
             colorizeHexCodes(mdContent);
+            wrapTables(mdContent);
             if (highlightQuery) {
                 highlightMatches(mdContent, highlightQuery);
                 scrollToFirstHit();
             }
         } catch (e) {
-            mdContent.innerHTML = `<p style="color:var(--ember)">Failed to load ${activeFile}</p>`;
+            mdContent.innerHTML = `<p style="color:var(--wiki-ember)">Failed to load ${activeFile}</p>`;
         }
     }
 
