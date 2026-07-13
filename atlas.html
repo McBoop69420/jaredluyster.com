@@ -3,26 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas</title>
+    <meta name="description" content="Wizard Battle design wiki — full game bibles covering mechanics, spells, classes, enemies, and lore.">
+    <title>Wizard Battle — Wiki</title>
     <link rel="stylesheet" href="shared-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="tagify.js"></script>
     <style>
+        :root {
+            --wiki-gold:  #d4af37;
+            --wiki-sky:   #88ddff;
+            --wiki-moss:  #22c55e;
+            --wiki-plum:  #bb33ee;
+            --wiki-ember: #ff4422;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
         body {
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            height: 100vh;
+        }
+
+        .topbar {
+            flex-shrink: 0;
         }
 
         .layout {
             display: grid;
             grid-template-columns: 220px 1fr;
-            height: 100vh;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        @media (max-width: 720px) {
+            .layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 40vh;
+            }
         }
 
         /* ── Sidebar ── */
         .sidebar {
-            border-right: 1px solid var(--line);
-            background: var(--bg-deep);
+            border-right: 1px solid var(--border);
+            background: var(--bg);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -30,7 +62,7 @@
 
         .sidebar-header {
             padding: 20px 16px 14px;
-            border-bottom: 1px solid var(--line);
+            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
 
@@ -39,7 +71,7 @@
             font-size: 0.7rem;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: var(--gold);
+            color: var(--wiki-gold);
         }
 
         .sidebar-header span {
@@ -72,13 +104,13 @@
         }
 
         .file-list li button:hover {
-            color: var(--ink);
+            color: var(--text);
             background: rgba(255, 236, 209, 0.04);
         }
 
         .file-list li button.active {
-            color: var(--gold);
-            border-left-color: var(--gold);
+            color: var(--wiki-gold);
+            border-left-color: var(--wiki-gold);
             background: rgba(240, 190, 99, 0.06);
         }
 
@@ -91,7 +123,7 @@
 
         .content-header {
             padding: 16px 32px;
-            border-bottom: 1px solid var(--line);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -106,7 +138,7 @@
             font-weight: 600;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--ink);
+            color: var(--text);
         }
 
         .content-header .filepath {
@@ -139,26 +171,26 @@
         /* ── Markdown rendering ── */
         .md h1, .md h2, .md h3 {
             font-family: Georgia, "Times New Roman", serif;
-            color: var(--ink);
+            color: var(--text);
         }
 
         .md h1 {
             font-size: 2rem;
             margin: 0 0 24px;
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--line-strong);
+            border-bottom: 1px solid var(--border-strong);
         }
 
         .md h2 {
             font-size: 1.3rem;
             margin: 36px 0 12px;
-            color: var(--gold);
+            color: var(--wiki-gold);
         }
 
         .md h3 {
             font-size: 1.05rem;
             margin: 24px 0 8px;
-            color: var(--sky);
+            color: var(--wiki-sky);
             font-family: inherit;
             font-weight: 700;
             letter-spacing: 0.04em;
@@ -172,7 +204,7 @@
         }
 
         .md strong {
-            color: var(--ink);
+            color: var(--text);
         }
 
         .md em {
@@ -181,7 +213,7 @@
 
         .md hr {
             border: none;
-            border-top: 1px solid var(--line);
+            border-top: 1px solid var(--border);
             margin: 28px 0;
         }
 
@@ -200,15 +232,15 @@
             font-family: "SF Mono", "Fira Code", monospace;
             font-size: 0.85em;
             background: rgba(255, 255, 255, 0.07);
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 1px 6px;
-            color: var(--sky);
+            color: var(--wiki-sky);
         }
 
         .md pre {
             background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             border-radius: 10px;
             padding: 18px 20px;
             overflow-x: auto;
@@ -219,7 +251,7 @@
             background: none;
             border: none;
             padding: 0;
-            color: var(--moss);
+            color: var(--wiki-moss);
             font-size: 0.88rem;
             line-height: 1.6;
         }
@@ -227,7 +259,7 @@
         .md blockquote {
             margin: 0 0 16px;
             padding: 10px 16px;
-            border-left: 3px solid var(--plum);
+            border-left: 3px solid var(--wiki-plum);
             background: rgba(164, 123, 255, 0.06);
             border-radius: 0 6px 6px 0;
         }
@@ -247,13 +279,13 @@
         }
 
         .md thead tr {
-            border-bottom: 2px solid var(--line-strong);
+            border-bottom: 2px solid var(--border-strong);
         }
 
         .md th {
             text-align: left;
             padding: 8px 12px;
-            color: var(--gold);
+            color: var(--wiki-gold);
             font-size: 0.78rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -263,13 +295,13 @@
         .md td {
             padding: 8px 12px;
             color: var(--muted);
-            border-bottom: 1px solid var(--line);
+            border-bottom: 1px solid var(--border);
             vertical-align: top;
             line-height: 1.5;
         }
 
         .md td strong {
-            color: var(--ink);
+            color: var(--text);
         }
 
         .md td code {
@@ -294,11 +326,11 @@
             width: 100%;
             box-sizing: border-box;
             background: rgba(255,255,255,0.05);
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 7px 10px;
             font-size: 0.82rem;
-            color: var(--ink);
+            color: var(--text);
             outline: none;
             transition: border-color 120ms, background 120ms;
             font-family: inherit;
@@ -310,7 +342,7 @@
         }
 
         .search-input:focus {
-            border-color: var(--gold);
+            border-color: var(--wiki-gold);
             background: rgba(240,190,99,0.04);
         }
 
@@ -331,12 +363,12 @@
 
         .search-results .result-item:hover {
             background: rgba(255,236,209,0.04);
-            border-left-color: var(--gold);
+            border-left-color: var(--wiki-gold);
         }
 
         .result-label {
             font-size: 0.72rem;
-            color: var(--gold);
+            color: var(--wiki-gold);
             letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-bottom: 2px;
@@ -353,7 +385,7 @@
 
         .result-snippet mark {
             background: rgba(240,190,99,0.3);
-            color: var(--gold);
+            color: var(--wiki-gold);
             border-radius: 2px;
             padding: 0 1px;
         }
@@ -382,7 +414,7 @@
         /* ── Refresh button ── */
         .refresh-btn {
             background: none;
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             border-radius: 6px;
             color: var(--muted);
             cursor: pointer;
@@ -397,8 +429,8 @@
         }
 
         .refresh-btn:hover {
-            color: var(--ink);
-            border-color: var(--gold);
+            color: var(--text);
+            border-color: var(--wiki-gold);
             background: rgba(240, 190, 99, 0.06);
         }
 
@@ -442,11 +474,31 @@
 </head>
 <body>
 
+<header class="topbar">
+    <div class="shell topbar-inner">
+        <a class="brand" href="wizard-battle.html">
+            <img class="brand-mark" src="wizard-battle-logo.svg" alt="Wizard Battle logo">
+            <div class="brand-copy">
+                <strong>Wizard Battle</strong>
+                <span>Roguelike Deckbuilder</span>
+            </div>
+        </a>
+        <nav class="nav" id="main-nav">
+            <a href="wizard-battle.html">Home</a>
+            <a href="keywords.html">Keywords</a>
+            <a href="type-chart.html">Type Chart</a>
+            <a href="cards.html">Cards</a>
+            <a href="download.html">Download</a>
+            <a class="active" href="atlas.html">Wiki</a>
+        </nav>
+    </div>
+</header>
+
 <div class="layout">
     <aside class="sidebar">
         <div class="sidebar-header">
             <strong>Wizard Battle</strong>
-            <span>Design Bibles</span>
+            <span>Wiki</span>
         </div>
         <div class="search-wrap">
             <input class="search-input" id="searchInput" type="search" placeholder="Search all bibles… (/)">
@@ -481,20 +533,19 @@
 
 <script>
     const FILES = [
-        { label: 'Classes & Starting Decks', file: 'classes.md' },
+        { label: 'Overview', file: 'README.md' },
+        { label: 'World & Lore', file: 'world-and-lore.md' },
+        { label: 'Game Systems', file: 'game-systems.md' },
+        { label: 'Status Effects', file: 'status-effects.md' },
+        { label: 'Classes', file: 'classes.md' },
         { label: 'Starting Decks', file: 'starting-decks.md' },
         { label: 'Spells', file: 'spells.md' },
-        { label: 'Enemies', file: 'enemies.md' },
-        { label: 'Status Effects', file: 'status-effects.md' },
-        { label: 'Type Matchups', file: 'type-matchups.md' },
         { label: 'Card Mechanics', file: 'card-mechanics.md' },
-        { label: 'Game Systems', file: 'game-systems.md' },
+        { label: 'Enemies', file: 'enemies.md' },
         { label: 'Map & Progression', file: 'map-and-progression.md' },
-        { label: 'World & Lore', file: 'world-and-lore.md' },
+        { label: 'Type Matchups', file: 'type-matchups.md' },
         { label: 'UI & Design', file: 'ui-and-design.md' },
         { label: 'HTML Styling Guide', file: 'HTML_STYLING_GUIDE.md' },
-        { label: 'Design Notes', file: 'design-notes.md' },
-        { label: 'Todo', file: 'todo.md' },
         { label: 'Logo Palette', type: 'iframe', src: 'logo-palette.html' },
     ];
 
@@ -531,6 +582,21 @@
         li.appendChild(btn);
         fileList.appendChild(li);
         if (entry.file) fileBtns[entry.file] = btn;
+    });
+
+    // Intercept clicks on links to other bibles so they open in-app instead of navigating away
+    mdContent.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        if (!href.endsWith('.md')) return;
+        const targetFile = href.split('/').pop();
+        const entry = FILES.find(f => f.file === targetFile);
+        const btn   = fileBtns[targetFile];
+        if (!entry || !btn) return;
+        e.preventDefault();
+        clearSearch(true);
+        loadFile(targetFile, entry.label, btn);
     });
 
     async function fetchFile(file) {
