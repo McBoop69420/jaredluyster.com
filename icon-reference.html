@@ -20,7 +20,12 @@
     font-family: 'Inter', system-ui, sans-serif; }
   .wrap { max-width: 1320px; margin: 0 auto; padding: 72px 48px 120px; }
 
-  header { border-bottom: 1px solid rgba(201,176,107,0.2); padding-bottom: 36px; margin-bottom: 12px; }
+  .logos { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+    gap: 48px; padding: 12px 0 44px; border-bottom: 1px solid rgba(201,176,107,0.2); margin-bottom: 12px; }
+  .logos img { display: block; }
+  .logos .sigil { width: 150px; height: 150px; }
+  .logos .hori  { width: 360px; height: auto; }
+  .logos .vert  { width: 130px; height: auto; }
   .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.28em;
     text-transform: uppercase; color: var(--rune); margin-bottom: 20px; }
   h1 { font-family: 'Cinzel', serif; font-size: 52px; letter-spacing: 0.05em; text-transform: uppercase;
@@ -109,6 +114,11 @@
 </head>
 <body data-screen-label="Wizard Battle Icon Reference">
 <div class="wrap">
+  <div class="logos">
+    <img class="sigil" src="master-sigil.svg" alt="Master Sigil" />
+    <img class="hori"  src="wordmark-horizontal.svg" alt="Wizard Battle — horizontal lockup" />
+    <img class="vert"  src="wordmark-vertical.svg" alt="Wizard Battle — vertical lockup" />
+  </div>
   <div id="root"></div>
 
   <footer>
@@ -176,8 +186,6 @@
             {CLASSES.map(c => (
               <div className="cell" key={c.id}>
                 <Emblem id={c.id} />
-                <img className="sprite" src={"TypeIcons/icon_" + c.element.toLowerCase() + ".png"}
-                  alt={c.element + " sprite"} title={c.element + " sprite"} />
                 <div className="nm" style={{ color: c.color }}>{c.name}</div>
                 <div className="el">{c.element}</div>
                 <div className="role">{c.role}</div>
