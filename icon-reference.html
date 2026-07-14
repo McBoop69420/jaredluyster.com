@@ -62,9 +62,6 @@
   .vrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
   .vicon { width: 56px; height: 56px; }
 
-  .egrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
-  .egrid .icon { border-radius: 50%; }
-
   .sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
   .sgrid .icon { width: 84px; height: 84px; }
   .sgrid .nm { font-size: 13px; }
@@ -120,7 +117,7 @@
 
   <footer>
     <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), master sigil (<code>crest.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
-    <div><b>Schools</b> — Fire · Water · Rock · Arc · Ice · Shadow · Light · Grass. <b>Status</b> — Char · Drown · Shock · Root · Freeze · Daze · Blind · Weak · Strength · Lifesteal.</div>
+    <div><b>Status</b> — Char · Drown · Shock · Root · Freeze · Daze · Blind · Weak · Strength · Lifesteal.</div>
     <div><b>Nodes</b> — Duel · Elite · Boss · Rest · Shop · Treasure · Mystery × Locked · Available · Active · Cleared.</div>
   </footer>
 </div>
@@ -136,17 +133,6 @@
 
 <script type="text/babel">
   const { useState } = React;
-
-  const ELEMENTS = [
-    { id:"fire",    name:"Fire",    color:"#ff4422", hex:"#FF4422" },
-    { id:"water",   name:"Water",   color:"#2277ff", hex:"#2277FF" },
-    { id:"rock",    name:"Rock",    color:"#a87832", hex:"#A87832" },
-    { id:"arc",     name:"Arc",     color:"#f97316", hex:"#F97316" },
-    { id:"ice",     name:"Ice",     color:"#88ddff", hex:"#88DDFF" },
-    { id:"shadow",  name:"Shadow",  color:"#bb33ee", hex:"#BB33EE" },
-    { id:"light",   name:"Light",   color:"#facc15", hex:"#FACC15" },
-    { id:"grass",   name:"Grass",   color:"#22c55e", hex:"#22C55E" },
-  ];
 
   const STATUS = [
     { name:"Char",      color:"#ff6633", hex:"#FF6633", type:"DoT",       mech:"Fire. Damage = stacks each turn; decays −1." },
@@ -197,21 +183,6 @@
               <div className="vcol" key={style}>
                 <div className="vlabel">{style}</div>
                 <div className="vrow">{CLASSES.map(c => <Variant key={c.id} style={style} id={c.id} />)}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <div className="shead"><h2>Schools of Magic</h2><div className="meta">8 elements · canonical colors</div></div>
-          <div className="egrid">
-            {ELEMENTS.map(e => (
-              <div className="cell" key={e.id}>
-                <div className="icon" style={{ background:`radial-gradient(circle at 50% 42%, ${e.color}22, #06070e 72%)`, border:`1px solid ${e.color}55`, boxShadow:`0 0 14px ${e.color}44`, borderRadius:"50%", display:"grid", placeItems:"center" }}>
-                  <GlyphTile kind="element" id={e.id} size={72} />
-                </div>
-                <div className="nm" style={{ color: e.color }}>{e.name}</div>
-                <div className="el">{e.hex}</div>
               </div>
             ))}
           </div>
