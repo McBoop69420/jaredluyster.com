@@ -551,10 +551,6 @@
         </a>
         <nav class="nav" id="main-nav">
             <a href="index.html">Home</a>
-            <a href="keywords.html">Keywords</a>
-            <a href="type-chart.html">Type Chart</a>
-            <a href="cards.html">Cards</a>
-            <a href="download.html">Download</a>
             <a class="active" href="atlas.html">Wiki</a>
         </nav>
     </div>
@@ -614,19 +610,23 @@
         { label: 'HTML Styling Guide', file: 'HTML_STYLING_GUIDE.md' },
         { label: 'Logo Palette', type: 'iframe', src: 'logo-palette.html' },
         { label: 'Icon Reference', type: 'iframe', src: 'icon-reference.html' },
+        { label: 'Keywords', id: 'keywords', type: 'iframe', src: 'keywords.html' },
+        { label: 'Type Chart', id: 'type-chart', type: 'iframe', src: 'type-chart.html' },
+        { label: 'Card Reference', id: 'cards', type: 'iframe', src: 'cards.html' },
+        { label: 'Download', id: 'download', type: 'iframe', src: 'download.html' },
     ];
 
     /* ── Type / status metadata — verified against Bibles/ui-and-design.md, */
     /* status-effects.md, and type-matchups.md; keep in sync if those change ── */
     const TYPE_META = {
-        Fire:   { hex: '#ff4422', icon: '../TypeIcons/icon_fire.png',   status: 'Char',      className: 'Pyromancer',   strong: ['Grass','Ice','Shadow'],  weak: ['Water','Arc','Rock'],    neutral: 'Light'  },
-        Water:  { hex: '#2277ff', icon: '../TypeIcons/icon_water.png',  status: 'Drown',     className: 'Tidecaller',   strong: ['Fire','Rock','Light'],   weak: ['Arc','Grass','Shadow'],  neutral: 'Ice'    },
-        Rock:   { hex: '#a87832', icon: '../TypeIcons/icon_rock.png',   status: 'Daze',      className: 'Stonewarden',  strong: ['Fire','Arc','Light'],    weak: ['Water','Grass','Ice'],   neutral: 'Shadow' },
-        Arc:    { hex: '#f97316', icon: '../TypeIcons/icon_arc.png',    status: 'Shock',     className: 'Stormseeker',  strong: ['Water','Fire','Shadow'], weak: ['Rock','Light','Ice'],    neutral: 'Grass'  },
-        Ice:    { hex: '#88ddff', icon: '../TypeIcons/icon_ice.png',    status: 'Freeze',    className: 'Frostweaver',  strong: ['Rock','Arc','Shadow'],   weak: ['Fire','Grass','Light'],  neutral: 'Water'  },
-        Shadow: { hex: '#bb33ee', icon: '../TypeIcons/icon_shadow.png', status: 'Lifesteal', className: 'Shadowblade',  strong: ['Water','Grass','Light'], weak: ['Fire','Arc','Ice'],      neutral: 'Rock'   },
-        Light:  { hex: '#facc15', icon: '../TypeIcons/icon_light.png',  status: 'Blind',     className: 'Dawnmage',     strong: ['Grass','Arc','Ice'],     weak: ['Water','Rock','Shadow'], neutral: 'Fire'   },
-        Grass:  { hex: '#22c55e', icon: '../TypeIcons/icon_grass.png',  status: 'Root',      className: 'Verdantmaker', strong: ['Water','Ice','Rock'],    weak: ['Fire','Light','Shadow'], neutral: 'Arc'    },
+        Fire:   { hex: '#ff4422', icon: 'TypeIcons/icon_fire.png',   status: 'Char',      className: 'Pyromancer',   strong: ['Grass','Ice','Shadow'],  weak: ['Water','Arc','Rock'],    neutral: 'Light'  },
+        Water:  { hex: '#2277ff', icon: 'TypeIcons/icon_water.png',  status: 'Drown',     className: 'Tidecaller',   strong: ['Fire','Rock','Light'],   weak: ['Arc','Grass','Shadow'],  neutral: 'Ice'    },
+        Rock:   { hex: '#a87832', icon: 'TypeIcons/icon_rock.png',   status: 'Daze',      className: 'Stonewarden',  strong: ['Fire','Arc','Light'],    weak: ['Water','Grass','Ice'],   neutral: 'Shadow' },
+        Arc:    { hex: '#f97316', icon: 'TypeIcons/icon_arc.png',    status: 'Shock',     className: 'Stormseeker',  strong: ['Water','Fire','Shadow'], weak: ['Rock','Light','Ice'],    neutral: 'Grass'  },
+        Ice:    { hex: '#88ddff', icon: 'TypeIcons/icon_ice.png',    status: 'Freeze',    className: 'Frostweaver',  strong: ['Rock','Arc','Shadow'],   weak: ['Fire','Grass','Light'],  neutral: 'Water'  },
+        Shadow: { hex: '#bb33ee', icon: 'TypeIcons/icon_shadow.png', status: 'Lifesteal', className: 'Shadowblade',  strong: ['Water','Grass','Light'], weak: ['Fire','Arc','Ice'],      neutral: 'Rock'   },
+        Light:  { hex: '#facc15', icon: 'TypeIcons/icon_light.png',  status: 'Blind',     className: 'Dawnmage',     strong: ['Grass','Arc','Ice'],     weak: ['Water','Rock','Shadow'], neutral: 'Fire'   },
+        Grass:  { hex: '#22c55e', icon: 'TypeIcons/icon_grass.png',  status: 'Root',      className: 'Verdantmaker', strong: ['Water','Ice','Rock'],    weak: ['Fire','Light','Shadow'], neutral: 'Arc'    },
     };
 
     const STATUS_META = {
@@ -942,12 +942,14 @@
 
     // Build sidebar file list buttons
     const fileBtns = {};
+    const entrySlug = (entry) => entry.id || slugify(entry.label);
     FILES.forEach((entry) => {
         const li  = document.createElement('li');
         const btn = document.createElement('button');
         btn.textContent = entry.label;
         btn.addEventListener('click', () => {
             clearSearch(true);
+            history.replaceState(null, '', `#${entrySlug(entry)}`);
             if (entry.type === 'iframe') {
                 loadIframe(entry.src, entry.label, btn);
             } else {
@@ -957,7 +959,12 @@
         li.appendChild(btn);
         fileList.appendChild(li);
         if (entry.file) fileBtns[entry.file] = btn;
+        entry._btn = btn;
     });
+
+    // Deep-link support: atlas.html#keywords, #type-chart, #cards, #download, etc.
+    const initialSlug  = decodeURIComponent(location.hash.slice(1));
+    const initialEntry = initialSlug && FILES.find(f => entrySlug(f) === initialSlug);
 
     // Intercept clicks on links to other bibles so they open in-app instead of navigating away
     mdContent.addEventListener('click', (e) => {
@@ -1222,9 +1229,8 @@
         });
     }
 
-    // Load first file on open
-    const firstBtn = fileList.querySelector('button');
-    if (firstBtn) firstBtn.click();
+    // Load the deep-linked entry if the URL hash matched one, otherwise the first file
+    (initialEntry ? initialEntry._btn : fileList.querySelector('button'))?.click();
 </script>
 </body>
 </html>
