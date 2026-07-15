@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Download Wizard Battle for Windows.">
     <title>Wizard Battle — Download</title>
-    <link rel="stylesheet" href="../shared-theme.css">
+    <link rel="stylesheet" href="shared-theme.css">
     <style>
         body {
             overflow-x: hidden;
@@ -118,6 +118,12 @@
             color: var(--line-strong);
         }
 
+        .button-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: default;
+        }
+
         @media (max-width: 560px) {
             .info-grid { grid-template-columns: 1fr; }
         }
@@ -131,7 +137,7 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="index.html">
-                <img class="brand-mark" src="../wizard-battle-logo.svg" alt="Wizard Battle logo">
+                <img class="brand-mark" src="wizard-battle-logo.svg" alt="Wizard Battle logo">
                 <div class="brand-copy">
                     <strong>Wizard Battle</strong>
                     <span>Roguelike Deckbuilder</span>
@@ -165,6 +171,15 @@
                 <span class="meta-chip">~103 MB</span>
                 <span class="meta-chip">No install required</span>
             </div>
+
+            <div>
+                <div class="platform-badge">Mobile Beta</div>
+                <div class="cta-row">
+                    <a class="button button-secondary button-disabled" href="#" aria-disabled="true">iOS Beta (TestFlight) — Coming Soon</a>
+                    <a class="button button-secondary button-disabled" href="#" aria-disabled="true">Android Beta (Google Play) — Coming Soon</a>
+                </div>
+            </div>
+
             <div class="info-grid">
                 <div class="info-panel">
                     <div class="info-panel-label">What's in this build</div>
