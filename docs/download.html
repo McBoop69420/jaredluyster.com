@@ -118,12 +118,6 @@
             color: var(--line-strong);
         }
 
-        .button-disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            cursor: default;
-        }
-
         @media (max-width: 560px) {
             .info-grid { grid-template-columns: 1fr; }
         }
@@ -137,11 +131,7 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="index.html">
-                <img class="brand-mark" src="wizard-battle-logo.svg" alt="Wizard Battle logo">
-                <div class="brand-copy">
-                    <strong>Wizard Battle</strong>
-                    <span>Roguelike Deckbuilder</span>
-                </div>
+                <img class="brand-wordmark" src="wordmark-horizontal.svg" alt="Wizard Battle — Roguelike Deckbuilder">
             </a>
             <nav class="nav" id="main-nav">
                 <a href="index.html">Home</a>
@@ -175,8 +165,8 @@
             <div>
                 <div class="platform-badge">Mobile Beta</div>
                 <div class="cta-row">
-                    <a class="button button-secondary button-disabled" href="#" aria-disabled="true">iOS Beta (TestFlight) — Coming Soon</a>
-                    <a class="button button-secondary button-disabled" href="#" aria-disabled="true">Android Beta (Google Play) — Coming Soon</a>
+                    <a class="button button-secondary" href="https://testflight.apple.com/join/gsfA43KM">iOS Beta (TestFlight)</a>
+                    <a class="button button-secondary" href="https://appdistribution.firebase.dev/i/cca7766ed91d420d">Android Beta (Firebase)</a>
                 </div>
             </div>
 
