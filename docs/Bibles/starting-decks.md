@@ -86,7 +86,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 | Card | Cost | Qty | Effect |
 |---|---|---|---|
-| Rock Throw | 1 | ×2 | Deal 5 damage. Apply 1 Daze |
+| Rock Throw− | 1 | ×2 | Deal 4 damage. Apply 1 Daze |
 | Stoneskin | 1 | ×2 | Gain 8 Block. Apply 2 Daze |
 | Erode | 2 | ×1 | Deal 8 damage. Apply 4 Daze |
 | On Guard | 2 | ×1 | Gain 20 Block. Apply 2 Daze |

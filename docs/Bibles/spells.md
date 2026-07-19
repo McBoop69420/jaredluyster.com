@@ -1,9 +1,9 @@
 # Spells Bible
 
-Full spell reference organized by type. All values sourced from `Assets/Editor/CreateGameData.cs` (`CreateSpells`) in the Wizard Battle game project.
+Full spell reference organized by type. All values sourced from `Assets/Editor/CreateGameData.cs` (`CreateSpells`, `CreateSpellTierVariants`, `LinkSpellTiers`) in the Wizard Battle game project.
 
 **Conventions:**
-- *(S)* = **Starter rarity** tier. Note this is a rarity, not deck membership: not every Starter-rarity card is in a deck (e.g. Inferno Core), and one deck card is Common rarity (Rock Throw). Actual starting-deck contents live in [starting-decks.md](starting-decks.md).
+- *(S)* = **Starter rarity** tier. Note this is a rarity, not deck membership: not every Starter-rarity card is in a deck (e.g. Inferno Core), and one deck card is Common rarity (Rock Throw−, the Minus-tier variant of the Common-rarity Rock Throw). Actual starting-deck contents live in [starting-decks.md](starting-decks.md).
 - *Fade* = Exhaust after use for the current combat
 - *On hit* = Reactive effect that triggers when the enemy's attack deals damage through your block
 - Multi-hit spells list each hit separately (e.g. "Twice" = effects listed once, apply twice)
@@ -76,7 +76,6 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
-| Rock Throw *(S)* | 1 | Starter | Deal 5 damage. Apply 1 Daze. |
 | Stoneskin *(S)* | 1 | Starter | Gain 8 Block. Apply 2 Daze. |
 | Erode *(S)* | 2 | Starter | Deal 8 damage. Apply 4 Daze. |
 | On Guard *(S)* | 2 | Starter | Gain 20 Block. Apply 2 Daze. |
@@ -138,9 +137,9 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 | Name | Cost | Rarity | Effect |
 |---|---|---|---|
 | Shadow Strike *(S)* | 1 | Starter | Deal 5 damage. Lifesteal 2. |
-| Curse Touch *(S)* | 1 | Starter | Lifesteal 4. |
-| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 8. |
-| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 12. |
+| Curse Touch *(S)* | 1 | Starter | Lifesteal 3. |
+| Soul Drain *(S)* | 2 | Starter | Deal 8 damage. Lifesteal 5. |
+| Shadow Pact *(S)* | 2 | Starter | Lose 6 HP. Lifesteal 8. |
 | Shadow Bolt | 1 | Common | Deal 9 damage. |
 | Shadow Step | 1 | Common | Gain 8 Block. |
 | Curse | 1 | Common | Lifesteal 6. |

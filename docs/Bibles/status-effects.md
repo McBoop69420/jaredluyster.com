@@ -51,15 +51,15 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Applied by:** Grass spells (e.g. Entangle, Overgrowth)
 - **Ticks:** On damage (detonation trigger, not turn-based)
 - **Effect:** When the rooted target takes any damage, Root detonates — deals 2× current Root stacks as bonus damage, then all stacks are consumed
-- **Decay:** None until detonation
-- **Clears at:** On detonation only
+- **Decay:** -1 per turn, same as most other statuses (not one of the few decay-exempt effects) — stacks can fade before they ever get the chance to detonate
+- **Clears at:** On detonation, or 0 stacks from decay
 - **Special:** *Verdant Surge* doubles all Root applied this turn
 
 ### Freeze (Ice) `#66ddff`
 - **Applied by:** Ice spells (e.g. Frost Bolt, Blizzard, Chill)
 - **Ticks:** Checked at start of enemy turn
 - **Effect:** At 5+ stacks, the target's action is skipped entirely and all Freeze stacks are consumed
-- **Decay:** No passive decay — accumulates until threshold or cleanse
+- **Decay:** -1 per turn, same as most other statuses (not one of the few decay-exempt effects) — must be stacked faster than it decays to reach the 5-stack threshold
 - **Note:** Requires multiple cards to trigger; valuable against high-damage enemies
 
 ### Daze (Rock) `#cc9944`
@@ -74,9 +74,9 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Applied by:** Light spells (e.g. Radiant Bolt)
 - **Ticks:** Each enemy attack
 - **Effect:** If the enemy has any Blind, a single 50% roll decides whether the attack misses entirely (no damage). The chance is flat 50% — it does **not** scale with stack count.
-- **Decay:** -1 per enemy attack (consumed whether the attack hits or misses), so N stacks covers the next N attacks
+- **Decay:** -1 per turn passively (not decay-exempt), *plus* an additional -1 whenever the enemy attacks (hit or miss). On a turn the enemy attacks, Blind drops by 2 total; on a turn it doesn't, it still drops by 1. N stacks therefore covers roughly N/2 attacks if the enemy attacks every turn — not N.
 - **Clears at:** 0 stacks
-- **Note:** Probabilistic — does not guarantee safety, but averages well over multiple attacks
+- **Note:** Probabilistic — does not guarantee safety, and decays faster than a naive "1 stack = 1 blocked attack" read would suggest
 
 ### Weak `#cc6666`
 - **Applied by:** Enemy intents only (Shade Wraith, Tide Witch, Shadow Stalker, Abyssal Leviathan, Shadow Sovereign). No player spell currently applies Weak.
@@ -87,13 +87,13 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Note:** Neutral/shared status — the stack count only controls how many turns it lasts, not the size of the reduction.
 
 ### Strength `#d4af37`
-- **Applied by:** Enemy buff intents; some player spells (Magma Form, Earthen Skin)
+- **Applied by:** Enemy buff intents only. No player spell currently applies Strength (Magma Form and Earthen Skin are Block-only, despite being Rock spells associated with the Daze status, not Strength).
 - **Effect:** Adds flat bonus damage to every attack
 - **Decay:** None — permanent until battle ends or cleansed
 - **Note:** One of the most dangerous enemy buffs; prioritize kills before Strength stacks build
 
 ### Lifesteal (Shadow) `#cc66ff`
-- **Applied by:** Shadow spells (e.g. Drain Life, Soul Rend, Shadow Strike)
+- **Applied by:** Shadow spells that apply the Lifesteal status (e.g. Soul Rend, Shadow Strike, Curse Touch, Soul Drain). Not Drain Life — despite the name, it deals damage and heals directly via its own effect, without touching the Lifesteal status.
 - **Ticks:** After the enemy acts
 - **Effect:** Drains HP from enemy equal to stacks, heals player by that amount
 - **Decay:** Consumed after triggering (single-trigger per application)
