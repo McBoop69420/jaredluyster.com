@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jared Luyster Radio — a self-hosted station streaming local music files, live.">
+    <title>Radio — Jared Luyster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --text: #f0f0f0;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .nav {
+            display: flex;
+            gap: 22px;
+        }
+
+        .nav a {
+            font-size: 0.82rem;
+            color: var(--muted);
+            transition: color 200ms;
+        }
+
+        .nav a:hover { color: var(--text); }
+        .nav a.active { color: var(--accent); }
+
+        @media (max-width: 620px) {
+            .nav { gap: 14px; font-size: 0.78rem; }
+            .nav a { font-size: 0.72rem; }
+        }
+
+        /* Hero / player */
+        .stage {
+            padding: 88px 0 72px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage::before {
+            content: "";
+            position: absolute;
+            top: -140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 640px;
+            height: 420px;
+            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.15);
+            color: var(--accent);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-bottom: 28px;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .live-dot.off { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: clamp(2.4rem, 6vw, 4rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            position: relative;
+        }
+
+        .lead {
+            margin: 0;
+            max-width: 36rem;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        /* Player card */
+        .player {
+            margin-top: 48px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--surface);
+            padding: 32px;
+            position: relative;
+            max-width: 640px;
+        }
+
+        .player-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .now-label {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .now-track {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            min-height: 1.4em;
+            transition: opacity 240ms;
+        }
+
+        .now-track.idle { color: var(--muted); font-weight: 500; font-size: 1rem; }
+
+        audio {
+            width: 100%;
+            margin-top: 8px;
+            filter: invert(0.92) hue-rotate(180deg);
+        }
+
+        .status-line {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .status-line code {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.78rem;
+            color: #ffe7a8;
+            overflow-wrap: anywhere;
+        }
+
+        .status-line .offline { color: #ef4444; }
+
+        .note {
+            margin-top: 40px;
+            max-width: 640px;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="index.html">Jared Luyster</a>
+            <nav class="nav" id="main-nav">
+                <a href="index.html">Home</a>
+                <a class="active" href="radio.html">Radio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="stage">
+            <div class="shell">
+                <div class="eyebrow"><span class="live-dot off" id="live-dot"></span><span id="live-text">Connecting…</span></div>
+                <h1 id="station-name">Jared Luyster Radio</h1>
+                <p class="lead">A self-hosted station streaming local music files. Tune in and you'll hear the same point in the loop as everyone else — like a real radio signal, generated live from the server.</p>
+
+                <div class="player">
+                    <div class="player-head">
+                        <span class="now-label">On the loop right now</span>
+                    </div>
+                    <div class="now-track idle" id="now-track">Loading current track…</div>
+                    <audio id="player" controls preload="none" src="https://radio.jaredluyster.com/stream.mp3"></audio>
+
+                    <div class="status-line" id="status-line">
+                        Status will appear once the station responds.
+                    </div>
+                </div>
+
+                <p class="note">
+                    The stream is generated on a persistent server from files stored locally — it isn't bundled into this site.
+                    If the dot above is red, the station is offline. Use the player controls to play or pause; the "now playing" line refreshes automatically.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API = "https://radio.jaredluyster.com/status.json";
+        const stationNameEl = document.getElementById("station-name");
+        const nowTrackEl = document.getElementById("now-track");
+        const statusLineEl = document.getElementById("status-line");
+        const liveDotEl = document.getElementById("live-dot");
+        const liveTextEl = document.getElementById("live-text");
+
+        function setOnline(online, stationName) {
+            if (online) {
+                liveDotEl.classList.remove("off");
+                liveTextEl.textContent = "On air";
+                if (stationName) stationNameEl.textContent = stationName;
+            } else {
+                liveDotEl.classList.add("off");
+                liveTextEl.textContent = "Offline";
+            }
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch(API, { cache: "no-store" });
+                if (!res.ok) throw new Error("status " + res.status);
+                const status = await res.json();
+
+                setOnline(true, status.stationName);
+                nowTrackEl.classList.remove("idle");
+                nowTrackEl.textContent = status.nowPlaying?.display || "Unknown track";
+
+                const generated = status.catalogGeneratedAt
+                    ? new Date(status.catalogGeneratedAt).toLocaleString()
+                    : "unknown";
+                statusLineEl.innerHTML =
+                    `<span>${status.tracks} tracks in the loop · catalog built ${generated}</span><br>` +
+                    `Direct stream: <code>${status.streamUrl}</code>`;
+            } catch (err) {
+                setOnline(false);
+                nowTrackEl.classList.add("idle");
+                nowTrackEl.textContent = "Station is offline";
+                statusLineEl.innerHTML =
+                    `<span class="offline">Couldn't reach the station (${err.message}).</span> ` +
+                    `It may be restarting or not deployed yet.`;
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 15000);
+    </script>
+</body>
+</html>
