@@ -76,6 +76,27 @@ One boss is randomly chosen per run. Fixed HP (no variance). All bosses have 5-i
 
 ---
 
+## Speed & Turn Order
+
+> ⚠️ **Proposed — not implemented.** Enemies have no speed stat and no status-intent suppression today. `EnemyData` carries only `id`, `enemyName`, `elementType`, `tier`, `minHp`/`maxHp`, `intentPattern`, and `portrait`; intents always resolve regardless of what statuses the enemy bears. Everything in this section is design intent. Per `CLAUDE.md` the code is the source of truth, so treat this as a proposal until it ships.
+
+Every enemy acts on its type's initial speed (see the Type Matchups Bible → Speed & Turn Order):
+
+| Type | Speed |
+|---|---|
+| Arc | 6 |
+| Fire | 6 |
+| Shadow | 5 |
+| Light | 5 |
+| Water | 5 |
+| Ice | 4 |
+| Grass | 4 |
+| Rock | 4 |
+
+**Status-intent suppression:** An enemy intent that applies a status is suppressed while the enemy bears the countering status. Example: a Vine Creeper (Grass) bearing Char (Fire's signature) cannot use its "Apply 2 Root" intent — Char counters Root. The intent does nothing for as long as the countering status persists. This is how the player's primal-counter status neutralizes the enemy's signature.
+
+---
+
 ## Intent Legend
 
 | Intent Type | Meaning |

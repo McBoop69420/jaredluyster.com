@@ -11,7 +11,7 @@
 ## Combat
 
 ### Structure
-- Turn-based. Player goes first each combat.
+- Turn-based. Turn order is fixed: the player acts first, then the enemy. (A Speed-based turn order is proposed but not implemented — see Speed & Turn Order, below.)
 - Both sides track: **HP**, **Block**, **Status Effects**
 - Player Block resets to 0 at the start of each new player turn
 
@@ -26,6 +26,14 @@
 - Intents are: **attack**, **defend** (gain Block), **buff** (gain Strength), **status** (apply a status to player)
 - After enemy acts: end-of-turn status effects tick (Lifesteal)
 - Enemy pattern then advances to the next intent
+
+### Speed & Turn Order
+
+> ⚠️ **Proposed — not implemented.** No speed stat or status pre-emption exists in the code. Turn order is fixed (player, then enemy) and enemy intents always resolve. Design intent only — see the Type Matchups and Status Effects Bibles for the full proposals.
+
+- Speed is compared at the start of each turn; the higher acts first. Ties are decided by a random coin flip.
+- Speed is public (shown in the HUD) and changes **only via cards**. There is no catch-up and no turn-skipping from speed — losing the race simply means you go second that turn.
+- **Status pre-emption:** the Status Counter-Cycle (see the Status Effects Bible) can suppress an enemy's status-applying intent. If the enemy bears your countering status, its signature-status intent does nothing that turn.
 
 ### End of Combat
 - All Block is lost between encounters

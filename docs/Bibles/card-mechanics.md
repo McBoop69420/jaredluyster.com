@@ -107,7 +107,8 @@ Three cards (Flame Shield, Static Field, Thorn Armor) register a reactive effect
 After combat you choose 1 of 3 offered spells:
 
 - Only Regular-tier, non-Starter spells are eligible.
-- About two thirds of offers are your element type; about one third are off-type.
+- Offers are restricted to your active wizard type. Off-type spells are never offered.
+- Neutral spells are permitted by the filter, but every neutral is Starter rarity, so none are offered today.
 - Chosen spells are added to your deck permanently.
 
 ---

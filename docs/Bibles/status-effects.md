@@ -101,6 +101,39 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 
 ---
 
+## Status Counter-Cycle
+
+> ⚠️ **Proposed — not implemented.** No counter-cycle logic exists in the game today. `AddStatus` in `BattleEngine.cs` applies stacks flatly, and neither `BattleEngine` nor `DuelEngine` checks what status a unit already bears before applying its own. Statuses are currently independent integer counters that coexist without interacting. Everything in this section is design intent. Per `CLAUDE.md` the code is the source of truth, so treat this as a proposal until it ships.
+
+Each type's signature status is, by its nature, a mutation that counters its **primal enemy's** signature status. This is inherent — a property of the status itself, not a type-conditional bonus.
+
+**Primal enemies** follow the original six-type ring, with Light and Shadow as mutual foes:
+`Fire → Grass → Ice → Rock → Arc → Water → Fire`, and `Light ↔ Shadow`.
+
+**Rule (inherent, status-vs-status):**
+> While a unit bears status **A**, it **cannot apply its own signature status B** to the opponent. Landing A on an enemy that wields B pre-empts B for as long as A persists.
+
+This is a *unit property* — "a burning unit cannot entangle." No type checks are involved; the counter manifests against the primal prey only because the prey is the type that wields B.
+
+| Your status A | Primal prey | Prey's status B | Inherent effect |
+|---|---|---|---|
+| Char (Fire) | Grass | Root | A burning unit cannot entangle — fire consumes roots |
+| Root (Grass) | Ice | Freeze | An entangled caster cannot weave frost — roots bind the hands |
+| Freeze (Ice) | Rock | Daze | A frozen unit has no action to repeat — ice locks it solid |
+| Daze (Rock) | Arc | Shock | A dazed unit cannot deliberately charge — it fumbles the buildup |
+| Shock (Arc) | Water | Drown | Electrified water discharges the drown buildup |
+| Drown (Water) | Fire | Char | A doused foe cannot sustain a burn — the fire is out |
+| Blind (Light) | Shadow | Lifesteal | A blinded stalker cannot feed — it can't find the vein |
+| Lifesteal (Shadow) | Light | Blind | A draining wound saps the radiance — the light dims |
+
+**Notes**
+- **Block-only.** If B was already on the opponent from a prior turn, it persists until it decays; A simply stops new B. The intended flow (you act first via Speed) pre-empts B entirely.
+- Each status keeps its core job; the disable is additive.
+- This is distinct from damage type effectiveness (see the Type Matchups Bible's Speed & Turn Order section).
+- Freeze's 5-stack turn skip is a separate status mechanic, unaffected by this cycle.
+
+---
+
 ## Purify / Cleanse
 
 The spell *Purify* (Dawnmage) cleanses this exact set of status effects from the player:

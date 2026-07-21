@@ -124,6 +124,35 @@ Rows = attacker type. Columns = defender type.
 
 ---
 
+## Speed & Turn Order
+
+> ⚠️ **Proposed — not implemented.** No speed system exists in the game today: there is no `speed` field anywhere in `Assets/Scripts/`, and nothing reads or writes one. Turn order is currently fixed — the player always acts first, then the enemy. Everything in this section is design intent. Per `CLAUDE.md` the code is the source of truth, so treat this as a proposal until it ships.
+
+Speed is a mutable resource that decides who acts first each turn. It is an **offensive closure tool**, not an equalizer.
+
+**Initial speed (locked per type):**
+
+| Type | Speed |
+|---|---|
+| Arc | 6 |
+| Fire | 6 |
+| Shadow | 5 |
+| Light | 5 |
+| Water | 5 |
+| Ice | 4 |
+| Grass | 4 |
+| Rock | 4 |
+
+**Rules**
+- Each side tracks a mutable `speed`. Each turn, the side with **higher speed acts first**.
+- **Tie → random.** A coin flip decides who acts first (see the tie-break animation). This is the only system-level resolution of a tie.
+- **Worst penalty for losing the speed race: going second next turn.** No turn-skipping, no turn-deny, no catch-up, no auto-recovery from speed.
+- **Speed is public** — both sides' speed is shown in the battle HUD.
+- Speed values change **only via cards** (Haste / Slow / Drain / Setup / Execution effects). The system never changes speed on its own. Root and Freeze cards are the speed-tempo control archetype.
+- Turning the counter-cycle to your advantage: acting first lets you land your signature status before the primal prey can apply theirs, pre-empting it entirely.
+
+---
+
 ## Enemy Type Coverage
 
 Each enemy's type determines what spell types hit it for 2× or 0.5×.
@@ -203,6 +232,8 @@ Neutral spells (Focus, Guard, Amplify, Mana Petal) deal no elemental damage and 
 
 **The main ring remains readable:** Fire > Grass > Ice > Rock > Arc > Water > Fire is still the backbone players can learn first, with the added relationships creating richer cross-domain matchups.
 
-**Status effects ignore type:** Status stacks never get the 2× or 0.5× treatment. Freeze is always face-value Freeze. This prevents stacking combinatorial complexity and keeps status effects as a second, independent axis of strategy.
+**Status effects ignore damage type:** Status stacks never get the 2× or 0.5× treatment from the type-effectiveness multiplier. Freeze is always face-value Freeze. This prevents stacking combinatorial complexity and keeps status effects as an independent axis.
+
+**Status vs. status (the Counter-Cycle):** Status effects *do* interact with one another inherently — each signature status prevents its primal enemy's signature from being applied (see the Status Effects Bible's Counter-Cycle section). This is a second, independent axis of strategy, not damage-type effectiveness.
 
 **Effectiveness is a modifier, not a gate:** Bad matchups reduce spell damage to 0.5×, not 0×. You can still win through better deckbuilding, status play, and defensive timing.

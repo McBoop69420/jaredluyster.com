@@ -69,7 +69,7 @@ Rest/Shop checkpoints (floors 4, 9) have no enemy. Elites never appear on floors
 
 After winning any battle:
 - **Gold:** 10–25 (random) + 15 bonus if enemy was elite tier
-- **Spell choice:** 3 random spells offered, biased toward player's type. Player chooses one to add to deck, or skips.
+- **Spell choice:** 3 random spells offered, all of the player's own type. Player chooses one to add to deck, or skips.
 
 ---
 
@@ -90,7 +90,7 @@ Only one action may be taken per rest node.
 ## Shop Nodes
 
 Shop offers:
-- **4 spells for purchase** (biased toward player type, includes some off-type)
+- **4 spells for purchase** (all of the player's own type — off-type spells are never stocked)
 - **4 items always in stock:**
 
 | Item | Icon | Price | Effect |

@@ -19,6 +19,8 @@ The roster table below gives a terse **role summary** for quick scanning; each c
 | Dawnmage | Light | 70 | Shields, heals, cleanses. |
 | Verdantmaker | Grass | 70 | Low base damage, exponential DoT. |
 
+> Classes have no Speed stat in the game today. Proposed per-type speed values live in the Type Matchups Bible → Speed & Turn Order, marked as unimplemented.
+
 ---
 
 ## Class Profiles
