@@ -80,11 +80,11 @@
         .nav a.active { color: var(--accent); }
 
         @media (max-width: 620px) {
-            .nav { gap: 14px; font-size: 0.78rem; }
+            .nav { gap: 14px; }
             .nav a { font-size: 0.72rem; }
         }
 
-        /* Hero / player */
+        /* Stage */
         .stage {
             padding: 88px 0 72px;
             position: relative;
@@ -106,7 +106,7 @@
         .eyebrow {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             padding: 6px 14px;
             border-radius: 999px;
             background: var(--accent-dim);
@@ -119,21 +119,32 @@
             margin-bottom: 28px;
         }
 
-        .live-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
-            animation: pulse 2s ease-in-out infinite;
+        /* Equalizer */
+        .eq {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+        }
+        .eq span {
+            width: 2.5px;
+            height: 30%;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: eq 900ms ease-in-out infinite;
+        }
+        .eq span:nth-child(2) { animation-delay: 150ms; }
+        .eq span:nth-child(3) { animation-delay: 300ms; }
+        .eq span:nth-child(4) { animation-delay: 450ms; }
+        .eq span:nth-child(5) { animation-delay: 600ms; }
+
+        @keyframes eq {
+            0%, 100% { height: 30%; }
+            50% { height: 100%; }
         }
 
-        .live-dot.off { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); animation: none; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+        .eyebrow.off { color: #ef4444; background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.18); }
+        .eyebrow.off .eq span { background: #ef4444; animation-play-state: paused; height: 30%; }
 
         h1 {
             margin: 0 0 16px;
@@ -144,83 +155,78 @@
             position: relative;
         }
 
-        .lead {
-            margin: 0;
-            max-width: 36rem;
-            color: var(--muted);
-            font-size: 1.05rem;
-            line-height: 1.7;
-            position: relative;
-        }
-
         /* Player card */
         .player {
-            margin-top: 48px;
+            margin-top: 32px;
             border: 1px solid var(--border);
             border-radius: 20px;
             background: var(--surface);
             padding: 32px;
             position: relative;
             max-width: 640px;
+            overflow: hidden;
+        }
+
+        .player::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.08), transparent 55%);
+            pointer-events: none;
         }
 
         .player-head {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 20px;
             margin-bottom: 18px;
+            position: relative;
         }
 
-        .now-label {
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.68rem;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--muted);
+        .art {
+            width: 96px;
+            height: 96px;
+            border-radius: 14px;
+            object-fit: cover;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 28px rgba(129, 140, 248, 0.18);
+            flex-shrink: 0;
+        }
+
+        .now-wrap {
+            min-width: 0;
         }
 
         .now-track {
-            font-size: 1.15rem;
+            font-size: 1.35rem;
             font-weight: 600;
             letter-spacing: -0.01em;
             min-height: 1.4em;
+            line-height: 1.3;
+            background: linear-gradient(92deg, #fff 0%, var(--accent) 140%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
             transition: opacity 240ms;
         }
 
-        .now-track.idle { color: var(--muted); font-weight: 500; font-size: 1rem; }
+        .now-track.idle {
+            background: none;
+            -webkit-text-fill-color: var(--muted);
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
 
         audio {
             width: 100%;
-            margin-top: 8px;
+            margin-top: 14px;
             filter: invert(0.92) hue-rotate(180deg);
+            position: relative;
         }
 
-        .status-line {
-            margin-top: 18px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-            font-size: 0.8rem;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .status-line code {
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.78rem;
-            color: #ffe7a8;
-            overflow-wrap: anywhere;
-        }
-
-        .status-line .offline { color: #ef4444; }
-
-        .note {
-            margin-top: 40px;
-            max-width: 640px;
-            font-size: 0.82rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
     </style>
 </head>
 <body>
@@ -237,45 +243,50 @@
     <main>
         <section class="stage">
             <div class="shell">
-                <div class="eyebrow"><span class="live-dot off" id="live-dot"></span><span id="live-text">Connecting…</span></div>
+                <div class="eyebrow off" id="live-eyebrow">
+                    <span class="eq"><span></span><span></span><span></span><span></span><span></span></span>
+                    <span id="live-text">Connecting…</span>
+                </div>
                 <h1 id="station-name">Jared Luyster Radio</h1>
-                <p class="lead">A self-hosted station streaming local music files. Tune in and you'll hear the same point in the loop as everyone else — like a real radio signal, generated live from the server.</p>
 
                 <div class="player">
                     <div class="player-head">
-                        <span class="now-label">On the loop right now</span>
+                        <img class="art" id="art" alt="" src="https://radio.jaredluyster.com/art/now">
+                        <div class="now-wrap">
+                            <div class="now-track idle" id="now-track">Loading current track…</div>
+                        </div>
                     </div>
-                    <div class="now-track idle" id="now-track">Loading current track…</div>
                     <audio id="player" controls preload="none" src="https://radio.jaredluyster.com/stream.mp3"></audio>
-
-                    <div class="status-line" id="status-line">
-                        Status will appear once the station responds.
-                    </div>
                 </div>
 
-                <p class="note">
-                    The stream is generated on a persistent server from files stored locally — it isn't bundled into this site.
-                    If the dot above is red, the station is offline. Use the player controls to play or pause; the "now playing" line refreshes automatically.
-                </p>
             </div>
         </section>
     </main>
 
     <script>
         const API = "https://radio.jaredluyster.com/status.json";
+        const ART = "https://radio.jaredluyster.com/art/now";
         const stationNameEl = document.getElementById("station-name");
         const nowTrackEl = document.getElementById("now-track");
-        const statusLineEl = document.getElementById("status-line");
-        const liveDotEl = document.getElementById("live-dot");
+        const artEl = document.getElementById("art");
+        const liveEyebrowEl = document.getElementById("live-eyebrow");
         const liveTextEl = document.getElementById("live-text");
+
+        let currentArtPath = null;
+
+        function refreshArt(path) {
+            if (path === currentArtPath) return;
+            currentArtPath = path;
+            artEl.src = `${ART}?t=${Date.now()}`;
+        }
 
         function setOnline(online, stationName) {
             if (online) {
-                liveDotEl.classList.remove("off");
+                liveEyebrowEl.classList.remove("off");
                 liveTextEl.textContent = "On air";
                 if (stationName) stationNameEl.textContent = stationName;
             } else {
-                liveDotEl.classList.add("off");
+                liveEyebrowEl.classList.add("off");
                 liveTextEl.textContent = "Offline";
             }
         }
@@ -289,20 +300,11 @@
                 setOnline(true, status.stationName);
                 nowTrackEl.classList.remove("idle");
                 nowTrackEl.textContent = status.nowPlaying?.display || "Unknown track";
-
-                const generated = status.catalogGeneratedAt
-                    ? new Date(status.catalogGeneratedAt).toLocaleString()
-                    : "unknown";
-                statusLineEl.innerHTML =
-                    `<span>${status.tracks} tracks in the loop · catalog built ${generated}</span><br>` +
-                    `Direct stream: <code>${status.streamUrl}</code>`;
+                refreshArt(status.nowPlaying?.path);
             } catch (err) {
                 setOnline(false);
                 nowTrackEl.classList.add("idle");
                 nowTrackEl.textContent = "Station is offline";
-                statusLineEl.innerHTML =
-                    `<span class="offline">Couldn't reach the station (${err.message}).</span> ` +
-                    `It may be restarting or not deployed yet.`;
             }
         }
 
