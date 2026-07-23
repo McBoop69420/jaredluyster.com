@@ -1,0 +1,18 @@
+# Cloudflare Pages configuration for jaredluyster.com
+#
+# The site is static (no build step) — Pages serves the repo root directly, and
+# the Function in functions/marketplace/[[path]].ts proxies /marketplace/* to the
+# marketplace backend.
+#
+# Deploy:  wrangler pages deploy .
+# Dev:     wrangler pages dev .
+
+name = "jaredluyster-com"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "."
+
+[vars]
+# Origin of the marketplace backend. Confirm the exact URL in your Render
+# dashboard — the service is named "jaredluyster-com" so this is the likely value.
+# In production, set/override this in the Pages project's environment variables.
+MARKETPLACE_ORIGIN = "https://jaredluyster-com.onrender.com"
