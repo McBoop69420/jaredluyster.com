@@ -20,8 +20,8 @@
         Rock:    '#a87832',
         Arc:     '#f97316',
         Ice:     '#88ddff',
-        Shadow:  '#bb33ee',
-        Light:   '#facc15',
+        Shadow:  '#8c2a5e',
+        Light:   '#ffe234',
         Grass:   '#22c55e',
     };
 
@@ -31,8 +31,8 @@
         Stonewarden:  '#a87832',
         Stormseeker:  '#f97316',
         Frostweaver:  '#88ddff',
-        Shadowblade:  '#bb33ee',
-        Dawnmage:     '#facc15',
+        Shadowblade:  '#8c2a5e',
+        Dawnmage:     '#ffe234',
         Verdantmaker: '#22c55e',
     };
 

@@ -7,7 +7,7 @@
    per type, each in its CANONICAL colour from bibles/ui-and-design.md:
 
      Fire #ff4422 · Water #2277ff · Rock #a87832 · Arc  #f97316
-     Ice  #88ddff · Shadow #bb33ee · Light #facc15 · Grass #22c55e
+     Ice  #88ddff · Shadow #8c2a5e · Light #ffe234 · Grass #22c55e
 
    Ray order clockwise from top is locked to Fire so it aligns with the vortex:
      Fire – Light – Grass – Arc – Water – Ice – Rock – Shadow.
@@ -21,13 +21,13 @@
   // the eight magic schools, in ray order (top = Fire, clockwise)
   var CANON_TYPES = [
     { id:"fire",    name:"Fire",    color:"#ff4422" },
-    { id:"light",   name:"Light",   color:"#facc15" },
+    { id:"light",   name:"Light",   color:"#ffe234" },
     { id:"grass",   name:"Grass",   color:"#22c55e" },
     { id:"arc",     name:"Arc",     color:"#f97316" },
     { id:"water",   name:"Water",   color:"#2277ff" },
     { id:"ice",     name:"Ice",     color:"#88ddff" },
     { id:"rock",    name:"Rock",    color:"#a87832" },
-    { id:"shadow",  name:"Shadow",  color:"#bb33ee" }
+    { id:"shadow",  name:"Shadow",  color:"#8c2a5e" }
   ];
 
   // colour presets (glow halo / core tube / bright / inner highlight / deep) — used for the frame, not the rays

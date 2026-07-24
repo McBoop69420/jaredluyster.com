@@ -420,7 +420,7 @@ const CARD_REFERENCE = [
         "label": "Shadow",
         "icon": "TypeIcons/icon_shadow.png",
         "fallbackIcon": "??",
-        "color": "#bb33ee",
+        "color": "#8c2a5e",
         "cards": [
             {
                 "name": "Curse Touch",
@@ -499,7 +499,7 @@ const CARD_REFERENCE = [
         "label": "Light",
         "icon": "TypeIcons/icon_light.png",
         "fallbackIcon": "??",
-        "color": "#facc15",
+        "color": "#ffe234",
         "cards": [
             {
                 "name": "Radiant Bolt",

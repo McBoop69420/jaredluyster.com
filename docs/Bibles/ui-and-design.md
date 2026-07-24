@@ -11,10 +11,10 @@ Each wizard type has a single authoritative color used for: spell card borders, 
 | Rock | Brown-gold | `#a87832` | Earthy, not bright |
 | Arc | Orange | `#f97316` | — |
 | Ice | Light blue | `#88ddff` | Pale, cool |
-| Shadow | Purple | `#bb33ee` | — |
-| Light | Bright yellow | `#facc15` | Distinct from Arc |
+| Shadow | Berry | `#8c2a5e` | Deep red-plum; reads on dark, off the warm cluster |
+| Light | Bright yellow | `#ffe234` | Vivid; distinct from Arc's orange |
 | Grass | Green | `#22c55e` | — |
-| Neutral | Gray | `#888888` | Universal cards |
+| Neutral | Tan-gray | `#c7bba4` | Universal cards |
 
 ---
 

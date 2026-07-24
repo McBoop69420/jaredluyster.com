@@ -47,14 +47,14 @@ const ElIce = ({ size = 64, color = "#88ddff" }) => (
     <path d="M21 21 L16.5 22 L19 27 M43 21 L47.5 22 L46 27 M46 37 L47.5 42 L43 43 M19 37 L16.5 42 L21 43" opacity="0.6" />
   </MarkFrame>
 );
-const ElShadow = ({ size = 64, color = "#bb33ee" }) => (
+const ElShadow = ({ size = 64, color = "#8c2a5e" }) => (
   <MarkFrame size={size} color={color}>
     <circle cx="32" cy="32" r="11" />
     <path d="M32 21 A11 11 0 0 0 32 43 A8 11 0 0 1 32 21 Z" fill={color} stroke="none" opacity="0.85" />
     <path d="M32 10 L32 16 M32 48 L32 54 M10 32 L16 32 M48 32 L54 32" opacity="0.5" />
   </MarkFrame>
 );
-const ElLight = ({ size = 64, color = "#facc15" }) => (
+const ElLight = ({ size = 64, color = "#ffe234" }) => (
   <MarkFrame size={size} color={color}>
     <circle cx="32" cy="32" r="8" />
     <path d="M32 13 L32 18 M32 46 L32 51 M13 32 L18 32 M46 32 L51 32" />
