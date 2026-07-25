@@ -511,24 +511,18 @@
             glow.setAttribute('class', 'node-glow');
             glow.style.transition = 'opacity 0.22s';
 
-            // Main circle
-            const circle = document.createElementNS(SVGNS, 'circle');
-            circle.setAttribute('r', String(pos.r || NODE_R));
-            circle.setAttribute('fill', color + '20');
-            circle.setAttribute('stroke', color);
-            circle.setAttribute('stroke-width', '2.5');
-
-            // Icon image (centred in node)
+            // Icon IS the node — no outer ring. Enlarged + soft halo.
+            const iconSize = pos.center ? 54 : 64;
             const icon = document.createElementNS(SVGNS, 'image');
             icon.setAttribute('href', TYPE_ICONS[type]);
-            icon.setAttribute('x', String(-14));
-            icon.setAttribute('y', String(-14));
-            icon.setAttribute('width', '28');
-            icon.setAttribute('height', '28');
+            icon.setAttribute('x', String(-iconSize / 2));
+            icon.setAttribute('y', String(-iconSize / 2));
+            icon.setAttribute('width', String(iconSize));
+            icon.setAttribute('height', String(iconSize));
             icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            icon.style.filter = `drop-shadow(0 0 7px ${color}aa)`;
 
             g.appendChild(glow);
-            g.appendChild(circle);
             g.appendChild(icon);
 
             // Always-on text label
