@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jared Luyster Theatre — a self-hosted video library streaming local video files, view only.">
+    <title>Theatre — Jared Luyster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --text: #f0f0f0;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .nav { display: flex; gap: 22px; }
+
+        .nav a {
+            font-size: 0.82rem;
+            color: var(--muted);
+            transition: color 200ms;
+        }
+
+        .nav a:hover { color: var(--text); }
+        .nav a.active { color: var(--accent); }
+
+        @media (max-width: 620px) {
+            .nav { gap: 14px; }
+            .nav a { font-size: 0.72rem; }
+        }
+
+        /* Stage */
+        .stage {
+            padding: 72px 0 64px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage::before {
+            content: "";
+            position: absolute;
+            top: -140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 640px;
+            height: 420px;
+            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.15);
+            color: var(--accent);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-bottom: 28px;
+        }
+
+        .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        .eyebrow.off { color: #ef4444; background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.18); }
+        .eyebrow.off .dot { background: #ef4444; box-shadow: none; }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2.2rem, 6vw, 3.6rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
+            position: relative;
+        }
+
+        .lede {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 0 0 36px;
+            max-width: 640px;
+        }
+
+        /* Player (hidden until a video is chosen) */
+        .player {
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--surface);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+        .player.show { display: block; }
+        .player::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.08), transparent 55%);
+            pointer-events: none;
+        }
+        .player-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            position: relative;
+        }
+        .now-title { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+        .close-btn {
+            border: 1px solid var(--border);
+            background: var(--surface-hover);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 200ms;
+        }
+        .close-btn:hover { color: var(--text); border-color: var(--border-hover); }
+        video {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            background: #000;
+            position: relative;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--surface);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 200ms, border-color 200ms;
+        }
+        .card:hover { transform: translateY(-3px); border-color: var(--border-hover); }
+        .thumb-wrap { position: relative; aspect-ratio: 16 / 9; background: #000; }
+        .thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .play-badge {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transition: opacity 200ms;
+            background: rgba(9, 9, 11, 0.35);
+        }
+        .card:hover .play-badge { opacity: 1; }
+        .play-badge span {
+            width: 54px; height: 54px; border-radius: 50%;
+            background: rgba(129, 140, 248, 0.92);
+            display: grid; place-items: center;
+            box-shadow: 0 8px 28px rgba(129, 140, 248, 0.4);
+        }
+        .play-badge span::after {
+            content: "";
+            width: 0; height: 0;
+            border-left: 16px solid #fff;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            margin-left: 4px;
+        }
+        .meta { padding: 14px 16px; }
+        .title { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+        .sub { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+
+        .empty, .error {
+            color: var(--muted);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .error { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="index.html">Jared Luyster</a>
+            <nav class="nav" id="main-nav">
+                <a href="index.html">Home</a>
+                <a href="radio.html">Radio</a>
+                <a class="active" href="theatre.html">Theatre</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="stage">
+            <div class="shell">
+                <div class="eyebrow off" id="live-eyebrow"><span class="dot"></span><span id="live-text">Connecting…</span></div>
+                <h1>Jared Luyster Theatre</h1>
+                <p class="lede">A self-hosted video library streaming local files. Pick a title to watch — no accounts, no tracking.</p>
+
+                <div class="player" id="player">
+                    <div class="player-head">
+                        <div class="now-title" id="now-title">Now playing</div>
+                        <button class="close-btn" id="close-btn">Close ✕</button>
+                    </div>
+                    <video id="video" controls preload="metadata"></video>
+                </div>
+
+                <div class="grid" id="grid">
+                    <div class="empty">Loading library…</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API = "https://theatre.jaredluyster.com/catalog.json";
+        const gridEl = document.getElementById("grid");
+        const playerEl = document.getElementById("player");
+        const videoEl = document.getElementById("video");
+        const nowTitleEl = document.getElementById("now-title");
+        const liveEyebrowEl = document.getElementById("live-eyebrow");
+        const liveTextEl = document.getElementById("live-text");
+
+        function fmtDur(s) {
+            if (!s) return "";
+            const m = Math.floor(s / 60);
+            const sec = Math.round(s % 60);
+            return `${m}:${String(sec).padStart(2, "0")}`;
+        }
+
+        function setOnline(online, count) {
+            if (online) {
+                liveEyebrowEl.classList.remove("off");
+                liveTextEl.textContent = count != null ? `${count} video${count === 1 ? "" : "s"} available` : "Online";
+            } else {
+                liveEyebrowEl.classList.add("off");
+                liveTextEl.textContent = "Offline";
+            }
+        }
+
+        function openVideo(v) {
+            nowTitleEl.textContent = v.title || "Now playing";
+            videoEl.src = v.url;
+            playerEl.classList.add("show");
+            playerEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            videoEl.play().catch(() => {});
+        }
+
+        document.getElementById("close-btn").addEventListener("click", () => {
+            videoEl.pause();
+            videoEl.removeAttribute("src");
+            videoEl.load();
+            playerEl.classList.remove("show");
+        });
+
+        function render(videos) {
+            if (!videos.length) {
+                gridEl.innerHTML = `<div class="empty">No videos in the library yet. Add files to the server's <code>videos/</code> folder.</div>`;
+                return;
+            }
+            gridEl.innerHTML = videos.map((v) => `
+                <article class="card" data-id="${encodeURIComponent(v.id)}">
+                    <div class="thumb-wrap">
+                        <img class="thumb" loading="lazy" alt="${v.title}" src="${v.thumbUrl}">
+                        <div class="play-badge"><span></span></div>
+                    </div>
+                    <div class="meta">
+                        <div class="title">${v.title}</div>
+                        <div class="sub">${fmtDur(v.duration)}${v.width ? ` · ${v.width}×${v.height}` : ""}</div>
+                    </div>
+                </article>`).join("");
+
+            gridEl.querySelectorAll(".card").forEach((card) => {
+                card.addEventListener("click", () => {
+                    const id = decodeURIComponent(card.dataset.id);
+                    const v = videos.find((x) => x.id === id);
+                    if (v) openVideo(v);
+                });
+            });
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch(API, { cache: "no-store" });
+                if (!res.ok) throw new Error("status " + res.status);
+                const data = await res.json();
+                setOnline(true, data.videoCount);
+                render(data.videos || []);
+            } catch (err) {
+                setOnline(false);
+                gridEl.innerHTML = `<div class="error">Theatre is offline — the video server isn't reachable right now.</div>`;
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 60000);
+    </script>
+</body>
+</html>
