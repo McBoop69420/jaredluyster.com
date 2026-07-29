@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import secrets
 import smtplib
 import threading
@@ -812,11 +813,28 @@ def api_admin_cards_autocomplete():
     q = (request.args.get("q") or "").strip()
     if len(q) < 2:
         return jsonify(names=[])
+    # Build a name query where each typed word must be a prefix of a word in the
+    # card name. This lets fragments like "det sph" match "Detention Sphere",
+    # which Scryfall's /cards/autocomplete (contiguous prefix only) cannot do.
+    words = [w for w in q.split() if w]
+    query = " ".join('name:/\\b{}/'.format(re.escape(w)) for w in words)
     try:
-        data = _scryfall_get("https://api.scryfall.com/cards/autocomplete", {"q": q})
+        data = _scryfall_get(
+            "https://api.scryfall.com/cards/search",
+            {"q": query, "order": "name", "unique": "cards"},
+        )
     except Exception:
         return jsonify(names=[])
-    return jsonify(names=data.get("data", []))
+    seen = set()
+    names = []
+    for card in data.get("data", []):
+        name = card.get("name")
+        if name and name not in seen:
+            seen.add(name)
+            names.append(name)
+        if len(names) >= 20:
+            break
+    return jsonify(names=names)
 
 
 @app.route("/marketplace/api/admin/cards/printings")
