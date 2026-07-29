@@ -1,5 +1,33 @@
 [
   {
+    "id": 3,
+    "name": "Abzan Beastmaster",
+    "set_code": "PLST",
+    "collector_number": "FRF-119",
+    "foil": false,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.25,
+    "image_url": "https://cards.scryfall.io/normal/front/e/c/ec2b30e2-f134-4fd0-bb3b-0e319630fd77.jpg?1723436534",
+    "notes": null
+  },
+  {
+    "id": 5,
+    "name": "Accomplished Alchemist",
+    "set_code": "STX",
+    "collector_number": "119",
+    "foil": false,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.5,
+    "image_url": "https://cards.scryfall.io/normal/front/0/d/0d7b7830-b65e-4c53-98e8-152026764e4b.jpg?1629218987",
+    "notes": null
+  },
+  {
     "id": 6,
     "name": "Accumulated Knowledge",
     "set_code": "A25",
@@ -389,6 +417,20 @@
     "sell_price": null,
     "market_price": 0.25,
     "image_url": "https://cards.scryfall.io/normal/front/b/2/b23c18f8-a19f-406a-ad60-491087f9d660.jpg?1674141513",
+    "notes": null
+  },
+  {
+    "id": 36,
+    "name": "Casey Jones, Vigilante",
+    "set_code": "TMT",
+    "collector_number": "88",
+    "foil": true,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.75,
+    "image_url": "https://cards.scryfall.io/normal/front/a/6/a6a3258d-2e9b-4862-b2e3-bbfae9bd4d33.jpg?1769005927",
     "notes": null
   },
   {
@@ -1369,6 +1411,20 @@
     "sell_price": 9.25,
     "market_price": 9.25,
     "image_url": "https://cards.scryfall.io/normal/front/2/8/2829c546-71e7-4a22-95c0-906ee152d4b0.jpg?1723221434",
+    "notes": null
+  },
+  {
+    "id": 253,
+    "name": "Miscalculation",
+    "set_code": "ULG",
+    "collector_number": "36",
+    "foil": true,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": null,
+    "market_price": 0.48,
+    "image_url": "https://cards.scryfall.io/normal/front/4/b/4b4956a2-9a39-4152-9c98-70e4b2acfa26.jpg?1783946245",
     "notes": null
   },
   {
@@ -2660,6 +2716,20 @@
     "notes": null
   },
   {
+    "id": 254,
+    "name": "Tribal Flames",
+    "set_code": "inv",
+    "collector_number": "176",
+    "foil": false,
+    "condition": "Near Mint",
+    "quantity": 1,
+    "category": "MTG Card",
+    "sell_price": 0.25,
+    "market_price": 0.25,
+    "image_url": "https://cards.scryfall.io/normal/front/9/b/9b32531e-c759-4603-abd0-1724e8df70db.jpg?1783945678",
+    "notes": null
+  },
+  {
     "id": 74,
     "name": "Triumph of Ferocity",
     "set_code": "MB2",
@@ -2881,62 +2951,6 @@
     "sell_price": null,
     "market_price": 0.25,
     "image_url": "https://cards.scryfall.io/normal/front/0/e/0e6e2188-7203-4d10-a838-27233f283cd5.jpg?1775938149",
-    "notes": null
-  },
-  {
-    "id": 5,
-    "name": "Accomplished Alchemist",
-    "set_code": "STX",
-    "collector_number": "119",
-    "foil": false,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.5,
-    "image_url": "https://cards.scryfall.io/normal/front/0/d/0d7b7830-b65e-4c53-98e8-152026764e4b.jpg?1629218987",
-    "notes": null
-  },
-  {
-    "id": 3,
-    "name": "Abzan Beastmaster",
-    "set_code": "PLST",
-    "collector_number": "FRF-119",
-    "foil": false,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.25,
-    "image_url": "https://cards.scryfall.io/normal/front/e/c/ec2b30e2-f134-4fd0-bb3b-0e319630fd77.jpg?1723436534",
-    "notes": null
-  },
-  {
-    "id": 36,
-    "name": "Casey Jones, Vigilante",
-    "set_code": "TMT",
-    "collector_number": "88",
-    "foil": true,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.75,
-    "image_url": "https://cards.scryfall.io/normal/front/a/6/a6a3258d-2e9b-4862-b2e3-bbfae9bd4d33.jpg?1769005927",
-    "notes": null
-  },
-  {
-    "id": 253,
-    "name": "Miscalculation",
-    "set_code": "ULG",
-    "collector_number": "36",
-    "foil": true,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.48,
-    "image_url": "https://cards.scryfall.io/normal/front/4/b/4b4956a2-9a39-4152-9c98-70e4b2acfa26.jpg?1783946245",
     "notes": null
   }
 ]
