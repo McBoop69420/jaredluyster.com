@@ -2938,19 +2938,5 @@
     "market_price": 0.48,
     "image_url": "https://cards.scryfall.io/normal/front/4/b/4b4956a2-9a39-4152-9c98-70e4b2acfa26.jpg?1783946245",
     "notes": null
-  },
-  {
-    "id": 252,
-    "name": "Tribal Flames",
-    "set_code": "MM2",
-    "collector_number": "132",
-    "foil": false,
-    "condition": "Near Mint",
-    "quantity": 1,
-    "category": "MTG Card",
-    "sell_price": null,
-    "market_price": 0.26,
-    "image_url": "https://cards.scryfall.io/normal/front/d/2/d22418cd-4c49-4754-aa75-17f6eaf1639a.jpg?1783938401",
-    "notes": null
   }
 ]
