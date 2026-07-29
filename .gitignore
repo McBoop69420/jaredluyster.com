@@ -1,6 +1,5 @@
 .DS_Store
 .claude/
-Atlas/node_modules/
 Caddyfile
 marketplace/__pycache__/
 marketplace/*.db

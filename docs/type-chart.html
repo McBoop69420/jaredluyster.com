@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle elemental type chart and matchup reference.">
+    <title>Wizard Battle — Type Chart</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="reference-pages.css">
+    <style>
+        /* ── Type Chart page styles ──────────────────────── */
+        .chart-section {
+            margin-bottom: 36px;
+        }
+
+        .chart-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-panel {
+            background: rgba(14, 10, 22, 0.55);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+        }
+
+        /* ── Controls ────────────────────────────────────── */
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .cc-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .cc-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+            font-family: inherit;
+        }
+
+        .cc-btn:hover {
+            color: var(--text);
+            border-color: var(--gold);
+        }
+
+        .cc-btn.active {
+            background: rgba(240, 190, 99, 0.12);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .chart-hint {
+            font-size: 0.76rem;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.55;
+            max-width: 460px;
+            margin: 0 auto 18px;
+        }
+
+        /* ── Graph ───────────────────────────────────────── */
+        .graph-wrap {
+            display: flex;
+            justify-content: center;
+        }
+
+        #wheelSvg .type-node {
+            cursor: pointer;
+            transition: opacity 0.22s;
+        }
+
+        .type-label {
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .arrow-path {
+            transition: opacity 0.22s;
+        }
+
+        .arrow-path.arrow-active {
+            stroke-dasharray: 6 4;
+            animation: dash-flow 0.65s linear infinite;
+        }
+
+        @keyframes dash-flow {
+            from { stroke-dashoffset: 10; }
+            to   { stroke-dashoffset: 0; }
+        }
+
+        /* ── Tooltip ─────────────────────────────────────── */
+        #typeTooltip {
+            position: fixed;
+            z-index: 100;
+            background: rgba(10, 7, 18, 0.97);
+            border: 1px solid rgba(255, 236, 209, 0.22);
+            border-radius: 14px;
+            padding: 14px 18px;
+            min-width: 186px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        #typeTooltip.visible { opacity: 1; }
+
+        .tt-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .tt-group { margin-bottom: 10px; }
+        .tt-group:last-child { margin-bottom: 0; }
+
+        .tt-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        .tt-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 2px;
+        }
+
+        .tt-sym {
+            font-weight: 900;
+            font-size: 0.9rem;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .tt-type-name {
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+
+        /* ── Matrix ──────────────────────────────────────── */
+        table {
+            margin-bottom: 0;
+        }
+
+        .matrix-overflow {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        td, th {
+            transition: background 0.15s;
+        }
+
+        td.good {
+            background: rgba(80, 200, 80, 0.08);
+        }
+
+        td.bad {
+            background: rgba(220, 90, 60, 0.08);
+        }
+
+        /* Hover row */
+        tr.row-hi > td,
+        tr.row-hi > th:first-child {
+            background: rgba(255, 236, 209, 0.06) !important;
+        }
+
+        /* Hover column */
+        [data-col-type].col-hi {
+            background: rgba(255, 236, 209, 0.06) !important;
+        }
+
+        /* Graph-selected row */
+        tr.sel-row > td,
+        tr.sel-row > th:first-child {
+            background: rgba(255, 236, 209, 0.09) !important;
+        }
+
+        /* Graph-selected column */
+        [data-col-type].sel-col {
+            background: rgba(255, 236, 209, 0.09) !important;
+        }
+
+        .cell-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            line-height: 1;
+        }
+
+        .cell-sym {
+            font-size: 0.65rem;
+            font-weight: 900;
+            display: block;
+        }
+
+        .cell-val {
+            font-size: 0.8rem;
+            display: block;
+        }
+
+        td.good .cell-sym  { color: #9be48b; }
+        td.bad  .cell-sym  { color: #ffb28f; }
+
+        td:not(.good):not(.bad) .cell-sym { color: var(--muted); opacity: 0.4; }
+        td:not(.good):not(.bad) .cell-val { opacity: 0.45; }
+
+        /* ── Legend ──────────────────────────────────────── */
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 0.78rem;
+            color: var(--muted);
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+
+        .legend-chip.good {
+            background: rgba(80, 200, 80, 0.14);
+            color: #9be48b;
+        }
+
+        .legend-chip.bad {
+            background: rgba(220, 90, 60, 0.14);
+            color: #ffb28f;
+        }
+
+        .legend-chip.neutral {
+            background: rgba(255, 236, 209, 0.07);
+            color: var(--muted);
+        }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 600px) {
+            .chart-panel { padding: 16px 12px; }
+            #wheelSvg { width: 300px !important; height: 300px !important; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page-narrow">
+        <h1 class="page-title">Type Chart</h1>
+        <p class="subtitle">Pick a type to highlight its matchups, or switch the view to see resistances. Rows are attackers, columns are defenders.</p>
+
+        <section class="chart-section">
+            <p class="chart-section-label">Relationship Map</p>
+            <div class="chart-panel">
+                <div class="chart-controls">
+                    <span class="cc-label">Show</span>
+                    <button class="cc-btn active" data-mode="offense">Strong ×2</button>
+                    <button class="cc-btn" data-mode="defense">Weak ×0.5</button>
+                </div>
+                <p class="chart-hint">Six primal types form the cycle (outer ring). Shadow &amp; Light sit at the center — they strike each other for ×2 but are neutral to everything in the cycle.</p>
+                <div class="graph-wrap">
+                    <svg id="wheelSvg" style="width:420px;height:420px;overflow:visible;" viewBox="-210 -210 420 420">
+                        <defs>
+                            <marker id="arr-marker" markerWidth="10" markerHeight="10"
+                                    refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+                                <path d="M0,0 L10,5 L0,10 Z" fill="#66ff99" opacity="0.9"/>
+                            </marker>
+                            <marker id="arr-marker-r" markerWidth="10" markerHeight="10"
+                                    refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+                                <path d="M0,0 L10,5 L0,10 Z" fill="#ff8a6c" opacity="0.9"/>
+                            </marker>
+                        </defs>
+                        <g id="arrowLayer"></g>
+                        <g id="nodeLayer"></g>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-section">
+            <p class="chart-section-label">Effectiveness Matrix</p>
+            <div class="chart-panel">
+                <div class="matrix-overflow">
+                    <table id="effMatrix"></table>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="legend-chip good"><span>↑</span> 2×</span>
+                        <span>super effective</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-chip neutral"><span>•</span> 1×</span>
+                        <span>neutral</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-chip bad"><span>↓</span> 0.5×</span>
+                        <span>not very effective</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="typeTooltip" role="tooltip" aria-hidden="true"></div>
+
+
+    <script>
+        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
+        const CYCLE = ['Fire','Grass','Ice','Rock','Arc','Water']; // primal cycle order
+
+        const TYPE_ICONS = {
+            Fire:   '../TypeIcons/icon_fire.png',
+            Water:  '../TypeIcons/icon_water.png',
+            Rock:   '../TypeIcons/icon_rock.png',
+            Arc:    '../TypeIcons/icon_arc.png',
+            Ice:    '../TypeIcons/icon_ice.png',
+            Shadow: '../TypeIcons/icon_shadow.png',
+            Light:  '../TypeIcons/icon_light.png',
+            Grass:  '../TypeIcons/icon_grass.png',
+        };
+
+        const TYPE_COLORS = {
+            Fire:   '#ff4422',
+            Water:  '#2277ff',
+            Rock:   '#a87832',
+            Arc:    '#f97316',
+            Ice:    '#88ddff',
+            Shadow: '#8c2a5e',
+            Light:  '#ffe234',
+            Grass:  '#22c55e',
+        };
+
+        // Canonical matrix from the Atlas Type Matchups spec.
+        // Row = attacker, Column = defender. ×2 / ×0.5 / ×1.
+        const EFF = {
+            Fire:   { Fire:1, Water:0.5, Rock:1,   Arc:0.5, Ice:2,   Grass:2,   Shadow:1, Light:1   },
+            Water:  { Fire:2, Water:1,   Rock:0.5, Arc:0.5, Ice:1,   Grass:2,   Shadow:1, Light:1   },
+            Rock:   { Fire:1, Water:2,   Rock:1,   Arc:2,   Ice:0.5, Grass:0.5, Shadow:1, Light:1   },
+            Arc:    { Fire:2, Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Grass:1,   Shadow:1, Light:1   },
+            Ice:    { Fire:0.5, Water:1, Rock:2,   Arc:2,   Ice:1,   Grass:0.5, Shadow:1, Light:1   },
+            Grass:  { Fire:0.5, Water:0.5, Rock:2, Arc:1,   Ice:2,   Grass:1,   Shadow:1, Light:1   },
+            Shadow: { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Grass:1,   Shadow:1, Light:2   },
+            Light:  { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Grass:1,   Shadow:2, Light:1   },
+        };
+
+        // ── Node positions ────────────────────────────────────
+        // 6 primal types on a hexagon in cycle order: the ring edges ARE the
+        // cycle (each beats the next). Shadow & Light sit at the center as a
+        // mutual ×2 pair, neutral to every cycle type.
+        const RADIUS = 150;
+        const NODE_R = 30;
+        const CENTER_R = 28;
+        const HEX_START = -Math.PI / 2; // Fire at top
+        const positions = {};
+        CYCLE.forEach((type, i) => {
+            const angle = HEX_START + i * (Math.PI * 2 / 6);
+            positions[type] = {
+                x: Math.cos(angle) * RADIUS,
+                y: Math.sin(angle) * RADIUS,
+                r: NODE_R,
+                ring: true,
+            };
+        });
+        positions['Shadow'] = { x: 0,   y: -34, r: CENTER_R, center: true };
+        positions['Light']  = { x: 0,   y: 34,  r: CENTER_R, center: true };
+
+        // Classify an edge for styling: 'ring' (cycle step), 'chord' (2nd win),
+        // 'special' (Shadow<->Light), or 'resist' (×0.5).
+        function classify(a, d) {
+            if ((a === 'Shadow' && d === 'Light') || (a === 'Light' && d === 'Shadow')) return 'special';
+            const v = EFF[a][d];
+            if (v === 2) {
+                const ia = CYCLE.indexOf(a), ib = CYCLE.indexOf(d);
+                if (ia >= 0 && ib >= 0 && ib === (ia + 1) % 6) return 'ring';
+                return 'chord';
+            }
+            if (v === 0.5) return 'resist';
+            return null;
+        }
+
+        // ── Helpers ───────────────────────────────────────────
+        function shortenLine(x1, y1, x2, y2, amount) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            return {
+                x1: x1 + dx / len * amount,
+                y1: y1 + dy / len * amount,
+                x2: x2 - dx / len * amount,
+                y2: y2 - dy / len * amount,
+            };
+        }
+
+        function curvePath(x1, y1, x2, y2) {
+            const cx = (x1 + x2) / 2 + (y2 - y1) * 0.24;
+            const cy = (y1 + y2) / 2 - (x2 - x1) * 0.24;
+            return `M${x1.toFixed(2)},${y1.toFixed(2)} Q${cx.toFixed(2)},${cy.toFixed(2)} ${x2.toFixed(2)},${y2.toFixed(2)}`;
+        }
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+
+        // ── Build edges ───────────────────────────────────────
+        const arrowLayer = document.getElementById('arrowLayer');
+        const nodeLayer  = document.getElementById('nodeLayer');
+        const edges = [];
+
+        TYPES.forEach(attacker => {
+            TYPES.forEach(defender => {
+                if (attacker === defender) return;
+                const v = EFF[attacker][defender];
+                if (v !== 2 && v !== 0.5) return; // skip neutral
+                const cls = classify(attacker, defender);
+                if (!cls) return;
+                const m = v === 2 ? 'offense' : 'defense';
+
+                const p1 = positions[attacker], p2 = positions[defender];
+                const r1 = p1.r || NODE_R, r2 = p2.r || NODE_R;
+                const s = shortenLine(p1.x, p1.y, p2.x, p2.y, (r1 + r2) / 2 + 5);
+                const d = curvePath(s.x1, s.y1, s.x2, s.y2);
+
+                const path = document.createElementNS(SVGNS, 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', m === 'offense' ? '#55ee88' : '#ff7a5c');
+                path.setAttribute('stroke-width',
+                    cls === 'ring' ? '2.1' :
+                    cls === 'special' ? '2.4' : '1.5');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('opacity', '0.5');
+                path.setAttribute('marker-end', m === 'offense' ? 'url(#arr-marker)' : 'url(#arr-marker-r)');
+                path.setAttribute('class', 'arrow-path');
+                path.dataset.from = attacker;
+                path.dataset.to   = defender;
+                path.dataset.cls  = cls;
+                path.dataset.mode = m;
+                arrowLayer.appendChild(path);
+                edges.push({ path, from: attacker, to: defender, cls, mode: m });
+            });
+        });
+
+        // ── Build nodes ───────────────────────────────────────
+        let selectedType = null;
+        let hoveredType  = null;
+        let mode = 'offense';
+
+        Object.keys(positions).forEach(type => {
+            const pos   = positions[type];
+            const color = TYPE_COLORS[type];
+            const g     = document.createElementNS(SVGNS, 'g');
+            g.setAttribute('class', 'type-node');
+            g.setAttribute('data-type', type);
+            g.setAttribute('transform', `translate(${pos.x},${pos.y})`);
+
+            // Outer glow ring (shown on active)
+            const glow = document.createElementNS(SVGNS, 'circle');
+            glow.setAttribute('r', String((pos.r || NODE_R) + 7));
+            glow.setAttribute('fill', 'none');
+            glow.setAttribute('stroke', color);
+            glow.setAttribute('stroke-width', '2');
+            glow.setAttribute('opacity', '0');
+            glow.setAttribute('class', 'node-glow');
+            glow.style.transition = 'opacity 0.22s';
+
+            // Icon IS the node — no outer ring. Enlarged + soft halo.
+            const iconSize = pos.center ? 54 : 64;
+            const icon = document.createElementNS(SVGNS, 'image');
+            icon.setAttribute('href', TYPE_ICONS[type]);
+            icon.setAttribute('x', String(-iconSize / 2));
+            icon.setAttribute('y', String(-iconSize / 2));
+            icon.setAttribute('width', String(iconSize));
+            icon.setAttribute('height', String(iconSize));
+            icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            icon.style.filter = `drop-shadow(0 0 7px ${color}aa)`;
+
+            g.appendChild(glow);
+            g.appendChild(icon);
+
+            // Always-on text label
+            const label = document.createElementNS(SVGNS, 'text');
+            label.setAttribute('class', 'type-label');
+            label.setAttribute('fill', color);
+            if (pos.center) {
+                label.setAttribute('x', type === 'Shadow' ? String(-46) : String(46));
+                label.setAttribute('y', String(pos.y + 4));
+                label.setAttribute('text-anchor', type === 'Shadow' ? 'end' : 'start');
+                label.setAttribute('dominant-baseline', 'middle');
+            } else {
+                label.setAttribute('x', '0');
+                label.setAttribute('y', String((pos.r || NODE_R) + 16));
+                label.setAttribute('text-anchor', 'middle');
+            }
+            label.textContent = type;
+            g.appendChild(label);
+
+            g.addEventListener('mouseenter', e => {
+                hoveredType = type;
+                applyHighlight();
+                showTooltip(type, e);
+            });
+            g.addEventListener('mousemove', positionTooltip);
+            g.addEventListener('mouseleave', () => {
+                hoveredType = null;
+                applyHighlight();
+                hideTooltip();
+            });
+            g.addEventListener('click', () => {
+                selectedType = selectedType === type ? null : type;
+                applyHighlight();
+                syncMatrixSelection(selectedType);
+            });
+
+            nodeLayer.appendChild(g);
+        });
+
+        // ── Highlight logic ───────────────────────────────────
+        function idleOpacity(cls) {
+            if (mode === 'offense') {
+                return cls === 'ring' ? 0.9 : cls === 'chord' ? 0.15 : cls === 'special' ? 0.7 : 0.5;
+            }
+            return 0.55; // defense: all ×0.5 edges share one look
+        }
+
+        function applyHighlight() {
+            const active = selectedType || hoveredType;
+
+            edges.forEach(e => {
+                if (e.mode !== mode) { e.path.style.display = 'none'; return; }
+                e.path.style.display = '';
+                if (!active) {
+                    e.path.style.opacity = String(idleOpacity(e.cls));
+                    e.path.classList.remove('arrow-active');
+                } else if (e.from === active || e.to === active) {
+                    e.path.style.opacity = '1';
+                    e.path.classList.add('arrow-active');
+                } else {
+                    e.path.style.opacity = '0.04';
+                    e.path.classList.remove('arrow-active');
+                }
+            });
+
+            nodeLayer.querySelectorAll('.type-node').forEach(node => {
+                const t    = node.getAttribute('data-type');
+                const glow = node.querySelector('.node-glow');
+                if (!active) {
+                    node.style.opacity = '1';
+                    glow.setAttribute('opacity', '0');
+                } else if (t === active) {
+                    node.style.opacity = '1';
+                    glow.setAttribute('opacity', '0.55');
+                } else {
+                    const connected = edges.some(e =>
+                        e.mode === mode &&
+                        ((e.from === active && e.to === t) || (e.from === t && e.to === active)));
+                    node.style.opacity = connected ? '0.82' : '0.16';
+                    glow.setAttribute('opacity', '0');
+                }
+            });
+        }
+
+        // ── Mode toggle ───────────────────────────────────────
+        function setMode(m) {
+            mode = m;
+            document.querySelectorAll('.cc-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.mode === m));
+            applyHighlight();
+        }
+        document.querySelectorAll('.cc-btn').forEach(b =>
+            b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+        // ── Matrix ────────────────────────────────────────────
+        const table = document.getElementById('effMatrix');
+
+        // Header row
+        const thead  = table.createTHead();
+        const hrow   = thead.insertRow();
+        const corner = document.createElement('th');
+        hrow.appendChild(corner);
+        TYPES.forEach(t => {
+            const th = document.createElement('th');
+            th.textContent = t;
+            th.dataset.colType = t;
+            hrow.appendChild(th);
+        });
+
+        // Data rows
+        const tbody = table.createTBody();
+        TYPES.forEach(attacker => {
+            const tr = tbody.insertRow();
+            tr.dataset.rowType = attacker;
+
+            const rh = document.createElement('th');
+            rh.textContent = attacker;
+            tr.appendChild(rh);
+
+            TYPES.forEach(defender => {
+                const eff = EFF[attacker][defender];
+                const td  = tr.insertCell();
+                td.dataset.colType = defender;
+                if (eff === 2) {
+                    td.className = 'good';
+                    td.innerHTML = '<div class="cell-inner"><span class="cell-sym">↑</span><span class="cell-val">2x</span></div>';
+                } else if (eff === 0.5) {
+                    td.className = 'bad';
+                    td.innerHTML = '<div class="cell-inner"><span class="cell-sym">↓</span><span class="cell-val">0.5x</span></div>';
+                } else {
+                    td.innerHTML = '<div class="cell-inner"><span class="cell-sym">•</span><span class="cell-val">1x</span></div>';
+                }
+            });
+        });
+
+        // Row hover (event delegation on tbody)
+        let rowHover = null;
+        tbody.addEventListener('mouseover', e => {
+            const tr = e.target.closest('tr[data-row-type]');
+            if (!tr || tr.dataset.rowType === rowHover) return;
+            table.querySelectorAll('tr.row-hi').forEach(r => r.classList.remove('row-hi'));
+            rowHover = tr.dataset.rowType;
+            tr.classList.add('row-hi');
+        });
+        tbody.addEventListener('mouseleave', () => {
+            table.querySelectorAll('tr.row-hi').forEach(r => r.classList.remove('row-hi'));
+            rowHover = null;
+        });
+
+        // Column hover (event delegation on whole table)
+        let colHover = null;
+        table.addEventListener('mouseover', e => {
+            const cell = e.target.closest('[data-col-type]');
+            if (!cell) return;
+            const ct = cell.dataset.colType;
+            if (ct === colHover) return;
+            table.querySelectorAll('[data-col-type].col-hi').forEach(c => c.classList.remove('col-hi'));
+            colHover = ct;
+            table.querySelectorAll(`[data-col-type="${ct}"]`).forEach(c => c.classList.add('col-hi'));
+        });
+        table.addEventListener('mouseleave', () => {
+            table.querySelectorAll('[data-col-type].col-hi').forEach(c => c.classList.remove('col-hi'));
+            colHover = null;
+        });
+
+        // Graph → matrix sync
+        function syncMatrixSelection(type) {
+            table.querySelectorAll('.sel-row').forEach(el => el.classList.remove('sel-row'));
+            table.querySelectorAll('.sel-col').forEach(el => el.classList.remove('sel-col'));
+            if (!type) return;
+            const tr = table.querySelector(`tr[data-row-type="${type}"]`);
+            if (tr) tr.classList.add('sel-row');
+            table.querySelectorAll(`[data-col-type="${type}"]`).forEach(c => c.classList.add('sel-col'));
+        }
+
+        // ── Tooltip ───────────────────────────────────────────
+        const tooltip = document.getElementById('typeTooltip');
+
+        function showTooltip(type, e) {
+            const strengths  = TYPES.filter(t => EFF[type][t] === 2);
+            const weaknesses = TYPES.filter(t => EFF[type][t] === 0.5);
+            const neutral    = TYPES.filter(t => EFF[type][t] === 1 && t !== type);
+
+            let html = `<div class="tt-title" style="color:${TYPE_COLORS[type]}">${type}</div>`;
+
+            if (strengths.length) {
+                html += `<div class="tt-group"><div class="tt-label">Strong vs</div>`;
+                strengths.forEach(t => {
+                    html += `<div class="tt-row">
+                        <span class="tt-sym" style="color:#9be48b">↑</span>
+                        <span class="tt-type-name" style="color:${TYPE_COLORS[t]}">${t}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            if (weaknesses.length) {
+                html += `<div class="tt-group"><div class="tt-label">Weak vs</div>`;
+                weaknesses.forEach(t => {
+                    html += `<div class="tt-row">
+                        <span class="tt-sym" style="color:#ffb28f">↓</span>
+                        <span class="tt-type-name" style="color:${TYPE_COLORS[t]}">${t}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            if (neutral.length) {
+                html += `<div class="tt-group"><div class="tt-label">Neutral vs</div>`;
+                neutral.forEach(t => {
+                    html += `<div class="tt-row">
+                        <span class="tt-sym" style="color:var(--muted)">•</span>
+                        <span class="tt-type-name" style="color:${TYPE_COLORS[t]}">${t}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            tooltip.innerHTML = html;
+            tooltip.setAttribute('aria-hidden', 'false');
+            positionTooltip(e);
+            tooltip.classList.add('visible');
+        }
+
+        function positionTooltip(e) {
+            const pad = 14;
+            const tw  = tooltip.offsetWidth;
+            const th  = tooltip.offsetHeight;
+            let x = e.clientX + pad;
+            let y = e.clientY + pad;
+            if (x + tw > window.innerWidth  - pad) x = e.clientX - tw - pad;
+            if (y + th > window.innerHeight - pad) y = e.clientY - th - pad;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top  = y + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+            tooltip.setAttribute('aria-hidden', 'true');
+        }
+
+        applyHighlight();
+    </script>
+</body>
+</html>

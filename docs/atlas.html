@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle design wiki — full game bibles covering mechanics, spells, classes, enemies, and lore.">
+    <title>Wizard Battle — Wiki</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="tagify.js"></script>
+    <style>
+        :root {
+            --wiki-gold:  #d4af37;
+            --wiki-sky:   #88ddff;
+            --wiki-moss:  #22c55e;
+            --wiki-plum:  #bb33ee;
+            --wiki-ember: #ff4422;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            flex-shrink: 0;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            border-right: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px 16px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-header strong {
+            display: block;
+            font-size: 0.7rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--wiki-gold);
+        }
+
+        .sidebar-header span {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .file-list {
+            list-style: none;
+            margin: 0;
+            padding: 8px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .file-list li button {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 9px 16px;
+            font-size: 0.88rem;
+            color: var(--muted);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: color 120ms, border-color 120ms, background 120ms;
+            line-height: 1.3;
+        }
+
+        .file-list li button:hover {
+            color: var(--text);
+            background: rgba(255, 236, 209, 0.04);
+        }
+
+        .file-list li button.active {
+            color: var(--wiki-gold);
+            border-left-color: var(--wiki-gold);
+            background: rgba(240, 190, 99, 0.06);
+        }
+
+        /* ── Main content ── */
+        .content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: rgba(8, 6, 10, 0.3);
+        }
+
+        .content-header h1 {
+            margin: 0;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        .content-header .filepath {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: "SF Mono", "Fira Code", monospace;
+        }
+
+        .scroll-area {
+            overflow-y: auto;
+            flex: 1;
+            padding: 36px 48px 64px;
+        }
+
+        .scroll-area.iframe-mode {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .embed-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ── Markdown rendering ── */
+        .md h1, .md h2, .md h3 {
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--text);
+        }
+
+        .md h1 {
+            font-size: 2rem;
+            margin: 0 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-strong);
+        }
+
+        .md h2 {
+            font-size: 1.3rem;
+            margin: 36px 0 12px;
+            color: var(--wiki-gold);
+        }
+
+        .md h3 {
+            font-size: 1.05rem;
+            margin: 24px 0 8px;
+            color: var(--wiki-sky);
+            font-family: inherit;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .md p {
+            color: var(--muted);
+            line-height: 1.75;
+            margin: 0 0 14px;
+            max-width: 72ch;
+        }
+
+        .md strong {
+            color: var(--text);
+        }
+
+        .md em {
+            color: var(--muted);
+        }
+
+        .md hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 28px 0;
+        }
+
+        .md ul, .md ol {
+            color: var(--muted);
+            padding-left: 1.4em;
+            margin: 0 0 14px;
+            line-height: 1.7;
+        }
+
+        .md li {
+            margin-bottom: 4px;
+        }
+
+        .md code {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.85em;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            color: var(--wiki-sky);
+        }
+
+        .md pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            margin: 0 0 18px;
+        }
+
+        .md pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--wiki-moss);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .md blockquote {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            border-left: 3px solid var(--wiki-plum);
+            background: rgba(164, 123, 255, 0.06);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .md blockquote p {
+            margin: 0;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* Tables */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 0 0 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .md table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .md thead tr {
+            border-bottom: 2px solid var(--border-strong);
+        }
+
+        .md th {
+            text-align: left;
+            padding: 8px 12px;
+            color: var(--wiki-gold);
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .md td {
+            padding: 8px 12px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        .md td strong {
+            color: var(--text);
+        }
+
+        .md td code {
+            font-size: 0.82em;
+        }
+
+        .md tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .md tbody tr:hover td {
+            background: rgba(255, 236, 209, 0.03);
+        }
+
+        /* ── Search ── */
+        .search-wrap {
+            padding: 10px 10px 0;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color 120ms, background 120ms;
+            font-family: inherit;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+            opacity: 0.6;
+        }
+
+        .search-input:focus {
+            border-color: var(--wiki-gold);
+            background: rgba(240,190,99,0.04);
+        }
+
+        .search-results {
+            list-style: none;
+            margin: 0;
+            padding: 8px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .search-results .result-item {
+            padding: 8px 14px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: background 120ms, border-color 120ms;
+        }
+
+        .search-results .result-item:hover {
+            background: rgba(255,236,209,0.04);
+            border-left-color: var(--wiki-gold);
+        }
+
+        .result-label {
+            font-size: 0.72rem;
+            color: var(--wiki-gold);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .result-snippet {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.45;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-snippet mark {
+            background: rgba(240,190,99,0.3);
+            color: var(--wiki-gold);
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .search-empty {
+            padding: 16px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        /* highlighted matches in main content */
+        .md mark.search-hit {
+            background: rgba(240,190,99,0.28);
+            color: inherit;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .md mark.search-hit.current-hit {
+            background: rgba(240,190,99,0.6);
+            color: inherit;
+        }
+
+        /* ── Refresh button ── */
+        .refresh-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 120ms, border-color 120ms, background 120ms;
+            flex-shrink: 0;
+        }
+
+        .refresh-btn:hover {
+            color: var(--text);
+            border-color: var(--wiki-gold);
+            background: rgba(240, 190, 99, 0.06);
+        }
+
+        .refresh-btn:active {
+            background: rgba(240, 190, 99, 0.12);
+        }
+
+        .refresh-btn svg {
+            transition: transform 400ms ease;
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 500ms linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* ── Term entry cards (classes, status effects, decks, type matchups) ── */
+        .term-entry {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 0 0 18px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .term-entry h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 10px;
+        }
+
+        .term-entry .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .term-entry .tag {
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 3px 10px;
+        }
+
+        .term-entry .quote {
+            font-style: italic;
+            color: var(--muted);
+            margin: 0 0 12px;
+        }
+
+        .term-entry .matchup-line {
+            margin: 12px 0 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .term-meta {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .type-icon-sm {
+            width: 1.1em;
+            height: 1.1em;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        /* Empty / loading state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            gap: 8px;
+        }
+
+        .empty-state span {
+            font-size: 2.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        @media (max-width: 720px) {
+            .layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 45vh;
+                transition: max-height 180ms ease;
+            }
+
+            .sidebar.collapsed {
+                max-height: 52px;
+            }
+
+            .sidebar.collapsed .search-wrap,
+            .sidebar.collapsed .file-list,
+            .sidebar.collapsed .search-results {
+                display: none;
+            }
+
+            .sidebar-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                cursor: pointer;
+                padding: 14px 16px;
+            }
+
+            .sidebar-toggle {
+                background: none;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--muted);
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+                line-height: 1;
+                transition: transform 180ms ease;
+                flex-shrink: 0;
+            }
+
+            .sidebar.collapsed .sidebar-toggle {
+                transform: rotate(-90deg);
+            }
+
+            .content-header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .content-header .filepath {
+                display: none;
+            }
+
+            .scroll-area {
+                padding: 20px 16px 40px;
+            }
+
+            .term-entry {
+                padding: 14px 16px;
+            }
+
+            .md h1 {
+                font-size: 1.5rem;
+            }
+
+            .md h2 {
+                font-size: 1.15rem;
+                margin: 28px 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="shell topbar-inner">
+        <a class="brand" href="index.html">
+            <img class="brand-wordmark" src="wordmark-horizontal.svg" alt="Wizard Battle — Roguelike Deckbuilder">
+        </a>
+        <nav class="nav" id="main-nav">
+            <a href="index.html">Home</a>
+            <a class="active" href="atlas.html">Wiki</a>
+        </nav>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-header" id="sidebarHeader">
+            <div>
+                <strong>Wizard Battle</strong>
+                <span>Wiki</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle chapter list" type="button">&#9660;</button>
+        </div>
+        <div class="search-wrap">
+            <input class="search-input" id="searchInput" type="search" placeholder="Search all bibles… (/)">
+        </div>
+        <ul class="file-list" id="fileList"></ul>
+    </aside>
+
+    <div class="content">
+        <div class="content-header">
+            <h1 id="contentTitle">Select a document</h1>
+            <div style="display:flex;align-items:center;gap:14px">
+                <span class="filepath" id="contentPath"></span>
+                <button class="refresh-btn" id="refreshBtn" title="Reload file (R)">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.5 6A4.5 4.5 0 1 1 8.25 2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        <polyline points="8.25,0.5 8.25,2.5 10.25,2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Reload
+                </button>
+            </div>
+        </div>
+        <div class="scroll-area">
+            <div class="md" id="mdContent">
+                <div class="empty-state">
+                    <span>📖</span>
+                    <p>Choose a bible from the sidebar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FILES = [
+        { label: 'Overview', file: 'README.md' },
+        { label: 'World & Lore', file: 'world-and-lore.md' },
+        { label: 'Game Systems', file: 'game-systems.md' },
+        { label: 'Status Effects', file: 'status-effects.md' },
+        { label: 'Classes', file: 'classes.md' },
+        { label: 'Starting Decks', file: 'starting-decks.md' },
+        { label: 'Spells', file: 'spells.md' },
+        { label: 'Card Mechanics', file: 'card-mechanics.md' },
+        { label: 'Enemies', file: 'enemies.md' },
+        { label: 'Map & Progression', file: 'map-and-progression.md' },
+        { label: 'Type Matchups', file: 'type-matchups.md' },
+        { label: 'UI & Design', file: 'ui-and-design.md' },
+        { label: 'HTML Styling Guide', file: 'HTML_STYLING_GUIDE.md' },
+        { label: 'Logo Palette', type: 'iframe', src: 'logo-palette.html' },
+        { label: 'Icon Reference', type: 'iframe', src: 'icon-reference.html' },
+        { label: 'Keywords', id: 'keywords', type: 'iframe', src: 'keywords.html' },
+        { label: 'Type Chart', id: 'type-chart', type: 'iframe', src: 'type-chart.html' },
+        { label: 'Card Reference', id: 'cards', type: 'iframe', src: 'cards.html' },
+        { label: 'Download', id: 'download', type: 'iframe', src: 'download.html' },
+    ];
+
+    /* ── Type / status metadata — verified against Bibles/ui-and-design.md, */
+    /* status-effects.md, and type-matchups.md; keep in sync if those change ── */
+    const TYPE_META = {
+        Fire:   { hex: '#ff4422', icon: 'TypeIcons/icon_fire.png',   status: 'Char',      className: 'Pyromancer',   strong: ['Grass','Ice','Shadow'],  weak: ['Water','Arc','Rock'],    neutral: 'Light'  },
+        Water:  { hex: '#2277ff', icon: 'TypeIcons/icon_water.png',  status: 'Drown',     className: 'Tidecaller',   strong: ['Fire','Rock','Light'],   weak: ['Arc','Grass','Shadow'],  neutral: 'Ice'    },
+        Rock:   { hex: '#a87832', icon: 'TypeIcons/icon_rock.png',   status: 'Daze',      className: 'Stonewarden',  strong: ['Fire','Arc','Light'],    weak: ['Water','Grass','Ice'],   neutral: 'Shadow' },
+        Arc:    { hex: '#f97316', icon: 'TypeIcons/icon_arc.png',    status: 'Shock',     className: 'Stormseeker',  strong: ['Water','Fire','Shadow'], weak: ['Rock','Light','Ice'],    neutral: 'Grass'  },
+        Ice:    { hex: '#88ddff', icon: 'TypeIcons/icon_ice.png',    status: 'Freeze',    className: 'Frostweaver',  strong: ['Rock','Arc','Shadow'],   weak: ['Fire','Grass','Light'],  neutral: 'Water'  },
+        Shadow: { hex: '#8c2a5e', icon: 'TypeIcons/icon_shadow.png', status: 'Lifesteal', className: 'Shadowblade',  strong: ['Water','Grass','Light'], weak: ['Fire','Arc','Ice'],      neutral: 'Rock'   },
+        Light:  { hex: '#ffe234', icon: 'TypeIcons/icon_light.png',  status: 'Blind',     className: 'Dawnmage',     strong: ['Grass','Arc','Ice'],     weak: ['Water','Rock','Shadow'], neutral: 'Fire'   },
+        Grass:  { hex: '#22c55e', icon: 'TypeIcons/icon_grass.png',  status: 'Root',      className: 'Verdantmaker', strong: ['Water','Ice','Rock'],    weak: ['Fire','Light','Shadow'], neutral: 'Arc'    },
+    };
+
+    const STATUS_META = {
+        Char:      { hex: '#ff6633', category: 'DoT' },
+        Drown:     { hex: '#4488ff', category: 'DoT' },
+        Shock:     { hex: '#ffdd00', category: 'Amplifier' },
+        Root:      { hex: '#44cc66', category: 'Trap' },
+        Freeze:    { hex: '#66ddff', category: 'Skip' },
+        Daze:      { hex: '#cc9944', category: 'Disruption' },
+        Blind:     { hex: '#f2f2f2', category: 'Miss' },
+        Weak:      { hex: '#cc6666', category: 'Debuff' },
+        Strength:  { hex: '#d4af37', category: 'Buff' },
+        Lifesteal: { hex: '#cc66ff', category: 'Drain' },
+    };
+
+    function slugify(text) {
+        return text.toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    function stripEmoji(text) {
+        return text
+            .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')
+            .replace(/[\u{FE0F}\u{200D}]/gu, '') // variation selectors / zero-width joiners left behind
+            .trim();
+    }
+
+    function typeIconImg(typeName) {
+        const t = TYPE_META[typeName];
+        return t ? `<img class="type-icon-sm" src="${t.icon}" alt="${typeName}">` : '';
+    }
+
+    function splitByH2(text) {
+        const parts = text.split(/^(?=## (?!#))/m);
+        return parts.map(part => {
+            if (part.startsWith('## ')) {
+                const nl = part.indexOf('\n');
+                return {
+                    heading: nl < 0 ? part.slice(3).trim() : part.slice(3, nl).trim(),
+                    content: nl < 0 ? '' : part.slice(nl + 1).trim(),
+                };
+            }
+            return { heading: null, content: part.replace(/^# .+\n?/m, '').trim() };
+        }).filter(s => s.heading !== null || s.content);
+    }
+
+    function splitByH3(text) {
+        const parts = text.split(/^(?=### (?!#))/m);
+        return parts.map(part => {
+            if (part.startsWith('### ')) {
+                const nl = part.indexOf('\n');
+                return {
+                    heading: nl < 0 ? part.slice(4).trim() : part.slice(4, nl).trim(),
+                    content: nl < 0 ? '' : part.slice(nl + 1).trim(),
+                };
+            }
+            return { heading: null, content: part.trim() };
+        }).filter(s => s.heading !== null || s.content);
+    }
+
+    // Strip the leading ID column from enemy tables (implementation detail, not player-facing)
+    function dropIdColumn(text) {
+        return text.split('\n').map(line => {
+            if (!line.trim().startsWith('|')) return line;
+            const parts = line.split('|');
+            if (parts.length >= 4) parts.splice(1, 1);
+            return parts.join('|');
+        }).join('\n');
+    }
+
+    function wrapTables(root) {
+        root.querySelectorAll('table').forEach(table => {
+            if (table.parentElement.classList.contains('table-wrap')) return;
+            const wrap = document.createElement('div');
+            wrap.className = 'table-wrap';
+            table.parentNode.insertBefore(wrap, table);
+            wrap.appendChild(table);
+        });
+    }
+
+    /* ── Section-aware renderers — give the most player-relevant bibles ── */
+    /* (spells, classes, status effects, decks, enemies, type matchups,   */
+    /* lore) dedicated card/anchor treatment. Everything else falls back */
+    /* to renderGeneric, which just wraps each H2 section in an id'd div. */
+
+    function renderGeneric(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const id = slugify(sec.heading);
+            const bodyMd = sec.content.replace(/^### /gm, '#### ');
+            html += `<div id="${id}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+        }
+        return html;
+    }
+
+    function renderSpells(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading.includes('Spell Tiers')) {
+                html += `<div id="spell-tiers"><h3>${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            if (/neutral|universal/i.test(sec.heading)) {
+                html += `<div id="spells-neutral"><h3>⬡ ${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            const typeName = stripEmoji(sec.heading);
+            const type = TYPE_META[typeName];
+            if (type) {
+                html += `<div id="spells-${typeName.toLowerCase()}">
+                    <h3 style="color:${type.hex}">${typeIconImg(typeName)} ${typeName}</h3>
+                    ${marked.parse(sec.content)}
+                </div>`;
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderClasses(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Class Roster') { html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Class Profiles') {
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const className = entry.heading.trim();
+                    const typeKey = Object.keys(TYPE_META).find(k => TYPE_META[k].className === className);
+                    const type = typeKey ? TYPE_META[typeKey] : null;
+                    if (!type) { html += `<div><h3>${className}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    const lines = entry.content.split('\n');
+                    const quoteMatch = (lines[0] || '').match(/\*"([^"]+)"\*/);
+                    const quote = quoteMatch ? quoteMatch[1] : '';
+                    const body = lines.slice(1).join('\n').trim();
+                    html += `<div id="class-${className.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                        <h3 style="color:${type.hex}">${typeIconImg(typeKey)} ${className}</h3>
+                        <div class="meta"><span class="tag">Type: ${typeKey}</span><span class="tag">HP: 70</span><span class="tag">Status: ${type.status}</span></div>
+                        ${quote ? `<p class="quote">&ldquo;${quote}&rdquo;</p>` : ''}
+                        ${marked.parse(body)}
+                        <p class="matchup-line"><strong>Strong vs:</strong> ${type.strong.join(', ')} (2&times;) &nbsp;|&nbsp; <strong>Weak vs:</strong> ${type.weak.join(', ')} (0.5&times;)</p>
+                    </div>`;
+                }
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderStatusEffects(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Quick Reference') { html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`; continue; }
+            if (sec.heading === 'Detailed Mechanics') {
+                html += '<h3>Detailed Mechanics</h3>';
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const nameMatch = entry.heading.match(/^(\w+)/);
+                    const statusName = nameMatch ? nameMatch[1] : null;
+                    const status = statusName ? STATUS_META[statusName] : null;
+                    if (!status) { html += `<div><h3>${entry.heading}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    const typeMatch = entry.heading.match(/\(([^)]+)\)/);
+                    const typeName = typeMatch ? typeMatch[1] : 'Neutral';
+                    html += `<div id="status-${statusName.toLowerCase()}" class="term-entry" style="border-color:${status.hex}">
+                        <h3 style="color:${status.hex}">${statusName} <span class="term-meta">${status.hex} &middot; ${typeName} &middot; ${status.category}</span></h3>
+                        ${marked.parse(entry.content)}
+                    </div>`;
+                }
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderStartingDecks(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (/universal/i.test(sec.heading)) {
+                html += `<div id="deck-universal"><h3>${sec.heading}</h3>${marked.parse(sec.content)}</div>`;
+                continue;
+            }
+            const className = stripEmoji(sec.heading).trim();
+            const typeKey = Object.keys(TYPE_META).find(k => TYPE_META[k].className === className);
+            const type = typeKey ? TYPE_META[typeKey] : null;
+            if (type) {
+                html += `<div id="deck-${className.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                    <h3 style="color:${type.hex}">${typeIconImg(typeKey)} ${className} Starting Deck</h3>
+                    ${marked.parse(sec.content)}
+                </div>`;
+            } else {
+                html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+            }
+        }
+        return html;
+    }
+
+    function renderEnemies(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        const TIER_ID = { Common: 'enemies-common', Elite: 'enemies-elite', Boss: 'enemies-boss' };
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const tierKey = Object.keys(TIER_ID).find(k => new RegExp('^' + k + ' Enemies').test(sec.heading));
+            if (tierKey) {
+                const cleaned = dropIdColumn(sec.content);
+                html += `<div id="${TIER_ID[tierKey]}"><h3>${sec.heading}</h3>${marked.parse(cleaned)}</div>`;
+                continue;
+            }
+            html += `<h3>${sec.heading}</h3>${marked.parse(sec.content)}`;
+        }
+        return html;
+    }
+
+    function renderTypeMatchups(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            if (sec.heading === 'Per-Type Breakdown') {
+                html += `<h3>${sec.heading}</h3>`;
+                for (const entry of splitByH3(sec.content)) {
+                    if (!entry.heading) { if (entry.content) html += marked.parse(entry.content); continue; }
+                    const typeName = stripEmoji(entry.heading);
+                    const type = TYPE_META[typeName];
+                    if (!type) { html += `<div><h3>${entry.heading}</h3>${marked.parse(entry.content)}</div>`; continue; }
+                    html += `<div id="matchup-${typeName.toLowerCase()}" class="term-entry" style="border-color:${type.hex}">
+                        <h3 style="color:${type.hex}">${typeIconImg(typeName)} ${typeName}</h3>
+                        ${marked.parse(entry.content)}
+                    </div>`;
+                }
+                continue;
+            }
+            const id = slugify(sec.heading);
+            const bodyMd = sec.content.replace(/^### /gm, '#### ');
+            html += `<div id="${id}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+        }
+        return html;
+    }
+
+    function renderLore(content) {
+        const sections = splitByH2(content);
+        let html = '';
+        for (const sec of sections) {
+            if (!sec.heading) { if (sec.content) html += marked.parse(sec.content); continue; }
+            const sectionId = slugify(sec.heading);
+            if (sec.heading === 'Lore Checklist') {
+                let inner = '';
+                for (const sub of splitByH3(sec.content)) {
+                    if (!sub.heading) { if (sub.content) inner += marked.parse(sub.content); continue; }
+                    inner += `<div id="lore-${slugify(sub.heading)}"><h4>${sub.heading}</h4>${marked.parse(sub.content)}</div>`;
+                }
+                html += `<div id="${sectionId}"><h3>${sec.heading}</h3>${inner}</div>`;
+            } else {
+                const bodyMd = sec.content.replace(/^### /gm, '#### ');
+                html += `<div id="${sectionId}"><h3>${sec.heading}</h3>${marked.parse(bodyMd)}</div>`;
+            }
+        }
+        return html;
+    }
+
+    const SECTION_RENDERERS = {
+        'spells':          renderSpells,
+        'classes':         renderClasses,
+        'status-effects':  renderStatusEffects,
+        'starting-decks':  renderStartingDecks,
+        'enemies':         renderEnemies,
+        'type-matchups':   renderTypeMatchups,
+        'world-and-lore':  renderLore,
+    };
+
+    function renderBible(content, sectionId) {
+        const renderer = SECTION_RENDERERS[sectionId];
+        try {
+            return renderer ? renderer(content) : renderGeneric(content);
+        } catch (err) {
+            console.error(`[wiki] render error for "${sectionId}":`, err);
+            return `<div class="callout"><strong>Render error:</strong> ${err.message}</div>${marked.parse(content)}`;
+        }
+    }
+
+    const fileList      = document.getElementById('fileList');
+    const mdContent     = document.getElementById('mdContent');
+    const contentTitle  = document.getElementById('contentTitle');
+    const contentPath   = document.getElementById('contentPath');
+    const refreshBtn    = document.getElementById('refreshBtn');
+    const searchInput   = document.getElementById('searchInput');
+    const sidebar       = document.querySelector('.sidebar');
+    const sidebarHeader = document.getElementById('sidebarHeader');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    let activeBtn   = null;
+    let activeFile  = null;
+    let activeLabel = null;
+
+    // Cache of raw file text keyed by filename
+    const fileCache = {};
+
+    const scrollArea = mdContent.parentElement;
+
+    // On narrow screens the sidebar's chapter list eats the whole viewport,
+    // so collapse it automatically once a chapter is chosen; a tap on the
+    // header re-expands it (see .sidebar.collapsed in the mobile media query).
+    function setSidebarCollapsed(collapsed) {
+        sidebar.classList.toggle('collapsed', collapsed);
+    }
+
+    sidebarHeader.addEventListener('click', () => {
+        setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
+    });
+
+    // Build sidebar file list buttons
+    const fileBtns = {};
+    const entrySlug = (entry) => entry.id || slugify(entry.label);
+    FILES.forEach((entry) => {
+        const li  = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.textContent = entry.label;
+        btn.addEventListener('click', () => {
+            clearSearch(true);
+            history.replaceState(null, '', `#${entrySlug(entry)}`);
+            if (entry.type === 'iframe') {
+                loadIframe(entry.src, entry.label, btn);
+            } else {
+                loadFile(entry.file, entry.label, btn);
+            }
+            if (window.matchMedia('(max-width: 720px)').matches) {
+                setSidebarCollapsed(true);
+            }
+        });
+        li.appendChild(btn);
+        fileList.appendChild(li);
+        if (entry.file) fileBtns[entry.file] = btn;
+        entry._btn = btn;
+    });
+
+    // Deep-link support: atlas.html#keywords, #type-chart, #cards, #download, etc.
+    const initialSlug  = decodeURIComponent(location.hash.slice(1));
+    const initialEntry = initialSlug && FILES.find(f => entrySlug(f) === initialSlug);
+
+    // Intercept clicks on links to other bibles so they open in-app instead of navigating away
+    mdContent.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        if (!href.endsWith('.md')) return;
+        const targetFile = href.split('/').pop();
+        const entry = FILES.find(f => f.file === targetFile);
+        const btn   = fileBtns[targetFile];
+        if (!entry || !btn) return;
+        e.preventDefault();
+        clearSearch(true);
+        loadFile(targetFile, entry.label, btn);
+    });
+
+    async function fetchFile(file) {
+        if (fileCache[file] !== undefined) return fileCache[file];
+        try {
+            const res  = await fetch(`Bibles/${file}?t=${Date.now()}`);
+            fileCache[file] = await res.text();
+        } catch {
+            fileCache[file] = '';
+        }
+        return fileCache[file];
+    }
+
+    function loadIframe(src, label, btn) {
+        if (activeBtn) activeBtn.classList.remove('active');
+        btn.classList.add('active');
+        activeBtn   = btn;
+        activeFile  = null;
+        activeLabel = label;
+        contentTitle.textContent = label;
+        contentPath.textContent  = src;
+        scrollArea.classList.add('iframe-mode');
+        mdContent.innerHTML = `<iframe class="embed-iframe" src="${src}"></iframe>`;
+    }
+
+    async function loadFile(file, label, btn, isRefresh = false, highlightQuery = '') {
+        scrollArea.classList.remove('iframe-mode');
+        if (!isRefresh) {
+            if (activeBtn) activeBtn.classList.remove('active');
+            btn.classList.add('active');
+            activeBtn   = btn;
+            activeFile  = file;
+            activeLabel = label;
+        }
+
+        contentTitle.textContent = activeLabel;
+        contentPath.textContent  = `Bibles/${activeFile}`;
+        if (!isRefresh) {
+            mdContent.innerHTML = '<div class="empty-state"><span>⏳</span><p>Loading…</p></div>';
+        }
+
+        try {
+            if (isRefresh) delete fileCache[activeFile];
+            const text = await fetchFile(activeFile);
+            const sectionId = activeFile.replace(/\.md$/, '');
+            mdContent.innerHTML = tagify(renderBible(text, sectionId));
+            colorizeHexCodes(mdContent);
+            wrapTables(mdContent);
+            if (highlightQuery) {
+                highlightMatches(mdContent, highlightQuery);
+                scrollToFirstHit();
+            }
+        } catch (e) {
+            mdContent.innerHTML = `<p style="color:var(--wiki-ember)">Failed to load ${activeFile}</p>`;
+        }
+    }
+
+    function refresh() {
+        if (!activeFile) return;
+        refreshBtn.classList.add('spinning');
+        setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
+        loadFile(activeFile, activeLabel, activeBtn, true);
+    }
+
+    refreshBtn.addEventListener('click', refresh);
+
+    // ── Search ──────────────────────────────────────────────
+
+    let searchDebounce = null;
+    let searchResultsList = null;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(runSearch, 220);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            clearSearch(true);
+            searchInput.blur();
+        }
+    });
+
+    function clearHighlights() {
+        mdContent.querySelectorAll('mark.search-hit').forEach(mark => {
+            mark.replaceWith(document.createTextNode(mark.textContent));
+        });
+    }
+
+    function clearSearch(clearInput = false) {
+        if (clearInput) searchInput.value = '';
+        if (searchResultsList) {
+            searchResultsList.remove();
+            searchResultsList = null;
+        }
+        fileList.style.display = '';
+    }
+
+    async function runSearch() {
+        const q = searchInput.value.trim();
+        if (!q || q.length < 2) {
+            if (searchResultsList) clearSearch();
+            clearHighlights();
+            return;
+        }
+
+        // Lazy-load all files in parallel
+        await Promise.all(FILES.map(({ file }) => fetchFile(file)));
+
+        const lq = q.toLowerCase();
+        const results = [];
+
+        FILES.forEach(({ label, file }) => {
+            const raw = fileCache[file] || '';
+            const lines = raw.split('\n');
+            lines.forEach((line, i) => {
+                if (line.toLowerCase().includes(lq)) {
+                    results.push({ label, file, line: line.trim(), lineIndex: i });
+                }
+            });
+        });
+
+        renderResults(results, q);
+    }
+
+    function renderResults(results, q) {
+        fileList.style.display = 'none';
+
+        if (searchResultsList) searchResultsList.remove();
+        searchResultsList = document.createElement('ul');
+        searchResultsList.className = 'search-results';
+
+        if (results.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'search-empty';
+            empty.textContent = 'No results';
+            searchResultsList.appendChild(empty);
+        } else {
+            results.slice(0, 60).forEach(({ label, file, line }) => {
+                const li   = document.createElement('li');
+                li.className = 'result-item';
+
+                const lbl  = document.createElement('div');
+                lbl.className = 'result-label';
+                lbl.textContent = label;
+
+                const snip = document.createElement('div');
+                snip.className = 'result-snippet';
+                snip.innerHTML = highlightSnippet(line, q);
+
+                li.appendChild(lbl);
+                li.appendChild(snip);
+                li.addEventListener('click', () => {
+                    clearSearch(true);
+                    const btn = fileBtns[file];
+                    loadFile(file, label, btn, false, q);
+                    if (window.matchMedia('(max-width: 720px)').matches) {
+                        setSidebarCollapsed(true);
+                    }
+                });
+                searchResultsList.appendChild(li);
+            });
+
+            if (results.length > 60) {
+                const more = document.createElement('div');
+                more.className = 'search-empty';
+                more.textContent = `+${results.length - 60} more — refine your query`;
+                searchResultsList.appendChild(more);
+            }
+        }
+
+        fileList.parentNode.insertBefore(searchResultsList, fileList.nextSibling);
+    }
+
+    function highlightSnippet(text, q) {
+        const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const re = new RegExp(escapeRe(q), 'gi');
+        return safe.replace(re, m => `<mark>${m}</mark>`);
+    }
+
+    function highlightMatches(root, q) {
+        const re = new RegExp(escapeRe(q), 'gi');
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach(node => {
+            if (!re.test(node.textContent)) return;
+            re.lastIndex = 0;
+            const frag = document.createDocumentFragment();
+            let last = 0, m;
+            while ((m = re.exec(node.textContent)) !== null) {
+                frag.appendChild(document.createTextNode(node.textContent.slice(last, m.index)));
+                const mark = document.createElement('mark');
+                mark.className = 'search-hit';
+                mark.textContent = m[0];
+                frag.appendChild(mark);
+                last = m.index + m[0].length;
+            }
+            frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+            node.parentNode.replaceChild(frag, node);
+        });
+
+        // Mark first hit as current
+        const first = root.querySelector('mark.search-hit');
+        if (first) first.classList.add('current-hit');
+    }
+
+    function scrollToFirstHit() {
+        const hit = mdContent.querySelector('mark.search-hit');
+        if (hit) hit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function escapeRe(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ── Keyboard shortcuts ───────────────────────────────────
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && e.target.tagName !== 'INPUT' && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+            return;
+        }
+        if (e.key === 'r' && !e.metaKey && !e.ctrlKey && e.target.tagName !== 'INPUT') {
+            refresh();
+        }
+    });
+
+    function colorizeHexCodes(root) {
+        const hexRe = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+        root.querySelectorAll('code').forEach(el => {
+            const val = el.textContent.trim();
+            if (!hexRe.test(val)) return;
+            const heading = el.closest('h1, h2, h3, h4, h5, h6');
+            if (heading) {
+                heading.style.color = val;
+                el.remove();
+            } else {
+                el.style.background = val;
+                el.style.borderColor = 'rgba(0,0,0,0.25)';
+                const hex = val.slice(1);
+                const r = parseInt(hex.length === 3 ? hex[0]+hex[0] : hex.slice(0,2), 16);
+                const g = parseInt(hex.length === 3 ? hex[1]+hex[1] : hex.slice(2,4), 16);
+                const b = parseInt(hex.length === 3 ? hex[2]+hex[2] : hex.slice(4,6), 16);
+                const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+                el.style.color = lum > 0.55 ? '#111' : '#fff';
+            }
+        });
+    }
+
+    // Load the deep-linked entry if the URL hash matched one, otherwise the first file
+    (initialEntry ? initialEntry._btn : fileList.querySelector('button'))?.click();
+</script>
+</body>
+</html>

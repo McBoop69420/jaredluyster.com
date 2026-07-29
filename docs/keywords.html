@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wizard Battle keyword reference for core mechanics and status terms.">
+    <title>Wizard Battle — Keywords</title>
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="reference-pages.css">
+    <script src="tagify.js"></script>
+</head>
+<body>
+    <main class="page">
+        <h1 class="page-title">Keywords</h1>
+        <p class="subtitle">Reference page for the game's core mechanics and status terms.</p>
+        <div class="keyword-grid" id="keyword-grid"></div>
+    </main>
+
+
+    <script>
+        const keywords = [
+            { color:'#94a3b8', icon:'🛡️', name:'Block',     short:'Damage absorption', desc:'Absorbs incoming damage before HP. Player Block resets to 0 at the start of each player turn.' },
+            { color:'#c4b5fd', icon:'🪄', name:'Fade',      short:'Combat exhaust',     desc:'After this card is played, it goes to the exhaust pile and does not return for the current combat.' },
+            { color:'#ff6633', icon:'🔥', name:'Char',      short:'Burning damage',     desc:'After you end your turn, the enemy takes damage equal to its Char stacks before acting, then loses 1 stack.' },
+            { color:'#66ddff', icon:'❄️', name:'Freeze',    short:'Turn denial',        desc:'At 5 stacks, the enemy skips its action and all Freeze stacks are consumed.' },
+            { color:'#ffdd00', icon:'⚡', name:'Shock',     short:'Arc amplifier',      desc:'Arc attacks deal x1.25 damage per Shock stack. Shock decays by 1 each turn.' },
+            { color:'#4488ff', icon:'🌊', name:'Drown',     short:'Persistent damage',  desc:'After you end your turn, the enemy takes damage equal to its Drown stacks before acting. Drown does not decay.' },
+            { color:'#44cc66', icon:'🌿', name:'Root',      short:'Burst on hit',       desc:'When the target takes damage, Root detonates for 2x current stacks as bonus damage, then all Root is consumed.' },
+            { color:'#cc6666', icon:'💔', name:'Weak',      short:'Damage reduction',   desc:'The afflicted target deals 25% less damage while Weak remains. Weak decays by 1 each turn.' },
+            { color:'#d4af37', icon:'💪', name:'Strength',  short:'Damage bonus',       desc:'Adds flat bonus damage to attacks and spell damage. Strength does not decay.' },
+            { color:'#cc9944', icon:'💫', name:'Daze',      short:'Action confusion',   desc:'50% chance the enemy repeats its previous action instead of its intended one. Daze decays by 1 each turn.' },
+            { color:'#f2f2f2', icon:'✨', name:'Blind',     short:'Miss chance',        desc:'50% chance the enemy attack misses entirely. Blind decays by 1 each turn.' },
+            { color:'#cc66ff', icon:'🌙', name:'Lifesteal', short:'HP drain',           desc:'Shadow drain effects damage the enemy and heal the player for the drained amount, capped by max HP.' },
+        ];
+
+        document.getElementById('keyword-grid').innerHTML = keywords.map(k => `
+            <article class="keyword-card" style="--kw-color:${k.color}">
+                <div class="keyword-icon">${k.icon}</div>
+                <div>
+                    <div class="keyword-header">
+                        <div class="keyword-name">${k.name}</div>
+                        <div class="keyword-short">${k.short}</div>
+                    </div>
+                    <div class="keyword-desc">${tagify(k.desc)}</div>
+                </div>
+            </article>
+        `).join('');
+    </script>
+</body>
+</html>

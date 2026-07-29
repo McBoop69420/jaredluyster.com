@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Jared Luyster — games, tools, and things in progress.">
-    <title>Jared Luyster</title>
+    <meta name="description" content="Wizard Battle is a roguelike deckbuilder. Choose one of eight elemental classes to master in a world where magic replaced technology.">
+    <title>Wizard Battle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -59,27 +59,38 @@
         }
 
         .brand {
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--text);
-        }
-
-        .topbar-status {
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.7rem;
-            color: var(--muted);
             display: flex;
             align-items: center;
+            gap: 12px;
+        }
+
+        .brand-wordmark {
+            height: 32px;
+            width: auto;
+        }
+
+        .nav {
+            display: flex;
             gap: 6px;
         }
 
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        .nav a {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 200ms;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         /* Hero */
@@ -103,6 +114,14 @@
 
         .hero-content {
             position: relative;
+        }
+
+        .hero-logo {
+            display: block;
+            width: 100%;
+            max-width: 380px;
+            height: auto;
+            margin-bottom: 24px;
         }
 
         .hero-eyebrow {
@@ -136,17 +155,49 @@
             background-clip: text;
         }
 
-        .lead {
-            margin: 0;
-            max-width: 34rem;
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 200ms;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .button-primary:hover {
+            background: #6366f1;
+            box-shadow: 0 4px 16px rgba(129, 140, 248, 0.3);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
             color: var(--muted);
-            font-size: 1.05rem;
-            line-height: 1.7;
+        }
+
+        .button-secondary:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         /* Section */
         .section {
-            padding-bottom: 96px;
+            padding-bottom: 80px;
         }
 
         .section-header {
@@ -171,26 +222,24 @@
             background: var(--border);
         }
 
-        /* Project Grid */
-        .project-grid {
+        /* Wizard grid */
+        .wizard-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 16px;
         }
 
-        .project-card {
+        .wizard-card {
             position: relative;
-            display: flex;
-            flex-direction: column;
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 28px;
+            padding: 24px;
             background: var(--surface);
             transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
         }
 
-        .project-card::before {
+        .wizard-card::before {
             content: "";
             position: absolute;
             inset: 0;
@@ -201,35 +250,30 @@
             pointer-events: none;
         }
 
-        .project-card:hover {
+        .wizard-card:hover {
             border-color: var(--border-hover);
             background: var(--surface-hover);
             transform: translateY(-2px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
         }
 
-        .project-card:hover::before {
+        .wizard-card:hover::before {
             opacity: 1;
         }
 
-        .project-icon {
+        .wizard-icon {
+            display: block;
             width: 44px;
             height: 44px;
             border-radius: 10px;
-            margin-bottom: 20px;
-            object-fit: cover;
-            border: 1px solid var(--border);
-        }
-
-        .project-logo {
-            width: 100%;
-            max-height: 80px;
             object-fit: contain;
-            object-position: left;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 6px;
         }
 
-        .project-tag {
+        .wizard-type {
             display: inline-block;
             font-family: "JetBrains Mono", monospace;
             font-size: 0.62rem;
@@ -241,45 +285,20 @@
             padding: 3px 8px;
             border-radius: 4px;
             margin-bottom: 10px;
-            width: fit-content;
         }
 
-        .project-name {
-            font-size: 1.05rem;
-            font-weight: 600;
+        .wizard-card h3 {
             margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 600;
             letter-spacing: -0.01em;
         }
 
-        .project-desc {
-            font-size: 0.875rem;
-            color: var(--muted);
-            line-height: 1.65;
+        .wizard-card p {
             margin: 0;
-            flex: 1;
-        }
-
-        .project-arrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 24px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            font-size: 0.82rem;
             color: var(--muted);
-            transition: all 200ms;
-        }
-
-        .project-arrow svg {
-            transition: transform 200ms;
-        }
-
-        .project-card:hover .project-arrow {
-            color: var(--accent);
-        }
-
-        .project-card:hover .project-arrow svg {
-            transform: translateX(3px);
+            line-height: 1.6;
         }
 
         /* Footer */
@@ -299,21 +318,6 @@
             color: var(--muted);
         }
 
-        .footer-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .footer-links a {
-            font-size: 0.78rem;
-            color: var(--muted);
-            transition: color 200ms;
-        }
-
-        .footer-links a:hover {
-            color: var(--text);
-        }
-
         /* Entrance animations */
         .fade-up {
             opacity: 0;
@@ -324,30 +328,32 @@
         .fade-up:nth-child(1) { animation-delay: 0ms; }
         .fade-up:nth-child(2) { animation-delay: 80ms; }
         .fade-up:nth-child(3) { animation-delay: 160ms; }
+        .fade-up:nth-child(4) { animation-delay: 240ms; }
+        .fade-up:nth-child(5) { animation-delay: 320ms; }
+        .fade-up:nth-child(6) { animation-delay: 400ms; }
+        .fade-up:nth-child(7) { animation-delay: 480ms; }
+        .fade-up:nth-child(8) { animation-delay: 560ms; }
 
+        .hero-logo { animation: fadeUp 500ms 60ms cubic-bezier(0.4, 0, 0.2, 1) both; }
         .hero-eyebrow { animation: fadeUp 500ms 100ms cubic-bezier(0.4, 0, 0.2, 1) both; }
         h1 { animation: fadeUp 500ms 180ms cubic-bezier(0.4, 0, 0.2, 1) both; }
-        .lead { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .cta-row { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
 
         @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 860px) {
-            .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (max-width: 980px) {
+            .wizard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (max-width: 560px) {
-            .project-grid { grid-template-columns: 1fr; }
+            .wizard-grid { grid-template-columns: 1fr; }
             .hero { padding: 64px 0 56px; }
             .shell { padding: 0 16px; }
+            .nav { gap: 2px; }
+            .nav a { padding: 6px 8px; font-size: 0.72rem; }
             .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
         }
     </style>
@@ -355,62 +361,47 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="index.html">Jared Luyster</a>
-            <div class="topbar-status">
-                <span class="status-dot"></span>
-                building things
-                <a href="radio.html" style="margin-left:14px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.04em;">Radio</a>
-            </div>
+            <a class="brand" href="index.html">
+                <img class="brand-wordmark" src="wordmark-horizontal.svg" alt="Wizard Battle — Roguelike Deckbuilder">
+            </a>
+            <nav class="nav">
+                <a class="active" href="index.html">Home</a>
+                <a href="atlas.html">Wiki</a>
+            </nav>
         </div>
     </header>
 
     <main>
-
         <section class="hero">
-            <div class="shell hero-content">
-                <h1>Hi, I'm Jared.<br><span class="text-gradient">I do things.</span></h1>
-                <p class="lead">Please check them out.</p>
-            </div>
-        </section>
+                <div class="shell hero-content">
+                    <h1><span class="text-gradient">What will you choose?</span></h1>
+                    <div class="cta-row">
+                        <a class="button button-primary" href="atlas.html#download">Download Windows Build</a>
+                        <a class="button button-secondary" href="https://testflight.apple.com/join/gsfA43KM">iOS Beta (TestFlight)</a>
+                        <a class="button button-secondary" href="https://appdistribution.firebase.dev/i/cca7766ed91d420d">Android Beta (Firebase)</a>
+                    </div>
+                </div>
+            </section>
 
-        <section class="section">
-            <div class="shell">
-                <div class="section-header">
-                    <span class="section-label">Projects</span>
-                    <div class="section-line"></div>
+            <section class="section">
+                <div class="shell">
+                    <div class="section-header">
+                        <span class="section-label">Wizards</span>
+                        <div class="section-line"></div>
+                    </div>
+                    <div class="wizard-grid">
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_fire.png" alt="Fire"><div class="wizard-type">Fire</div><h3>Pyromancer</h3><p>Pile on Burn and never let up — a damage engine that buries enemies before they stabilize.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_water.png" alt="Water"><div class="wizard-type">Water</div><h3>Tidecaller</h3><p>Heal, draw, and drown enemies under stacking Drown. Outlast what you can't out-damage.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_rock.png" alt="Rock"><div class="wizard-type">Rock</div><h3>Stonewarden</h3><p>Stack Daze and tank everything. The enemy eventually runs out of moves.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_arc.png" alt="Arc"><div class="wizard-type">Arc</div><h3>Stormseeker</h3><p>Chain fast hits and Shock to keep enemies locked. Speed kills.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_ice.png" alt="Ice"><div class="wizard-type">Ice</div><h3>Frostweaver</h3><p>Stack Freeze to steal enemy turns outright. They never get to act.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_shadow.png" alt="Shadow"><div class="wizard-type">Shadow</div><h3>Shadowblade</h3><p>Drain life, curse, and weaken. Stay healthy by hurting them.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_light.png" alt="Light"><div class="wizard-type">Light</div><h3>Dawnmage</h3><p>Shield up, heal, and Blind to shut down attacks. A wall that fights back.</p></article>
+                        <article class="wizard-card fade-up"><img class="wizard-icon" src="TypeIcons/icon_grass.png" alt="Grass"><div class="wizard-type">Grass</div><h3>Verdantmaker</h3><p>Stack Root, then detonate for burst that scales with every turn you wait.</p></article>
+                    </div>
                 </div>
-                <div class="project-grid">
-                    <a class="project-card fade-up" href="https://www.bluegrasscybersecurity.com/">
-                        <img class="project-logo" src="bcs-logo-t.png" alt="Bluegrass Cybersecurity Solutions">
-                        <div class="project-tag">Cybersecurity</div>
-                        <p class="project-name">Bluegrass Cybersecurity Solutions</p>
-                        <p class="project-desc">Cybersecurity services for businesses in the Bluegrass region.</p>
-                        <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                    </a>
-                    <a class="project-card fade-up" href="https://shop.jaredluyster.com/">
-                        <img class="project-logo" src="bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
-                        <div class="project-tag">Collectibles</div>
-                        <p class="project-name">Bluegrass Memorabilia & Collectibles</p>
-                        <p class="project-desc">Buy and sell trading cards, memorabilia, and collectibles.</p>
-                        <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                    </a>
-                    <a class="project-card fade-up" href="https://wizardbattle.jaredluyster.com/">
-                        <img class="project-logo" src="wordmark-horizontal.svg" alt="Wizard Battle">
-                        <div class="project-tag">Game</div>
-                        <p class="project-name">Wizard Battle</p>
-                        <p class="project-desc">A roguelike deckbuilder. Choose one of eight elemental classes to master in a world where magic replaced technology.</p>
-                        <span class="project-arrow">Explore <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                    </a>
-                    <a class="project-card fade-up" href="radio.html">
-                        <div class="project-tag">Radio</div>
-                        <p class="project-name">Jared Luyster Radio</p>
-                        <p class="project-desc">A self-hosted station streaming local music files — tune in and hear the same point in the loop as everyone else.</p>
-                        <span class="project-arrow">Tune Radio <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                    </a>
-                </div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </main>
 
     <footer class="footer">
         <div class="shell footer-inner">
@@ -419,7 +410,7 @@
     </footer>
 
     <script>
-        document.querySelectorAll('.project-card').forEach(card => {
+        document.querySelectorAll('.wizard-card').forEach(card => {
             card.addEventListener('mousemove', e => {
                 const rect = card.getBoundingClientRect();
                 card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');

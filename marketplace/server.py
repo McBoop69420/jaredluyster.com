@@ -189,6 +189,9 @@ def _price_for(item):
 
 @app.route("/")
 def home_page():
+    host = request.host.split(":")[0]
+    if host.startswith("shop."):
+        return redirect("/marketplace/")
     return send_from_directory(str(SITE_ROOT), "index.html")
 
 

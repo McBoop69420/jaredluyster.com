@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Wizard Battle — Icon Reference</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:      #efe6d8;
+    --ink-dim:  #a89a85;
+    --ink-mute: #6b5f4e;
+    --bg:       #000000;
+    --rune:     #c9b06b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 72px 48px 120px; }
+
+  .logos { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+    gap: 48px; padding: 12px 0 44px; border-bottom: 1px solid rgba(201,176,107,0.2); margin-bottom: 12px; }
+  .logos img { display: block; }
+  .logos .sigil { width: 150px; height: 150px; }
+  .logos .hori  { width: 360px; height: auto; }
+  .logos .vert  { width: 130px; height: auto; }
+  .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--rune); margin-bottom: 20px; }
+  h1 { font-family: 'Cinzel', serif; font-size: 52px; letter-spacing: 0.05em; text-transform: uppercase;
+    margin: 0 0 18px; line-height: 1; }
+  header p { color: var(--ink-dim); font-size: 15px; line-height: 1.7; max-width: 760px; margin: 0; }
+  .count { display: flex; flex-wrap: wrap; gap: 40px; margin-top: 28px; }
+  .count .c { font-family: 'JetBrains Mono', monospace; }
+  .count .c b { font-family: 'Cinzel', serif; font-size: 30px; color: var(--rune); font-weight: 600; }
+  .count .c span { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-mute); margin-top: 4px; }
+
+  section { margin-top: 80px; }
+  .shead { display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 36px; }
+  .shead h2 { font-family: 'Cinzel', serif; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0; }
+  .shead .meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-mute); }
+
+  .cgrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
+  .cell { background: linear-gradient(180deg, #0a0710, #000);
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; padding: 18px 10px 14px; gap: 10px; }
+  .icon { width: 96px; height: 96px; display: block; }
+  .sprite { width: 88px; height: 88px; display: block; object-fit: contain; border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.05), #06070e 72%);
+    border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 0 12px rgba(255,255,255,0.06); }
+  .nm { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .el { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .variants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .vcol { border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 22px 14px 18px;
+    background: linear-gradient(180deg,#0a0710,#000); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .vlabel { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--rune); }
+  .vrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .vicon { width: 56px; height: 56px; }
+
+  .sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .sgrid .icon { width: 84px; height: 84px; }
+  .sgrid .nm { font-size: 13px; }
+  .sgrid .typ { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mute); }
+
+  .matrix { display: grid; grid-template-columns: 132px repeat(4, 1fr); gap: 0; }
+  .matrix .corner { }
+  .matrix .colhead { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-mute); text-align: center; padding-bottom: 18px; }
+  .matrix .rowhead { display: flex; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-left: 4px; }
+  .matrix .rowhead .n { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .matrix .rowhead .fn { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.04em;
+    color: var(--ink-mute); text-transform: none; margin-top: 3px; }
+  .matrix .nc { display: flex; align-items: center; justify-content: center; padding: 18px;
+    border-top: 1px solid rgba(255,255,255,0.05); border-left: 1px solid rgba(255,255,255,0.05); }
+  .matrix .nc:nth-child(5n+2) { border-left: none; }
+  .matrix .nicon { width: 84px; height: 84px; }
+
+  .sigil-hero { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 20px 0 8px; }
+  .sigil-hero .icon { width: 280px; height: 280px; }
+  .sigil-hero .cap { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-dim); text-align: center; max-width: 640px; line-height: 1.8; }
+
+  footer { margin-top: 96px; padding-top: 28px; border-top: 1px solid rgba(201,176,107,0.2);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-mute); letter-spacing: 0.1em; line-height: 1.9; }
+  footer b { color: var(--ink-dim); font-weight: 500; }
+
+  /* node marker primitives (from event-nodes system) */
+  .em-node { position: relative; display: grid; place-items: center; }
+  .em-art { position: absolute; inset: 0; display: grid; place-items: center; }
+  .em-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .em-glyph { position: relative; display: grid; place-items: center; width: 100%; height: 100%; }
+  .em-glyph svg { width: 50%; height: 50%; display: block; }
+  .em-glyph-lock svg { width: 38%; height: 38%; opacity: 0.85; }
+  .em-here { position: absolute; top: -16%; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 7px solid var(--c); }
+  .em-badge { position: absolute; right: -6%; bottom: -6%; width: 42%; height: 42%; min-width: 16px; min-height: 16px;
+    border-radius: 50%; display: grid; place-items: center; background: #0a0710; }
+  .em-badge-check { color: #45c97a; box-shadow: 0 0 0 1.5px rgba(69,201,122,0.6), 0 0 10px rgba(69,201,122,0.35); }
+  .em-badge-check svg { width: 64%; height: 64%; }
+</style>
+</head>
+<body data-screen-label="Wizard Battle Icon Reference">
+<div class="wrap">
+  <div class="logos">
+    <img class="sigil" src="master-sigil.svg" alt="Master Sigil" />
+    <img class="hori"  src="wordmark-horizontal.svg" alt="Wizard Battle — horizontal lockup" />
+    <img class="vert"  src="wordmark-vertical.svg" alt="Wizard Battle — vertical lockup" />
+  </div>
+  <div id="root"></div>
+
+  <footer>
+    <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), master sigil (<code>crest.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
+    <div><b>Status</b> — Char · Drown · Shock · Root · Freeze · Daze · Blind · Weak · Strength · Lifesteal.</div>
+    <div><b>Nodes</b> — Duel · Elite · Boss · Rest · Shop · Treasure · Mystery × Locked · Available · Active · Cleared.</div>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="event-nodes.jsx"></script>
+<script type="text/babel" src="crest.js"></script>
+<script type="text/babel" src="marks.jsx"></script>
+
+<script type="text/babel">
+  const { useState } = React;
+
+  const STATUS = [
+    { name:"Char",      color:"#ff6633", hex:"#FF6633", type:"DoT",       mech:"Fire. Damage = stacks each turn; decays −1." },
+    { name:"Drown",     color:"#4488ff", hex:"#4488FF", type:"DoT",       mech:"Water. Damage = stacks; never decays — permanent." },
+    { name:"Shock",     color:"#ffdd00", hex:"#FFDD00", type:"Amplifier", mech:"Arc. ×1.25 per stack on Arc damage; decays −1." },
+    { name:"Root",      color:"#44cc66", hex:"#44CC66", type:"Trap",      mech:"Grass. Detonates on damage: 2× stacks; consumed." },
+    { name:"Freeze",    color:"#66ddff", hex:"#66DDFF", type:"Skip",      mech:"Ice. At 5+ stacks enemy skips; all consumed." },
+    { name:"Daze",      color:"#cc9944", hex:"#CC9944", type:"Disruption",mech:"Rock. 50% enemy repeats last action; decays −1." },
+    { name:"Blind",     color:"#f2f2f2", hex:"#F2F2F2", type:"Miss",      mech:"Light. 50% enemy attack misses; decays per hit." },
+    { name:"Weak",      color:"#cc6666", hex:"#CC6666", type:"Debuff",    mech:"Enemy. All damage −25%; flat, decays −1." },
+    { name:"Strength",  color:"#d4af37", hex:"#D4AF37", type:"Buff",      mech:"Enemy. +flat damage to attacks; permanent." },
+    { name:"Lifesteal", color:"#cc66ff", hex:"#CC66FF", type:"Drain",     mech:"Shadow. Drains enemy HP, heals player; consumed." },
+  ];
+
+  const NODE_STATES = ["locked","available","active","cleared"];
+
+  const FrameOnly = ({ style, color, size = 56 }) => {
+    const id = React.useId();
+    if (style === "sigil") {
+      return (
+        <svg width={size} height={size} viewBox="0 0 64 64" fill="none" stroke={color} strokeWidth={1.25}>
+          <circle cx="32" cy="32" r="28" opacity="0.35" />
+          <circle cx="32" cy="32" r="24" opacity="0.9" />
+        </svg>
+      );
+    }
+    if (style === "emblem") {
+      return (
+        <svg width={size} height={size} viewBox="0 0 72 72">
+          <defs>
+            <radialGradient id={`g${id}`} cx="50%" cy="45%">
+              <stop offset="0%" stopColor={color} stopOpacity="0.55" />
+              <stop offset="55%" stopColor={color} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={`d${id}`} cx="50%" cy="35%">
+              <stop offset="0%" stopColor="#1a1322" />
+              <stop offset="100%" stopColor="#0a0710" />
+            </radialGradient>
+          </defs>
+          <circle cx="36" cy="36" r="34" fill={`url(#g${id})`} />
+          <circle cx="36" cy="36" r="26" fill={`url(#d${id})`} stroke={color} strokeOpacity="0.55" strokeWidth="1" />
+          <circle cx="36" cy="36" r="22" fill="none" stroke={color} strokeOpacity="0.18" strokeWidth="0.75" />
+        </svg>
+      );
+    }
+    return (
+      <svg width={size} height={size} viewBox="0 0 72 72">
+        <defs>
+          <linearGradient id={`r${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#231828" />
+            <stop offset="100%" stopColor="#0c0710" />
+          </linearGradient>
+        </defs>
+        <path d="M36 4 L62 18 L62 54 L36 68 L10 54 L10 18 Z" fill={`url(#r${id})`} stroke={color} strokeOpacity="0.5" strokeWidth="1" />
+        <path d="M36 8 L58 20 L58 52 L36 64 L14 52 L14 20 Z" fill="none" stroke={color} strokeOpacity="0.18" strokeWidth="0.75" />
+      </svg>
+    );
+  };
+
+  const Variant = ({ style, id }) => {
+    const cls = CLASSES.find(c => c.id === id);
+    const color = id === "shadowblade" ? "#f2f2f2" : cls.color;
+    return <div className="vicon"><FrameOnly style={style} color={color} size={56} /></div>;
+  };
+
+  function App() {
+    return (
+      <div>
+        <section>
+          <div className="shead"><h2>The Master Sigil</h2><div className="meta">crown of the set</div></div>
+          <div className="sigil-hero">
+            <div className="icon" dangerouslySetInnerHTML={{ __html: buildCrest({ size: 280, glyph:"octagram", preset:"gold" }) }} />
+            <div className="cap">The Eightfold Master Sigil — one ray per school, each in its canonical colour. The crown of the whole icon set, drawn in the class-icon grammar.</div>
+          </div>
+        </section>
+
+        <section>
+          <div className="shead"><h2>Wizard Classes</h2><div className="meta">8 classes · type icon</div></div>
+          <div className="cgrid">
+            {CLASSES.map(c => (
+              <div className="cell" key={c.id}>
+                <img className="sprite" src={"TypeIcons/icon_" + c.element.toLowerCase() + ".png"}
+                  alt={c.element + " icon"} title={c.element + " icon"} />
+                <div className="nm" style={{ color: c.color }}>{c.name}</div>
+                <div className="el">{c.element}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="shead"><h2>Class Icon Styles</h2><div className="meta">sigil · emblem · relic</div></div>
+          <div className="variants">
+            {["sigil","emblem","relic"].map(style => (
+              <div className="vcol" key={style}>
+                <div className="vlabel">{style}</div>
+                <div className="vrow">{CLASSES.map(c => <Variant key={c.id} style={style} id={c.id} />)}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="shead"><h2>Status Effects</h2><div className="meta">10 effects · color tokens</div></div>
+          <div className="sgrid">
+            {STATUS.map(s => (
+              <div className="cell" key={s.name}>
+                <div className="icon" style={{ background:`radial-gradient(circle at 50% 40%, ${s.color}1f, #06070e 72%)`, border:`1px solid ${s.color}66`, boxShadow:`0 0 12px ${s.color}33`, borderRadius:"50%", display:"grid", placeItems:"center" }}>
+                  <span style={{ width:56, height:56, display:"grid", placeItems:"center", color:s.color }}><GlyphTile kind="status" id={s.name} size={56} /></span>
+                </div>
+                <div className="nm" style={{ color: s.color }}>{s.name}</div>
+                <div className="typ" style={{ color: s.color }}>{s.type}</div>
+                <div className="typ">{s.hex}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="shead"><h2>Map Node Types</h2><div className="meta">7 types × 4 states</div></div>
+          <div className="matrix">
+            <div className="corner" />
+            {NODE_STATES.map(s => <div className="colhead" key={s}>{s}</div>)}
+            {NODE_TYPES.map(t => (
+              <React.Fragment key={t.id}>
+                <div className="rowhead">
+                  <div>
+                    <div className="n" style={{ color: t.color }}>{t.name}</div>
+                    <div className="fn">{t.fn}</div>
+                  </div>
+                </div>
+                {NODE_STATES.map(s => (
+                  <div className="nc" key={s}>
+                    <div className="nicon"><NodeMarker type={t.id} frame="diamond" state={s} size={84} /></div>
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
