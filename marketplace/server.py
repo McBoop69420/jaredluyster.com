@@ -960,6 +960,20 @@ def api_admin_quick_add_add():
     return jsonify(ok=True, added=total_cards, inventory_count=len(inventory))
 
 
+@app.route("/marketplace/api/admin/cards/delete", methods=["POST"])
+@admin_required
+def api_admin_cards_delete():
+    data = request.get_json()
+    card_id = data.get("id")
+    if not card_id:
+        return jsonify(error="Card id is required."), 400
+    with _inventory_lock:
+        inventory = _load_inventory()
+        inventory = [item for item in inventory if item["id"] != int(card_id)]
+        _save_inventory(inventory)
+    return jsonify(ok=True, inventory_count=len(inventory))
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Marketplace server running at http://localhost:{port}")
