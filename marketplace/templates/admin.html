@@ -500,10 +500,28 @@ function saveSmtp() {
     });
 }
 
+var SESSION_LOG_KEY = 'bmc_admin_session_log';
 var sessionLog = [];
 
+function sessionLogLoad() {
+    try {
+        var raw = localStorage.getItem(SESSION_LOG_KEY);
+        sessionLog = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        sessionLog = [];
+    }
+    if (!Array.isArray(sessionLog)) sessionLog = [];
+    sessionLogRender();
+}
+
+function sessionLogSave() {
+    try {
+        localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(sessionLog));
+    } catch (e) { /* storage full or unavailable — keep in-memory copy */ }
+}
+
 function sessionLogAdd(cards) {
-    var now = new Date();
+    var now = new Date().toISOString();
     cards.forEach(function(c) {
         sessionLog.push({
             name: c.name,
@@ -515,6 +533,7 @@ function sessionLogAdd(cards) {
             time: now
         });
     });
+    sessionLogSave();
     sessionLogRender();
 }
 
@@ -533,17 +552,23 @@ function sessionLogRender() {
     section.style.display = 'block';
     list.innerHTML = '';
 
+    var todayStr = new Date().toDateString();
     var totalQty = 0, totalValue = 0;
     for (var i = sessionLog.length - 1; i >= 0; i--) {
         var e = sessionLog[i];
         totalQty += e.qty;
         totalValue += e.qty * e.sell_price;
+        var when = new Date(e.time);
+        var stamp = when.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        if (when.toDateString() !== todayStr) {
+            stamp = when.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' ' + stamp;
+        }
         var foilTag = e.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
         var row = document.createElement('div');
         row.style.cssText = 'display:flex; justify-content:space-between; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
         row.innerHTML =
             '<span>' +
-                '<span style="color:var(--muted); font-size:0.72rem;">' + e.time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</span> ' +
+                '<span style="color:var(--muted); font-size:0.72rem;">' + stamp + '</span> ' +
                 '<strong>+' + e.qty + '</strong> ' + e.name + foilTag +
                 ' <span style="color:var(--muted)">' + e.set_code.toUpperCase() + ' #' + e.collector_number + '</span>' +
             '</span>' +
@@ -555,7 +580,9 @@ function sessionLogRender() {
 }
 
 function sessionLogClear() {
+    if (sessionLog.length && !confirm('Clear the ' + sessionLog.length + '-entry session log?')) return;
     sessionLog = [];
+    sessionLogSave();
     sessionLogRender();
 }
 
@@ -857,5 +884,8 @@ function testSmtp() {
         }
     });
 }
+
+// Restore the session-add log persisted from earlier page loads.
+sessionLogLoad();
 </script>
 {% endblock %}
