@@ -10,6 +10,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 DB_PATH = Path(__file__).resolve().parent / "marketplace.db"
 
 ADMIN_EMAIL = "jared.luyster@gmail.com"
+# Additional admin emails — accounts created with these addresses are auto-admin.
+# Override at runtime via the HERMES_ADMIN_EMAILS env var (comma-separated).
+HERMES_ADMIN_EMAILS = os.environ.get("HERMES_ADMIN_EMAILS", "hermes-agent@bluegrass-marketplace.local").split(",")
+HERMES_ADMIN_EMAILS = [e.strip().lower() for e in HERMES_ADMIN_EMAILS if e.strip()]
+ALL_ADMIN_EMAILS = [ADMIN_EMAIL.lower()] + HERMES_ADMIN_EMAILS
 GUEST_EMAIL = "guest@bluegrass-marketplace.local"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
@@ -96,6 +101,9 @@ class Store:
                 guest_name TEXT NOT NULL DEFAULT '',
                 guest_email TEXT NOT NULL DEFAULT '',
                 guest_phone TEXT NOT NULL DEFAULT '',
+                payment_method TEXT NOT NULL DEFAULT 'cash',
+                payment_status TEXT NOT NULL DEFAULT 'unpaid',
+                paypal_order_id TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             );
 
@@ -128,11 +136,17 @@ class Store:
         self._migrate_orders_table()
 
     def _migrate_orders_table(self):
-        for column in ("guest_name", "guest_email", "guest_phone"):
+        columns = (
+            "guest_name TEXT NOT NULL DEFAULT ''",
+            "guest_email TEXT NOT NULL DEFAULT ''",
+            "guest_phone TEXT NOT NULL DEFAULT ''",
+            "payment_method TEXT NOT NULL DEFAULT 'cash'",
+            "payment_status TEXT NOT NULL DEFAULT 'unpaid'",
+            "paypal_order_id TEXT NOT NULL DEFAULT ''",
+        )
+        for column_def in columns:
             try:
-                self._conn.execute(
-                    f"ALTER TABLE orders ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
-                )
+                self._conn.execute(f"ALTER TABLE orders ADD COLUMN {column_def}")
                 self._conn.commit()
             except Exception as e:
                 if "duplicate column" not in str(e).lower():
@@ -142,7 +156,7 @@ class Store:
 
     def create_account(self, email, name, password):
         email = email.strip().lower()
-        is_admin = 1 if email == ADMIN_EMAIL else 0
+        is_admin = 1 if email in ALL_ADMIN_EMAILS else 0
         try:
             self._conn.execute(
                 "INSERT INTO accounts (email, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -161,7 +175,7 @@ class Store:
 
     def get_account(self, account_id):
         row = self._conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
-        if row and row["email"] == ADMIN_EMAIL and not row["is_admin"]:
+        if row and row["email"].lower() in ALL_ADMIN_EMAILS and not row["is_admin"]:
             self._conn.execute("UPDATE accounts SET is_admin = 1 WHERE id = ?", (account_id,))
             self._conn.commit()
             row = self._conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
@@ -222,12 +236,16 @@ class Store:
 
     # -- orders ---------------------------------------------------------------
 
-    def create_order(self, account_id, cart_items, notes="", guest_name="", guest_email="", guest_phone=""):
+    def create_order(self, account_id, cart_items, notes="", guest_name="", guest_email="",
+                     guest_phone="", payment_method="cash", payment_status="unpaid",
+                     paypal_order_id=""):
         now = _now()
         cursor = self._conn.execute(
-            """INSERT INTO orders (account_id, status, notes, guest_name, guest_email, guest_phone, created_at)
-               VALUES (?, 'pending', ?, ?, ?, ?, ?)""",
-            (account_id, notes, guest_name, guest_email, guest_phone, now),
+            """INSERT INTO orders (account_id, status, notes, guest_name, guest_email, guest_phone,
+               payment_method, payment_status, paypal_order_id, created_at)
+               VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (account_id, notes, guest_name, guest_email, guest_phone,
+             payment_method, payment_status, paypal_order_id, now),
         )
         order_id = cursor.lastrowid
         for item in cart_items:
@@ -292,6 +310,15 @@ class Store:
     def update_admin_notes(self, order_id, notes):
         self._conn.execute("UPDATE orders SET admin_notes = ? WHERE id = ?", (notes, order_id))
         self._conn.commit()
+
+    def set_payment_status(self, order_id, status):
+        if status not in ("paid", "unpaid"):
+            return False
+        self._conn.execute(
+            "UPDATE orders SET payment_status = ? WHERE id = ?", (status, order_id)
+        )
+        self._conn.commit()
+        return True
 
     # -- settings -------------------------------------------------------------
 

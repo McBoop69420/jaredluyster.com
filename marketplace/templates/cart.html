@@ -41,6 +41,15 @@
 .guest-fields.active { display: block; }
 .guest-fields input { width: 100%; margin-bottom: 8px; }
 .guest-note { font-size: 0.78rem; color: var(--muted); margin: 0 0 10px; }
+.pay-methods { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 4px; }
+.pay-opt {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    font-size: 0.85rem; transition: border-color 120ms;
+}
+.pay-opt:hover { border-color: rgba(255,255,255,0.2); }
+.pay-opt input { width: auto; margin: 0; accent-color: var(--accent); }
+.pay-note { font-size: 0.78rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 .order-confirm { text-align: center; padding: 48px 0; }
 .order-confirm h2 { margin: 0 0 8px; }
 @media (max-width: 700px) {
@@ -102,13 +111,34 @@
                         <input type="email" id="guest-email" placeholder="you@email.com">
                         <input type="tel" id="guest-phone" placeholder="Phone (optional)">
                     </div>
-                    <button class="btn btn-accent" style="width:100%; justify-content:center; margin-top:8px;" onclick="submitOrder()">
-                        Submit Order
-                    </button>
+                    <div class="pay-methods" id="pay-methods">
+                        <label class="pay-opt">
+                            <input type="radio" name="pay" value="cash" checked onchange="selectPay('cash')">
+                            <span>Cash at pickup</span>
+                        </label>
+                        <label class="pay-opt" id="pay-opt-paypal" style="display:none">
+                            <input type="radio" name="pay" value="paypal" onchange="selectPay('paypal')">
+                            <span>PayPal / Card</span>
+                        </label>
+                    </div>
+
+                    <div id="cash-pay">
+                        <button class="btn btn-accent" style="width:100%; justify-content:center; margin-top:8px;" onclick="submitOrder()">
+                            Submit Order
+                        </button>
+                        <p class="pay-note">
+                            Cash on pickup — I'll be at Tabletop Tavern every Thursday to deliver orders.
+                        </p>
+                    </div>
+
+                    <div id="paypal-pay" style="display:none">
+                        <div id="paypal-button-container" style="margin-top:8px;"></div>
+                        <p class="pay-note">
+                            Pay securely with PayPal or a card. I'll still be at Tabletop Tavern every Thursday to hand off your cards.
+                        </p>
+                    </div>
+
                     <div id="order-error" class="error-msg" style="display:none"></div>
-                    <p style="font-size:0.78rem; color:var(--muted); margin-top:12px; line-height:1.5;">
-                        Cash only — no online payments are accepted. I'll be at Tabletop Tavern every Thursday to deliver orders.
-                    </p>
                 </div>
             </div>
         </div>
@@ -125,12 +155,37 @@
 {% block extra_js %}
 <script>
 var isLoggedIn = false;
+var paypalRendered = false;
 
 fetch('/marketplace/api/me').then(function(r) { return r.json(); }).then(function(data) {
     isLoggedIn = !!data.logged_in;
     var guestFields = document.getElementById('guest-fields');
     if (guestFields) guestFields.classList.toggle('active', !isLoggedIn);
 });
+
+// Show the PayPal option only when it's configured on the server.
+fetch('/marketplace/api/paypal/config').then(function(r) { return r.json(); }).then(function(cfg) {
+    if (cfg.enabled && cfg.client_id) {
+        var opt = document.getElementById('pay-opt-paypal');
+        if (opt) opt.style.display = '';
+        loadPaypalSdk(cfg.client_id);
+    }
+}).catch(function() {});
+
+function loadPaypalSdk(clientId) {
+    var s = document.createElement('script');
+    s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(clientId) + '&currency=USD';
+    s.onload = renderPaypalButtons;
+    document.head.appendChild(s);
+}
+
+function selectPay(method) {
+    var cash = document.getElementById('cash-pay');
+    var pp = document.getElementById('paypal-pay');
+    if (cash) cash.style.display = method === 'cash' ? '' : 'none';
+    if (pp) pp.style.display = method === 'paypal' ? '' : 'none';
+    hideError();
+}
 
 function updateQty(id, qty) {
     fetch('/marketplace/api/cart/update', {
@@ -139,42 +194,96 @@ function updateQty(id, qty) {
     }).then(function() { location.reload(); });
 }
 
-function submitOrder() {
+function showError(msg) {
     var err = document.getElementById('order-error');
-    err.style.display = 'none';
+    err.textContent = msg;
+    err.style.display = '';
+}
 
+function hideError() {
+    document.getElementById('order-error').style.display = 'none';
+}
+
+// Build the checkout payload; returns null (and leaves an error for the caller) if guest info is missing.
+function buildPayload() {
     var payload = {notes: document.getElementById('order-notes').value};
     if (!isLoggedIn) {
         var name = document.getElementById('guest-name').value.trim();
         var email = document.getElementById('guest-email').value.trim();
-        if (!name || !email.includes('@')) {
-            err.textContent = 'Please enter your name and a valid email.';
-            err.style.display = '';
-            return;
-        }
+        if (!name || !email.includes('@')) return null;
         payload.guest_name = name;
         payload.guest_email = email;
         payload.guest_phone = document.getElementById('guest-phone').value.trim();
     }
+    return payload;
+}
+
+function handleOrderResult(res, paid) {
+    if (res.ok && res.data.is_guest) {
+        document.getElementById('cart-layout').style.display = 'none';
+        document.getElementById('order-confirm-msg').textContent = paid
+            ? 'Order #' + res.data.order_id + ' — payment received via PayPal, thank you! ' +
+              'Pickup Thursdays at the Bluegrass Cube table at Tabletop Tavern, ' +
+              'or reach out on Discord (McBoop) to arrange something else.'
+            : 'Order #' + res.data.order_id + ' — cash only, pickup Thursdays at the Bluegrass Cube table at Tabletop Tavern. ' +
+              "Reach out to me on Discord (McBoop) if you'd like to make other arrangements.";
+        document.getElementById('order-confirm').style.display = '';
+    } else if (res.ok) {
+        location.href = '/marketplace/orders';
+    } else {
+        showError(res.data.error || 'Something went wrong.');
+    }
+}
+
+function submitOrder() {
+    hideError();
+    var payload = buildPayload();
+    if (!payload) { showError('Please enter your name and a valid email.'); return; }
 
     fetch('/marketplace/api/orders', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
-    .then(function(res) {
-        if (res.ok && res.data.is_guest) {
-            document.getElementById('cart-layout').style.display = 'none';
-            document.getElementById('order-confirm-msg').textContent =
-                'Order #' + res.data.order_id + ' — cash only, pickup Thursdays at the Bluegrass Cube table at Tabletop Tavern. ' +
-                "Reach out to me on Discord (McBoop) if you'd like to make other arrangements.";
-            document.getElementById('order-confirm').style.display = '';
-        } else if (res.ok) {
-            location.href = '/marketplace/orders';
-        } else {
-            err.textContent = res.data.error;
-            err.style.display = '';
+    .then(function(res) { handleOrderResult(res, false); });
+}
+
+function renderPaypalButtons() {
+    if (paypalRendered || typeof paypal === 'undefined') return;
+    paypalRendered = true;
+    paypal.Buttons({
+        style: {layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal'},
+        createOrder: function() {
+            hideError();
+            var payload = buildPayload();
+            if (!payload) {
+                showError('Please enter your name and a valid email.');
+                return Promise.reject(new Error('Missing guest info'));
+            }
+            return fetch('/marketplace/api/paypal/create-order', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+            .then(function(res) {
+                if (!res.ok) {
+                    showError(res.data.error || 'Could not start PayPal checkout.');
+                    throw new Error(res.data.error || 'create-order failed');
+                }
+                return res.data.id;
+            });
+        },
+        onApprove: function(data) {
+            var payload = buildPayload() || {};
+            payload.paypal_order_id = data.orderID;
+            return fetch('/marketplace/api/paypal/capture-order', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+            .then(function(res) { handleOrderResult(res, true); });
+        },
+        onError: function() {
+            showError('PayPal ran into a problem. Please try again, or choose cash at pickup.');
         }
-    });
+    }).render('#paypal-button-container');
 }
 </script>
 {% endblock %}

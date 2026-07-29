@@ -251,6 +251,40 @@
             </div>
         </details>
 
+        <details class="card" style="margin-bottom:24px; padding:0;">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Payment Settings (PayPal)
+                <span id="paypal-status" style="font-size:0.72rem; margin-left:auto;"></span>
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <p style="font-size:0.8rem; color:var(--muted); margin:16px 0 4px; line-height:1.5;">
+                    From your <a href="https://developer.paypal.com/dashboard/applications" target="_blank" rel="noopener" style="color:var(--accent)">PayPal Developer dashboard</a>,
+                    create a REST app and paste its Client ID and Secret. Use <strong>Sandbox</strong> keys to test, then switch to <strong>Live</strong> to take real payments.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                    <div class="field">
+                        <label>Client ID</label>
+                        <input type="text" id="paypal-client-id" placeholder="Paste Client ID" style="width:100%">
+                    </div>
+                    <div class="field">
+                        <label>Secret</label>
+                        <input type="password" id="paypal-secret" placeholder="Paste Secret" style="width:100%">
+                    </div>
+                    <div class="field">
+                        <label>Environment</label>
+                        <select id="paypal-env" style="width:100%">
+                            <option value="sandbox">Sandbox (testing)</option>
+                            <option value="live">Live (real payments)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+                    <button class="btn btn-accent btn-sm" onclick="savePaypal()">Save</button>
+                    <span id="paypal-msg" style="font-size:0.82rem; margin-left:8px;"></span>
+                </div>
+            </div>
+        </details>
+
         {% if orders %}
         <div class="orders-list">
             {% for o in orders %}
@@ -266,7 +300,13 @@
                         <span class="order-email">({{ order.guest_email if order.guest_name else (acct.email if acct else '') }}{% if order.guest_phone %} · {{ order.guest_phone }}{% endif %})</span>
                         <span class="order-date">{{ order.created_at[:10] }}</span>
                     </div>
-                    <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="status-badge" id="pay-badge-{{ order.id }}"
+                              style="{% if order.payment_status == 'paid' %}background:rgba(76,184,122,0.15); color:var(--green){% else %}background:rgba(255,255,255,0.06); color:var(--muted){% endif %}">
+                            {{ 'PayPal' if order.payment_method == 'paypal' else 'Cash' }} · {{ 'Paid' if order.payment_status == 'paid' else 'Unpaid' }}
+                        </span>
+                        <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
+                    </div>
                 </div>
 
                 {% if order.notes %}
@@ -304,6 +344,10 @@
                         <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
                         {% endfor %}
                     </select>
+                    <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
+                        onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
+                        {{ 'Mark unpaid' if order.payment_status == 'paid' else 'Mark paid' }}
+                    </button>
                     <textarea class="admin-notes-input" placeholder="Admin notes..."
                         onblur="saveNotes({{ order.id }}, this.value)">{{ order.admin_notes }}</textarea>
                 </div>
@@ -380,7 +424,61 @@ fetch('/marketplace/api/admin/settings').then(function(r) { return r.json(); }).
         status.textContent = 'Not configured';
         status.style.color = 'var(--red)';
     }
+
+    document.getElementById('paypal-client-id').value = d.paypal_client_id || '';
+    document.getElementById('paypal-secret').value = d.paypal_secret || '';
+    document.getElementById('paypal-env').value = d.paypal_env || 'sandbox';
+    var ppStatus = document.getElementById('paypal-status');
+    if (d.paypal_client_id && d.paypal_secret) {
+        ppStatus.textContent = (d.paypal_env === 'live' ? 'Live' : 'Sandbox') + ' — configured';
+        ppStatus.style.color = 'var(--green)';
+    } else {
+        ppStatus.textContent = 'Not configured';
+        ppStatus.style.color = 'var(--red)';
+    }
 });
+
+function savePaypal() {
+    var msg = document.getElementById('paypal-msg');
+    msg.textContent = '';
+    fetch('/marketplace/api/admin/settings', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            paypal_client_id: document.getElementById('paypal-client-id').value,
+            paypal_secret: document.getElementById('paypal-secret').value,
+            paypal_env: document.getElementById('paypal-env').value
+        })
+    }).then(function(r) { return r.json(); }).then(function() {
+        msg.textContent = 'Saved!';
+        msg.style.color = 'var(--green)';
+        var env = document.getElementById('paypal-env').value;
+        var hasKeys = document.getElementById('paypal-client-id').value && document.getElementById('paypal-secret').value;
+        var ppStatus = document.getElementById('paypal-status');
+        ppStatus.textContent = hasKeys ? (env === 'live' ? 'Live' : 'Sandbox') + ' — configured' : 'Not configured';
+        ppStatus.style.color = hasKeys ? 'var(--green)' : 'var(--red)';
+    });
+}
+
+function togglePaid(orderId) {
+    var btn = document.getElementById('pay-btn-' + orderId);
+    var newStatus = btn.getAttribute('data-paid') === '1' ? 'unpaid' : 'paid';
+    fetch('/marketplace/api/admin/orders/' + orderId + '/payment', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({payment_status: newStatus})
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.error) return;
+        var paid = newStatus === 'paid';
+        btn.setAttribute('data-paid', paid ? '1' : '0');
+        btn.textContent = paid ? 'Mark unpaid' : 'Mark paid';
+        var badge = document.getElementById('pay-badge-' + orderId);
+        if (badge) {
+            var label = badge.textContent.trim().split('·')[0].trim();
+            badge.textContent = label + ' · ' + (paid ? 'Paid' : 'Unpaid');
+            badge.style.background = paid ? 'rgba(76,184,122,0.15)' : 'rgba(255,255,255,0.06)';
+            badge.style.color = paid ? 'var(--green)' : 'var(--muted)';
+        }
+    });
+}
 
 function saveSmtp() {
     var msg = document.getElementById('smtp-msg');

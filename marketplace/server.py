@@ -58,7 +58,8 @@ def _send_reset_email(to_email, reset_url):
         server.send_message(msg)
 
 
-def _send_order_confirmation_email(to_email, order_id, items, total, notes):
+def _send_order_confirmation_email(to_email, order_id, items, total, notes,
+                                   payment_method="cash", payment_status="unpaid"):
     cfg = _smtp_config()
     lines = [f"Thanks for your order! Here's a copy for your records.\n", f"Order #{order_id}\n"]
     for item in items:
@@ -69,11 +70,17 @@ def _send_order_confirmation_email(to_email, order_id, items, total, notes):
     lines.append(f"\nTotal: ${total:.2f}")
     if notes:
         lines.append(f"\nNotes: {notes}")
-    lines.append(
-        "\n\nCash only — no online payments are accepted. "
-        "I'll be at Tabletop Tavern every Thursday to deliver orders. "
-        "Reach out to me on Discord (McBoop) if you'd like to make other arrangements."
-    )
+    if payment_method == "paypal" and payment_status == "paid":
+        lines.append(
+            "\n\nPayment received via PayPal — thank you! "
+            "I'll be at Tabletop Tavern every Thursday to hand off your cards. "
+            "Reach out to me on Discord (McBoop) if you'd like to make other arrangements."
+        )
+    else:
+        lines.append(
+            "\n\nCash on pickup — I'll be at Tabletop Tavern every Thursday to deliver orders. "
+            "Reach out to me on Discord (McBoop) if you'd like to make other arrangements."
+        )
     body = "\n".join(lines)
     msg = MIMEText(body)
     msg["Subject"] = f"Order Confirmation #{order_id} — Bluegrass Memorabilia"
@@ -83,6 +90,35 @@ def _send_order_confirmation_email(to_email, order_id, items, total, notes):
         server.starttls()
         server.login(cfg["user"], cfg["password"])
         server.send_message(msg)
+
+
+def _paypal_config():
+    return {
+        "client_id": store.get_setting("paypal_client_id", ""),
+        "secret": store.get_setting("paypal_secret", ""),
+        "env": store.get_setting("paypal_env", "sandbox"),
+    }
+
+
+def _paypal_enabled():
+    cfg = _paypal_config()
+    return bool(cfg["client_id"] and cfg["secret"])
+
+
+def _paypal_api_base(env):
+    return "https://api-m.paypal.com" if env == "live" else "https://api-m.sandbox.paypal.com"
+
+
+def _paypal_access_token(cfg):
+    resp = requests.post(
+        _paypal_api_base(cfg["env"]) + "/v1/oauth2/token",
+        auth=(cfg["client_id"], cfg["secret"]),
+        data={"grant_type": "client_credentials"},
+        headers={"Accept": "application/json"},
+        timeout=20,
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
 
 
 _inventory_lock = threading.Lock()
@@ -121,6 +157,18 @@ def admin_required(f):
             return "Unauthorized", 403
         return f(*args, **kwargs)
     return wrapped
+
+
+def _external_base_url():
+    """Public-facing base URL, honoring the reverse proxy in front of us.
+
+    When served behind Cloudflare Pages, the proxy sets X-Forwarded-Host/Proto so
+    generated links (e.g. password-reset URLs) use the public domain rather than
+    this origin's own hostname.
+    """
+    proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+    host = request.headers.get("X-Forwarded-Host", request.host)
+    return f"{proto}://{host}"
 
 
 def _quarter(price):
@@ -259,7 +307,7 @@ def api_forgot_password():
     token = store.create_reset_token(email)
     cfg = _smtp_config()
     if token and cfg["user"] and cfg["password"]:
-        reset_url = request.host_url.rstrip("/") + f"/marketplace/reset-password/{token}"
+        reset_url = _external_base_url() + f"/marketplace/reset-password/{token}"
         try:
             _send_reset_email(email, reset_url)
         except Exception:
@@ -347,6 +395,89 @@ def api_cart_clear():
 
 # -- order API ----------------------------------------------------------------
 
+def _validate_and_price_cart(cart):
+    """Resolve a session cart into priced line items against current inventory."""
+    inv_by_id = _inventory_by_id()
+    items = []
+    out_of_stock = []
+    for item_id_str, qty in cart.items():
+        item = inv_by_id.get(int(item_id_str))
+        if not item:
+            out_of_stock.append(f"Item #{item_id_str} is no longer available")
+            continue
+        available = item.get("quantity", 0)
+        if qty > available:
+            out_of_stock.append(f"{item['name']} (have {available}, want {qty})")
+            continue
+        price = _price_for(item)
+        items.append({
+            "id": item["id"], "name": item["name"],
+            "set_code": item.get("set_code", ""),
+            "collector_number": item.get("collector_number", ""),
+            "foil": item.get("foil", False),
+            "quantity": qty, "price": price,
+        })
+    return items, out_of_stock
+
+
+def _resolve_customer(data):
+    """Return (account_id, guest_name, guest_email, guest_phone, error)."""
+    if "account_id" in session:
+        return session["account_id"], "", "", "", None
+    guest_name = (data.get("guest_name") or "").strip()
+    guest_email = (data.get("guest_email") or "").strip().lower()
+    guest_phone = (data.get("guest_phone") or "").strip()
+    if not guest_name or "@" not in guest_email:
+        return None, "", "", "", "Name and a valid email are required for guest checkout."
+    account_id = store.get_or_create_guest_account()["id"]
+    return account_id, guest_name, guest_email, guest_phone, None
+
+
+def _place_order(items, account_id, guest_name, guest_email, guest_phone,
+                 notes, payment_method, payment_status, paypal_order_id,
+                 enforce_stock=True):
+    """Persist an order and adjust inventory. Returns {"order_id": ...} or {"error": ...}."""
+    with _inventory_lock:
+        inventory = _load_inventory()
+        inv_by_id = {item["id"]: item for item in inventory}
+        short = []
+        for line in items:
+            it = inv_by_id.get(line["id"])
+            available = it.get("quantity", 0) if it else 0
+            if line["quantity"] > available:
+                short.append(f"{line['name']} (have {available}, want {line['quantity']})")
+        if short and enforce_stock:
+            return {"error": "Insufficient stock: " + "; ".join(short)}
+
+        order_id = store.create_order(account_id, items, notes, guest_name,
+                                      guest_email, guest_phone, payment_method,
+                                      payment_status, paypal_order_id)
+        # Payment was already captured, so record even if stock slipped; flag for admin.
+        if short:
+            store.update_admin_notes(order_id, "STOCK SHORT at capture: " + "; ".join(short))
+        for line in items:
+            it = inv_by_id.get(line["id"])
+            if it:
+                it["quantity"] = max(0, it["quantity"] - line["quantity"])
+        inventory = [item for item in inventory if item.get("quantity", 0) > 0]
+        _save_inventory(inventory)
+
+    confirm_email = guest_email
+    if not confirm_email:
+        account = store.get_account(account_id)
+        confirm_email = account["email"] if account else ""
+    cfg = _smtp_config()
+    if confirm_email and cfg["user"] and cfg["password"]:
+        total = sum(item["price"] * item["quantity"] for item in items)
+        try:
+            _send_order_confirmation_email(confirm_email, order_id, items, total, notes,
+                                           payment_method, payment_status)
+        except Exception:
+            pass
+
+    return {"order_id": order_id}
+
+
 @app.route("/marketplace/api/orders", methods=["POST"])
 def api_order_submit():
     cart = session.get("cart", {})
@@ -355,67 +486,140 @@ def api_order_submit():
     data = request.get_json() or {}
     notes = data.get("notes", "")
 
-    guest_name = ""
-    guest_email = ""
-    guest_phone = ""
-    if "account_id" in session:
-        account_id = session["account_id"]
-    else:
-        guest_name = (data.get("guest_name") or "").strip()
-        guest_email = (data.get("guest_email") or "").strip().lower()
-        guest_phone = (data.get("guest_phone") or "").strip()
-        if not guest_name or "@" not in guest_email:
-            return jsonify(error="Name and a valid email are required for guest checkout."), 400
-        account_id = store.get_or_create_guest_account()["id"]
+    account_id, guest_name, guest_email, guest_phone, err = _resolve_customer(data)
+    if err:
+        return jsonify(error=err), 400
 
-    with _inventory_lock:
-        inventory = _load_inventory()
-        inv_by_id = {item["id"]: item for item in inventory}
-        items = []
-        out_of_stock = []
-        for item_id_str, qty in cart.items():
-            item = inv_by_id.get(int(item_id_str))
-            if not item:
-                out_of_stock.append(f"Item #{item_id_str} is no longer available")
-                continue
-            available = item.get("quantity", 0)
-            if qty > available:
-                out_of_stock.append(f"{item['name']} (have {available}, want {qty})")
-                continue
-            price = _price_for(item)
-            items.append({
-                "id": item["id"], "name": item["name"],
-                "set_code": item.get("set_code", ""),
-                "collector_number": item.get("collector_number", ""),
-                "foil": item.get("foil", False),
-                "quantity": qty, "price": price,
-            })
-        if out_of_stock:
-            return jsonify(error="Insufficient stock: " + "; ".join(out_of_stock)), 400
-        if not items:
-            return jsonify(error="No valid items in cart."), 400
-        order_id = store.create_order(account_id, items, notes,
-                                       guest_name, guest_email, guest_phone)
-        for order_item in items:
-            inv_by_id[order_item["id"]]["quantity"] -= order_item["quantity"]
-        inventory = [item for item in inventory if item.get("quantity", 0) > 0]
-        _save_inventory(inventory)
+    items, out_of_stock = _validate_and_price_cart(cart)
+    if out_of_stock:
+        return jsonify(error="Insufficient stock: " + "; ".join(out_of_stock)), 400
+    if not items:
+        return jsonify(error="No valid items in cart."), 400
+
+    result = _place_order(items, account_id, guest_name, guest_email, guest_phone,
+                          notes, "cash", "unpaid", "", enforce_stock=True)
+    if "error" in result:
+        return jsonify(error=result["error"]), 400
+
     session["cart"] = {}
     is_guest = "account_id" not in session
+    return jsonify(ok=True, order_id=result["order_id"], is_guest=is_guest)
 
-    confirm_email = guest_email
-    if not confirm_email and "account_id" in session:
-        account = store.get_account(session["account_id"])
-        confirm_email = account["email"] if account else ""
-    cfg = _smtp_config()
-    if confirm_email and cfg["user"] and cfg["password"]:
-        total = sum(item["price"] * item["quantity"] for item in items)
-        try:
-            _send_order_confirmation_email(confirm_email, order_id, items, total, notes)
-        except Exception:
-            pass
 
-    return jsonify(ok=True, order_id=order_id, is_guest=is_guest)
+# -- PayPal API ---------------------------------------------------------------
+
+@app.route("/marketplace/api/paypal/config")
+def api_paypal_config():
+    cfg = _paypal_config()
+    # Only the client id is public; the secret never leaves the server.
+    return jsonify(enabled=bool(cfg["client_id"] and cfg["secret"]),
+                   client_id=cfg["client_id"], env=cfg["env"])
+
+
+@app.route("/marketplace/api/paypal/create-order", methods=["POST"])
+def api_paypal_create_order():
+    if not _paypal_enabled():
+        return jsonify(error="PayPal is not configured."), 400
+    cart = session.get("cart", {})
+    if not cart:
+        return jsonify(error="Cart is empty."), 400
+    data = request.get_json() or {}
+
+    # Resolve the customer up front so we never take a payment we can't fulfill,
+    # and so their identity is locked in before the PayPal popup opens.
+    account_id, guest_name, guest_email, guest_phone, err = _resolve_customer(data)
+    if err:
+        return jsonify(error=err), 400
+
+    items, out_of_stock = _validate_and_price_cart(cart)
+    if out_of_stock:
+        return jsonify(error="Insufficient stock: " + "; ".join(out_of_stock)), 400
+    if not items:
+        return jsonify(error="No valid items in cart."), 400
+    total = sum(item["price"] * item["quantity"] for item in items)
+    if total <= 0:
+        return jsonify(error="Order total must be greater than zero."), 400
+
+    cfg = _paypal_config()
+    try:
+        token = _paypal_access_token(cfg)
+        resp = requests.post(
+            _paypal_api_base(cfg["env"]) + "/v2/checkout/orders",
+            headers={"Authorization": "Bearer " + token,
+                     "Content-Type": "application/json"},
+            json={
+                "intent": "CAPTURE",
+                "purchase_units": [{
+                    "amount": {"currency_code": "USD", "value": f"{total:.2f}"},
+                    "description": "Bluegrass Memorabilia order",
+                }],
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        return jsonify(error="Could not reach PayPal: " + str(e)), 502
+
+    pp = resp.json()
+    # Lock in exactly what was priced and who's buying, so neither the cart nor the
+    # customer's identity can change between now and capture.
+    session["pending_paypal"] = {
+        "paypal_order_id": pp["id"], "items": items,
+        "account_id": account_id, "guest_name": guest_name,
+        "guest_email": guest_email, "guest_phone": guest_phone,
+    }
+    return jsonify(id=pp["id"])
+
+
+@app.route("/marketplace/api/paypal/capture-order", methods=["POST"])
+def api_paypal_capture_order():
+    if not _paypal_enabled():
+        return jsonify(error="PayPal is not configured."), 400
+    data = request.get_json() or {}
+    paypal_order_id = data.get("paypal_order_id") or data.get("orderID") or ""
+    if not paypal_order_id:
+        return jsonify(error="Missing PayPal order id."), 400
+
+    pending = session.get("pending_paypal")
+    if not pending or pending.get("paypal_order_id") != paypal_order_id:
+        return jsonify(error="No matching pending payment. Please start checkout again."), 400
+    items = pending["items"]
+    # Use the customer captured at create-time — never re-read identity from the
+    # request here, or a client change could reject an already-paid order.
+    account_id = pending["account_id"]
+    guest_name = pending.get("guest_name", "")
+    guest_email = pending.get("guest_email", "")
+    guest_phone = pending.get("guest_phone", "")
+    notes = data.get("notes", "")
+
+    cfg = _paypal_config()
+    try:
+        token = _paypal_access_token(cfg)
+        resp = requests.post(
+            _paypal_api_base(cfg["env"]) + f"/v2/checkout/orders/{paypal_order_id}/capture",
+            headers={"Authorization": "Bearer " + token,
+                     "Content-Type": "application/json"},
+            timeout=20,
+        )
+    except Exception as e:
+        return jsonify(error="Could not reach PayPal: " + str(e)), 502
+
+    if resp.status_code not in (200, 201):
+        return jsonify(error="Payment could not be captured. You have not been charged."), 502
+    capture = resp.json()
+    if capture.get("status") != "COMPLETED":
+        return jsonify(error="Payment was not completed."), 400
+
+    # Payment is final; record the order even if stock slipped in the meantime.
+    result = _place_order(items, account_id, guest_name, guest_email, guest_phone,
+                          notes, "paypal", "paid", paypal_order_id, enforce_stock=False)
+    if "error" in result:
+        return jsonify(error=result["error"]), 400
+
+    session["cart"] = {}
+    session.pop("pending_paypal", None)
+    is_guest = "account_id" not in session
+    return jsonify(ok=True, order_id=result["order_id"], is_guest=is_guest)
 
 
 # -- admin API ----------------------------------------------------------------
@@ -486,6 +690,15 @@ def api_admin_update_notes(order_id):
     return jsonify(ok=True)
 
 
+@app.route("/marketplace/api/admin/orders/<int:order_id>/payment", methods=["POST"])
+@admin_required
+def api_admin_update_payment(order_id):
+    data = request.get_json()
+    if not store.set_payment_status(order_id, data.get("payment_status", "")):
+        return jsonify(error="Invalid payment status."), 400
+    return jsonify(ok=True)
+
+
 @app.route("/marketplace/api/admin/settings", methods=["GET"])
 @admin_required
 def api_admin_settings_get():
@@ -494,6 +707,9 @@ def api_admin_settings_get():
         smtp_port=store.get_setting("smtp_port", "587"),
         smtp_user=store.get_setting("smtp_user", ""),
         smtp_pass=store.get_setting("smtp_pass", ""),
+        paypal_client_id=store.get_setting("paypal_client_id", ""),
+        paypal_secret=store.get_setting("paypal_secret", ""),
+        paypal_env=store.get_setting("paypal_env", "sandbox"),
     )
 
 
@@ -501,9 +717,10 @@ def api_admin_settings_get():
 @admin_required
 def api_admin_settings_save():
     data = request.get_json()
-    for key in ("smtp_host", "smtp_port", "smtp_user", "smtp_pass"):
+    for key in ("smtp_host", "smtp_port", "smtp_user", "smtp_pass",
+                "paypal_client_id", "paypal_secret", "paypal_env"):
         if key in data:
-            store.set_setting(key, data[key])
+            store.set_setting(key, (data[key] or "").strip())
     return jsonify(ok=True)
 
 
