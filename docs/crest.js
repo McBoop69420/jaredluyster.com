@@ -1,4 +1,4 @@
-/* crest.js — Wizard Battle MASTER SIGIL generator.
+/* crest.js — Wizard Battle THE COMPASS generator.
    Built on the class-icon grammar: a double glowing rune-ring with bright
    cardinal seal-points, a central glyph, and a soft neon bloom — the same
    language as the eight element icons, elevated to the game's master mark.
@@ -19,13 +19,13 @@
   // the eight classes, in wheel order — one octagram point each
   var CLASS_COLORS = [
     { id:"pyromancer",  name:"Fire",   core:"#ff4422", deep:"#8c2513" },
+    { id:"verdantmaker",name:"Grass",  core:"#22c55e", deep:"#136c34" },
+    { id:"frostweaver", name:"Ice",    core:"#88ddff", deep:"#4b7a8c" },
+    { id:"shadowblade", name:"Shadow", core:"#8c2a5e", deep:"#4d1734" },
+    { id:"dawnmage",    name:"Light",  core:"#ffe234", deep:"#8c7c1d" },
     { id:"stormseeker", name:"Arc",    core:"#f97316", deep:"#893f0c" },
     { id:"tidecaller",  name:"Water",  core:"#2277ff", deep:"#13418c" },
-    { id:"frostweaver", name:"Ice",    core:"#88ddff", deep:"#4b7a8c" },
-    { id:"stonewarden", name:"Rock",   core:"#a87832", deep:"#5c421c" },
-    { id:"verdantmaker",name:"Grass",  core:"#22c55e", deep:"#136c34" },
-    { id:"dawnmage",    name:"Light",  core:"#ffe234", deep:"#8c7c1d" },
-    { id:"shadowblade", name:"Shadow", core:"#8c2a5e", deep:"#4d1734" }
+    { id:"stonewarden", name:"Rock",   core:"#a87832", deep:"#5c421c" }
   ];
 
   var uid = 0;
