@@ -35,6 +35,15 @@
                     <div>
                         <span class="order-id">Order #{{ order.id }}</span>
                         <span class="order-date">{{ order.created_at[:10] }}</span>
+                        {% if order.payment_status == 'refunded' %}
+                        <span class="payment-status">Refunded by PayPal</span>
+                        {% elif order.payment_status == 'refund_pending' %}
+                        <span class="payment-status">PayPal refund pending</span>
+                        {% elif order.payment_method == 'paypal' %}
+                        <span class="payment-status payment-status-paid">Paid with PayPal</span>
+                        {% else %}
+                        <span class="payment-status">Cash at pickup</span>
+                        {% endif %}
                     </div>
                     <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
                 </div>

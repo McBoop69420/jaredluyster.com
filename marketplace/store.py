@@ -1,5 +1,6 @@
 """Accounts, carts, and orders database for the marketplace."""
 
+import json
 import os
 import secrets
 import sqlite3
@@ -104,6 +105,10 @@ class Store:
                 payment_method TEXT NOT NULL DEFAULT 'cash',
                 payment_status TEXT NOT NULL DEFAULT 'unpaid',
                 paypal_order_id TEXT NOT NULL DEFAULT '',
+                paypal_capture_id TEXT NOT NULL DEFAULT '',
+                paid_at TEXT NOT NULL DEFAULT '',
+                paypal_refund_id TEXT NOT NULL DEFAULT '',
+                refunded_at TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             );
 
@@ -131,26 +136,53 @@ class Store:
                 created_at TEXT NOT NULL,
                 used INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS paypal_checkouts (
+                paypal_order_id TEXT PRIMARY KEY,
+                account_id INTEGER NOT NULL REFERENCES accounts(id),
+                cart_json TEXT NOT NULL,
+                notes TEXT NOT NULL DEFAULT '',
+                guest_name TEXT NOT NULL DEFAULT '',
+                guest_email TEXT NOT NULL DEFAULT '',
+                guest_phone TEXT NOT NULL DEFAULT '',
+                expected_amount TEXT NOT NULL,
+                currency TEXT NOT NULL DEFAULT 'USD',
+                status TEXT NOT NULL DEFAULT 'created',
+                local_order_id INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
         """)
         self._conn.commit()
         self._migrate_orders_table()
 
     def _migrate_orders_table(self):
-        columns = (
-            "guest_name TEXT NOT NULL DEFAULT ''",
-            "guest_email TEXT NOT NULL DEFAULT ''",
-            "guest_phone TEXT NOT NULL DEFAULT ''",
-            "payment_method TEXT NOT NULL DEFAULT 'cash'",
-            "payment_status TEXT NOT NULL DEFAULT 'unpaid'",
-            "paypal_order_id TEXT NOT NULL DEFAULT ''",
-        )
-        for column_def in columns:
+        columns = {
+            "guest_name": "TEXT NOT NULL DEFAULT ''",
+            "guest_email": "TEXT NOT NULL DEFAULT ''",
+            "guest_phone": "TEXT NOT NULL DEFAULT ''",
+            "payment_method": "TEXT NOT NULL DEFAULT 'cash'",
+            "payment_status": "TEXT NOT NULL DEFAULT 'unpaid'",
+            "paypal_order_id": "TEXT NOT NULL DEFAULT ''",
+            "paypal_capture_id": "TEXT NOT NULL DEFAULT ''",
+            "paid_at": "TEXT NOT NULL DEFAULT ''",
+            "paypal_refund_id": "TEXT NOT NULL DEFAULT ''",
+            "refunded_at": "TEXT NOT NULL DEFAULT ''",
+        }
+        for column, definition in columns.items():
             try:
-                self._conn.execute(f"ALTER TABLE orders ADD COLUMN {column_def}")
+                self._conn.execute(
+                    f"ALTER TABLE orders ADD COLUMN {column} {definition}"
+                )
                 self._conn.commit()
             except Exception as e:
                 if "duplicate column" not in str(e).lower():
                     raise
+        self._conn.execute(
+            """CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paypal_order_id
+               ON orders(paypal_order_id) WHERE paypal_order_id <> ''"""
+        )
+        self._conn.commit()
 
     # -- accounts -------------------------------------------------------------
 
@@ -238,14 +270,17 @@ class Store:
 
     def create_order(self, account_id, cart_items, notes="", guest_name="", guest_email="",
                      guest_phone="", payment_method="cash", payment_status="unpaid",
-                     paypal_order_id=""):
+                     paypal_order_id="", paypal_capture_id="", paid_at=""):
         now = _now()
         cursor = self._conn.execute(
-            """INSERT INTO orders (account_id, status, notes, guest_name, guest_email, guest_phone,
-               payment_method, payment_status, paypal_order_id, created_at)
-               VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO orders (
+                   account_id, status, notes, guest_name, guest_email, guest_phone,
+                   payment_method, payment_status, paypal_order_id,
+                   paypal_capture_id, paid_at, created_at
+               ) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (account_id, notes, guest_name, guest_email, guest_phone,
-             payment_method, payment_status, paypal_order_id, now),
+             payment_method, payment_status, paypal_order_id,
+             paypal_capture_id, paid_at, now),
         )
         order_id = cursor.lastrowid
         for item in cart_items:
@@ -268,6 +303,53 @@ class Store:
             "SELECT * FROM order_items WHERE order_id = ?", (order_id,)
         ).fetchall()
         return {"order": order, "items": items}
+
+    def get_order_by_paypal_order_id(self, paypal_order_id):
+        order = self._conn.execute(
+            "SELECT * FROM orders WHERE paypal_order_id = ?", (paypal_order_id,)
+        ).fetchone()
+        if not order:
+            return None
+        items = self._conn.execute(
+            "SELECT * FROM order_items WHERE order_id = ?", (order["id"],)
+        ).fetchall()
+        return {"order": order, "items": items}
+
+    def create_paypal_checkout(self, paypal_order_id, account_id, cart, expected_amount,
+                               currency, notes="", guest_name="", guest_email="",
+                               guest_phone=""):
+        now = _now()
+        self._conn.execute(
+            """INSERT INTO paypal_checkouts (
+                   paypal_order_id, account_id, cart_json, notes, guest_name,
+                   guest_email, guest_phone, expected_amount, currency,
+                   status, created_at, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'created', ?, ?)""",
+            (paypal_order_id, account_id, json.dumps(cart, sort_keys=True), notes,
+             guest_name, guest_email, guest_phone, expected_amount, currency,
+             now, now),
+        )
+        self._conn.commit()
+
+    def get_paypal_checkout(self, paypal_order_id):
+        row = self._conn.execute(
+            "SELECT * FROM paypal_checkouts WHERE paypal_order_id = ?",
+            (paypal_order_id,),
+        ).fetchone()
+        if not row:
+            return None
+        checkout = dict(row)
+        checkout["cart"] = json.loads(checkout.pop("cart_json"))
+        return checkout
+
+    def complete_paypal_checkout(self, paypal_order_id, local_order_id):
+        self._conn.execute(
+            """UPDATE paypal_checkouts
+               SET status = 'completed', local_order_id = ?, updated_at = ?
+               WHERE paypal_order_id = ?""",
+            (local_order_id, _now(), paypal_order_id),
+        )
+        self._conn.commit()
 
     def get_orders_for_account(self, account_id):
         rows = self._conn.execute(
@@ -306,6 +388,15 @@ class Store:
         self._conn.execute("UPDATE orders SET status = ? WHERE id = ?", (status, order_id))
         self._conn.commit()
         return True
+
+    def update_paypal_refund(self, order_id, refund_id, payment_status, refunded_at):
+        self._conn.execute(
+            """UPDATE orders
+               SET paypal_refund_id = ?, payment_status = ?, refunded_at = ?
+               WHERE id = ?""",
+            (refund_id, payment_status, refunded_at, order_id),
+        )
+        self._conn.commit()
 
     def update_admin_notes(self, order_id, notes):
         self._conn.execute("UPDATE orders SET admin_notes = ? WHERE id = ?", (notes, order_id))
