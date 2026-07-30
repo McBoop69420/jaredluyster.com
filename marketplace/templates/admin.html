@@ -118,7 +118,7 @@
             <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/marketplace/admin?status=shipped">Shipped</a>
             <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/marketplace/admin?status=completed">Completed</a>
             <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
-            <button class="btn btn-sm" style="margin-left:auto; color:var(--red);" onclick="cancelAllPending()">Cancel All Pending</button>
+            <button class="btn btn-sm" style="margin-left:auto; color:var(--red);" onclick="cancelAllPending(this)">Cancel All Pending</button>
         </div>
 
         <div class="card" id="session-log-section" style="margin-bottom:24px; padding:16px 20px; display:none;">
@@ -299,11 +299,20 @@
                         {% if order.guest_name %}<span class="order-customer" style="color:var(--muted); font-size:0.72rem; text-transform:uppercase;">Guest</span>{% endif %}
                         <span class="order-email">({{ order.guest_email if order.guest_name else (acct.email if acct else '') }}{% if order.guest_phone %} · {{ order.guest_phone }}{% endif %})</span>
                         <span class="order-date">{{ order.created_at[:10] }}</span>
+                        {% if order.payment_status == 'refunded' %}
+                        <span class="payment-status" title="Refund {{ order.paypal_refund_id }}">Refunded by PayPal</span>
+                        {% elif order.payment_status == 'refund_pending' %}
+                        <span class="payment-status" title="Refund {{ order.paypal_refund_id }}">PayPal refund pending</span>
+                        {% elif order.payment_method == 'paypal' %}
+                        <span class="payment-status payment-status-paid" title="Capture {{ order.paypal_capture_id }}">Paid with PayPal</span>
+                        {% else %}
+                        <span class="payment-status">Cash at pickup</span>
+                        {% endif %}
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="status-badge" id="pay-badge-{{ order.id }}"
                               style="{% if order.payment_status == 'paid' %}background:rgba(76,184,122,0.15); color:var(--green){% else %}background:rgba(255,255,255,0.06); color:var(--muted){% endif %}">
-                            {{ 'PayPal' if order.payment_method == 'paypal' else 'Cash' }} · {{ 'Paid' if order.payment_status == 'paid' else 'Unpaid' }}
+                            {{ 'PayPal' if order.payment_method == 'paypal' else 'Cash' }} · {{ order.payment_status | replace('_', ' ') | title }}
                         </span>
                         <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
                     </div>
@@ -344,10 +353,12 @@
                         <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
                         {% endfor %}
                     </select>
-                    <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
-                        onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
-                        {{ 'Mark unpaid' if order.payment_status == 'paid' else 'Mark paid' }}
-                    </button>
+                    {% if order.payment_method != 'paypal' %}
+                        <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
+                            onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
+                            {{ 'Mark unpaid' if order.payment_status == 'paid' else 'Mark paid' }}
+                        </button>
+                    {% endif %}
                     <textarea class="admin-notes-input" placeholder="Admin notes..."
                         onblur="saveNotes({{ order.id }}, this.value)">{{ order.admin_notes }}</textarea>
                 </div>
@@ -365,18 +376,26 @@
 
 {% block extra_js %}
 <script>
+function adminResponse(response) {
+    return response.json().then(function(data) {
+        if (!response.ok) throw new Error(data.error || 'The update failed.');
+        return data;
+    });
+}
+
 function updateStatus(orderId, status) {
     fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({status: status})
-    }).then(function() {
-        var badge = document.querySelector('#order-' + orderId + ' .status-badge');
-        badge.className = 'status-badge status-' + status;
-        badge.textContent = status;
+    }).then(adminResponse).then(function() {
+        window.location.reload();
+    }).catch(function(error) {
+        alert(error.message);
+        window.location.reload();
     });
 }
 
-function cancelAllPending() {
+function cancelAllPending(button) {
     var cards = document.querySelectorAll('.order-card');
     var pendingIds = [];
     cards.forEach(function(card) {
@@ -388,19 +407,18 @@ function cancelAllPending() {
     if (!pendingIds.length) { alert('No pending orders on this page.'); return; }
     if (!confirm('Cancel ' + pendingIds.length + ' pending order(s) and restore their cards to inventory?')) return;
 
-    var btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Cancelling...';
-
-    var remaining = pendingIds.length;
-    pendingIds.forEach(function(orderId) {
-        fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
+    button.disabled = true;
+    button.textContent = 'Cancelling...';
+    Promise.all(pendingIds.map(function(orderId) {
+        return fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({status: 'cancelled'})
-        }).then(function() {
-            remaining -= 1;
-            if (remaining === 0) window.location.reload();
-        });
+        }).then(adminResponse);
+    })).then(function() {
+        window.location.reload();
+    }).catch(function(error) {
+        alert(error.message);
+        window.location.reload();
     });
 }
 
