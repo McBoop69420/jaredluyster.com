@@ -130,7 +130,7 @@
   <div id="root"></div>
 
   <footer>
-    <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), Compass (<code>crest.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
+    <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), Compass (<code>compass.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
     <div><b>Status</b> — Char · Drown · Shock · Root · Freeze · Daze · Blind · Weak · Strength · Lifesteal.</div>
     <div><b>Nodes</b> — Duel · Elite · Boss · Rest · Shop · Treasure · Mystery × Locked · Available · Active · Cleared.</div>
   </footer>
@@ -142,7 +142,7 @@
 
 <script type="text/babel" src="icons.jsx"></script>
 <script type="text/babel" src="event-nodes.jsx"></script>
-<script type="text/babel" src="crest.js"></script>
+<script type="text/babel" src="compass.js"></script>
 <script type="text/babel" src="marks.jsx"></script>
 
 <script type="text/babel">
@@ -219,7 +219,7 @@
         <section>
           <div className="shead"><h2>The Compass</h2><div className="meta">crown of the set</div></div>
           <div className="sigil-hero">
-            <div className="icon" dangerouslySetInnerHTML={{ __html: buildCrest({ size: 280, glyph:"octagram", mode:"spectrum" }) }} />
+            <div className="icon" dangerouslySetInnerHTML={{ __html: buildCompass({ size: 280, glyph:"octagram", mode:"spectrum" }) }} />
             <div className="cap">The Eightfold The Compass — one ray per school, each in its canonical colour. The crown of the whole icon set, drawn in the class-icon grammar.</div>
           </div>
         </section>

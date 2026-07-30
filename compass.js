@@ -1,9 +1,9 @@
-/* crest.js — Wizard Battle THE COMPASS generator.
+/* compass.js — Wizard Battle THE COMPASS generator.
    Built on the class-icon grammar: a double glowing rune-ring with bright
    cardinal seal-points, a central glyph, and a soft neon bloom — the same
    language as the eight element icons, elevated to the game's master mark.
 
-   buildCrest(opts) -> SVG markup string. Pure, deterministic, no deps.
+   buildCompass(opts) -> SVG markup string. Pure, deterministic, no deps.
 */
 (function (root) {
   "use strict";
@@ -108,7 +108,7 @@
     return { defs:defs, body:body };
   }
 
-  function buildCrest(opts){
+  function buildCompass(opts){
     opts = opts || {};
     var size = opts.size || 512;
     var glyph = opts.glyph || "octagram";
@@ -200,7 +200,7 @@
       + '<defs>'+defs+'</defs>'+body+'</svg>';
   }
 
-  root.buildCrest = buildCrest;
-  root.CREST_PRESETS = PRESETS;
-  root.CREST_CLASS_COLORS = CLASS_COLORS;
+  root.buildCompass = buildCompass;
+  root.COMPASS_PRESETS = PRESETS;
+  root.COMPASS_CLASS_COLORS = CLASS_COLORS;
 })(typeof window !== "undefined" ? window : globalThis);
