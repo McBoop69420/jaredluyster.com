@@ -19,7 +19,7 @@
   // the eight classes, in wheel order — one octagram point each
   var CLASS_COLORS = [
     { id:"pyromancer",  name:"Fire",   core:"#ff4422", deep:"#8c2513" },
-    { id:"verdantmaker",name:"Grass",  core:"#22c55e", deep:"#136c34" },
+    { id:"verdantmaker",name:"Plant",  core:"#22c55e", deep:"#136c34" },
     { id:"frostweaver", name:"Ice",    core:"#88ddff", deep:"#4b7a8c" },
     { id:"shadowblade", name:"Shadow", core:"#8c2a5e", deep:"#4d1734" },
     { id:"dawnmage",    name:"Light",  core:"#ffe234", deep:"#8c7c1d" },

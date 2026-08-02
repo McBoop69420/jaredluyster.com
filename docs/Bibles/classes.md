@@ -17,7 +17,7 @@ The roster table below gives a terse **role summary** for quick scanning; each c
 | Frostweaver | Ice | 70 | Freeze control. |
 | Shadowblade | Shadow | 70 | Lifesteal, curses, sustain. |
 | Dawnmage | Light | 70 | Shields, heals, cleanses. |
-| Verdantmaker | Grass | 70 | Low base damage, exponential DoT. |
+| Verdantmaker | Plant | 70 | Low base damage, exponential DoT. |
 
 > Classes have no Speed stat in the game today. Proposed per-type speed values live in the Type Matchups Bible → Speed & Turn Order, marked as unimplemented.
 
@@ -77,7 +77,7 @@ Layered survival. Block (shields) absorbs hits. Heals restore HP after damage ge
 ---
 
 ### Verdantmaker
-**Type:** Grass | **HP:** 70 | *"Low base damage with exponential DoT. Plant the seeds and watch them suffer."*
+**Type:** Plant | **HP:** 70 | *"Low base damage with exponential DoT. Plant the seeds and watch them suffer."*
 
 Root stacks accumulate on the enemy and do nothing — until the enemy takes any damage, which detonates all stacks as 2× burst bonus damage. Verdant Surge doubles Root applied in a turn. The DoT is not tick-based; it's a trap that explodes on contact. The "exponential" part comes from stacking many Root stacks before triggering the detonation. High ceiling, slow ramp.
 

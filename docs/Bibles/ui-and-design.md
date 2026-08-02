@@ -13,7 +13,7 @@ Each wizard type has a single authoritative color used for: spell card borders, 
 | Ice | Light blue | `#88ddff` | Pale, cool |
 | Shadow | Berry | `#8c2a5e` | Deep red-plum; reads on dark, off the warm cluster |
 | Light | Bright yellow | `#ffe234` | Vivid; distinct from Arc's orange |
-| Grass | Green | `#22c55e` | — |
+| Plant | Green | `#22c55e` | — |
 | Neutral | Tan-gray | `#c7bba4` | Universal cards |
 
 ---
@@ -30,7 +30,7 @@ Each status effect has its own color, distinct from but related to its source ty
 | Shock | Lightning yellow | `#ffdd00` | Arc |
 | Freeze | Ice blue | `#66ddff` | Ice |
 | Weak | Dull red | `#cc6666` | Neutral/shared |
-| Root | Grass green | `#44cc66` | Grass |
+| Root | Plant green | `#44cc66` | Plant |
 | Blind | Pale white | `#f2f2f2` | Light |
 | Lifesteal | Shadow purple | `#cc66ff` | Shadow |
 | Strength | Empowerment gold | `#d4af37` | Neutral/shared (enemy) |
@@ -53,7 +53,7 @@ Each elemental type uses its transparent PNG sigil as its primary visual identif
 | Ice | `Assets/Resources/Sprites/TypeIcons/icon_ice.png` | ❄️ |
 | Shadow | `Assets/Resources/Sprites/TypeIcons/icon_shadow.png` | 🌑 |
 | Light | `Assets/Resources/Sprites/TypeIcons/icon_light.png` | ☀️ |
-| Grass | `Assets/Resources/Sprites/TypeIcons/icon_grass.png` | 🌿 |
+| Plant | `Assets/Resources/Sprites/TypeIcons/icon_plant.png` | 🌿 |
 | Neutral | none | ⬡ |
 
 **Map Node Icons** (emoji fallbacks; in-game nodes use PNG sprites from `Sprites/NodeIcons/`):

@@ -29,7 +29,7 @@ Labels shown in-game:
 The original six-type ring remains intact:
 
 ```
-Fire → Grass → Ice → Rock → Arc → Water → Fire
+Fire → Plant → Ice → Rock → Arc → Water → Fire
 ```
 
 The revised 8-type system gives every non-neutral type exactly:
@@ -41,17 +41,17 @@ Neutral pairs:
 - Fire ↔ Light
 - Water ↔ Ice
 - Rock ↔ Shadow
-- Grass ↔ Arc
+- Plant ↔ Arc
 
 Clean strength matrix:
-- Fire > Grass, Ice, Shadow
+- Fire > Plant, Ice, Shadow
 - Water > Fire, Rock, Light
 - Rock > Fire, Arc, Light
 - Arc > Water, Fire, Shadow
 - Ice > Rock, Arc, Shadow
-- Grass > Water, Ice, Rock
-- Shadow > Water, Grass, Light
-- Light > Grass, Arc, Ice
+- Plant > Water, Ice, Rock
+- Shadow > Water, Plant, Light
+- Light > Plant, Arc, Ice
 
 ---
 
@@ -59,7 +59,7 @@ Clean strength matrix:
 
 Rows = attacker type. Columns = defender type.
 
-| Attacker ↓ / Defender → | 🔥 Fire | 🌊 Water | 🪨 Rock | ⚡ Arc | ❄️ Ice | 🌑 Shadow | ☀️ Light | 🌿 Grass |
+| Attacker ↓ / Defender → | 🔥 Fire | 🌊 Water | 🪨 Rock | ⚡ Arc | ❄️ Ice | 🌑 Shadow | ☀️ Light | 🌿 Plant |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 🔥 **Fire** | 1× | 0.5× | 0.5× | 0.5× | **2×** | **2×** | 1× | **2×** |
 | 🌊 **Water** | **2×** | 1× | **2×** | 0.5× | 1× | 0.5× | **2×** | 0.5× |
@@ -68,56 +68,56 @@ Rows = attacker type. Columns = defender type.
 | ❄️ **Ice** | 0.5× | 1× | **2×** | **2×** | 1× | **2×** | 0.5× | 0.5× |
 | 🌑 **Shadow** | 0.5× | **2×** | 1× | 0.5× | 0.5× | 1× | **2×** | **2×** |
 | ☀️ **Light** | 1× | 0.5× | 0.5× | **2×** | **2×** | 0.5× | 1× | **2×** |
-| 🌿 **Grass** | 0.5× | **2×** | **2×** | 1× | **2×** | 0.5× | 0.5× | 1× |
+| 🌿 **Plant** | 0.5× | **2×** | **2×** | 1× | **2×** | 0.5× | 0.5× | 1× |
 
 ---
 
 ## Per-Type Breakdown
 
 ### 🔥 Fire
-- **Super effective vs:** 🌿 Grass, ❄️ Ice, 🌑 Shadow
+- **Super effective vs:** 🌿 Plant, ❄️ Ice, 🌑 Shadow
 - **Not very effective vs:** 🌊 Water, ⚡ Arc, 🪨 Rock
 - **Neutral vs:** ☀️ Light
-- **Design note:** Fire burns Grass, melts Ice, and illuminates Shadow. Water extinguishes it, Arc destabilizes it, and Rock contains it. Fire and Light coexist as adjacent radiant forces.
+- **Design note:** Fire burns Plant, melts Ice, and illuminates Shadow. Water extinguishes it, Arc destabilizes it, and Rock contains it. Fire and Light coexist as adjacent radiant forces.
 
 ### 🌊 Water
 - **Super effective vs:** 🔥 Fire, 🪨 Rock, ☀️ Light
-- **Not very effective vs:** ⚡ Arc, 🌿 Grass, 🌑 Shadow
+- **Not very effective vs:** ⚡ Arc, 🌿 Plant, 🌑 Shadow
 - **Neutral vs:** ❄️ Ice
-- **Design note:** Water extinguishes Fire, erodes Rock, and diffuses Light. Arc conducts through it, Grass absorbs it, and Shadow corrupts stagnant water. Water and Ice are different states of the same element.
+- **Design note:** Water extinguishes Fire, erodes Rock, and diffuses Light. Arc conducts through it, Plant absorbs it, and Shadow corrupts stagnant water. Water and Ice are different states of the same element.
 
 ### 🪨 Rock
 - **Super effective vs:** 🔥 Fire, ⚡ Arc, ☀️ Light
-- **Not very effective vs:** 🌊 Water, 🌿 Grass, ❄️ Ice
+- **Not very effective vs:** 🌊 Water, 🌿 Plant, ❄️ Ice
 - **Neutral vs:** 🌑 Shadow
 - **Design note:** Stone suppresses Fire, grounds Arc, and blocks Light. Water erodes it, roots split it, and Ice fractures it. Shadow may cover or corrupt stone, but does not inherently overcome it.
 
 ### ⚡ Arc
 - **Super effective vs:** 🌊 Water, 🔥 Fire, 🌑 Shadow
 - **Not very effective vs:** 🪨 Rock, ☀️ Light, ❄️ Ice
-- **Neutral vs:** 🌿 Grass
-- **Design note:** Arc conducts through Water, destabilizes Fire, and disrupts Shadow. Rock grounds it, Light orders it, and Ice insulates against it. Grass and Arc stay neutral to avoid hard-countering biological systems with raw energy.
+- **Neutral vs:** 🌿 Plant
+- **Design note:** Arc conducts through Water, destabilizes Fire, and disrupts Shadow. Rock grounds it, Light orders it, and Ice insulates against it. Plant and Arc stay neutral to avoid hard-countering biological systems with raw energy.
 
 ### ❄️ Ice
 - **Super effective vs:** 🪨 Rock, ⚡ Arc, 🌑 Shadow
-- **Not very effective vs:** 🔥 Fire, 🌿 Grass, ☀️ Light
+- **Not very effective vs:** 🔥 Fire, 🌿 Plant, ☀️ Light
 - **Neutral vs:** 🌊 Water
-- **Design note:** Ice fractures Rock, disrupts Arc, and preserves against Shadow's entropy. Fire melts it, Grass overcomes cold with life, and Light melts and purifies it. Ice and Water remain neutral state-pairs.
+- **Design note:** Ice fractures Rock, disrupts Arc, and preserves against Shadow's entropy. Fire melts it, Plant overcomes cold with life, and Light melts and purifies it. Ice and Water remain neutral state-pairs.
 
-### 🌿 Grass
+### 🌿 Plant
 - **Super effective vs:** 🌊 Water, ❄️ Ice, 🪨 Rock
 - **Not very effective vs:** 🔥 Fire, ☀️ Light, 🌑 Shadow
 - **Neutral vs:** ⚡ Arc
-- **Design note:** Grass absorbs Water, overcomes cold, and splits Rock with roots. Fire burns it, cosmic Light can overexpose it, and Shadow decays it. Grass and Arc stay neutral to keep life and energy from dominating one another.
+- **Design note:** Plant absorbs Water, overcomes cold, and splits Rock with roots. Fire burns it, cosmic Light can overexpose it, and Shadow decays it. Plant and Arc stay neutral to keep life and energy from dominating one another.
 
 ### 🌑 Shadow
-- **Super effective vs:** 🌊 Water, 🌿 Grass, ☀️ Light
+- **Super effective vs:** 🌊 Water, 🌿 Plant, ☀️ Light
 - **Not very effective vs:** 🔥 Fire, ⚡ Arc, ❄️ Ice
 - **Neutral vs:** 🪨 Rock
 - **Design note:** Shadow corrupts Water, decays living systems, and consumes Light. Fire illuminates it, Arc exposes it, and Ice halts entropy. Rock is stable enough that neither side inherently dominates.
 
 ### ☀️ Light
-- **Super effective vs:** 🌿 Grass, ⚡ Arc, ❄️ Ice
+- **Super effective vs:** 🌿 Plant, ⚡ Arc, ❄️ Ice
 - **Not very effective vs:** 🌊 Water, 🪨 Rock, 🌑 Shadow
 - **Neutral vs:** 🔥 Fire
 - **Design note:** Light overexposes life, orders volatile Arc, and melts Ice. Water refracts it, Rock blocks it, and Shadow consumes it. Light and Fire remain neutral adjacent radiant forces.
@@ -140,7 +140,7 @@ Speed is a mutable resource that decides who acts first each turn. It is an **of
 | Light | 5 |
 | Water | 5 |
 | Ice | 4 |
-| Grass | 4 |
+| Plant | 4 |
 | Rock | 4 |
 
 **Rules**
@@ -161,41 +161,41 @@ Each enemy's type determines what spell types hit it for 2× or 0.5×.
 
 | Enemy | Type | Weak to | Resists |
 |---|---|---|---|
-| 👺 Fire Imp | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
-| 🌋 Lava Golem | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
-| 🧜 Sea Sprite | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Grass | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| 🟤 Mud Elemental | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Grass | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 👺 Fire Imp | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🌋 Lava Golem | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🧜 Sea Sprite | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| 🟤 Mud Elemental | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
 | 🔵 Storm Wisp | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 🐺 Frost Wolf | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 👻 Shade Wraith | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
-| 🛡 Holy Sentinel | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
-| 🌱 Vine Creeper | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| 🐺 Frost Wolf | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 👻 Shade Wraith | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| 🛡 Holy Sentinel | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
+| 🌱 Vine Creeper | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
 
 ### Elite Enemies
 
 | Enemy | Type | Weak to | Resists |
 |---|---|---|---|
-| 🌞 Magma Lord | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
-| 🧙 Tide Witch | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Grass | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| 🗿 Stone Guardian | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Grass | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 🌞 Magma Lord | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🧙 Tide Witch | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| 🗿 Stone Guardian | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
 | 🧝 Thunder Mage | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 💀 Frost Lich | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 🦇 Shadow Stalker | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
-| 🌳 Thornwood | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
-| ⚔️ Radiant Knight | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
+| 💀 Frost Lich | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 🦇 Shadow Stalker | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| 🌳 Thornwood | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| ⚔️ Radiant Knight | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
 
 ### Bosses
 
 | Boss | Type | Weak to | Resists |
 |---|---|---|---|
-| 👁 The Drifter | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Grass |
-| 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Grass | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| ⛰️ Mountain Titan | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Grass | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 👁 The Drifter | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| ⛰️ Mountain Titan | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
 | 🌩️ Storm Sovereign | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 🧊 Glacial Mass | ❄️ Ice | 🔥 Fire, 🌿 Grass, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 🌑 Shadow Sovereign | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Grass, ☀️ Light |
-| ✨ Celestial Arbiter | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Grass |
-| 🌲 World Root | 🌿 Grass | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| 🧊 Glacial Mass | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 🌑 Shadow Sovereign | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| ✨ Celestial Arbiter | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
+| 🌲 World Root | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
 
 ---
 
@@ -230,7 +230,7 @@ Neutral spells (Focus, Guard, Amplify, Mana Petal) deal no elemental damage and 
 
 **Reciprocity is mandatory:** If one type deals 2× to another, the reverse direction must be 0.5×. Neutral pairs are always mutual.
 
-**The main ring remains readable:** Fire > Grass > Ice > Rock > Arc > Water > Fire is still the backbone players can learn first, with the added relationships creating richer cross-domain matchups.
+**The main ring remains readable:** Fire > Plant > Ice > Rock > Arc > Water > Fire is still the backbone players can learn first, with the added relationships creating richer cross-domain matchups.
 
 **Status effects ignore damage type:** Status stacks never get the 2× or 0.5× treatment from the type-effectiveness multiplier. Freeze is always face-value Freeze. This prevents stacking combinatorial complexity and keeps status effects as an independent axis.
 

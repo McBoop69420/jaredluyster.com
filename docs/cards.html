@@ -33,7 +33,7 @@
 
 
     <script>
-        const CYCLE_ORDER = ['fire','grass','ice','rock','arc','water','shadow','light','neutral'];
+        const CYCLE_ORDER = ['fire','plant','ice','rock','arc','water','shadow','light','neutral'];
         const byKey = Object.fromEntries(CARD_REFERENCE.map(element => [element.key, element]));
         const elements = CYCLE_ORDER.map(key => byKey[key]).filter(Boolean);
         const allCards = elements.flatMap(element => element.cards);

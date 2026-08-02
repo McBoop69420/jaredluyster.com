@@ -170,7 +170,7 @@ Each tier is a separate ScriptableObject with its own explicit values (no formul
 
 ---
 
-## Grass 🌿
+## Plant 🌿
 
 **Class status:** Root — detonates on any damage: deals 2× stacks as bonus damage, then all Root is consumed.
 

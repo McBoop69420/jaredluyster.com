@@ -328,7 +328,7 @@ const CLASSES = [
   { id: "frostweaver",  name: "Frostweaver",  element: "Ice",    role: "Control",          tagline: "Freeze, control.",                  color: "#66ddff" },
   { id: "shadowblade",  name: "Shadowblade",  element: "Shadow", role: "Debuff",           tagline: "Lifesteal, curses, Weak.",          color: "#0d0d0d" },
   { id: "dawnmage",     name: "Dawnmage",     element: "Light",  role: "Support",          tagline: "Shields, heals, cleanses.",         color: "#ffdd00" },
-  { id: "verdantmaker", name: "Verdantmaker", element: "Grass",  role: "Scaling DoT",      tagline: "Low base damage, exponential DoT.", color: "#44cc66" },
+  { id: "verdantmaker", name: "Verdantmaker", element: "Plant",  role: "Scaling DoT",      tagline: "Low base damage, exponential DoT.", color: "#44cc66" },
 ];
 
 const ICONS = {

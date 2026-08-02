@@ -41,7 +41,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Key mechanic:** Char ticks at the end of every enemy turn (before the enemy acts) and decays by 1 after dealing damage. Stack it high early, then let it burn.
 
-**Type matchups:** Strong vs Grass, Ice, Shadow (2×). Weak vs Water, Arc, Rock (0.5×).
+**Type matchups:** Strong vs Plant, Ice, Shadow (2×). Weak vs Water, Arc, Rock (0.5×).
 
 **Early game:** Low immediate damage — you're setting up Char stacks. Play Ignite before attacking.
 
@@ -67,7 +67,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Key mechanic:** Drown never decays. Stack it early and it pays off every turn for the rest of the fight. Riptide's +1 mana next turn keeps the tempo up.
 
-**Type matchups:** Strong vs Fire, Rock, Light (2×). Weak vs Arc, Grass, Shadow (0.5×).
+**Type matchups:** Strong vs Fire, Rock, Light (2×). Weak vs Arc, Plant, Shadow (0.5×).
 
 **Early game:** Flexible — can heal, deal damage, or generate tempo depending on the situation.
 
@@ -95,7 +95,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Key mechanic:** On Guard (20 Block) is one of the most efficient block cards in the game. This deck can absorb enormous amounts of damage.
 
-**Type matchups:** Strong vs Fire, Arc, Light (2×). Weak vs Water, Grass, Ice (0.5×).
+**Type matchups:** Strong vs Fire, Arc, Light (2×). Weak vs Water, Plant, Ice (0.5×).
 
 **Early game:** Stack block constantly. Take minimal damage. Use Erode to disrupt attack patterns.
 
@@ -149,7 +149,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Key mechanic:** Freeze doesn't decay on its own — stacks accumulate across turns. When the enemy reaches **5** Freeze stacks, their next action is skipped and all stacks are consumed.
 
-**Type matchups:** Strong vs Rock, Arc, Shadow (2×). Weak vs Fire, Grass, Light (0.5×).
+**Type matchups:** Strong vs Rock, Arc, Shadow (2×). Weak vs Fire, Plant, Light (0.5×).
 
 **Early game:** Alternate block and Freeze application. Blizzard Strike lands 4 Freeze in one card (2 hits × 2 Freeze).
 
@@ -179,7 +179,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 > **Note:** Weak is an **enemy-only** debuff in the current build. Despite the class fantasy of "curses," Curse Touch and Curse apply **Lifesteal**, not Weak — the Shadowblade starter kit does not apply Weak at all.
 
-**Type matchups:** Strong vs Water, Grass, Light (2×). Weak vs Fire, Arc, Ice (0.5×).
+**Type matchups:** Strong vs Water, Plant, Light (2×). Weak vs Fire, Arc, Ice (0.5×).
 
 **Early game:** Lead with Curse Touch and Shadow Strike to bank Lifesteal, then coast on the healing.
 
@@ -207,7 +207,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 **Key mechanic:** Blind gives each enemy attack a **flat 50%** miss chance (it does not scale with stack count); each attack consumes 1 Blind stack whether it hits or misses. So 3 Blind covers the next 3 attacks with a 50% miss roll each.
 
-**Type matchups:** Strong vs Grass, Arc, Ice (2×). Weak vs Water, Rock, Shadow (0.5×).
+**Type matchups:** Strong vs Plant, Arc, Ice (2×). Weak vs Water, Rock, Shadow (0.5×).
 
 **Early game:** Block and heal to stay healthy. Apply Blind to disrupt the enemy's attack intent.
 
@@ -217,7 +217,7 @@ These 4 cards are shuffled into every class deck. They are drawn into hand, cost
 
 ## Verdantmaker 🌿
 
-**Type:** Grass | **HP:** 70
+**Type:** Plant | **HP:** 70
 **In-game description:** *"Low base damage with exponential DoT. Plant the seeds and watch them suffer."*
 
 **Identity:** Root trap with exponential burst. Stacks Root on the enemy — which detonates as 2× stacks in bonus damage the next time they take any damage. Verdant Surge doubles Root applied this turn.
