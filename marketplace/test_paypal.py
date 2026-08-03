@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 import unittest
@@ -14,25 +13,20 @@ class PayPalCheckoutTests(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         temp_path = Path(self.temp_dir.name)
         self.original_store = server.store
-        self.original_inventory_path = server.INVENTORY_PATH
         server.store = Store(temp_path / "marketplace.db")
-        server.INVENTORY_PATH = temp_path / "inventory.json"
-        server.INVENTORY_PATH.write_text(
-            json.dumps([
-                {
-                    "id": 1,
-                    "name": "Test Card",
-                    "set_code": "tst",
-                    "collector_number": "1",
-                    "foil": False,
-                    "quantity": 2,
-                    "sell_price": 1.25,
-                    "market_price": 1.25,
-                    "image_url": None,
-                }
-            ]),
-            encoding="utf-8",
-        )
+        server.store.replace_inventory([
+            {
+                "id": 1,
+                "name": "Test Card",
+                "set_code": "tst",
+                "collector_number": "1",
+                "foil": False,
+                "quantity": 2,
+                "sell_price": 1.25,
+                "market_price": 1.25,
+                "image_url": None,
+            }
+        ])
         server.app.config.update(TESTING=True, SECRET_KEY="test-secret")
         self.client = server.app.test_client()
         self.env = patch.dict(
@@ -50,7 +44,6 @@ class PayPalCheckoutTests(unittest.TestCase):
         self.env.stop()
         server.store.close()
         server.store = self.original_store
-        server.INVENTORY_PATH = self.original_inventory_path
         self.temp_dir.cleanup()
 
     def _set_cart(self, quantity=1):
@@ -121,7 +114,7 @@ class PayPalCheckoutTests(unittest.TestCase):
         self.assertEqual(order["payment_status"], "paid")
         self.assertEqual(order["paypal_order_id"], "PAYPAL123")
         self.assertEqual(order["paypal_capture_id"], "CAPTURE456")
-        inventory = json.loads(server.INVENTORY_PATH.read_text(encoding="utf-8"))
+        inventory = server.store.list_inventory()
         self.assertEqual(inventory[0]["quantity"], 1)
         self.assertEqual(paypal_request.call_count, 1)
 
@@ -138,9 +131,9 @@ class PayPalCheckoutTests(unittest.TestCase):
 
     def test_capture_stops_before_payment_when_price_changes(self):
         self._create_paypal_order()
-        inventory = json.loads(server.INVENTORY_PATH.read_text(encoding="utf-8"))
+        inventory = server.store.list_inventory()
         inventory[0]["sell_price"] = 2.00
-        server.INVENTORY_PATH.write_text(json.dumps(inventory), encoding="utf-8")
+        server.store.replace_inventory(inventory)
 
         with patch.object(
             server,
@@ -256,7 +249,7 @@ class PayPalCheckoutTests(unittest.TestCase):
             paypal_capture_id="CAPTURE456",
             paid_at="2026-07-26T18:00:00Z",
         )
-        server.INVENTORY_PATH.write_text("[]", encoding="utf-8")
+        server.store.replace_inventory([])
         with self.client.session_transaction() as checkout_session:
             checkout_session["account_id"] = admin["id"]
 
@@ -280,7 +273,7 @@ class PayPalCheckoutTests(unittest.TestCase):
         self.assertEqual(order["paypal_refund_id"], "REFUND789")
         self.assertIn("/v2/payments/captures/CAPTURE456/refund",
                       paypal_request.call_args.args)
-        inventory = json.loads(server.INVENTORY_PATH.read_text(encoding="utf-8"))
+        inventory = server.store.list_inventory()
         self.assertEqual(inventory[0]["id"], 1)
         self.assertEqual(inventory[0]["quantity"], 1)
 

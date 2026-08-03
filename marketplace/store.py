@@ -137,6 +137,21 @@ class Store:
                 used INTEGER NOT NULL DEFAULT 0
             );
 
+            CREATE TABLE IF NOT EXISTS inventory (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                set_code TEXT NOT NULL DEFAULT '',
+                collector_number TEXT NOT NULL DEFAULT '',
+                foil INTEGER NOT NULL DEFAULT 0,
+                condition TEXT NOT NULL DEFAULT 'Near Mint',
+                quantity INTEGER NOT NULL DEFAULT 0,
+                category TEXT NOT NULL DEFAULT 'MTG Card',
+                sell_price REAL,
+                market_price REAL,
+                image_url TEXT,
+                notes TEXT
+            );
+
             CREATE TABLE IF NOT EXISTS paypal_checkouts (
                 paypal_order_id TEXT PRIMARY KEY,
                 account_id INTEGER NOT NULL REFERENCES accounts(id),
@@ -410,6 +425,34 @@ class Store:
         )
         self._conn.commit()
         return True
+
+    # -- inventory --------------------------------------------------------------
+
+    def list_inventory(self):
+        rows = self._conn.execute("SELECT * FROM inventory ORDER BY id").fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
+    def replace_inventory(self, items):
+        """Full replace, mirroring the old write-the-whole-file semantics callers rely on."""
+        self._conn.execute("DELETE FROM inventory")
+        for item in items:
+            self._conn.execute(
+                """INSERT INTO inventory (
+                       id, name, set_code, collector_number, foil, condition,
+                       quantity, category, sell_price, market_price, image_url, notes
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (item["id"], item["name"], item.get("set_code", ""),
+                 item.get("collector_number", ""), int(bool(item.get("foil", False))),
+                 item.get("condition") or "Near Mint", item.get("quantity", 0),
+                 item.get("category") or "MTG Card", item.get("sell_price"),
+                 item.get("market_price", 0), item.get("image_url"), item.get("notes")),
+            )
+        self._conn.commit()
 
     # -- settings -------------------------------------------------------------
 

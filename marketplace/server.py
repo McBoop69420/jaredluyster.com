@@ -1,6 +1,5 @@
 """Marketplace Flask server — accounts, cart, orders, admin packing dashboard."""
 
-import json
 import os
 import re
 import secrets
@@ -20,10 +19,10 @@ from flask import (Flask, request, session, redirect, url_for,
                    render_template, jsonify, send_from_directory)
 
 from store import Store
+from inventory_carry import carry_over
 
 ROOT = Path(__file__).resolve().parent
 SITE_ROOT = ROOT.parent
-INVENTORY_PATH = ROOT / "inventory.json"
 
 app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
 
@@ -237,13 +236,11 @@ _inventory_lock = threading.Lock()
 
 
 def _load_inventory():
-    if INVENTORY_PATH.exists():
-        return json.loads(INVENTORY_PATH.read_text(encoding="utf-8"))
-    return []
+    return store.list_inventory()
 
 
 def _save_inventory(items):
-    INVENTORY_PATH.write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8")
+    store.replace_inventory(items)
 
 
 def _inventory_by_id():
@@ -267,6 +264,19 @@ def admin_required(f):
         account = store.get_account(session["account_id"])
         if not account or not account["is_admin"]:
             return "Unauthorized", 403
+        return f(*args, **kwargs)
+    return wrapped
+
+
+def publish_key_required(f):
+    """Header-based auth for the local publish.py script -- it has no browser session."""
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        expected = os.environ.get("PUBLISH_API_KEY")
+        if not expected:
+            return jsonify(error="Publishing is not configured on this server."), 503
+        if not secrets.compare_digest(request.headers.get("X-Publish-Key", ""), expected):
+            return jsonify(error="Unauthorized"), 403
         return f(*args, **kwargs)
     return wrapped
 
@@ -469,7 +479,7 @@ def shop_page():
 
 @app.route("/marketplace/inventory.json")
 def inventory_json():
-    return send_from_directory(str(INVENTORY_PATH.parent), INVENTORY_PATH.name)
+    return jsonify(store.list_inventory())
 
 
 @app.route("/marketplace/lands.json")
@@ -1453,6 +1463,30 @@ def api_admin_quick_add_undo():
         _save_inventory(inventory)
 
     return jsonify(ok=True, removed=removed, inventory_count=len(inventory))
+
+
+@app.route("/marketplace/api/admin/inventory/bulk-publish", methods=["POST"])
+@publish_key_required
+def api_admin_inventory_bulk_publish():
+    """Replace the POS-tracked slice of inventory, carrying over hand-added listings.
+
+    Called by the local publish.py script after a POS scan -- see inventory_carry.py
+    for what "carry over" means.
+    """
+    data = request.get_json()
+    items = data.get("items", [])
+    pos_printings = data.get("pos_printings", [])
+    pos_ids = data.get("pos_ids", [])
+    replace = bool(data.get("replace", False))
+
+    with _inventory_lock:
+        existing = _load_inventory()
+        carried = [] if replace else carry_over(existing, pos_printings, pos_ids)
+        listings = sorted(items + carried,
+                          key=lambda item: (str(item.get("name") or "").lower(), str(item.get("set_code") or "")))
+        _save_inventory(listings)
+
+    return jsonify(ok=True, published=len(items), carried=len(carried), total=len(listings))
 
 
 @app.route("/marketplace/api/admin/cards/delete", methods=["POST"])

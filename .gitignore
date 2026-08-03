@@ -2,7 +2,6 @@
 .claude/
 Caddyfile
 marketplace/__pycache__/
-marketplace/inventory.json.bak
 marketplace/*.db
 marketplace/*.db-shm
 marketplace/*.db-wal

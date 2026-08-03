@@ -5,7 +5,6 @@ file focuses on the cash-checkout path, cart mutation edge cases, auth/session
 handling, admin authorization, and order status transitions.
 """
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,16 +14,14 @@ from store import Store
 
 
 class MarketplaceTestCase(unittest.TestCase):
-    """Common fixture: a fresh Store + inventory.json per test, like test_paypal.py."""
+    """Common fixture: a fresh Store (accounts, orders, inventory) per test."""
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
         temp_path = Path(self.temp_dir.name)
         self.original_store = server.store
-        self.original_inventory_path = server.INVENTORY_PATH
         server.store = Store(temp_path / "marketplace.db")
-        server.INVENTORY_PATH = temp_path / "inventory.json"
         self.set_inventory(self.default_inventory())
         server.app.config.update(TESTING=True, SECRET_KEY="test-secret")
         self.client = server.app.test_client()
@@ -33,7 +30,6 @@ class MarketplaceTestCase(unittest.TestCase):
     def _teardown(self):
         server.store.close()
         server.store = self.original_store
-        server.INVENTORY_PATH = self.original_inventory_path
 
     def default_inventory(self):
         return [
@@ -46,10 +42,10 @@ class MarketplaceTestCase(unittest.TestCase):
         ]
 
     def set_inventory(self, items):
-        server.INVENTORY_PATH.write_text(json.dumps(items), encoding="utf-8")
+        server.store.replace_inventory(items)
 
     def inventory(self):
-        return json.loads(server.INVENTORY_PATH.read_text(encoding="utf-8"))
+        return server.store.list_inventory()
 
     def set_cart(self, cart):
         with self.client.session_transaction() as s:

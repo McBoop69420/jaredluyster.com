@@ -1,15 +1,15 @@
-"""Tests for publishing POS inventory without wiping hand-added listings."""
+"""Tests for reading the POS database and posting it to the marketplace API."""
 
-import json
 import sqlite3
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from publish import MANUAL_ID_BASE, publish
+from publish import _read_pos_rows, publish
 
 SCHEMA = """
 CREATE TABLE collection_items (
@@ -30,21 +30,11 @@ CREATE TABLE collection_items (
 """
 
 
-def listing(**overrides):
-    item = {"id": 1, "name": "Opt", "set_code": "DOM", "collector_number": "60", "foil": False,
-            "condition": "Near Mint", "quantity": 1, "category": "MTG Card", "sell_price": None,
-            "market_price": 0.25, "image_url": None, "notes": None}
-    item.update(overrides)
-    return item
-
-
-class PublishTests(unittest.TestCase):
+class PosDbTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        root = Path(self.directory.name)
-        self.db = root / "collection.db"
-        self.out = root / "inventory.json"
+        self.db = Path(self.directory.name) / "collection.db"
 
         connection = sqlite3.connect(self.db)
         connection.executescript(SCHEMA)
@@ -61,92 +51,62 @@ class PublishTests(unittest.TestCase):
             " VALUES (?,?,?,?,?,'Near Mint',?,'MTG Card',NULL,?,?,NULL,NULL)",
             (item_id, name, set_code, number, foil, quantity, price, price))
 
-    def write_site(self, listings):
-        self.out.write_text(json.dumps(listings, indent=2), encoding="utf-8")
-
-    def published(self):
-        return json.loads(self.out.read_text(encoding="utf-8"))
-
-    def names(self):
-        return sorted(item["name"] for item in self.published())
-
     def test_publishes_stocked_pos_cards_and_skips_sold_out_ones(self):
-        publish(self.db, self.out)
-        self.assertEqual(self.names(), ["Opt", "Sol Ring"])
-
-    def test_hand_added_listing_survives_a_publish(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Sealed Booster Box", set_code="LTR",
-                                 collector_number="BOX", market_price=99.0)])
-        publish(self.db, self.out)
-        self.assertEqual(self.names(), ["Opt", "Sealed Booster Box", "Sol Ring"])
-        kept = next(item for item in self.published() if item["name"] == "Sealed Booster Box")
-        self.assertEqual(kept["id"], MANUAL_ID_BASE, "a non-clashing id should stay put")
-
-    def test_pos_card_that_sold_out_is_still_delisted(self):
-        self.write_site([listing(id=3, name="Ancestral Vision", set_code="TSP", collector_number="45")])
-        publish(self.db, self.out)
-        self.assertNotIn("Ancestral Vision", self.names())
-
-    def test_pos_quantity_wins_over_the_published_copy(self):
-        self.write_site([listing(id=1, name="Opt", set_code="DOM", collector_number="60", quantity=99)])
-        publish(self.db, self.out)
-        opt = next(item for item in self.published() if item["name"] == "Opt")
-        self.assertEqual(opt["quantity"], 3)
-
-    def test_matching_is_per_printing_not_per_name(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Opt", set_code="ELD", collector_number="59")])
-        publish(self.db, self.out)
-        self.assertEqual([item["set_code"] for item in self.published() if item["name"] == "Opt"],
-                         ["DOM", "ELD"])
-
-    def test_foil_and_nonfoil_are_different_listings(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Opt", set_code="DOM",
-                                 collector_number="60", foil=True)])
-        publish(self.db, self.out)
-        self.assertEqual(len([item for item in self.published() if item["name"] == "Opt"]), 2)
-
-    def test_a_clashing_id_is_renumbered_out_of_the_pos_range(self):
-        self.write_site([listing(id=2, name="Playmat", set_code="ACC", collector_number="PM1")])
-        publish(self.db, self.out)
-        playmat = next(item for item in self.published() if item["name"] == "Playmat")
-        self.assertGreaterEqual(playmat["id"], MANUAL_ID_BASE)
-        ids = [item["id"] for item in self.published()]
-        self.assertEqual(len(ids), len(set(ids)), "ids must stay unique")
-
-    def test_replace_restores_the_old_wipe_everything_behaviour(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Sealed Booster Box", set_code="LTR",
-                                 collector_number="BOX")])
-        publish(self.db, self.out, replace=True)
-        self.assertEqual(self.names(), ["Opt", "Sol Ring"])
+        items, _, _ = _read_pos_rows(self.db)
+        self.assertEqual(sorted(i["name"] for i in items), ["Opt", "Sol Ring"])
 
     def test_min_price_filter_still_applies(self):
-        publish(self.db, self.out, min_price=1.0)
-        self.assertEqual(self.names(), ["Sol Ring"])
+        items, _, _ = _read_pos_rows(self.db, min_price=1.0)
+        self.assertEqual([i["name"] for i in items], ["Sol Ring"])
 
-    def test_zero_quantity_listings_are_not_carried_over(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Playmat", set_code="ACC",
-                                 collector_number="PM1", quantity=0)])
-        publish(self.db, self.out)
-        self.assertNotIn("Playmat", self.names())
-
-    def test_previous_file_is_backed_up_and_written_atomically(self):
-        self.write_site([listing(id=MANUAL_ID_BASE, name="Playmat", set_code="ACC", collector_number="PM1")])
-        publish(self.db, self.out)
-        backup = self.out.with_name(self.out.name + ".bak")
-        self.assertTrue(backup.exists())
-        self.assertEqual(json.loads(backup.read_text(encoding="utf-8"))[0]["name"], "Playmat")
-        self.assertFalse(self.out.with_name(self.out.name + ".tmp").exists())
-
-    def test_unreadable_site_file_does_not_stop_a_publish(self):
-        self.out.write_text("{ this is not json", encoding="utf-8")
-        publish(self.db, self.out)
-        self.assertEqual(self.names(), ["Opt", "Sol Ring"])
+    def test_pos_printings_and_ids_cover_every_row_including_sold_out(self):
+        _, pos_printings, pos_ids = _read_pos_rows(self.db)
+        self.assertEqual(len(pos_printings), 3)
+        self.assertEqual(sorted(pos_ids), [1, 2, 3])
+        self.assertIn(("tsp", "45", False), pos_printings)
 
     def test_output_shape_matches_what_the_storefront_expects(self):
-        publish(self.db, self.out)
-        self.assertEqual(set(self.published()[0]), {
+        items, _, _ = _read_pos_rows(self.db)
+        self.assertEqual(set(items[0]), {
             "id", "name", "set_code", "collector_number", "foil", "condition", "quantity",
             "category", "sell_price", "market_price", "image_url", "notes"})
+
+
+class PublishRequestTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.db = Path(self.directory.name) / "collection.db"
+        connection = sqlite3.connect(self.db)
+        connection.executescript(SCHEMA)
+        connection.execute(
+            "INSERT INTO collection_items (id, name, set_code, collector_number, quantity,"
+            " sell_price, last_price_usd, price_usd_at_scan) VALUES (1, 'Opt', 'DOM', '60', 3, NULL, 0.25, 0.25)"
+        )
+        connection.commit()
+        connection.close()
+
+    @patch("publish.requests.post")
+    def test_posts_items_and_key_to_the_bulk_publish_endpoint(self, mock_post):
+        mock_post.return_value.json.return_value = {"ok": True, "published": 1, "carried": 0, "total": 1}
+        mock_post.return_value.raise_for_status.return_value = None
+
+        publish(self.db, base_url="https://example.test", api_key="secret123")
+
+        mock_post.assert_called_once()
+        url, kwargs = mock_post.call_args[0][0], mock_post.call_args[1]
+        self.assertEqual(url, "https://example.test/marketplace/api/admin/inventory/bulk-publish")
+        self.assertEqual(kwargs["headers"]["X-Publish-Key"], "secret123")
+        self.assertEqual([i["name"] for i in kwargs["json"]["items"]], ["Opt"])
+        self.assertEqual(kwargs["json"]["replace"], False)
+
+    @patch("publish.requests.post")
+    def test_raises_when_the_server_reports_failure(self, mock_post):
+        mock_post.return_value.json.return_value = {"ok": False, "error": "Unauthorized"}
+        mock_post.return_value.raise_for_status.return_value = None
+
+        with self.assertRaises(RuntimeError):
+            publish(self.db, base_url="https://example.test", api_key="wrong")
 
 
 if __name__ == "__main__":
