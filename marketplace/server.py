@@ -1,6 +1,7 @@
 """Marketplace Flask server — accounts, cart, orders, admin packing dashboard."""
 
 import os
+import random
 import re
 import secrets
 import smtplib
@@ -1288,6 +1289,29 @@ def api_admin_cards_autocomplete():
         if len(names) >= 20:
             break
     return jsonify(names=names)
+
+
+@app.route("/marketplace/api/admin/inventory/export-batch")
+@admin_required
+def api_admin_inventory_export_batch():
+    try:
+        min_price = float(request.args.get("min", 0.5))
+        max_price = float(request.args.get("max", 1.0))
+        count = int(request.args.get("count", 10))
+    except ValueError:
+        return jsonify(error="min, max, and count must be numbers."), 400
+
+    candidates = store.inventory_in_price_range(min_price, max_price)
+
+    # Cards already undercutting their own market value are the ones most worth moving
+    # to TCGplayer instead, where they'd fetch closer to market -- fill from those first.
+    underpriced = [c for c in candidates if c.get("sell_price") is not None and c["sell_price"] < c["market_price"]]
+    rest = [c for c in candidates if c not in underpriced]
+    random.shuffle(underpriced)
+    random.shuffle(rest)
+    picked = (underpriced + rest)[:count]
+
+    return jsonify(results=picked, pool_size=len(candidates), underpriced_pool_size=len(underpriced))
 
 
 @app.route("/marketplace/api/admin/cards/search")

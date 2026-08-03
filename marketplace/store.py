@@ -450,6 +450,18 @@ class Store:
             items.append(item)
         return items
 
+    def inventory_in_price_range(self, min_price, max_price):
+        rows = self._conn.execute(
+            "SELECT * FROM inventory WHERE quantity > 0 AND market_price BETWEEN ? AND ? ORDER BY id",
+            (min_price, max_price),
+        ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
     def replace_inventory(self, items):
         """Full replace, mirroring the old write-the-whole-file semantics callers rely on."""
         self._conn.execute("DELETE FROM inventory")

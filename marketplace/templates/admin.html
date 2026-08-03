@@ -232,6 +232,38 @@
             </div>
         </details>
 
+        <details class="card" style="margin-bottom:24px; padding:0;" id="export-tcg-section">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Export to TCGplayer
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div style="display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap;">
+                    <button class="btn btn-accent btn-sm" onclick="tcgPick()">Pick 10 Cards ($0.50&ndash;$1 market price)</button>
+                    <span id="tcg-status" style="font-size:0.78rem; color:var(--muted);"></span>
+                </div>
+
+                <div id="tcg-results-wrap" style="display:none; margin-top:16px;">
+                    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
+                        Uncheck any you don't want to move, then remove the rest from this site once you've listed them on TCGplayer.
+                    </div>
+                    <div id="tcg-results" style="display:flex; flex-direction:column; gap:2px;"></div>
+
+                    <div style="margin-top:16px;">
+                        <label style="font-size:0.78rem; color:var(--muted);">
+                            TCGplayer Mass Entry text (paste into their bulk-add box). Name-only match &mdash;
+                            when TCGplayer asks which printing, use the set/collector # shown above to pick the right one.
+                        </label>
+                        <textarea id="tcg-export-text" rows="10" readonly style="width:100%; margin-top:4px; font-family:Consolas,monospace; font-size:0.85rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top:8px;" onclick="tcgCopy()">Copy to Clipboard</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                        <button class="btn btn-sm" id="tcg-remove-btn" style="background:var(--red); color:var(--bg); font-weight:600;" onclick="tcgRemoveChecked()">Remove Checked from Site</button>
+                    </div>
+                </div>
+            </div>
+        </details>
+
         <details class="card" style="margin-bottom:24px; padding:0;">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Email Settings
@@ -1027,6 +1059,117 @@ function rcRemove(item, qtyInput, btn, row, info) {
         btn.disabled = false;
         btn.textContent = 'Remove';
         alert('Could not reach the server to remove this card.');
+    });
+}
+
+var tcgPicked = [];
+
+function tcgPick() {
+    var status = document.getElementById('tcg-status');
+    status.textContent = 'Picking...';
+    status.style.color = 'var(--muted)';
+
+    fetch('/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.error) {
+                status.textContent = d.error;
+                status.style.color = 'var(--red)';
+                return;
+            }
+            tcgPicked = d.results || [];
+            document.getElementById('tcg-results-wrap').style.display = tcgPicked.length ? 'block' : 'none';
+            status.textContent = tcgPicked.length
+                ? tcgPicked.length + ' picked from ' + d.pool_size + ' matching cards (' + d.underpriced_pool_size + ' priced below market)'
+                : 'No cards found in that price range';
+            status.style.color = tcgPicked.length ? 'var(--green)' : 'var(--red)';
+            tcgRenderResults();
+        });
+}
+
+function tcgRenderResults() {
+    var box = document.getElementById('tcg-results');
+    box.innerHTML = '';
+    tcgPicked.forEach(function(item, i) {
+        var foilTag = item.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:10px; font-size:0.85rem; padding:6px 0; border-bottom:1px solid var(--border);';
+        row.innerHTML =
+            '<input type="checkbox" checked data-idx="' + i + '" style="width:16px;height:16px;accent-color:var(--accent);">' +
+            '<span style="flex:1;">' + item.name + foilTag +
+                ' <span style="color:var(--muted)">' + item.set_code.toUpperCase() + ' #' + item.collector_number +
+                ' &middot; qty ' + item.quantity + '</span>' +
+            '</span>' +
+            '<span style="color:var(--accent); white-space:nowrap;">$' + (item.market_price || 0).toFixed(2) + '</span>';
+        row.querySelector('input').addEventListener('change', tcgUpdateExportText);
+        box.appendChild(row);
+    });
+    tcgUpdateExportText();
+}
+
+function tcgCheckedItems() {
+    var checkboxes = document.querySelectorAll('#tcg-results input[type="checkbox"]');
+    var checked = [];
+    checkboxes.forEach(function(cb) {
+        if (cb.checked) checked.push(tcgPicked[parseInt(cb.dataset.idx)]);
+    });
+    return checked;
+}
+
+function tcgUpdateExportText() {
+    var lines = tcgCheckedItems().map(function(item) { return item.quantity + ' ' + item.name; });
+    document.getElementById('tcg-export-text').value = lines.join('\n');
+}
+
+function tcgCopy() {
+    var textarea = document.getElementById('tcg-export-text');
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).catch(function() {
+        document.execCommand('copy');
+    });
+}
+
+function tcgRemoveChecked() {
+    var checked = tcgCheckedItems();
+    if (!checked.length) return;
+    if (!confirm('Remove ' + checked.length + ' listing(s) from this site? You should have them listed on TCGplayer first.')) return;
+
+    var btn = document.getElementById('tcg-remove-btn');
+    btn.disabled = true;
+    btn.textContent = 'Removing...';
+
+    var remaining = checked.length;
+    var failures = [];
+    checked.forEach(function(item) {
+        fetch('/marketplace/api/admin/quick-add/undo', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                set_code: item.set_code,
+                collector_number: item.collector_number,
+                foil: item.foil,
+                qty: item.quantity
+            })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.ok) failures.push(item.name);
+        }).catch(function() {
+            failures.push(item.name);
+        }).finally(function() {
+            remaining -= 1;
+            if (remaining === 0) {
+                btn.disabled = false;
+                btn.textContent = 'Remove Checked from Site';
+                tcgPicked = tcgPicked.filter(function(item) { return checked.indexOf(item) === -1 || failures.indexOf(item.name) !== -1; });
+                tcgRenderResults();
+                var status = document.getElementById('tcg-status');
+                if (failures.length) {
+                    status.textContent = 'Removed ' + (checked.length - failures.length) + ', failed: ' + failures.join(', ');
+                    status.style.color = 'var(--red)';
+                } else {
+                    status.textContent = 'Removed ' + checked.length + ' listing(s) from the site.';
+                    status.style.color = 'var(--green)';
+                }
+            }
+        });
     });
 }
 

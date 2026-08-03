@@ -372,6 +372,11 @@ class AuthorizationGuardTests(MarketplaceTestCase):
         response = self.client.get("/marketplace/api/admin/cards/search?q=test")
         self.assertEqual(response.status_code, 403)
 
+    def test_admin_export_batch_is_forbidden_for_a_non_admin_account(self):
+        self.login_as("shopper@example.com")
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch")
+        self.assertEqual(response.status_code, 403)
+
 
 class AdminCardsSearchTests(MarketplaceTestCase):
     def setUp(self):
@@ -414,6 +419,82 @@ class AdminCardsRemoveTests(MarketplaceTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json()["removed"])
         self.assertNotIn(1, [i["id"] for i in self.inventory()])
+
+
+class AdminExportBatchTests(MarketplaceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.login_as("jared.luyster@gmail.com")
+
+    def card(self, item_id, market_price, quantity=1, **overrides):
+        item = {"id": item_id, "name": f"Card {item_id}", "set_code": "tst",
+                "collector_number": str(item_id), "foil": False, "quantity": quantity,
+                "sell_price": None, "market_price": market_price, "image_url": None,
+                "condition": "Near Mint", "category": "MTG Card", "notes": None}
+        item.update(overrides)
+        return item
+
+    def test_only_cards_within_the_price_range_are_candidates(self):
+        self.set_inventory([
+            self.card(1, 0.25), self.card(2, 0.75), self.card(3, 1.00), self.card(4, 1.50),
+        ])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10")
+        data = response.get_json()
+        self.assertEqual(data["pool_size"], 2)
+        self.assertEqual(sorted(r["id"] for r in data["results"]), [2, 3])
+
+    def test_zero_quantity_cards_are_excluded(self):
+        self.set_inventory([self.card(1, 0.75, quantity=0), self.card(2, 0.75, quantity=1)])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10")
+        data = response.get_json()
+        self.assertEqual([r["id"] for r in data["results"]], [2])
+
+    def test_count_caps_the_number_returned(self):
+        self.set_inventory([self.card(i, 0.75) for i in range(1, 16)])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10")
+        data = response.get_json()
+        self.assertEqual(data["pool_size"], 15)
+        self.assertEqual(len(data["results"]), 10)
+        self.assertEqual(len(set(r["id"] for r in data["results"])), 10, "no duplicates")
+
+    def test_fewer_candidates_than_count_returns_all_of_them(self):
+        self.set_inventory([self.card(1, 0.75), self.card(2, 0.75)])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10")
+        data = response.get_json()
+        self.assertEqual(len(data["results"]), 2)
+
+    def test_non_numeric_params_are_a_clean_400(self):
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=abc")
+        self.assertEqual(response.status_code, 400)
+
+    def test_cards_priced_below_market_are_prioritized(self):
+        # 3 underpriced (sell < market) vs 5 at-or-above market -- with count=3, only
+        # the underpriced ones should come back even though they're a minority.
+        self.set_inventory([
+            self.card(1, 1.00, sell_price=0.50),
+            self.card(2, 1.00, sell_price=0.75),
+            self.card(3, 1.00, sell_price=0.90),
+            self.card(4, 1.00, sell_price=1.00),
+            self.card(5, 1.00, sell_price=1.25),
+            self.card(6, 1.00, sell_price=None),
+            self.card(7, 1.00, sell_price=None),
+            self.card(8, 1.00, sell_price=None),
+        ])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=3")
+        data = response.get_json()
+        self.assertEqual(data["underpriced_pool_size"], 3)
+        self.assertEqual(sorted(r["id"] for r in data["results"]), [1, 2, 3])
+
+    def test_non_underpriced_cards_fill_remaining_slots(self):
+        self.set_inventory([
+            self.card(1, 1.00, sell_price=0.50),
+            self.card(2, 1.00, sell_price=1.00),
+            self.card(3, 1.00, sell_price=None),
+        ])
+        response = self.client.get("/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10")
+        data = response.get_json()
+        self.assertEqual(data["underpriced_pool_size"], 1)
+        self.assertEqual(sorted(r["id"] for r in data["results"]), [1, 2, 3])
 
 
 class AdminOrderStatusTests(MarketplaceTestCase):
