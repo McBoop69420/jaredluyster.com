@@ -353,7 +353,7 @@ class Store:
 
     def get_orders_for_account(self, account_id):
         rows = self._conn.execute(
-            "SELECT * FROM orders WHERE account_id = ? ORDER BY created_at DESC", (account_id,)
+            "SELECT * FROM orders WHERE account_id = ? ORDER BY created_at DESC, id DESC", (account_id,)
         ).fetchall()
         orders = []
         for row in rows:
@@ -366,12 +366,12 @@ class Store:
     def get_all_orders(self, status=None):
         if status:
             rows = self._conn.execute(
-                "SELECT * FROM orders ORDER BY created_at DESC"
+                "SELECT * FROM orders ORDER BY created_at DESC, id DESC"
             ).fetchall()
             rows = [r for r in rows if r["status"] == status]
         else:
             rows = self._conn.execute(
-                "SELECT * FROM orders ORDER BY created_at DESC"
+                "SELECT * FROM orders ORDER BY created_at DESC, id DESC"
             ).fetchall()
         orders = []
         for row in rows:

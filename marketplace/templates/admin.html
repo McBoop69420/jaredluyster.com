@@ -583,14 +583,17 @@ function sessionLogRender() {
         }
         var foilTag = e.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
         var row = document.createElement('div');
-        row.style.cssText = 'display:flex; justify-content:space-between; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
+        row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
         row.innerHTML =
             '<span>' +
                 '<span style="color:var(--muted); font-size:0.72rem;">' + stamp + '</span> ' +
                 '<strong>+' + e.qty + '</strong> ' + e.name + foilTag +
                 ' <span style="color:var(--muted)">' + e.set_code.toUpperCase() + ' #' + e.collector_number + '</span>' +
             '</span>' +
-            '<span style="color:var(--accent); white-space:nowrap;">$' + (e.qty * e.sell_price).toFixed(2) + '</span>';
+            '<span style="display:flex; align-items:center; gap:10px; white-space:nowrap;">' +
+                '<span style="color:var(--accent);">$' + (e.qty * e.sell_price).toFixed(2) + '</span>' +
+                '<button class="btn btn-sm" data-idx="' + i + '" onclick="sessionLogCancel(this)" title="Undo this add" style="padding:2px 8px; color:var(--red);">Cancel</button>' +
+            '</span>';
         list.appendChild(row);
     }
 
@@ -602,6 +605,39 @@ function sessionLogClear() {
     sessionLog = [];
     sessionLogSave();
     sessionLogRender();
+}
+
+function sessionLogCancel(btn) {
+    var idx = parseInt(btn.dataset.idx);
+    var entry = sessionLog[idx];
+    if (!entry) return;
+
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    fetch('/marketplace/api/admin/quick-add/undo', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            set_code: entry.set_code,
+            collector_number: entry.collector_number,
+            foil: entry.foil,
+            qty: entry.qty
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+            sessionLog.splice(idx, 1);
+            sessionLogSave();
+            sessionLogRender();
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Cancel';
+            alert(d.error || 'Could not undo this add.');
+        }
+    }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Cancel';
+        alert('Could not reach the server to undo this add.');
+    });
 }
 
 var fcDebounce = null;

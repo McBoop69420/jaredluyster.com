@@ -469,7 +469,7 @@ def shop_page():
 
 @app.route("/marketplace/inventory.json")
 def inventory_json():
-    return send_from_directory(str(ROOT), "inventory.json")
+    return send_from_directory(str(INVENTORY_PATH.parent), INVENTORY_PATH.name)
 
 
 @app.route("/marketplace/lands.json")
@@ -629,12 +629,18 @@ def api_cart_get():
 @app.route("/marketplace/api/cart/add", methods=["POST"])
 def api_cart_add():
     data = request.get_json()
-    item_id = str(data.get("id"))
-    qty = int(data.get("quantity", 1))
+    try:
+        item_id = int(data.get("id"))
+        qty = int(data.get("quantity", 1))
+    except (TypeError, ValueError):
+        return jsonify(error="Invalid item or quantity."), 400
+    if qty < 1:
+        return jsonify(error="Quantity must be at least 1."), 400
     inv = _inventory_by_id()
-    item = inv.get(int(item_id))
+    item = inv.get(item_id)
     if not item:
         return jsonify(error="Item not found."), 404
+    item_id = str(item_id)
     cart = session.get("cart", {})
     new_qty = cart.get(item_id, 0) + qty
     available = item.get("quantity", 0)
@@ -648,8 +654,11 @@ def api_cart_add():
 @app.route("/marketplace/api/cart/update", methods=["POST"])
 def api_cart_update():
     data = request.get_json()
-    item_id = str(data.get("id"))
-    qty = int(data.get("quantity", 0))
+    try:
+        item_id = str(int(data.get("id")))
+        qty = int(data.get("quantity", 0))
+    except (TypeError, ValueError):
+        return jsonify(error="Invalid item or quantity."), 400
     cart = session.get("cart", {})
     if qty <= 0:
         cart.pop(item_id, None)
@@ -678,7 +687,7 @@ def _validate_and_price_cart(cart):
             out_of_stock.append(f"Item #{item_id_str} is no longer available")
             continue
         available = item.get("quantity", 0)
-        if qty > available:
+        if qty <= 0 or qty > available:
             out_of_stock.append(f"{item['name']} (have {available}, want {qty})")
             continue
         price = _price_for(item)
@@ -1410,6 +1419,40 @@ def api_admin_quick_add_add():
 
     total_cards = sum(c.get("qty", 1) for c in cards)
     return jsonify(ok=True, added=total_cards, inventory_count=len(inventory))
+
+
+@app.route("/marketplace/api/admin/quick-add/undo", methods=["POST"])
+@admin_required
+def api_admin_quick_add_undo():
+    data = request.get_json()
+    set_code = data.get("set_code")
+    collector_number = data.get("collector_number")
+    foil = bool(data.get("foil", False))
+    qty = data.get("qty", 1)
+    if not set_code or not collector_number:
+        return jsonify(error="set_code and collector_number are required."), 400
+
+    with _inventory_lock:
+        inventory = _load_inventory()
+        existing = None
+        for item in inventory:
+            if (item["set_code"] == set_code
+                    and item["collector_number"] == collector_number
+                    and item.get("foil", False) == foil):
+                existing = item
+                break
+
+        if not existing:
+            return jsonify(error="Matching inventory item not found."), 404
+
+        existing["quantity"] -= qty
+        removed = existing["quantity"] <= 0
+        if removed:
+            inventory = [item for item in inventory if item["id"] != existing["id"]]
+
+        _save_inventory(inventory)
+
+    return jsonify(ok=True, removed=removed, inventory_count=len(inventory))
 
 
 @app.route("/marketplace/api/admin/cards/delete", methods=["POST"])
