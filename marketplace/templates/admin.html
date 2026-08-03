@@ -219,6 +219,19 @@
             </div>
         </details>
 
+        <details class="card" style="margin-bottom:24px; padding:0;" id="remove-card-section">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Remove Card from Inventory
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div class="fc-search-wrap" style="margin-top:12px;">
+                    <label style="font-size:0.78rem; color:var(--muted);">Card name</label>
+                    <input type="text" id="rc-search" autocomplete="off" placeholder="Start typing a card name..." style="width:100%; margin-top:4px;">
+                </div>
+                <div id="rc-results" style="margin-top:12px; display:flex; flex-direction:column; gap:2px;"></div>
+            </div>
+        </details>
+
         <details class="card" style="margin-bottom:24px; padding:0;">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Email Settings
@@ -918,6 +931,102 @@ function qaAdd() {
             msg.textContent = d.error;
             msg.style.color = 'var(--red)';
         }
+    });
+}
+
+var rcDebounce = null;
+
+document.getElementById('rc-search').addEventListener('input', function() {
+    var q = this.value.trim();
+    clearTimeout(rcDebounce);
+    if (q.length < 2) { document.getElementById('rc-results').innerHTML = ''; return; }
+    rcDebounce = setTimeout(function() { rcSearch(q); }, 200);
+});
+
+function rcSearch(q) {
+    fetch('/marketplace/api/admin/cards/search?q=' + encodeURIComponent(q))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var box = document.getElementById('rc-results');
+            box.innerHTML = '';
+            var results = d.results || [];
+            if (!results.length) {
+                box.innerHTML = '<div style="color:var(--muted); font-size:0.82rem; padding:8px 0;">No matching cards in inventory.</div>';
+                return;
+            }
+            results.forEach(function(item) { box.appendChild(rcRow(item)); });
+        });
+}
+
+function rcRow(item) {
+    var foilTag = item.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:0.85rem; padding:8px 0; border-bottom:1px solid var(--border);';
+
+    var info = document.createElement('span');
+    info.innerHTML = item.name + foilTag +
+        ' <span style="color:var(--muted)">' + item.set_code.toUpperCase() + ' #' + item.collector_number + '</span>' +
+        ' <span id="rc-qty-label-' + item.id + '" style="color:var(--muted)">(' + item.quantity + ' in stock)</span>';
+
+    var controls = document.createElement('span');
+    controls.style.cssText = 'display:flex; align-items:center; gap:8px;';
+    var qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.min = '1';
+    qtyInput.max = String(item.quantity);
+    qtyInput.value = String(item.quantity);
+    qtyInput.style.width = '60px';
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-sm';
+    removeBtn.style.color = 'var(--red)';
+    removeBtn.textContent = 'Remove';
+    removeBtn.onclick = function() { rcRemove(item, qtyInput, removeBtn, row, info); };
+
+    controls.appendChild(qtyInput);
+    controls.appendChild(removeBtn);
+    row.appendChild(info);
+    row.appendChild(controls);
+    return row;
+}
+
+function rcRemove(item, qtyInput, btn, row, info) {
+    var qty = parseInt(qtyInput.value) || 0;
+    if (qty < 1) return;
+    if (!confirm('Remove ' + qty + ' x ' + item.name + ' from inventory?')) return;
+
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    fetch('/marketplace/api/admin/quick-add/undo', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            set_code: item.set_code,
+            collector_number: item.collector_number,
+            foil: item.foil,
+            qty: qty
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+            if (d.removed) {
+                row.remove();
+            } else {
+                item.quantity -= qty;
+                qtyInput.max = String(item.quantity);
+                qtyInput.value = String(item.quantity);
+                btn.disabled = false;
+                btn.textContent = 'Remove';
+                var label = document.getElementById('rc-qty-label-' + item.id);
+                if (label) label.textContent = '(' + item.quantity + ' in stock)';
+            }
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Remove';
+            alert(d.error || 'Could not remove this card.');
+        }
+    }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Remove';
+        alert('Could not reach the server to remove this card.');
     });
 }
 

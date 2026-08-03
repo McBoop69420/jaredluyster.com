@@ -367,6 +367,54 @@ class AuthorizationGuardTests(MarketplaceTestCase):
         response = self.client.post("/marketplace/api/admin/cards/delete", json={"id": 1})
         self.assertEqual(response.status_code, 403)
 
+    def test_admin_cards_search_is_forbidden_for_a_non_admin_account(self):
+        self.login_as("shopper@example.com")
+        response = self.client.get("/marketplace/api/admin/cards/search?q=test")
+        self.assertEqual(response.status_code, 403)
+
+
+class AdminCardsSearchTests(MarketplaceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.login_as("jared.luyster@gmail.com")
+
+    def test_matches_by_partial_case_insensitive_name(self):
+        response = self.client.get("/marketplace/api/admin/cards/search?q=test")
+        names = [r["name"] for r in response.get_json()["results"]]
+        self.assertEqual(names, ["Test Card"])
+
+    def test_short_query_returns_no_results(self):
+        response = self.client.get("/marketplace/api/admin/cards/search?q=t")
+        self.assertEqual(response.get_json()["results"], [])
+
+    def test_no_match_returns_empty_list(self):
+        response = self.client.get("/marketplace/api/admin/cards/search?q=nonexistent")
+        self.assertEqual(response.get_json()["results"], [])
+
+
+class AdminCardsRemoveTests(MarketplaceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.login_as("jared.luyster@gmail.com")
+
+    def test_removing_fewer_than_stock_reduces_quantity(self):
+        response = self.client.post("/marketplace/api/admin/quick-add/undo", json={
+            "set_code": "tst", "collector_number": "1", "foil": False, "qty": 1,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertFalse(data["removed"])
+        remaining = next(i for i in self.inventory() if i["id"] == 1)
+        self.assertEqual(remaining["quantity"], 1)
+
+    def test_removing_all_stock_deletes_the_listing(self):
+        response = self.client.post("/marketplace/api/admin/quick-add/undo", json={
+            "set_code": "tst", "collector_number": "1", "foil": False, "qty": 2,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["removed"])
+        self.assertNotIn(1, [i["id"] for i in self.inventory()])
+
 
 class AdminOrderStatusTests(MarketplaceTestCase):
     def setUp(self):

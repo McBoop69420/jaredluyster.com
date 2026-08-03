@@ -1290,6 +1290,15 @@ def api_admin_cards_autocomplete():
     return jsonify(names=names)
 
 
+@app.route("/marketplace/api/admin/cards/search")
+@admin_required
+def api_admin_cards_search():
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify(results=[])
+    return jsonify(results=store.search_inventory(q))
+
+
 @app.route("/marketplace/api/admin/cards/printings")
 @admin_required
 def api_admin_cards_printings():

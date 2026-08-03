@@ -437,6 +437,19 @@ class Store:
             items.append(item)
         return items
 
+    def search_inventory(self, query, limit=20):
+        rows = self._conn.execute(
+            "SELECT * FROM inventory WHERE name LIKE ? COLLATE NOCASE"
+            " ORDER BY name COLLATE NOCASE, set_code LIMIT ?",
+            (f"%{query}%", limit),
+        ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
     def replace_inventory(self, items):
         """Full replace, mirroring the old write-the-whole-file semantics callers rely on."""
         self._conn.execute("DELETE FROM inventory")
