@@ -235,6 +235,10 @@ def _send_order_confirmation_email(to_email, order_id, items, total, notes,
 
 _inventory_lock = threading.Lock()
 
+# Below this many live listings a shrinking publish is ordinary (a shop just starting out),
+# so the guard only applies once there is a real inventory to lose.
+SHRINK_FLOOR = 10
+
 
 def _load_inventory():
     return store.list_inventory()
@@ -1511,15 +1515,43 @@ def api_admin_inventory_bulk_publish():
     pos_printings = data.get("pos_printings", [])
     pos_ids = data.get("pos_ids", [])
     replace = bool(data.get("replace", False))
+    force = bool(data.get("force", False))
 
     with _inventory_lock:
         existing = _load_inventory()
         carried = [] if replace else carry_over(existing, pos_printings, pos_ids)
         listings = sorted(items + carried,
                           key=lambda item: (str(item.get("name") or "").lower(), str(item.get("set_code") or "")))
+
+        # A partly scanned POS is already safe: cards it does not mention are carried over.
+        # What guts the shop is a POS that still tracks everything but reports it out of
+        # stock, or a --replace run. Refuse those, and make saying "yes, really" deliberate.
+        if not force and len(existing) >= SHRINK_FLOOR and len(listings) * 2 < len(existing):
+            return jsonify(
+                ok=False,
+                error=(f"This publish would cut the shop from {len(existing)} listings to "
+                       f"{len(listings)}. If the POS database is complete, publish again with "
+                       f"--force."),
+            ), 409
+
+        store.snapshot_inventory()
         _save_inventory(listings)
 
     return jsonify(ok=True, published=len(items), carried=len(carried), total=len(listings))
+
+
+@app.route("/marketplace/api/admin/inventory/restore", methods=["POST"])
+@publish_key_required
+def api_admin_inventory_restore():
+    """Put back the inventory as it was before the last publish or restore."""
+    with _inventory_lock:
+        items, taken_at = store.get_inventory_snapshot()
+        if items is None:
+            return jsonify(ok=False, error="There is no inventory snapshot to restore."), 404
+        replaced = store.snapshot_inventory()   # so a restore can itself be undone
+        _save_inventory(items)
+
+    return jsonify(ok=True, restored=len(items), replaced=replaced, taken_at=taken_at)
 
 
 @app.route("/marketplace/api/admin/cards/delete", methods=["POST"])

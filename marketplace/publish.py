@@ -8,10 +8,16 @@ Gard Same Chop desktop app -- are carried over rather than wiped. A card the POS
 know about is still republished from the POS, so selling out there still delists it here.
 The carry-over itself happens server-side, against whatever is live at publish time.
 
+Every publish keeps the inventory it replaced, so a wrong one can be undone with --restore.
+A publish that would cut the shop to less than half its listings -- the shape a half-scanned
+POS database takes -- is refused unless --force says it is intended.
+
 Usage:
     py publish.py                  # publish all items with quantity > 0
     py publish.py --min-price 1    # only items worth $1+
     py publish.py --replace        # overwrite everything, ignoring hand-added listings
+    py publish.py --force          # publish even if it collapses the shop
+    py publish.py --restore        # undo the last publish
 """
 
 import argparse
@@ -76,25 +82,38 @@ def _read_pos_rows(db_path: Path, min_price: float = 0.0):
     return items, pos_printings, pos_ids
 
 
-def publish(db_path: Path, *, min_price: float = 0.0, replace: bool = False,
-            base_url: str = DEFAULT_URL, api_key: str = "") -> int:
-    items, pos_printings, pos_ids = _read_pos_rows(db_path, min_price)
-
-    resp = requests.post(
-        base_url.rstrip("/") + "/marketplace/api/admin/inventory/bulk-publish",
-        json={"items": items, "pos_printings": pos_printings, "pos_ids": pos_ids, "replace": replace},
-        headers={"X-Publish-Key": api_key},
-        timeout=30,
-    )
-    resp.raise_for_status()
+def _post(base_url: str, endpoint: str, api_key: str, payload: dict) -> dict:
+    resp = requests.post(base_url.rstrip("/") + endpoint, json=payload,
+                         headers={"X-Publish-Key": api_key}, timeout=30)
+    # A refused publish answers 409 with an explanation, which is worth more than the status.
+    if resp.status_code not in (200, 409):
+        resp.raise_for_status()
     result = resp.json()
     if not result.get("ok"):
         raise RuntimeError(result.get("error", "Publish failed"))
+    return result
+
+
+def publish(db_path: Path, *, min_price: float = 0.0, replace: bool = False, force: bool = False,
+            base_url: str = DEFAULT_URL, api_key: str = "") -> int:
+    items, pos_printings, pos_ids = _read_pos_rows(db_path, min_price)
+
+    result = _post(base_url, "/marketplace/api/admin/inventory/bulk-publish", api_key,
+                   {"items": items, "pos_printings": pos_printings, "pos_ids": pos_ids,
+                    "replace": replace, "force": force})
 
     print(f"Published {result['published']} items to {base_url}")
     if result.get("carried"):
         print(f"Carried over {result['carried']} hand-added listing(s) the POS does not track")
     return result["total"]
+
+
+def restore(*, base_url: str = DEFAULT_URL, api_key: str = "") -> int:
+    """Undo the last publish, putting back the inventory it replaced."""
+    result = _post(base_url, "/marketplace/api/admin/inventory/restore", api_key, {})
+    print(f"Restored {result['restored']} listing(s) from the snapshot taken {result['taken_at']}")
+    print(f"The {result['replaced']} listing(s) just replaced were kept, so this can be undone too")
+    return result["restored"]
 
 
 if __name__ == "__main__":
@@ -109,8 +128,15 @@ if __name__ == "__main__":
                         help="Publish API key (defaults to MARKETPLACE_PUBLISH_KEY env var)")
     parser.add_argument("--replace", action="store_true",
                         help="Overwrite everything, dropping listings added outside the POS")
+    parser.add_argument("--force", action="store_true",
+                        help="Publish even if it would cut the shop to less than half its listings")
+    parser.add_argument("--restore", action="store_true",
+                        help="Undo the last publish instead of publishing")
     args = parser.parse_args()
     if not args.api_key:
         parser.error("An API key is required: pass --api-key or set MARKETPLACE_PUBLISH_KEY")
-    publish(Path(args.db), min_price=args.min_price, replace=args.replace,
-            base_url=args.url, api_key=args.api_key)
+    if args.restore:
+        restore(base_url=args.url, api_key=args.api_key)
+    else:
+        publish(Path(args.db), min_price=args.min_price, replace=args.replace, force=args.force,
+                base_url=args.url, api_key=args.api_key)

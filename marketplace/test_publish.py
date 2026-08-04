@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from publish import _read_pos_rows, publish
+from publish import _read_pos_rows, publish, restore
 
 SCHEMA = """
 CREATE TABLE collection_items (
@@ -99,6 +99,36 @@ class PublishRequestTests(unittest.TestCase):
         self.assertEqual(kwargs["headers"]["X-Publish-Key"], "secret123")
         self.assertEqual([i["name"] for i in kwargs["json"]["items"]], ["Opt"])
         self.assertEqual(kwargs["json"]["replace"], False)
+
+    @patch("publish.requests.post")
+    def test_force_is_passed_through_so_a_refused_publish_can_be_repeated(self, mock_post):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"ok": True, "published": 1, "carried": 0, "total": 1}
+        mock_post.return_value.raise_for_status.return_value = None
+
+        publish(self.db, base_url="https://example.test", api_key="k", force=True)
+
+        self.assertTrue(mock_post.call_args[1]["json"]["force"])
+
+    @patch("publish.requests.post")
+    def test_a_refusal_reports_the_reason_rather_than_the_status_code(self, mock_post):
+        mock_post.return_value.status_code = 409
+        mock_post.return_value.json.return_value = {"ok": False, "error": "would cut the shop"}
+
+        with self.assertRaises(RuntimeError) as caught:
+            publish(self.db, base_url="https://example.test", api_key="k")
+        self.assertIn("would cut the shop", str(caught.exception))
+
+    @patch("publish.requests.post")
+    def test_restore_posts_to_the_restore_endpoint(self, mock_post):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"ok": True, "restored": 12, "replaced": 3,
+                                                    "taken_at": "2026-08-03T10:00:00+00:00"}
+        mock_post.return_value.raise_for_status.return_value = None
+
+        self.assertEqual(restore(base_url="https://example.test", api_key="k"), 12)
+        self.assertEqual(mock_post.call_args[0][0],
+                         "https://example.test/marketplace/api/admin/inventory/restore")
 
     @patch("publish.requests.post")
     def test_raises_when_the_server_reports_failure(self, mock_post):

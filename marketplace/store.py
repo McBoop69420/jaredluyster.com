@@ -17,6 +17,8 @@ HERMES_ADMIN_EMAILS = os.environ.get("HERMES_ADMIN_EMAILS", "hermes-agent@bluegr
 HERMES_ADMIN_EMAILS = [e.strip().lower() for e in HERMES_ADMIN_EMAILS if e.strip()]
 ALL_ADMIN_EMAILS = [ADMIN_EMAIL.lower()] + HERMES_ADMIN_EMAILS
 GUEST_EMAIL = "guest@bluegrass-marketplace.local"
+INVENTORY_SNAPSHOT_KEY = "inventory_snapshot"
+INVENTORY_SNAPSHOT_AT_KEY = "inventory_snapshot_at"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
 
@@ -478,6 +480,30 @@ class Store:
                  item.get("market_price", 0), item.get("image_url"), item.get("notes")),
             )
         self._conn.commit()
+
+    # -- inventory snapshots --------------------------------------------------
+
+    def snapshot_inventory(self):
+        """Keep the current inventory aside so a wrong bulk replace can be undone.
+
+        A publish from a half-scanned POS database is a valid-looking request that
+        replaces good stock with bad, and replace_inventory has no undo of its own.
+        """
+        items = self.list_inventory()
+        self.set_setting(INVENTORY_SNAPSHOT_KEY, json.dumps(items))
+        self.set_setting(INVENTORY_SNAPSHOT_AT_KEY, _now())
+        return len(items)
+
+    def get_inventory_snapshot(self):
+        """The listings kept by the last snapshot, and when it was taken."""
+        raw = self.get_setting(INVENTORY_SNAPSHOT_KEY)
+        if not raw:
+            return None, ""
+        try:
+            items = json.loads(raw)
+        except ValueError:
+            return None, ""
+        return items, self.get_setting(INVENTORY_SNAPSHOT_AT_KEY)
 
     # -- settings -------------------------------------------------------------
 
