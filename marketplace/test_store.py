@@ -1,11 +1,12 @@
 """Tests for the Store data layer: accounts, password resets, orders, settings."""
 
+import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from store import ALL_ADMIN_EMAILS, GUEST_EMAIL, ORDER_STATUSES, Store
+from store import ALL_ADMIN_EMAILS, GUEST_EMAIL, ORDER_STATUSES, Store, _TursoConnection
 
 
 class AccountTests(unittest.TestCase):
@@ -277,6 +278,78 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(self.store.get_setting("k"), "second")
         rows = self.store._conn.execute("SELECT COUNT(*) AS n FROM settings WHERE key='k'").fetchone()
         self.assertEqual(rows["n"], 1)
+
+
+class _FakeCursor:
+    def __init__(self, value):
+        self.description = [("value",)]
+        self._value = value
+
+    def fetchone(self):
+        return (self._value,)
+
+    def fetchall(self):
+        return [(self._value,)]
+
+    @property
+    def lastrowid(self):
+        return 1
+
+
+class _FakeStreamConn:
+    """Stands in for a real libsql connection whose Hrana stream has gone stale."""
+
+    def __init__(self, name, fail_first_execute):
+        self.name = name
+        self.fail_first_execute = fail_first_execute
+        self.calls = 0
+
+    def execute(self, sql, params):
+        self.calls += 1
+        if self.fail_first_execute and self.calls == 1:
+            raise ValueError(
+                'Hrana: `api error: `status=404 Not Found, '
+                'body={"error":"stream not found: 7112d115:4182b"}``'
+            )
+        return _FakeCursor(self.name)
+
+
+class TursoReconnectTests(unittest.TestCase):
+    def _connection_with(self, conns):
+        """A _TursoConnection whose self._libsql.connect() yields `conns` in order."""
+        conn = _TursoConnection.__new__(_TursoConnection)
+        remaining = list(conns)
+        fake_libsql = type("FakeLibsql", (), {"connect": staticmethod(lambda **kw: remaining.pop(0))})
+        conn._libsql = fake_libsql
+        conn._url = "libsql://example"
+        conn._auth_token = "token"
+        conn._connect()
+        return conn
+
+    def test_stale_stream_triggers_one_reconnect_and_retry(self):
+        stale = _FakeStreamConn("stale", fail_first_execute=True)
+        fresh = _FakeStreamConn("fresh", fail_first_execute=False)
+        conn = self._connection_with([stale, fresh])
+
+        cursor = conn.execute("SELECT 1", ())
+
+        self.assertEqual(cursor.fetchone()["value"], "fresh")
+        self.assertEqual(stale.calls, 1)
+        self.assertEqual(fresh.calls, 1)
+
+    def test_unrelated_value_error_is_not_treated_as_a_stale_stream(self):
+        conn = self._connection_with([_FakeStreamConn("only", fail_first_execute=False)])
+        conn._conn.execute = lambda sql, params: (_ for _ in ()).throw(ValueError("something else broke"))
+
+        with self.assertRaises(ValueError):
+            conn.execute("SELECT 1", ())
+
+    def test_unique_constraint_still_maps_to_integrity_error(self):
+        conn = self._connection_with([_FakeStreamConn("only", fail_first_execute=False)])
+        conn._conn.execute = lambda sql, params: (_ for _ in ()).throw(ValueError("UNIQUE constraint failed: accounts.email"))
+
+        with self.assertRaises(sqlite3.IntegrityError):
+            conn.execute("SELECT 1", ())
 
 
 if __name__ == "__main__":

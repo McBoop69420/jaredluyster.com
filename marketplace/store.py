@@ -48,18 +48,34 @@ class _TursoCursor:
 
 
 class _TursoConnection:
-    """Adapts the libsql client to the subset of the sqlite3 API store.py uses."""
+    """Adapts the libsql client to the subset of the sqlite3 API store.py uses.
+
+    The underlying Hrana HTTP stream can be garbage-collected server-side after a
+    period of inactivity (e.g. Render's free-tier instance spinning down and back
+    up), which otherwise permanently breaks every query on this process until a
+    restart -- so a "stream not found" error triggers one reconnect-and-retry.
+    """
 
     def __init__(self, url, auth_token):
         import libsql
-        self._conn = libsql.connect(database=url, auth_token=auth_token)
+        self._libsql = libsql
+        self._url = url
+        self._auth_token = auth_token
+        self._connect()
+
+    def _connect(self):
+        self._conn = self._libsql.connect(database=self._url, auth_token=self._auth_token)
 
     def execute(self, sql, params=()):
         try:
             return _TursoCursor(self._conn.execute(sql, params))
         except ValueError as e:
-            if "UNIQUE constraint" in str(e):
-                raise sqlite3.IntegrityError(str(e))
+            message = str(e)
+            if "UNIQUE constraint" in message:
+                raise sqlite3.IntegrityError(message)
+            if "stream not found" in message:
+                self._connect()
+                return _TursoCursor(self._conn.execute(sql, params))
             raise
 
     def executescript(self, script):
