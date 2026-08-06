@@ -29,6 +29,10 @@
     display: flex; gap: 8px; padding: 0 20px 16px; flex-wrap: wrap; align-items: center;
 }
 .order-actions select { padding: 6px 10px; font-size: 0.8rem; }
+.order-action-primary {
+    background: rgba(36,150,176,0.15); color: var(--blue); border-color: rgba(36,150,176,0.45);
+}
+.order-action-primary:hover { background: rgba(36,150,176,0.24); }
 .packing-check {
     display: flex; align-items: center; gap: 8px; cursor: pointer;
 }
@@ -398,6 +402,16 @@
                         <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
                         {% endfor %}
                     </select>
+                    {% if order.status == 'pending' %}
+                        <button class="btn btn-sm order-action-primary"
+                            onclick="markPacked({{ order.id }}, this)">Mark packed</button>
+                    {% endif %}
+                    {% if order.status not in ['shipped', 'completed', 'cancelled'] %}
+                        <button class="btn btn-sm btn-red"
+                            onclick="cancelOrder({{ order.id }}, this, {{ 'true' if order.payment_method == 'paypal' and order.payment_status == 'paid' else 'false' }})">
+                            Cancel order
+                        </button>
+                    {% endif %}
                     {% if order.payment_method != 'paypal' %}
                         <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
                             onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
@@ -438,6 +452,21 @@ function updateStatus(orderId, status) {
         alert(error.message);
         window.location.reload();
     });
+}
+
+function markPacked(orderId, button) {
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    updateStatus(orderId, 'packing');
+}
+
+function cancelOrder(orderId, button, willRefund) {
+    var message = 'Cancel order #' + orderId + ' and return its cards to inventory?';
+    if (willRefund) message += ' Its captured PayPal payment will also be refunded.';
+    if (!confirm(message)) return;
+    button.disabled = true;
+    button.textContent = 'Cancelling...';
+    updateStatus(orderId, 'cancelled');
 }
 
 function cancelAllPending(button) {

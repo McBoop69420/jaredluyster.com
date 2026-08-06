@@ -528,6 +528,22 @@ class AdminOrderStatusTests(MarketplaceTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+    def test_pending_order_can_be_marked_as_packing(self):
+        order_id = self._cash_order()
+        response = self.client.post(
+            f"/marketplace/api/admin/orders/{order_id}/status", json={"status": "packing"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(server.store.get_order(order_id)["order"]["status"], "packing")
+
+    def test_pending_order_admin_card_has_packed_and_cancel_actions(self):
+        order_id = self._cash_order()
+        response = self.client.get("/marketplace/admin")
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn(f"markPacked({order_id}, this)", html)
+        self.assertIn(f"cancelOrder({order_id}, this, false)", html)
+
     def test_cannot_cancel_a_shipped_order(self):
         order_id = self._cash_order()
         self.client.post(f"/marketplace/api/admin/orders/{order_id}/status", json={"status": "shipped"})
