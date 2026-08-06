@@ -233,6 +233,36 @@ def _send_order_confirmation_email(to_email, order_id, items, total, notes,
         server.login(cfg["user"], cfg["password"])
         server.send_message(msg)
 
+
+def _discord_order_message(order_id, items, total, customer, payment_method, payment_status):
+    lines = [f"\U0001f6d2 **New order #{order_id}** — ${total:.2f}", customer]
+    lines.append(f"{payment_method} · {payment_status}")
+    lines.append("")
+    for item in items:
+        foil = " (foil)" if item.get("foil") else ""
+        lines.append(f"- {item['quantity']}x {item['name']}{foil} — ${item['price'] * item['quantity']:.2f}")
+    lines.append("")
+    lines.append(_external_base_url() + "/marketplace/admin")
+    return "\n".join(lines)
+
+
+def _send_discord_order_notification(order_id, items, total, customer, payment_method, payment_status):
+    webhook_url = store.get_setting("discord_webhook_url", "")
+    if not webhook_url:
+        return
+    content = _discord_order_message(order_id, items, total, customer, payment_method, payment_status)
+    requests.post(webhook_url, json={"content": content}, timeout=10)
+
+
+def _order_notification_customer(account_id, guest_name, guest_email):
+    if guest_name:
+        return f"{guest_name} ({guest_email})" if guest_email else guest_name
+    account = store.get_account(account_id)
+    if account:
+        return f"{account['name']} ({account['email']})"
+    return "Unknown customer"
+
+
 _inventory_lock = threading.Lock()
 
 # Below this many live listings a shrinking publish is ordinary (a shop just starting out),
@@ -758,18 +788,28 @@ def _place_order(items, account_id, guest_name, guest_email, guest_phone,
         inventory = [item for item in inventory if item.get("quantity", 0) > 0]
         _save_inventory(inventory)
 
+    total = sum(item["price"] * item["quantity"] for item in items)
+
     confirm_email = guest_email
     if not confirm_email:
         account = store.get_account(account_id)
         confirm_email = account["email"] if account else ""
     cfg = _smtp_config()
     if confirm_email and cfg["user"] and cfg["password"]:
-        total = sum(item["price"] * item["quantity"] for item in items)
         try:
             _send_order_confirmation_email(confirm_email, order_id, items, total, notes,
                                            payment_method, payment_status)
         except Exception:
             pass
+
+    try:
+        _send_discord_order_notification(
+            order_id, items, total,
+            _order_notification_customer(account_id, guest_name, guest_email),
+            payment_method, payment_status,
+        )
+    except Exception:
+        app.logger.exception("Failed to send Discord notification for order %s", order_id)
 
     return {"order_id": order_id}
 
@@ -1022,6 +1062,14 @@ def api_paypal_order_capture(paypal_order_id):
         checkout["notes"],
         payment_method="paypal",
     )
+    try:
+        _send_discord_order_notification(
+            order_id, items, float(Decimal(_amount_string(items))),
+            _order_notification_customer(checkout["account_id"], checkout["guest_name"], checkout["guest_email"]),
+            "paypal", "paid",
+        )
+    except Exception:
+        app.logger.exception("Failed to send Discord notification for order %s", order_id)
     return jsonify(
         ok=True,
         order_id=order_id,
@@ -1172,6 +1220,7 @@ def api_admin_settings_get():
         paypal_client_id=store.get_setting("paypal_client_id", ""),
         paypal_secret=store.get_setting("paypal_secret", ""),
         paypal_env=store.get_setting("paypal_env", "sandbox"),
+        discord_webhook_url=store.get_setting("discord_webhook_url", ""),
     )
 
 
@@ -1180,7 +1229,8 @@ def api_admin_settings_get():
 def api_admin_settings_save():
     data = request.get_json()
     for key in ("smtp_host", "smtp_port", "smtp_user", "smtp_pass",
-                "paypal_client_id", "paypal_secret", "paypal_env"):
+                "paypal_client_id", "paypal_secret", "paypal_env",
+                "discord_webhook_url"):
         if key in data:
             store.set_setting(key, (data[key] or "").strip())
     return jsonify(ok=True)
@@ -1203,6 +1253,23 @@ def api_admin_test_email():
             server.login(cfg["user"], cfg["password"])
             server.send_message(msg)
         return jsonify(ok=True, message=f"Test email sent to {account['email']}")
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
+@app.route("/marketplace/api/admin/settings/test-discord", methods=["POST"])
+@admin_required
+def api_admin_test_discord():
+    webhook_url = store.get_setting("discord_webhook_url", "")
+    if not webhook_url:
+        return jsonify(error="Discord webhook URL not configured."), 400
+    try:
+        requests.post(
+            webhook_url,
+            json={"content": "\U0001f514 Test notification from Bluegrass Memorabilia. Discord alerts are working!"},
+            timeout=10,
+        )
+        return jsonify(ok=True, message="Test notification sent to Discord.")
     except Exception as e:
         return jsonify(error=str(e)), 500
 

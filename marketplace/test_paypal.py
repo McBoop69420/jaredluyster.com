@@ -129,6 +129,34 @@ class PayPalCheckoutTests(unittest.TestCase):
         self.assertEqual(repeated.status_code, 200)
         self.assertEqual(repeated.get_json()["order_id"], result["order_id"])
 
+    def test_capture_sends_a_discord_notification_when_configured(self):
+        server.store.set_setting("discord_webhook_url", "https://discord.com/api/webhooks/test")
+        self._create_paypal_order()
+        capture_payload = {
+            "id": "PAYPAL123",
+            "status": "COMPLETED",
+            "purchase_units": [{
+                "payments": {
+                    "captures": [{
+                        "id": "CAPTURE456",
+                        "status": "COMPLETED",
+                        "amount": {"currency_code": "USD", "value": "1.25"},
+                        "create_time": "2026-07-26T18:00:00Z",
+                    }]
+                }
+            }],
+        }
+        with patch.object(server, "_paypal_api_request", return_value=capture_payload), \
+             patch("server.requests.post") as mock_post:
+            response = self.client.post("/marketplace/api/paypal/orders/PAYPAL123/capture")
+
+        self.assertEqual(response.status_code, 200)
+        mock_post.assert_called_once()
+        self.assertEqual(mock_post.call_args[0][0], "https://discord.com/api/webhooks/test")
+        content = mock_post.call_args[1]["json"]["content"]
+        self.assertIn("paypal", content)
+        self.assertIn("paid", content)
+
     def test_capture_stops_before_payment_when_price_changes(self):
         self._create_paypal_order()
         inventory = server.store.list_inventory()

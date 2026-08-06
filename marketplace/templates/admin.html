@@ -302,6 +302,28 @@
 
         <details class="card" style="margin-bottom:24px; padding:0;">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Order Notifications (Discord)
+                <span id="discord-status" style="font-size:0.72rem; margin-left:auto;"></span>
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <p style="font-size:0.8rem; color:var(--muted); margin:16px 0 4px; line-height:1.5;">
+                    In Discord, go to a channel's Settings &rarr; Integrations &rarr; Webhooks &rarr; New Webhook, then paste its URL here.
+                    You'll get a message there every time an order comes in.
+                </p>
+                <div class="field" style="margin-top:12px;">
+                    <label>Webhook URL</label>
+                    <input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/..." style="width:100%">
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+                    <button class="btn btn-accent btn-sm" onclick="saveDiscord()">Save</button>
+                    <button class="btn btn-sm" onclick="testDiscord()">Send Test Notification</button>
+                    <span id="discord-msg" style="font-size:0.82rem; margin-left:8px;"></span>
+                </div>
+            </div>
+        </details>
+
+        <details class="card" style="margin-bottom:24px; padding:0;">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Payment Settings (PayPal)
                 <span id="paypal-status" style="font-size:0.72rem; margin-left:auto;"></span>
             </summary>
@@ -517,6 +539,16 @@ fetch('/marketplace/api/admin/settings').then(function(r) { return r.json(); }).
         status.style.color = 'var(--red)';
     }
 
+    document.getElementById('discord-webhook-url').value = d.discord_webhook_url || '';
+    var discordStatus = document.getElementById('discord-status');
+    if (d.discord_webhook_url) {
+        discordStatus.textContent = 'Configured';
+        discordStatus.style.color = 'var(--green)';
+    } else {
+        discordStatus.textContent = 'Not configured';
+        discordStatus.style.color = 'var(--red)';
+    }
+
     document.getElementById('paypal-client-id').value = d.paypal_client_id || '';
     document.getElementById('paypal-secret').value = d.paypal_secret || '';
     document.getElementById('paypal-env').value = d.paypal_env || 'sandbox';
@@ -589,6 +621,42 @@ function saveSmtp() {
         var status = document.getElementById('smtp-status');
         status.textContent = 'Configured';
         status.style.color = 'var(--green)';
+    });
+}
+
+function saveDiscord() {
+    var msg = document.getElementById('discord-msg');
+    msg.textContent = '';
+    fetch('/marketplace/api/admin/settings', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            discord_webhook_url: document.getElementById('discord-webhook-url').value
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        msg.textContent = 'Saved!';
+        msg.style.color = 'var(--green)';
+        var configured = !!document.getElementById('discord-webhook-url').value;
+        var status = document.getElementById('discord-status');
+        status.textContent = configured ? 'Configured' : 'Not configured';
+        status.style.color = configured ? 'var(--green)' : 'var(--red)';
+    });
+}
+
+function testDiscord() {
+    var msg = document.getElementById('discord-msg');
+    msg.textContent = 'Sending...';
+    msg.style.color = 'var(--muted)';
+    fetch('/marketplace/api/admin/settings/test-discord', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}
+    }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        if (res.ok) {
+            msg.textContent = res.data.message;
+            msg.style.color = 'var(--green)';
+        } else {
+            msg.textContent = res.data.error;
+            msg.style.color = 'var(--red)';
+        }
     });
 }
 

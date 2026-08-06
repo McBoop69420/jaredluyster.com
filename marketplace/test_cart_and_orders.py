@@ -8,6 +8,7 @@ handling, admin authorization, and order status transitions.
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import server
 from store import Store
@@ -247,6 +248,40 @@ class CashCheckoutTests(MarketplaceTestCase):
         response = self.client.post("/marketplace/api/orders", json={
             "guest_name": "Bob", "guest_email": "bob@example.com",
         })
+        self.assertEqual(response.status_code, 200)
+
+    def test_no_discord_notification_when_webhook_not_configured(self):
+        self.set_cart({"1": 1})
+        with patch("server.requests.post") as mock_post:
+            response = self.client.post("/marketplace/api/orders", json={
+                "guest_name": "Bob", "guest_email": "bob@example.com",
+            })
+        self.assertEqual(response.status_code, 200)
+        mock_post.assert_not_called()
+
+    def test_discord_notification_sent_when_webhook_configured(self):
+        server.store.set_setting("discord_webhook_url", "https://discord.com/api/webhooks/test")
+        self.set_cart({"1": 2})
+        with patch("server.requests.post") as mock_post:
+            response = self.client.post("/marketplace/api/orders", json={
+                "guest_name": "Bob", "guest_email": "bob@example.com",
+            })
+        self.assertEqual(response.status_code, 200)
+        mock_post.assert_called_once()
+        url, kwargs = mock_post.call_args[0][0], mock_post.call_args[1]
+        self.assertEqual(url, "https://discord.com/api/webhooks/test")
+        content = kwargs["json"]["content"]
+        self.assertIn("Bob", content)
+        self.assertIn("Test Card", content)
+        self.assertIn("2.50", content)
+
+    def test_discord_notification_failure_does_not_fail_the_order(self):
+        server.store.set_setting("discord_webhook_url", "https://discord.com/api/webhooks/test")
+        self.set_cart({"1": 1})
+        with patch("server.requests.post", side_effect=Exception("network down")):
+            response = self.client.post("/marketplace/api/orders", json={
+                "guest_name": "Bob", "guest_email": "bob@example.com",
+            })
         self.assertEqual(response.status_code, 200)
 
 
@@ -495,6 +530,35 @@ class AdminExportBatchTests(MarketplaceTestCase):
         data = response.get_json()
         self.assertEqual(data["underpriced_pool_size"], 1)
         self.assertEqual(sorted(r["id"] for r in data["results"]), [1, 2, 3])
+
+
+class AdminDiscordSettingsTests(MarketplaceTestCase):
+    def setUp(self):
+        super().setUp()
+        self.login_as("jared.luyster@gmail.com")
+
+    def test_webhook_url_round_trips_through_settings(self):
+        self.client.post("/marketplace/api/admin/settings",
+                         json={"discord_webhook_url": " https://discord.com/api/webhooks/abc "})
+        response = self.client.get("/marketplace/api/admin/settings")
+        self.assertEqual(response.get_json()["discord_webhook_url"], "https://discord.com/api/webhooks/abc")
+
+    def test_test_notification_requires_a_configured_webhook(self):
+        response = self.client.post("/marketplace/api/admin/settings/test-discord")
+        self.assertEqual(response.status_code, 400)
+
+    def test_test_notification_posts_to_the_configured_webhook(self):
+        server.store.set_setting("discord_webhook_url", "https://discord.com/api/webhooks/test")
+        with patch("server.requests.post") as mock_post:
+            response = self.client.post("/marketplace/api/admin/settings/test-discord")
+        self.assertEqual(response.status_code, 200)
+        mock_post.assert_called_once()
+        self.assertEqual(mock_post.call_args[0][0], "https://discord.com/api/webhooks/test")
+
+    def test_test_notification_is_forbidden_for_a_non_admin_account(self):
+        self.login_as("shopper@example.com")
+        response = self.client.post("/marketplace/api/admin/settings/test-discord")
+        self.assertEqual(response.status_code, 403)
 
 
 class AdminOrderStatusTests(MarketplaceTestCase):
