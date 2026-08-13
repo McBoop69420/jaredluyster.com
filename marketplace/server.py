@@ -1635,6 +1635,16 @@ def api_admin_cards_delete():
     return jsonify(ok=True, inventory_count=len(inventory))
 
 
+@app.route("/marketplace/api/admin/inventory/clear", methods=["POST"])
+@admin_required
+def api_admin_inventory_clear():
+    """Remove every card from the shop inventory at once."""
+    with _inventory_lock:
+        store.snapshot_inventory()
+        _save_inventory([])
+    return jsonify(ok=True, inventory_count=0)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"Marketplace server running at http://localhost:{port}")

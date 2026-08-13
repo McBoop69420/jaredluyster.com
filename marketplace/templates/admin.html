@@ -236,6 +236,23 @@
             </div>
         </details>
 
+        <details class="card" style="margin-bottom:24px; padding:0;" id="clear-inventory-section">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Clear All Inventory
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <p style="font-size:0.82rem; color:var(--muted); margin-top:12px; line-height:1.5;">
+                    This removes <strong>every</strong> card from the shop at once. The inventory snapshot is
+                    preserved, so you can undo this with a single restore. Use with care.
+                </p>
+                <div style="display:flex; align-items:center; gap:12px; margin-top:16px;">
+                    <button class="btn btn-sm" id="clear-inventory-btn"
+                            style="background:var(--red); color:var(--bg); font-weight:600;"
+                            onclick="clearAllInventory()" disabled>Loading...</button>
+                    <span id="clear-inventory-msg" style="font-size:0.78rem; color:var(--muted);"></span>
+                </div>
+            </div>
+        </details>
         <details class="card" style="margin-bottom:24px; padding:0;" id="export-tcg-section">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Export to TCGplayer
@@ -1290,5 +1307,40 @@ function testSmtp() {
 
 // Restore the session-add log persisted from earlier page loads.
 sessionLogLoad();
+
+// Enable the Clear All button and wire it up.
+var clearBtn = document.getElementById('clear-inventory-btn');
+if (clearBtn) {
+    clearBtn.disabled = false;
+    clearBtn.textContent = 'Clear All Inventory';
+}
+function clearAllInventory() {
+    if (!confirm('Remove ALL cards from the shop inventory? This cannot be undone (except by restoring the last publish snapshot).')) return;
+    var btn = document.getElementById('clear-inventory-btn');
+    var msg = document.getElementById('clear-inventory-msg');
+    btn.disabled = true;
+    btn.textContent = 'Clearing...';
+    msg.textContent = '';
+    msg.style.color = 'var(--muted)';
+    fetch('/marketplace/api/admin/inventory/clear', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}
+    }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        if (res.ok) {
+            msg.textContent = 'Removed all cards from inventory. (' + res.data.inventory_count + ' items remain)';
+            msg.style.color = 'var(--green)';
+        } else {
+            msg.textContent = res.data.error || 'Failed to clear inventory.';
+            msg.style.color = 'var(--red)';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Clear All Inventory';
+    }).catch(function() {
+        msg.textContent = 'Could not reach the server.';
+        msg.style.color = 'var(--red)';
+        btn.disabled = false;
+        btn.textContent = 'Clear All Inventory';
+    });
+}
 </script>
 {% endblock %}
