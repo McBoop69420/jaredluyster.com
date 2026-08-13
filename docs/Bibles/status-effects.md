@@ -11,7 +11,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 | Char | `#ff6633` | DoT | Fire | Deals damage = stacks after player turn, before enemy action; decays -1/turn |
 | Drown | `#4488ff` | DoT | Water | Deals damage = stacks after player turn, before enemy action; **no decay** |
 | Shock | `#ffdd00` | Amplifier | Arc | Arc attacks deal ×1.25 per stack; decays -1/turn |
-| Root | `#44cc66` | Trap | Grass | On next damage hit: bursts for 2× stacks as bonus damage, all stacks consumed |
+| Root | `#44cc66` | Trap | Plant | On next damage hit: bursts for 2× stacks as bonus damage, all stacks consumed |
 | Freeze | `#66ddff` | Skip | Ice | At 5+ stacks: skip action, consume all stacks |
 | Daze | `#cc9944` | Disruption | Rock | 50% chance enemy repeats previous action; decays -1/turn |
 | Blind | `#f2f2f2` | Miss | Light | 50% chance enemy attack misses entirely; decays -1/turn |
@@ -47,8 +47,8 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Clears at:** 0 stacks
 - **Note:** Enables burst combos — stack Shock first, then land a heavy Arc hit
 
-### Root (Grass) `#44cc66`
-- **Applied by:** Grass spells (e.g. Entangle, Overgrowth)
+### Root (Plant) `#44cc66`
+- **Applied by:** Plant spells (e.g. Entangle, Overgrowth)
 - **Ticks:** On damage (detonation trigger, not turn-based)
 - **Effect:** When the rooted target takes any damage, Root detonates — deals 2× current Root stacks as bonus damage, then all stacks are consumed
 - **Decay:** -1 per turn, same as most other statuses (not one of the few decay-exempt effects) — stacks can fade before they ever get the chance to detonate
@@ -108,7 +108,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 Each type's signature status is, by its nature, a mutation that counters its **primal enemy's** signature status. This is inherent — a property of the status itself, not a type-conditional bonus.
 
 **Primal enemies** follow the original six-type ring, with Light and Shadow as mutual foes:
-`Fire → Grass → Ice → Rock → Arc → Water → Fire`, and `Light ↔ Shadow`.
+`Fire → Plant → Ice → Rock → Arc → Water → Fire`, and `Light ↔ Shadow`.
 
 **Rule (inherent, status-vs-status):**
 > While a unit bears status **A**, it **cannot apply its own signature status B** to the opponent. Landing A on an enemy that wields B pre-empts B for as long as A persists.
@@ -117,8 +117,8 @@ This is a *unit property* — "a burning unit cannot entangle." No type checks a
 
 | Your status A | Primal prey | Prey's status B | Inherent effect |
 |---|---|---|---|
-| Char (Fire) | Grass | Root | A burning unit cannot entangle — fire consumes roots |
-| Root (Grass) | Ice | Freeze | An entangled caster cannot weave frost — roots bind the hands |
+| Char (Fire) | Plant | Root | A burning unit cannot entangle — fire consumes roots |
+| Root (Plant) | Ice | Freeze | An entangled caster cannot weave frost — roots bind the hands |
 | Freeze (Ice) | Rock | Daze | A frozen unit has no action to repeat — ice locks it solid |
 | Daze (Rock) | Arc | Shock | A dazed unit cannot deliberately charge — it fumbles the buildup |
 | Shock (Arc) | Water | Drown | Electrified water discharges the drown buildup |

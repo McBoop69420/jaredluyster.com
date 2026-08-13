@@ -87,13 +87,13 @@ Root detonation triggers separately on any damage hit.
 
 ## Type Effectiveness
 
-**Main ring:** Fire > Grass > Ice > Rock > Arc > Water > Fire
+**Main ring:** Fire > Plant > Ice > Rock > Arc > Water > Fire
 
 Every non-neutral type is strong against 3 types, weak against 3 types, and neutral with 1 paired type.
 
-Neutral pairs: Fire <-> Light, Water <-> Ice, Rock <-> Shadow, Grass <-> Arc.
+Neutral pairs: Fire <-> Light, Water <-> Ice, Rock <-> Shadow, Plant <-> Arc.
 
-| Attacker -> | vs Fire | vs Water | vs Rock | vs Arc | vs Ice | vs Shadow | vs Light | vs Grass |
+| Attacker -> | vs Fire | vs Water | vs Rock | vs Arc | vs Ice | vs Shadow | vs Light | vs Plant |
 |---|---|---|---|---|---|---|---|---|
 | **Fire** | 1x | 0.5x | 0.5x | 0.5x | **2x** | **2x** | 1x | **2x** |
 | **Water** | **2x** | 1x | **2x** | 0.5x | 1x | 0.5x | **2x** | 0.5x |
@@ -102,7 +102,7 @@ Neutral pairs: Fire <-> Light, Water <-> Ice, Rock <-> Shadow, Grass <-> Arc.
 | **Ice** | 0.5x | 1x | **2x** | **2x** | 1x | **2x** | 0.5x | 0.5x |
 | **Shadow** | 0.5x | **2x** | 1x | 0.5x | 0.5x | 1x | **2x** | **2x** |
 | **Light** | 1x | 0.5x | 0.5x | **2x** | **2x** | 0.5x | 1x | **2x** |
-| **Grass** | 0.5x | **2x** | **2x** | 1x | **2x** | 0.5x | 0.5x | 1x |
+| **Plant** | 0.5x | **2x** | **2x** | 1x | **2x** | 0.5x | 0.5x | 1x |
 
 Type effectiveness applies to spell damage. It does not affect status effect stacks or Block values.
 

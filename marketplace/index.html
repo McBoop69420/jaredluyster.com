@@ -14,7 +14,7 @@
             --border: rgba(255, 255, 255, 0.08);
             --text: #f0f0f0;
             --muted: #888;
-            --accent: #c0c0c0;
+            --accent: #f89800;
         }
 
         html, body {
@@ -44,7 +44,7 @@
         }
 
         .topbar-inner {
-            height: 56px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -60,7 +60,7 @@
         }
 
         .brand-logo {
-            height: 36px;
+            height: 48px;
             width: auto;
         }
 
@@ -247,7 +247,7 @@
 
         .badge-foil {
             color: var(--accent);
-            border: 1px solid rgba(201, 168, 76, 0.3);
+            border: 1px solid rgba(248, 152, 0, 0.3);
         }
 
         .badge-qty {
@@ -301,8 +301,8 @@
             width: 100%;
             padding: 9px;
             margin-top: 10px;
-            background: rgba(201, 168, 76, 0.08);
-            border: 1px solid rgba(201, 168, 76, 0.25);
+            background: rgba(248, 152, 0, 0.08);
+            border: 1px solid rgba(248, 152, 0, 0.25);
             border-radius: 8px;
             color: var(--accent);
             font-size: 0.78rem;
@@ -314,7 +314,7 @@
         }
 
         .add-to-cart-btn:hover {
-            background: rgba(201, 168, 76, 0.15);
+            background: rgba(248, 152, 0, 0.15);
             border-color: var(--accent);
         }
 
@@ -426,8 +426,7 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="/marketplace/">
-                <img class="brand-logo" src="/bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
-                <span>Bluegrass Memorabilia</span>
+                <img class="brand-logo" src="/bmc-logo-header.png" alt="Bluegrass Memorabilia & Collectibles">
             </a>
             <nav style="display:flex;gap:16px;align-items:center;font-size:0.85rem;">
 <a href="/marketplace/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:#000;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
@@ -445,7 +444,7 @@
                     <p class="lead"></p>
                 </div>
                 <div class="trust-bar">
-                    <span>Cash only — no online payments</span>
+                    <span>Pay online with PayPal or cash at pickup</span>
                     <span>Pickup Thursdays at Tabletop Tavern</span>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 """Accounts, carts, and orders database for the marketplace."""
 
+import json
 import os
 import secrets
 import sqlite3
@@ -16,6 +17,8 @@ HERMES_ADMIN_EMAILS = os.environ.get("HERMES_ADMIN_EMAILS", "hermes-agent@bluegr
 HERMES_ADMIN_EMAILS = [e.strip().lower() for e in HERMES_ADMIN_EMAILS if e.strip()]
 ALL_ADMIN_EMAILS = [ADMIN_EMAIL.lower()] + HERMES_ADMIN_EMAILS
 GUEST_EMAIL = "guest@bluegrass-marketplace.local"
+INVENTORY_SNAPSHOT_KEY = "inventory_snapshot"
+INVENTORY_SNAPSHOT_AT_KEY = "inventory_snapshot_at"
 ORDER_STATUSES = ("pending", "packing", "shipped", "completed", "cancelled")
 
 
@@ -45,18 +48,34 @@ class _TursoCursor:
 
 
 class _TursoConnection:
-    """Adapts the libsql client to the subset of the sqlite3 API store.py uses."""
+    """Adapts the libsql client to the subset of the sqlite3 API store.py uses.
+
+    The underlying Hrana HTTP stream can be garbage-collected server-side after a
+    period of inactivity (e.g. Render's free-tier instance spinning down and back
+    up), which otherwise permanently breaks every query on this process until a
+    restart -- so a "stream not found" error triggers one reconnect-and-retry.
+    """
 
     def __init__(self, url, auth_token):
         import libsql
-        self._conn = libsql.connect(database=url, auth_token=auth_token)
+        self._libsql = libsql
+        self._url = url
+        self._auth_token = auth_token
+        self._connect()
+
+    def _connect(self):
+        self._conn = self._libsql.connect(database=self._url, auth_token=self._auth_token)
 
     def execute(self, sql, params=()):
         try:
             return _TursoCursor(self._conn.execute(sql, params))
         except ValueError as e:
-            if "UNIQUE constraint" in str(e):
-                raise sqlite3.IntegrityError(str(e))
+            message = str(e)
+            if "UNIQUE constraint" in message:
+                raise sqlite3.IntegrityError(message)
+            if "stream not found" in message:
+                self._connect()
+                return _TursoCursor(self._conn.execute(sql, params))
             raise
 
     def executescript(self, script):
@@ -104,6 +123,10 @@ class Store:
                 payment_method TEXT NOT NULL DEFAULT 'cash',
                 payment_status TEXT NOT NULL DEFAULT 'unpaid',
                 paypal_order_id TEXT NOT NULL DEFAULT '',
+                paypal_capture_id TEXT NOT NULL DEFAULT '',
+                paid_at TEXT NOT NULL DEFAULT '',
+                paypal_refund_id TEXT NOT NULL DEFAULT '',
+                refunded_at TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             );
 
@@ -131,26 +154,68 @@ class Store:
                 created_at TEXT NOT NULL,
                 used INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS inventory (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                set_code TEXT NOT NULL DEFAULT '',
+                collector_number TEXT NOT NULL DEFAULT '',
+                foil INTEGER NOT NULL DEFAULT 0,
+                condition TEXT NOT NULL DEFAULT 'Near Mint',
+                quantity INTEGER NOT NULL DEFAULT 0,
+                category TEXT NOT NULL DEFAULT 'MTG Card',
+                sell_price REAL,
+                market_price REAL,
+                image_url TEXT,
+                notes TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS paypal_checkouts (
+                paypal_order_id TEXT PRIMARY KEY,
+                account_id INTEGER NOT NULL REFERENCES accounts(id),
+                cart_json TEXT NOT NULL,
+                notes TEXT NOT NULL DEFAULT '',
+                guest_name TEXT NOT NULL DEFAULT '',
+                guest_email TEXT NOT NULL DEFAULT '',
+                guest_phone TEXT NOT NULL DEFAULT '',
+                expected_amount TEXT NOT NULL,
+                currency TEXT NOT NULL DEFAULT 'USD',
+                status TEXT NOT NULL DEFAULT 'created',
+                local_order_id INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
         """)
         self._conn.commit()
         self._migrate_orders_table()
 
     def _migrate_orders_table(self):
-        columns = (
-            "guest_name TEXT NOT NULL DEFAULT ''",
-            "guest_email TEXT NOT NULL DEFAULT ''",
-            "guest_phone TEXT NOT NULL DEFAULT ''",
-            "payment_method TEXT NOT NULL DEFAULT 'cash'",
-            "payment_status TEXT NOT NULL DEFAULT 'unpaid'",
-            "paypal_order_id TEXT NOT NULL DEFAULT ''",
-        )
-        for column_def in columns:
+        columns = {
+            "guest_name": "TEXT NOT NULL DEFAULT ''",
+            "guest_email": "TEXT NOT NULL DEFAULT ''",
+            "guest_phone": "TEXT NOT NULL DEFAULT ''",
+            "payment_method": "TEXT NOT NULL DEFAULT 'cash'",
+            "payment_status": "TEXT NOT NULL DEFAULT 'unpaid'",
+            "paypal_order_id": "TEXT NOT NULL DEFAULT ''",
+            "paypal_capture_id": "TEXT NOT NULL DEFAULT ''",
+            "paid_at": "TEXT NOT NULL DEFAULT ''",
+            "paypal_refund_id": "TEXT NOT NULL DEFAULT ''",
+            "refunded_at": "TEXT NOT NULL DEFAULT ''",
+        }
+        for column, definition in columns.items():
             try:
-                self._conn.execute(f"ALTER TABLE orders ADD COLUMN {column_def}")
+                self._conn.execute(
+                    f"ALTER TABLE orders ADD COLUMN {column} {definition}"
+                )
                 self._conn.commit()
             except Exception as e:
                 if "duplicate column" not in str(e).lower():
                     raise
+        self._conn.execute(
+            """CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paypal_order_id
+               ON orders(paypal_order_id) WHERE paypal_order_id <> ''"""
+        )
+        self._conn.commit()
 
     # -- accounts -------------------------------------------------------------
 
@@ -238,14 +303,17 @@ class Store:
 
     def create_order(self, account_id, cart_items, notes="", guest_name="", guest_email="",
                      guest_phone="", payment_method="cash", payment_status="unpaid",
-                     paypal_order_id=""):
+                     paypal_order_id="", paypal_capture_id="", paid_at=""):
         now = _now()
         cursor = self._conn.execute(
-            """INSERT INTO orders (account_id, status, notes, guest_name, guest_email, guest_phone,
-               payment_method, payment_status, paypal_order_id, created_at)
-               VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO orders (
+                   account_id, status, notes, guest_name, guest_email, guest_phone,
+                   payment_method, payment_status, paypal_order_id,
+                   paypal_capture_id, paid_at, created_at
+               ) VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (account_id, notes, guest_name, guest_email, guest_phone,
-             payment_method, payment_status, paypal_order_id, now),
+             payment_method, payment_status, paypal_order_id,
+             paypal_capture_id, paid_at, now),
         )
         order_id = cursor.lastrowid
         for item in cart_items:
@@ -269,9 +337,56 @@ class Store:
         ).fetchall()
         return {"order": order, "items": items}
 
+    def get_order_by_paypal_order_id(self, paypal_order_id):
+        order = self._conn.execute(
+            "SELECT * FROM orders WHERE paypal_order_id = ?", (paypal_order_id,)
+        ).fetchone()
+        if not order:
+            return None
+        items = self._conn.execute(
+            "SELECT * FROM order_items WHERE order_id = ?", (order["id"],)
+        ).fetchall()
+        return {"order": order, "items": items}
+
+    def create_paypal_checkout(self, paypal_order_id, account_id, cart, expected_amount,
+                               currency, notes="", guest_name="", guest_email="",
+                               guest_phone=""):
+        now = _now()
+        self._conn.execute(
+            """INSERT INTO paypal_checkouts (
+                   paypal_order_id, account_id, cart_json, notes, guest_name,
+                   guest_email, guest_phone, expected_amount, currency,
+                   status, created_at, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'created', ?, ?)""",
+            (paypal_order_id, account_id, json.dumps(cart, sort_keys=True), notes,
+             guest_name, guest_email, guest_phone, expected_amount, currency,
+             now, now),
+        )
+        self._conn.commit()
+
+    def get_paypal_checkout(self, paypal_order_id):
+        row = self._conn.execute(
+            "SELECT * FROM paypal_checkouts WHERE paypal_order_id = ?",
+            (paypal_order_id,),
+        ).fetchone()
+        if not row:
+            return None
+        checkout = dict(row)
+        checkout["cart"] = json.loads(checkout.pop("cart_json"))
+        return checkout
+
+    def complete_paypal_checkout(self, paypal_order_id, local_order_id):
+        self._conn.execute(
+            """UPDATE paypal_checkouts
+               SET status = 'completed', local_order_id = ?, updated_at = ?
+               WHERE paypal_order_id = ?""",
+            (local_order_id, _now(), paypal_order_id),
+        )
+        self._conn.commit()
+
     def get_orders_for_account(self, account_id):
         rows = self._conn.execute(
-            "SELECT * FROM orders WHERE account_id = ? ORDER BY created_at DESC", (account_id,)
+            "SELECT * FROM orders WHERE account_id = ? ORDER BY created_at DESC, id DESC", (account_id,)
         ).fetchall()
         orders = []
         for row in rows:
@@ -284,12 +399,12 @@ class Store:
     def get_all_orders(self, status=None):
         if status:
             rows = self._conn.execute(
-                "SELECT * FROM orders ORDER BY created_at DESC"
+                "SELECT * FROM orders ORDER BY created_at DESC, id DESC"
             ).fetchall()
             rows = [r for r in rows if r["status"] == status]
         else:
             rows = self._conn.execute(
-                "SELECT * FROM orders ORDER BY created_at DESC"
+                "SELECT * FROM orders ORDER BY created_at DESC, id DESC"
             ).fetchall()
         orders = []
         for row in rows:
@@ -307,6 +422,15 @@ class Store:
         self._conn.commit()
         return True
 
+    def update_paypal_refund(self, order_id, refund_id, payment_status, refunded_at):
+        self._conn.execute(
+            """UPDATE orders
+               SET paypal_refund_id = ?, payment_status = ?, refunded_at = ?
+               WHERE id = ?""",
+            (refund_id, payment_status, refunded_at, order_id),
+        )
+        self._conn.commit()
+
     def update_admin_notes(self, order_id, notes):
         self._conn.execute("UPDATE orders SET admin_notes = ? WHERE id = ?", (notes, order_id))
         self._conn.commit()
@@ -319,6 +443,83 @@ class Store:
         )
         self._conn.commit()
         return True
+
+    # -- inventory --------------------------------------------------------------
+
+    def list_inventory(self):
+        rows = self._conn.execute("SELECT * FROM inventory ORDER BY id").fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
+    def search_inventory(self, query, limit=20):
+        rows = self._conn.execute(
+            "SELECT * FROM inventory WHERE name LIKE ? COLLATE NOCASE"
+            " ORDER BY name COLLATE NOCASE, set_code LIMIT ?",
+            (f"%{query}%", limit),
+        ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
+    def inventory_in_price_range(self, min_price, max_price):
+        rows = self._conn.execute(
+            "SELECT * FROM inventory WHERE quantity > 0 AND market_price BETWEEN ? AND ? ORDER BY id",
+            (min_price, max_price),
+        ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            item["foil"] = bool(item["foil"])
+            items.append(item)
+        return items
+
+    def replace_inventory(self, items):
+        """Full replace, mirroring the old write-the-whole-file semantics callers rely on."""
+        self._conn.execute("DELETE FROM inventory")
+        for item in items:
+            self._conn.execute(
+                """INSERT INTO inventory (
+                       id, name, set_code, collector_number, foil, condition,
+                       quantity, category, sell_price, market_price, image_url, notes
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (item["id"], item["name"], item.get("set_code", ""),
+                 item.get("collector_number", ""), int(bool(item.get("foil", False))),
+                 item.get("condition") or "Near Mint", item.get("quantity", 0),
+                 item.get("category") or "MTG Card", item.get("sell_price"),
+                 item.get("market_price", 0), item.get("image_url"), item.get("notes")),
+            )
+        self._conn.commit()
+
+    # -- inventory snapshots --------------------------------------------------
+
+    def snapshot_inventory(self):
+        """Keep the current inventory aside so a wrong bulk replace can be undone.
+
+        A publish from a half-scanned POS database is a valid-looking request that
+        replaces good stock with bad, and replace_inventory has no undo of its own.
+        """
+        items = self.list_inventory()
+        self.set_setting(INVENTORY_SNAPSHOT_KEY, json.dumps(items))
+        self.set_setting(INVENTORY_SNAPSHOT_AT_KEY, _now())
+        return len(items)
+
+    def get_inventory_snapshot(self):
+        """The listings kept by the last snapshot, and when it was taken."""
+        raw = self.get_setting(INVENTORY_SNAPSHOT_KEY)
+        if not raw:
+            return None, ""
+        try:
+            items = json.loads(raw)
+        except ValueError:
+            return None, ""
+        return items, self.get_setting(INVENTORY_SNAPSHOT_AT_KEY)
 
     # -- settings -------------------------------------------------------------
 

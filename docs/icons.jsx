@@ -321,14 +321,14 @@ const RelicVerdantmaker = ({ size = 72, color = "#5bd07a" }) => (
 // ============================================================
 
 const CLASSES = [
-  { id: "pyromancer",   name: "Pyromancer",   element: "Fire",   role: "Aggressive DoT",   tagline: "Burn DoT, high damage.",            color: "#ff6633" },
-  { id: "tidecaller",   name: "Tidecaller",   element: "Water",  role: "Sustain Healer",   tagline: "Healing, mana gen, control.",       color: "#4488ff" },
-  { id: "stonewarden",  name: "Stonewarden",  element: "Rock",   role: "Tank",             tagline: "Max defense, outlasts foes.",       color: "#cc9944" },
-  { id: "stormseeker",  name: "Stormseeker",  element: "Arc",    role: "Combo Mage",       tagline: "Fast chains, shock combos.",        color: "#ff9933" },
-  { id: "frostweaver",  name: "Frostweaver",  element: "Ice",    role: "Control",          tagline: "Freeze, control.",                  color: "#66ddff" },
-  { id: "shadowblade",  name: "Shadowblade",  element: "Shadow", role: "Debuff",           tagline: "Lifesteal, curses, Weak.",          color: "#0d0d0d" },
-  { id: "dawnmage",     name: "Dawnmage",     element: "Light",  role: "Support",          tagline: "Shields, heals, cleanses.",         color: "#ffdd00" },
-  { id: "verdantmaker", name: "Verdantmaker", element: "Grass",  role: "Scaling DoT",      tagline: "Low base damage, exponential DoT.", color: "#44cc66" },
+  { id: "pyromancer",   name: "Pyromancer",   element: "Fire",   role: "Aggressive DoT",   tagline: "Burn DoT, high damage.",            color: "#ff4422" },
+  { id: "tidecaller",   name: "Tidecaller",   element: "Water",  role: "Sustain Healer",   tagline: "Healing, mana gen, control.",       color: "#2277ff" },
+  { id: "stonewarden",  name: "Stonewarden",  element: "Rock",   role: "Tank",             tagline: "Max defense, outlasts foes.",       color: "#a87832" },
+  { id: "stormseeker",  name: "Stormseeker",  element: "Arc",    role: "Combo Mage",       tagline: "Fast chains, shock combos.",        color: "#f97316" },
+  { id: "frostweaver",  name: "Frostweaver",  element: "Ice",    role: "Control",          tagline: "Freeze, control.",                  color: "#88ddff" },
+  { id: "shadowblade",  name: "Shadowblade",  element: "Shadow", role: "Debuff",           tagline: "Lifesteal, curses, Weak.",          color: "#8c2a5e" },
+  { id: "dawnmage",     name: "Dawnmage",     element: "Light",  role: "Support",          tagline: "Shields, heals, cleanses.",         color: "#ffe234" },
+  { id: "verdantmaker", name: "Verdantmaker", element: "Plant",  role: "Scaling DoT",      tagline: "Low base damage, exponential DoT.", color: "#22c55e" },
 ];
 
 const ICONS = {

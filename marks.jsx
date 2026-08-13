@@ -62,7 +62,7 @@ const ElLight = ({ size = 64, color = "#ffe234" }) => (
     <circle cx="32" cy="32" r="3" fill={color} stroke="none" />
   </MarkFrame>
 );
-const ElGrass = ({ size = 64, color = "#22c55e" }) => (
+const ElPlant = ({ size = 64, color = "#22c55e" }) => (
   <MarkFrame size={size} color={color}>
     <path d="M22 50 Q 30 38, 45 17" />
     <path d="M22 50 C 16 42, 18 29, 29 23 C 39 21, 47 29, 45 17 C 32 17, 24 28, 22 50 Z" />
@@ -72,7 +72,7 @@ const ElGrass = ({ size = 64, color = "#22c55e" }) => (
 
 const ELEMENT_GLYPHS = {
   fire: ElFire, water: ElWater, rock: ElRock, arc: ElArc,
-  ice: ElIce, shadow: ElShadow, light: ElLight, grass: ElGrass,
+  ice: ElIce, shadow: ElShadow, light: ElLight, plant: ElPlant,
 };
 
 // ── Status glyphs (compact 24px marks) ──

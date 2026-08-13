@@ -7,3 +7,4 @@ marketplace/*.db-shm
 marketplace/*.db-wal
 .env
 marketplace/.env
+.codex-tmp/

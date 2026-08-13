@@ -574,9 +574,9 @@ const CARD_REFERENCE = [
         ]
     },
     {
-        "key": "grass",
-        "label": "Grass",
-        "icon": "TypeIcons/icon_grass.png",
+        "key": "plant",
+        "label": "Plant",
+        "icon": "TypeIcons/icon_plant.png",
         "fallbackIcon": "??",
         "color": "#22c55e",
         "cards": [

@@ -22,7 +22,7 @@
         Ice:     '#88ddff',
         Shadow:  '#8c2a5e',
         Light:   '#ffe234',
-        Grass:   '#22c55e',
+        Plant:   '#22c55e',
     };
 
     const CLASSES = {

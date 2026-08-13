@@ -9,8 +9,8 @@
         *, *::before, *::after { box-sizing: border-box; }
         :root {
             --bg: #0e0e0e; --surface: #161616; --border: rgba(255,255,255,0.08);
-            --text: #f0f0f0; --muted: #888; --accent: #c0c0c0;
-            --green: #4cb87a; --red: #e55; --blue: #5b9bd5;
+            --text: #f0f0f0; --muted: #888; --accent: #f89800;
+            --green: #4cb87a; --red: #e8362a; --blue: #2496b0;
         }
         html, body {
             margin: 0; background: var(--bg); color: var(--text);
@@ -25,14 +25,14 @@
             border-bottom: 1px solid var(--border);
         }
         .topbar-inner {
-            height: 56px; display: flex; align-items: center;
+            height: 64px; display: flex; align-items: center;
             justify-content: space-between; gap: 16px;
         }
         .brand {
             display: flex; align-items: center; gap: 10px;
             font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em;
         }
-        .brand-logo { height: 36px; width: auto; }
+        .brand-logo { height: 48px; width: auto; }
         .nav-links { display: flex; gap: 16px; align-items: center; font-size: 0.85rem; }
         .nav-links a { color: var(--muted); transition: color 120ms; }
         .nav-links a:hover { color: var(--text); }
@@ -60,7 +60,7 @@
         .btn-accent:hover { background: #a8a8a8; }
         .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
         .btn-red { background: transparent; color: var(--red); border-color: var(--red); }
-        .btn-red:hover { background: rgba(238,85,85,0.1); }
+        .btn-red:hover { background: rgba(232,54,42,0.1); }
         .card {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px;
@@ -70,11 +70,16 @@
             font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.04em;
         }
-        .status-pending { background: rgba(201,168,76,0.15); color: var(--accent); }
-        .status-packing { background: rgba(91,155,213,0.15); color: var(--blue); }
+        .status-pending { background: rgba(248,152,0,0.15); color: var(--accent); }
+        .status-packing { background: rgba(36,150,176,0.15); color: var(--blue); }
         .status-shipped { background: rgba(76,184,122,0.15); color: var(--green); }
         .status-completed { background: rgba(255,255,255,0.06); color: var(--muted); }
-        .status-cancelled { background: rgba(238,85,85,0.1); color: var(--red); }
+        .status-cancelled { background: rgba(232,54,42,0.1); color: var(--red); }
+        .payment-status {
+            display: inline-block; margin-left: 8px; font-size: 0.72rem;
+            font-weight: 600; color: var(--muted);
+        }
+        .payment-status-paid { color: var(--green); }
         input, select, textarea {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 8px; padding: 10px 14px; color: var(--text);
@@ -101,8 +106,7 @@
     <header class="topbar">
         <div class="shell topbar-inner">
             <a class="brand" href="/marketplace/">
-                <img class="brand-logo" src="/bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
-                <span>Bluegrass Memorabilia</span>
+                <img class="brand-logo" src="/bmc-logo-header.png" alt="Bluegrass Memorabilia & Collectibles">
             </a>
             <nav class="nav-links" id="nav">
                 <a href="/marketplace/">Shop</a>

@@ -123,14 +123,14 @@
 <body data-screen-label="Wizard Battle Icon Reference">
 <div class="wrap">
   <div class="logos">
-    <img class="sigil" src="master-sigil.svg" alt="Master Sigil" />
+    <img class="sigil" src="master-sigil.svg" alt="The Compass" />
     <img class="hori"  src="wordmark-horizontal.svg" alt="Wizard Battle — horizontal lockup" />
     <img class="vert"  src="wordmark-vertical.svg" alt="Wizard Battle — vertical lockup" />
   </div>
   <div id="root"></div>
 
   <footer>
-    <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), master sigil (<code>crest.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
+    <div><b>Sources</b> — class-icon grammar (<code>icons.jsx</code>), event-node system (<code>event-nodes.jsx</code>), Compass (<code>compass.js</code>), element/status glyphs (<code>marks.jsx</code>).</div>
     <div><b>Status</b> — Char · Drown · Shock · Root · Freeze · Daze · Blind · Weak · Strength · Lifesteal.</div>
     <div><b>Nodes</b> — Duel · Elite · Boss · Rest · Shop · Treasure · Mystery × Locked · Available · Active · Cleared.</div>
   </footer>
@@ -142,19 +142,19 @@
 
 <script type="text/babel" src="icons.jsx"></script>
 <script type="text/babel" src="event-nodes.jsx"></script>
-<script type="text/babel" src="crest.js"></script>
+<script type="text/babel" src="compass.js"></script>
 <script type="text/babel" src="marks.jsx"></script>
 
 <script type="text/babel">
   const { useState } = React;
 
   const STATUS = [
-    { name:"Char",      color:"#ff6633", hex:"#FF6633", type:"DoT",       mech:"Fire. Damage = stacks each turn; decays −1." },
-    { name:"Drown",     color:"#4488ff", hex:"#4488FF", type:"DoT",       mech:"Water. Damage = stacks; never decays — permanent." },
-    { name:"Shock",     color:"#ffdd00", hex:"#FFDD00", type:"Amplifier", mech:"Arc. ×1.25 per stack on Arc damage; decays −1." },
-    { name:"Root",      color:"#44cc66", hex:"#44CC66", type:"Trap",      mech:"Grass. Detonates on damage: 2× stacks; consumed." },
-    { name:"Freeze",    color:"#66ddff", hex:"#66DDFF", type:"Skip",      mech:"Ice. At 5+ stacks enemy skips; all consumed." },
-    { name:"Daze",      color:"#cc9944", hex:"#CC9944", type:"Disruption",mech:"Rock. 50% enemy repeats last action; decays −1." },
+    { name:"Char",      color:"#ff4422", hex:"#ff4422", type:"DoT",       mech:"Fire. Damage = stacks each turn; decays −1." },
+    { name:"Drown",     color:"#2277ff", hex:"#2277ff", type:"DoT",       mech:"Water. Damage = stacks; never decays — permanent." },
+    { name:"Shock",     color:"#ffe234", hex:"#ffe234", type:"Amplifier", mech:"Arc. ×1.25 per stack on Arc damage; decays −1." },
+    { name:"Root",      color:"#22c55e", hex:"#22c55e", type:"Trap",      mech:"Plant. Detonates on damage: 2× stacks; consumed." },
+    { name:"Freeze",    color:"#88ddff", hex:"#88ddff", type:"Skip",      mech:"Ice. At 5+ stacks enemy skips; all consumed." },
+    { name:"Daze",      color:"#a87832", hex:"#a87832", type:"Disruption",mech:"Rock. 50% enemy repeats last action; decays −1." },
     { name:"Blind",     color:"#f2f2f2", hex:"#F2F2F2", type:"Miss",      mech:"Light. 50% enemy attack misses; decays per hit." },
     { name:"Weak",      color:"#cc6666", hex:"#CC6666", type:"Debuff",    mech:"Enemy. All damage −25%; flat, decays −1." },
     { name:"Strength",  color:"#d4af37", hex:"#D4AF37", type:"Buff",      mech:"Enemy. +flat damage to attacks; permanent." },
@@ -217,10 +217,10 @@
     return (
       <div>
         <section>
-          <div className="shead"><h2>The Master Sigil</h2><div className="meta">crown of the set</div></div>
+          <div className="shead"><h2>The Compass</h2><div className="meta">crown of the set</div></div>
           <div className="sigil-hero">
-            <div className="icon" dangerouslySetInnerHTML={{ __html: buildCrest({ size: 280, glyph:"octagram", preset:"gold" }) }} />
-            <div className="cap">The Eightfold Master Sigil — one ray per school, each in its canonical colour. The crown of the whole icon set, drawn in the class-icon grammar.</div>
+            <div className="icon" dangerouslySetInnerHTML={{ __html: buildCompass({ size: 280, glyph:"octagram", mode:"spectrum" }) }} />
+            <div className="cap">The Eightfold The Compass — one ray per school, each in its canonical colour. The crown of the whole icon set, drawn in the class-icon grammar.</div>
           </div>
         </section>
 

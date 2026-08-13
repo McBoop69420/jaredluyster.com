@@ -29,6 +29,10 @@
     display: flex; gap: 8px; padding: 0 20px 16px; flex-wrap: wrap; align-items: center;
 }
 .order-actions select { padding: 6px 10px; font-size: 0.8rem; }
+.order-action-primary {
+    background: rgba(36,150,176,0.15); color: var(--blue); border-color: rgba(36,150,176,0.45);
+}
+.order-action-primary:hover { background: rgba(36,150,176,0.24); }
 .packing-check {
     display: flex; align-items: center; gap: 8px; cursor: pointer;
 }
@@ -118,7 +122,7 @@
             <a class="btn btn-sm {% if current_status == 'shipped' %}active{% endif %}" href="/marketplace/admin?status=shipped">Shipped</a>
             <a class="btn btn-sm {% if current_status == 'completed' %}active{% endif %}" href="/marketplace/admin?status=completed">Completed</a>
             <a class="btn btn-sm {% if current_status == 'cancelled' %}active{% endif %}" href="/marketplace/admin?status=cancelled">Cancelled</a>
-            <button class="btn btn-sm" style="margin-left:auto; color:var(--red);" onclick="cancelAllPending()">Cancel All Pending</button>
+            <button class="btn btn-sm" style="margin-left:auto; color:var(--red);" onclick="cancelAllPending(this)">Cancel All Pending</button>
         </div>
 
         <div class="card" id="session-log-section" style="margin-bottom:24px; padding:16px 20px; display:none;">
@@ -219,6 +223,51 @@
             </div>
         </details>
 
+        <details class="card" style="margin-bottom:24px; padding:0;" id="remove-card-section">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Remove Card from Inventory
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div class="fc-search-wrap" style="margin-top:12px;">
+                    <label style="font-size:0.78rem; color:var(--muted);">Card name</label>
+                    <input type="text" id="rc-search" autocomplete="off" placeholder="Start typing a card name..." style="width:100%; margin-top:4px;">
+                </div>
+                <div id="rc-results" style="margin-top:12px; display:flex; flex-direction:column; gap:2px;"></div>
+            </div>
+        </details>
+
+        <details class="card" style="margin-bottom:24px; padding:0;" id="export-tcg-section">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Export to TCGplayer
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <div style="display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap;">
+                    <button class="btn btn-accent btn-sm" onclick="tcgPick()">Pick 10 Cards ($0.50&ndash;$1 market price)</button>
+                    <span id="tcg-status" style="font-size:0.78rem; color:var(--muted);"></span>
+                </div>
+
+                <div id="tcg-results-wrap" style="display:none; margin-top:16px;">
+                    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
+                        Uncheck any you don't want to move, then remove the rest from this site once you've listed them on TCGplayer.
+                    </div>
+                    <div id="tcg-results" style="display:flex; flex-direction:column; gap:2px;"></div>
+
+                    <div style="margin-top:16px;">
+                        <label style="font-size:0.78rem; color:var(--muted);">
+                            TCGplayer Mass Entry text (paste into their bulk-add box). Name-only match &mdash;
+                            when TCGplayer asks which printing, use the set/collector # shown above to pick the right one.
+                        </label>
+                        <textarea id="tcg-export-text" rows="10" readonly style="width:100%; margin-top:4px; font-family:Consolas,monospace; font-size:0.85rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top:8px;" onclick="tcgCopy()">Copy to Clipboard</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                        <button class="btn btn-sm" id="tcg-remove-btn" style="background:var(--red); color:var(--bg); font-weight:600;" onclick="tcgRemoveChecked()">Remove Checked from Site</button>
+                    </div>
+                </div>
+            </div>
+        </details>
+
         <details class="card" style="margin-bottom:24px; padding:0;">
             <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
                 <span style="font-size:0.7rem;">&#9654;</span> Email Settings
@@ -247,6 +296,28 @@
                     <button class="btn btn-accent btn-sm" onclick="saveSmtp()">Save</button>
                     <button class="btn btn-sm" onclick="testSmtp()">Send Test Email</button>
                     <span id="smtp-msg" style="font-size:0.82rem; margin-left:8px;"></span>
+                </div>
+            </div>
+        </details>
+
+        <details class="card" style="margin-bottom:24px; padding:0;">
+            <summary style="padding:16px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; list-style:none; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.7rem;">&#9654;</span> Order Notifications (Discord)
+                <span id="discord-status" style="font-size:0.72rem; margin-left:auto;"></span>
+            </summary>
+            <div style="padding:0 20px 20px; border-top:1px solid var(--border);">
+                <p style="font-size:0.8rem; color:var(--muted); margin:16px 0 4px; line-height:1.5;">
+                    In Discord, go to a channel's Settings &rarr; Integrations &rarr; Webhooks &rarr; New Webhook, then paste its URL here.
+                    You'll get a message there every time an order comes in.
+                </p>
+                <div class="field" style="margin-top:12px;">
+                    <label>Webhook URL</label>
+                    <input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/..." style="width:100%">
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+                    <button class="btn btn-accent btn-sm" onclick="saveDiscord()">Save</button>
+                    <button class="btn btn-sm" onclick="testDiscord()">Send Test Notification</button>
+                    <span id="discord-msg" style="font-size:0.82rem; margin-left:8px;"></span>
                 </div>
             </div>
         </details>
@@ -299,11 +370,20 @@
                         {% if order.guest_name %}<span class="order-customer" style="color:var(--muted); font-size:0.72rem; text-transform:uppercase;">Guest</span>{% endif %}
                         <span class="order-email">({{ order.guest_email if order.guest_name else (acct.email if acct else '') }}{% if order.guest_phone %} · {{ order.guest_phone }}{% endif %})</span>
                         <span class="order-date">{{ order.created_at[:10] }}</span>
+                        {% if order.payment_status == 'refunded' %}
+                        <span class="payment-status" title="Refund {{ order.paypal_refund_id }}">Refunded by PayPal</span>
+                        {% elif order.payment_status == 'refund_pending' %}
+                        <span class="payment-status" title="Refund {{ order.paypal_refund_id }}">PayPal refund pending</span>
+                        {% elif order.payment_method == 'paypal' %}
+                        <span class="payment-status payment-status-paid" title="Capture {{ order.paypal_capture_id }}">Paid with PayPal</span>
+                        {% else %}
+                        <span class="payment-status">Cash at pickup</span>
+                        {% endif %}
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="status-badge" id="pay-badge-{{ order.id }}"
                               style="{% if order.payment_status == 'paid' %}background:rgba(76,184,122,0.15); color:var(--green){% else %}background:rgba(255,255,255,0.06); color:var(--muted){% endif %}">
-                            {{ 'PayPal' if order.payment_method == 'paypal' else 'Cash' }} · {{ 'Paid' if order.payment_status == 'paid' else 'Unpaid' }}
+                            {{ 'PayPal' if order.payment_method == 'paypal' else 'Cash' }} · {{ order.payment_status | replace('_', ' ') | title }}
                         </span>
                         <span class="status-badge status-{{ order.status }}">{{ order.status }}</span>
                     </div>
@@ -344,10 +424,22 @@
                         <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
                         {% endfor %}
                     </select>
-                    <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
-                        onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
-                        {{ 'Mark unpaid' if order.payment_status == 'paid' else 'Mark paid' }}
-                    </button>
+                    {% if order.status == 'pending' %}
+                        <button class="btn btn-sm order-action-primary"
+                            onclick="markPacked({{ order.id }}, this)">Mark packed</button>
+                    {% endif %}
+                    {% if order.status not in ['shipped', 'completed', 'cancelled'] %}
+                        <button class="btn btn-sm btn-red"
+                            onclick="cancelOrder({{ order.id }}, this, {{ 'true' if order.payment_method == 'paypal' and order.payment_status == 'paid' else 'false' }})">
+                            Cancel order
+                        </button>
+                    {% endif %}
+                    {% if order.payment_method != 'paypal' %}
+                        <button class="btn btn-sm" id="pay-btn-{{ order.id }}"
+                            onclick="togglePaid({{ order.id }})" data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
+                            {{ 'Mark unpaid' if order.payment_status == 'paid' else 'Mark paid' }}
+                        </button>
+                    {% endif %}
                     <textarea class="admin-notes-input" placeholder="Admin notes..."
                         onblur="saveNotes({{ order.id }}, this.value)">{{ order.admin_notes }}</textarea>
                 </div>
@@ -365,18 +457,41 @@
 
 {% block extra_js %}
 <script>
+function adminResponse(response) {
+    return response.json().then(function(data) {
+        if (!response.ok) throw new Error(data.error || 'The update failed.');
+        return data;
+    });
+}
+
 function updateStatus(orderId, status) {
     fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({status: status})
-    }).then(function() {
-        var badge = document.querySelector('#order-' + orderId + ' .status-badge');
-        badge.className = 'status-badge status-' + status;
-        badge.textContent = status;
+    }).then(adminResponse).then(function() {
+        window.location.reload();
+    }).catch(function(error) {
+        alert(error.message);
+        window.location.reload();
     });
 }
 
-function cancelAllPending() {
+function markPacked(orderId, button) {
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    updateStatus(orderId, 'packing');
+}
+
+function cancelOrder(orderId, button, willRefund) {
+    var message = 'Cancel order #' + orderId + ' and return its cards to inventory?';
+    if (willRefund) message += ' Its captured PayPal payment will also be refunded.';
+    if (!confirm(message)) return;
+    button.disabled = true;
+    button.textContent = 'Cancelling...';
+    updateStatus(orderId, 'cancelled');
+}
+
+function cancelAllPending(button) {
     var cards = document.querySelectorAll('.order-card');
     var pendingIds = [];
     cards.forEach(function(card) {
@@ -388,19 +503,18 @@ function cancelAllPending() {
     if (!pendingIds.length) { alert('No pending orders on this page.'); return; }
     if (!confirm('Cancel ' + pendingIds.length + ' pending order(s) and restore their cards to inventory?')) return;
 
-    var btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Cancelling...';
-
-    var remaining = pendingIds.length;
-    pendingIds.forEach(function(orderId) {
-        fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
+    button.disabled = true;
+    button.textContent = 'Cancelling...';
+    Promise.all(pendingIds.map(function(orderId) {
+        return fetch('/marketplace/api/admin/orders/' + orderId + '/status', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({status: 'cancelled'})
-        }).then(function() {
-            remaining -= 1;
-            if (remaining === 0) window.location.reload();
-        });
+        }).then(adminResponse);
+    })).then(function() {
+        window.location.reload();
+    }).catch(function(error) {
+        alert(error.message);
+        window.location.reload();
     });
 }
 
@@ -423,6 +537,16 @@ fetch('/marketplace/api/admin/settings').then(function(r) { return r.json(); }).
     } else {
         status.textContent = 'Not configured';
         status.style.color = 'var(--red)';
+    }
+
+    document.getElementById('discord-webhook-url').value = d.discord_webhook_url || '';
+    var discordStatus = document.getElementById('discord-status');
+    if (d.discord_webhook_url) {
+        discordStatus.textContent = 'Configured';
+        discordStatus.style.color = 'var(--green)';
+    } else {
+        discordStatus.textContent = 'Not configured';
+        discordStatus.style.color = 'var(--red)';
     }
 
     document.getElementById('paypal-client-id').value = d.paypal_client_id || '';
@@ -500,6 +624,42 @@ function saveSmtp() {
     });
 }
 
+function saveDiscord() {
+    var msg = document.getElementById('discord-msg');
+    msg.textContent = '';
+    fetch('/marketplace/api/admin/settings', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            discord_webhook_url: document.getElementById('discord-webhook-url').value
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        msg.textContent = 'Saved!';
+        msg.style.color = 'var(--green)';
+        var configured = !!document.getElementById('discord-webhook-url').value;
+        var status = document.getElementById('discord-status');
+        status.textContent = configured ? 'Configured' : 'Not configured';
+        status.style.color = configured ? 'var(--green)' : 'var(--red)';
+    });
+}
+
+function testDiscord() {
+    var msg = document.getElementById('discord-msg');
+    msg.textContent = 'Sending...';
+    msg.style.color = 'var(--muted)';
+    fetch('/marketplace/api/admin/settings/test-discord', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}
+    }).then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        if (res.ok) {
+            msg.textContent = res.data.message;
+            msg.style.color = 'var(--green)';
+        } else {
+            msg.textContent = res.data.error;
+            msg.style.color = 'var(--red)';
+        }
+    });
+}
+
 var SESSION_LOG_KEY = 'bmc_admin_session_log';
 var sessionLog = [];
 
@@ -565,14 +725,17 @@ function sessionLogRender() {
         }
         var foilTag = e.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
         var row = document.createElement('div');
-        row.style.cssText = 'display:flex; justify-content:space-between; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
+        row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:0.82rem; padding:5px 0; border-bottom:1px solid var(--border);';
         row.innerHTML =
             '<span>' +
                 '<span style="color:var(--muted); font-size:0.72rem;">' + stamp + '</span> ' +
                 '<strong>+' + e.qty + '</strong> ' + e.name + foilTag +
                 ' <span style="color:var(--muted)">' + e.set_code.toUpperCase() + ' #' + e.collector_number + '</span>' +
             '</span>' +
-            '<span style="color:var(--accent); white-space:nowrap;">$' + (e.qty * e.sell_price).toFixed(2) + '</span>';
+            '<span style="display:flex; align-items:center; gap:10px; white-space:nowrap;">' +
+                '<span style="color:var(--accent);">$' + (e.qty * e.sell_price).toFixed(2) + '</span>' +
+                '<button class="btn btn-sm" data-idx="' + i + '" onclick="sessionLogCancel(this)" title="Undo this add" style="padding:2px 8px; color:var(--red);">Cancel</button>' +
+            '</span>';
         list.appendChild(row);
     }
 
@@ -584,6 +747,39 @@ function sessionLogClear() {
     sessionLog = [];
     sessionLogSave();
     sessionLogRender();
+}
+
+function sessionLogCancel(btn) {
+    var idx = parseInt(btn.dataset.idx);
+    var entry = sessionLog[idx];
+    if (!entry) return;
+
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    fetch('/marketplace/api/admin/quick-add/undo', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            set_code: entry.set_code,
+            collector_number: entry.collector_number,
+            foil: entry.foil,
+            qty: entry.qty
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+            sessionLog.splice(idx, 1);
+            sessionLogSave();
+            sessionLogRender();
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Cancel';
+            alert(d.error || 'Could not undo this add.');
+        }
+    }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Cancel';
+        alert('Could not reach the server to undo this add.');
+    });
 }
 
 var fcDebounce = null;
@@ -864,6 +1060,213 @@ function qaAdd() {
             msg.textContent = d.error;
             msg.style.color = 'var(--red)';
         }
+    });
+}
+
+var rcDebounce = null;
+
+document.getElementById('rc-search').addEventListener('input', function() {
+    var q = this.value.trim();
+    clearTimeout(rcDebounce);
+    if (q.length < 2) { document.getElementById('rc-results').innerHTML = ''; return; }
+    rcDebounce = setTimeout(function() { rcSearch(q); }, 200);
+});
+
+function rcSearch(q) {
+    fetch('/marketplace/api/admin/cards/search?q=' + encodeURIComponent(q))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var box = document.getElementById('rc-results');
+            box.innerHTML = '';
+            var results = d.results || [];
+            if (!results.length) {
+                box.innerHTML = '<div style="color:var(--muted); font-size:0.82rem; padding:8px 0;">No matching cards in inventory.</div>';
+                return;
+            }
+            results.forEach(function(item) { box.appendChild(rcRow(item)); });
+        });
+}
+
+function rcRow(item) {
+    var foilTag = item.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:0.85rem; padding:8px 0; border-bottom:1px solid var(--border);';
+
+    var info = document.createElement('span');
+    info.innerHTML = item.name + foilTag +
+        ' <span style="color:var(--muted)">' + item.set_code.toUpperCase() + ' #' + item.collector_number + '</span>' +
+        ' <span id="rc-qty-label-' + item.id + '" style="color:var(--muted)">(' + item.quantity + ' in stock)</span>';
+
+    var controls = document.createElement('span');
+    controls.style.cssText = 'display:flex; align-items:center; gap:8px;';
+    var qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.min = '1';
+    qtyInput.max = String(item.quantity);
+    qtyInput.value = String(item.quantity);
+    qtyInput.style.width = '60px';
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-sm';
+    removeBtn.style.color = 'var(--red)';
+    removeBtn.textContent = 'Remove';
+    removeBtn.onclick = function() { rcRemove(item, qtyInput, removeBtn, row, info); };
+
+    controls.appendChild(qtyInput);
+    controls.appendChild(removeBtn);
+    row.appendChild(info);
+    row.appendChild(controls);
+    return row;
+}
+
+function rcRemove(item, qtyInput, btn, row, info) {
+    var qty = parseInt(qtyInput.value) || 0;
+    if (qty < 1) return;
+    if (!confirm('Remove ' + qty + ' x ' + item.name + ' from inventory?')) return;
+
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    fetch('/marketplace/api/admin/quick-add/undo', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            set_code: item.set_code,
+            collector_number: item.collector_number,
+            foil: item.foil,
+            qty: qty
+        })
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+            if (d.removed) {
+                row.remove();
+            } else {
+                item.quantity -= qty;
+                qtyInput.max = String(item.quantity);
+                qtyInput.value = String(item.quantity);
+                btn.disabled = false;
+                btn.textContent = 'Remove';
+                var label = document.getElementById('rc-qty-label-' + item.id);
+                if (label) label.textContent = '(' + item.quantity + ' in stock)';
+            }
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Remove';
+            alert(d.error || 'Could not remove this card.');
+        }
+    }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Remove';
+        alert('Could not reach the server to remove this card.');
+    });
+}
+
+var tcgPicked = [];
+
+function tcgPick() {
+    var status = document.getElementById('tcg-status');
+    status.textContent = 'Picking...';
+    status.style.color = 'var(--muted)';
+
+    fetch('/marketplace/api/admin/inventory/export-batch?min=0.5&max=1&count=10')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.error) {
+                status.textContent = d.error;
+                status.style.color = 'var(--red)';
+                return;
+            }
+            tcgPicked = d.results || [];
+            document.getElementById('tcg-results-wrap').style.display = tcgPicked.length ? 'block' : 'none';
+            status.textContent = tcgPicked.length
+                ? tcgPicked.length + ' picked from ' + d.pool_size + ' matching cards (' + d.underpriced_pool_size + ' priced below market)'
+                : 'No cards found in that price range';
+            status.style.color = tcgPicked.length ? 'var(--green)' : 'var(--red)';
+            tcgRenderResults();
+        });
+}
+
+function tcgRenderResults() {
+    var box = document.getElementById('tcg-results');
+    box.innerHTML = '';
+    tcgPicked.forEach(function(item, i) {
+        var foilTag = item.foil ? ' <span style="color:var(--accent);font-size:0.7rem">FOIL</span>' : '';
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:10px; font-size:0.85rem; padding:6px 0; border-bottom:1px solid var(--border);';
+        row.innerHTML =
+            '<input type="checkbox" checked data-idx="' + i + '" style="width:16px;height:16px;accent-color:var(--accent);">' +
+            '<span style="flex:1;">' + item.name + foilTag +
+                ' <span style="color:var(--muted)">' + item.set_code.toUpperCase() + ' #' + item.collector_number +
+                ' &middot; qty ' + item.quantity + '</span>' +
+            '</span>' +
+            '<span style="color:var(--accent); white-space:nowrap;">$' + (item.market_price || 0).toFixed(2) + '</span>';
+        row.querySelector('input').addEventListener('change', tcgUpdateExportText);
+        box.appendChild(row);
+    });
+    tcgUpdateExportText();
+}
+
+function tcgCheckedItems() {
+    var checkboxes = document.querySelectorAll('#tcg-results input[type="checkbox"]');
+    var checked = [];
+    checkboxes.forEach(function(cb) {
+        if (cb.checked) checked.push(tcgPicked[parseInt(cb.dataset.idx)]);
+    });
+    return checked;
+}
+
+function tcgUpdateExportText() {
+    var lines = tcgCheckedItems().map(function(item) { return item.quantity + ' ' + item.name; });
+    document.getElementById('tcg-export-text').value = lines.join('\n');
+}
+
+function tcgCopy() {
+    var textarea = document.getElementById('tcg-export-text');
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).catch(function() {
+        document.execCommand('copy');
+    });
+}
+
+function tcgRemoveChecked() {
+    var checked = tcgCheckedItems();
+    if (!checked.length) return;
+    if (!confirm('Remove ' + checked.length + ' listing(s) from this site? You should have them listed on TCGplayer first.')) return;
+
+    var btn = document.getElementById('tcg-remove-btn');
+    btn.disabled = true;
+    btn.textContent = 'Removing...';
+
+    var remaining = checked.length;
+    var failures = [];
+    checked.forEach(function(item) {
+        fetch('/marketplace/api/admin/quick-add/undo', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                set_code: item.set_code,
+                collector_number: item.collector_number,
+                foil: item.foil,
+                qty: item.quantity
+            })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (!d.ok) failures.push(item.name);
+        }).catch(function() {
+            failures.push(item.name);
+        }).finally(function() {
+            remaining -= 1;
+            if (remaining === 0) {
+                btn.disabled = false;
+                btn.textContent = 'Remove Checked from Site';
+                tcgPicked = tcgPicked.filter(function(item) { return checked.indexOf(item) === -1 || failures.indexOf(item.name) !== -1; });
+                tcgRenderResults();
+                var status = document.getElementById('tcg-status');
+                if (failures.length) {
+                    status.textContent = 'Removed ' + (checked.length - failures.length) + ', failed: ' + failures.join(', ');
+                    status.style.color = 'var(--red)';
+                } else {
+                    status.textContent = 'Removed ' + checked.length + ' listing(s) from the site.';
+                    status.style.color = 'var(--green)';
+                }
+            }
+        });
     });
 }
 

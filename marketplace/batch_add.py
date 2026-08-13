@@ -305,10 +305,19 @@ class BatchAddApp(tk.Tk):
         total_cards = sum(r["qty"] for r in self._results)
         self._status_var.set(f"Added {total_cards} cards. Publishing...")
 
-        subprocess.run([sys.executable, str(PUBLISH_SCRIPT)], cwd=str(PUBLISH_SCRIPT.parent))
+        result = subprocess.run(
+            [sys.executable, str(PUBLISH_SCRIPT)],
+            cwd=str(PUBLISH_SCRIPT.parent), capture_output=True, text=True,
+        )
 
         batch_total = sum(r["line_total"] for r in self._results)
-        self._status_var.set(f"Done! Added {total_cards} cards (${batch_total:.2f}) and republished.")
+        if result.returncode != 0:
+            error = (result.stderr or result.stdout or "unknown error").strip().splitlines()[-1]
+            self._status_var.set(
+                f"Added {total_cards} cards (${batch_total:.2f}) locally, but publishing failed: {error}"
+            )
+        else:
+            self._status_var.set(f"Done! Added {total_cards} cards (${batch_total:.2f}) and republished.")
         self._results = []
 
 

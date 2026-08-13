@@ -24,6 +24,21 @@ The static site (GitHub Pages) serves `radio.html` but cannot run the streaming 
 Deploy the radio service separately and point DNS / a reverse proxy at
 `https://radio.jaredluyster.com/`.
 
+## Marketplace payments
+
+The marketplace uses PayPal Checkout with server-side order creation and capture.
+Configure the client ID, client secret, and sandbox/live mode from the marketplace
+admin settings. Deployment environment variables can override those settings:
+
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_ENVIRONMENT` (`sandbox` while testing, then `live`)
+- `PAYPAL_CURRENCY` (`USD` by default)
+
+The client secret must stay in the deployment environment or the protected settings
+database and must not be committed.
+The cart continues to support cash-at-pickup reservations when PayPal is unavailable.
+
 ## Source Control
 
 Run Git commands from inside `website/` to manage the site history independently from the main game project.

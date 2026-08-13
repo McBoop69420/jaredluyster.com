@@ -18,7 +18,7 @@ One per type. Found at Combat (Battle) nodes.
 | frost_wolf | Frost Wolf | Ice | 25–33 | 🐺 | Attack 8 → Apply 1 Freeze → Attack 10 |
 | shade_wraith | Shade Wraith | Shadow | 20–30 | 👻 | Attack 8 → Apply 2 Weak → Attack 11 |
 | holy_sentinel | Holy Sentinel | Light | 28–36 | 🛡 | Defend 8 → Attack 8 → Defend 6 → Attack 12 |
-| vine_creeper | Vine Creeper | Grass | 22–30 | 🌱 | Attack 4 → Apply 2 Root → Attack 5 |
+| vine_creeper | Vine Creeper | Plant | 22–30 | 🌱 | Attack 4 → Apply 2 Root → Attack 5 |
 
 ---
 
@@ -35,7 +35,7 @@ Found at Elite nodes (fixed floors). +15 gold reward over common.
 | frost_lich | Frost Lich | Ice | 52–68 | 💀 | Apply 2 Freeze → Attack 12 → Apply 3 Freeze → Attack 16 → Defend 8 |
 | shadow_stalker | Shadow Stalker | Shadow | 45–60 | 🦇 | Attack 10 → Apply 3 Weak → Attack 14 → Buff +2 Strength |
 | radiant_knight | Radiant Knight | Light | 55–70 | ⚔️ | Defend 14 → Attack 12 → Apply 3 Blind → Attack 16 → Defend 10 |
-| thornwood | Thornwood | Grass | 50–65 | 🌳 | Apply 3 Root → Attack 8 → Apply 4 Root → Attack 12 → Defend 10 |
+| thornwood | Thornwood | Plant | 50–65 | 🌳 | Apply 3 Root → Attack 8 → Apply 4 Root → Attack 12 → Defend 10 |
 
 ---
 
@@ -52,7 +52,7 @@ One boss is randomly chosen per run. Fixed HP (no variance). All bosses have 5-i
 | glacial_mass | Glacial Mass | Ice | 158 | 🧊 | Apply 3 Freeze → Attack 18 → Defend 22 → Attack 24 → Apply 4 Freeze |
 | shadow_sovereign | Shadow Sovereign | Shadow | 152 | 🌑 | Apply 4 Weak → Attack 20 → Buff +3 Str → Attack 18 → Attack 28 |
 | celestial_arbiter | Celestial Arbiter | Light | 155 | ✨ | Defend 22 → Attack 18 → Buff +3 Str → Attack 24 → Defend 16 |
-| world_root | World Root | Grass | 160 | 🌲 | Apply 4 Root → Defend 20 → Attack 16 → Apply 5 Root → Attack 22 |
+| world_root | World Root | Plant | 160 | 🌲 | Apply 4 Root → Defend 20 → Attack 16 → Apply 5 Root → Attack 22 |
 
 ---
 
@@ -72,7 +72,7 @@ One boss is randomly chosen per run. Fixed HP (no variance). All bosses have 5-i
 
 **Celestial Arbiter (Light):** Most defensive boss — high block on intents 1 and 5. Burst damage or sustained DoT needed to work through block cycles.
 
-**World Root (Grass):** Applies massive Root stacks — watch for its attack intents triggering Root detonation on *itself* if you apply Root back. Intent 4 applies 5 Root before its own attack intent.
+**World Root (Plant):** Applies massive Root stacks — watch for its attack intents triggering Root detonation on *itself* if you apply Root back. Intent 4 applies 5 Root before its own attack intent.
 
 ---
 
@@ -90,10 +90,10 @@ Every enemy acts on its type's initial speed (see the Type Matchups Bible → Sp
 | Light | 5 |
 | Water | 5 |
 | Ice | 4 |
-| Grass | 4 |
+| Plant | 4 |
 | Rock | 4 |
 
-**Status-intent suppression:** An enemy intent that applies a status is suppressed while the enemy bears the countering status. Example: a Vine Creeper (Grass) bearing Char (Fire's signature) cannot use its "Apply 2 Root" intent — Char counters Root. The intent does nothing for as long as the countering status persists. This is how the player's primal-counter status neutralizes the enemy's signature.
+**Status-intent suppression:** An enemy intent that applies a status is suppressed while the enemy bears the countering status. Example: a Vine Creeper (Plant) bearing Char (Fire's signature) cannot use its "Apply 2 Root" intent — Char counters Root. The intent does nothing for as long as the countering status persists. This is how the player's primal-counter status neutralizes the enemy's signature.
 
 ---
 

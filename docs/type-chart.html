@@ -357,8 +357,8 @@
 
 
     <script>
-        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Grass'];
-        const CYCLE = ['Fire','Grass','Ice','Rock','Arc','Water']; // primal cycle order
+        const TYPES = ['Fire','Water','Rock','Arc','Ice','Shadow','Light','Plant'];
+        const CYCLE = ['Fire','Plant','Ice','Rock','Arc','Water']; // primal cycle order
 
         const TYPE_ICONS = {
             Fire:   '../TypeIcons/icon_fire.png',
@@ -368,7 +368,7 @@
             Ice:    '../TypeIcons/icon_ice.png',
             Shadow: '../TypeIcons/icon_shadow.png',
             Light:  '../TypeIcons/icon_light.png',
-            Grass:  '../TypeIcons/icon_grass.png',
+            Plant:  '../TypeIcons/icon_plant.png',
         };
 
         const TYPE_COLORS = {
@@ -379,20 +379,20 @@
             Ice:    '#88ddff',
             Shadow: '#8c2a5e',
             Light:  '#ffe234',
-            Grass:  '#22c55e',
+            Plant:  '#22c55e',
         };
 
         // Canonical matrix from the Atlas Type Matchups spec.
         // Row = attacker, Column = defender. ×2 / ×0.5 / ×1.
         const EFF = {
-            Fire:   { Fire:1, Water:0.5, Rock:1,   Arc:0.5, Ice:2,   Grass:2,   Shadow:1, Light:1   },
-            Water:  { Fire:2, Water:1,   Rock:0.5, Arc:0.5, Ice:1,   Grass:2,   Shadow:1, Light:1   },
-            Rock:   { Fire:1, Water:2,   Rock:1,   Arc:2,   Ice:0.5, Grass:0.5, Shadow:1, Light:1   },
-            Arc:    { Fire:2, Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Grass:1,   Shadow:1, Light:1   },
-            Ice:    { Fire:0.5, Water:1, Rock:2,   Arc:2,   Ice:1,   Grass:0.5, Shadow:1, Light:1   },
-            Grass:  { Fire:0.5, Water:0.5, Rock:2, Arc:1,   Ice:2,   Grass:1,   Shadow:1, Light:1   },
-            Shadow: { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Grass:1,   Shadow:1, Light:2   },
-            Light:  { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Grass:1,   Shadow:2, Light:1   },
+            Fire:   { Fire:1, Water:0.5, Rock:1,   Arc:0.5, Ice:2,   Plant:2,   Shadow:1, Light:1   },
+            Water:  { Fire:2, Water:1,   Rock:0.5, Arc:0.5, Ice:1,   Plant:2,   Shadow:1, Light:1   },
+            Rock:   { Fire:1, Water:2,   Rock:1,   Arc:2,   Ice:0.5, Plant:0.5, Shadow:1, Light:1   },
+            Arc:    { Fire:2, Water:2,   Rock:0.5, Arc:1,   Ice:0.5, Plant:1,   Shadow:1, Light:1   },
+            Ice:    { Fire:0.5, Water:1, Rock:2,   Arc:2,   Ice:1,   Plant:0.5, Shadow:1, Light:1   },
+            Plant:  { Fire:0.5, Water:0.5, Rock:2, Arc:1,   Ice:2,   Plant:1,   Shadow:1, Light:1   },
+            Shadow: { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Plant:1,   Shadow:1, Light:2   },
+            Light:  { Fire:1, Water:1,   Rock:1,   Arc:1,   Ice:1,   Plant:1,   Shadow:2, Light:1   },
         };
 
         // ── Node positions ────────────────────────────────────
