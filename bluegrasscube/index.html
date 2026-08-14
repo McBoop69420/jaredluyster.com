@@ -282,7 +282,27 @@
         const CUBE_IDS = [
             'ff7caa01-4bc4-451c-b659-dc3424468938',
             '9hd',
+            '91af0e8e-033e-4911-acce-2663ca4f50c4',
         ];
+
+        // CubeCobra descriptions use Markdown (headers, blockquotes, images, [[card]] links).
+        // Pull the first line that reads as actual prose, stripped of markup, for the card primer.
+        function extractPrimer(description) {
+            const lines = (description || '').split('\n');
+            for (let line of lines) {
+                let cleaned = line
+                    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')   // ![alt][ref] images
+                    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')    // ![alt](url) images
+                    .replace(/\[\[([^\]]+)\]\]/g, '$1')      // [[Card Name]] -> Card Name
+                    .replace(/^[#>*<\s]+|[#>*<\s]+$/g, '')   // strip leading/trailing markup chars
+                    .replace(/\*\*/g, '')                    // bold markers
+                    .trim();
+                if (cleaned.length > 40 && /[a-zA-Z]{3,}/.test(cleaned)) {
+                    return cleaned.length > 220 ? cleaned.slice(0, 217) + '…' : cleaned;
+                }
+            }
+            return '';
+        }
 
         const listEl = document.getElementById('cube-list');
 
@@ -308,7 +328,7 @@
                 .then(data => {
                     card.querySelector('.cube-name').textContent = data.name || 'Untitled Cube';
 
-                    const primer = (data.description || '').split('\n')[0].trim();
+                    const primer = extractPrimer(data.description);
                     card.querySelector('.primer').textContent = primer || 'No description provided.';
 
                     const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
