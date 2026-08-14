@@ -291,6 +291,11 @@
             '9j0',
         ];
 
+        // Override the display name for specific cubes (e.g. a nickname the group uses).
+        const NAME_OVERRIDES = {
+            '9hd': "Austin's \"Bangers Only\" Cube",
+        };
+
         // CubeCobra descriptions use Markdown (headers, blockquotes, images, [[card]] links).
         // Pull the first line that reads as actual prose, stripped of markup, for the card primer.
         function extractPrimer(description) {
@@ -314,6 +319,10 @@
         const listEl = document.getElementById('cube-list');
         const PINNED_ID = 'BluegrassCube';
 
+        function displayName(cubeId, data) {
+            return NAME_OVERRIDES[cubeId] || (data?.name || 'Untitled Cube').trim();
+        }
+
         function renderCube(cubeId, data) {
             const card = document.createElement('a');
             card.className = 'cube-card';
@@ -334,7 +343,7 @@
             card.append(row, primerEl);
 
             if (data) {
-                nameEl.textContent = (data.name || 'Untitled Cube').trim();
+                nameEl.textContent = displayName(cubeId, data);
                 primerEl.textContent = extractPrimer(data.description) || 'No description provided.';
 
                 const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
@@ -362,8 +371,8 @@
             results.sort((a, b) => {
                 if (a.cubeId === PINNED_ID) return -1;
                 if (b.cubeId === PINNED_ID) return 1;
-                const nameA = (a.data?.name || a.cubeId).trim().toLowerCase();
-                const nameB = (b.data?.name || b.cubeId).trim().toLowerCase();
+                const nameA = displayName(a.cubeId, a.data).toLowerCase();
+                const nameB = displayName(b.cubeId, b.data).toLowerCase();
                 return nameA.localeCompare(nameB);
             });
             results.forEach(({ cubeId, data }) => renderCube(cubeId, data));
