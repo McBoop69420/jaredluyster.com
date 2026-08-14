@@ -45,6 +45,17 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 - `GET /marketplace/admin` → admin dashboard (admin required)
 - Plus API endpoints for auth, cart, orders, admin, and PayPal
 
+### 1b. Bluegrass Cube Staging — Cloudflare Pages (static, separate project)
+
+- **Purpose:** Staging/working area for Bluegrass Cube group content (cube options, lists, etc.), separate from the live `bluegrasscube.com` site.
+- **Host:** A dedicated Cloudflare Pages project (not Render, not GitHub Pages — this repo's GitHub Pages slot is already used by `docs/` → `wizardbattle.jaredluyster.com`, and GitHub only allows one custom domain per repo). Same category of hosting as `sports.jaredluyster.com`.
+- **Files served from:** `bluegrasscube/` directory in repo root (currently just `index.html`, placeholder content).
+- **Subdomain:** `bluegrasscube.jaredluyster.com`
+- **Setup required (not yet done as of this writing):**
+  1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → `McBoop69420/jaredluyster.com`.
+  2. Build settings: Framework preset **None**, build command *(empty)*, root/output directory **`bluegrasscube`**.
+  3. Deploy, then add `bluegrasscube.jaredluyster.com` as a custom domain on that Pages project (dashboard walks through the DNS record — no manual CNAME needed since Cloudflare manages it automatically for Pages custom domains on a zone it already controls).
+
 ### 2. Wizard Battle Site — GitHub Pages (static)
 
 - **Host:** GitHub Pages
@@ -164,6 +175,7 @@ jaredluyster.com/
 │       ├── orders.html     # Order history
 │       ├── forgot_password.html
 │       └── reset_password.html
+├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -204,6 +216,7 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `jaredluyster.com/marketplace/` | Marketplace | Render (Flask) |
 | `wizardbattle.jaredluyster.com` | Wizard Battle site | GitHub Pages (docs/) |
 | `shop.jaredluyster.com` | Marketplace (redirect) | Render (Flask) |
+| `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper | Self-hosted (Cloudflare Tunnel + Access) |
 | `sports.jaredluyster.com` | McBoop Sports (live scores) | Cloudflare-hosted (Pages/Worker) + Access |
