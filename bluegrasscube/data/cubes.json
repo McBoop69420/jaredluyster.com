@@ -1,0 +1,71 @@
+{
+  "_comment": "Cube directory. id is the CubeCobra ID (short or UUID); link target is https://cubecobra.com/cube/list/<id>. nameOverride replaces the CubeCobra name when set (group nicknames). strategy is hand-curated, not auto-generated. pinned cubes sort first; the rest sort alphabetically by display name. thumbnail is an optional community-art image path; when null, try pulling art from the CubeCobra API.",
+  "cubes": [
+    {
+      "id": "BluegrassCube",
+      "pinned": true,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": "Leans into combo and synergy over classic Vintage archetypes (e.g. Doomsday), and is currently featuring the Initiative mechanic from Commander Legends: Battle for Baldur's Gate."
+    },
+    {
+      "id": "ff7caa01-4bc4-451c-b659-dc3424468938",
+      "pinned": false,
+      "nameOverride": "Commander Cube",
+      "thumbnail": null,
+      "strategy": null
+    },
+    {
+      "id": "9hd",
+      "pinned": false,
+      "nameOverride": "Bangers Only Cube (Legacy+)",
+      "thumbnail": null,
+      "strategy": "Cross-synergies center on ETBs, +1/+1 counters, and cheating creatures into play."
+    },
+    {
+      "id": "91af0e8e-033e-4911-acce-2663ca4f50c4",
+      "pinned": false,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": "WR Aggro/Heroic · GB Graveyard · WB Drain/Reanimator · WU Heroic/Flyers · UB Mill/Control · RB Burn/Minotaurs · RG Stompy/Satyrs · WG +1/+1 Counters/Centaurs · UR Burn/Spells Matter"
+    },
+    {
+      "id": "fc1f6adf-ea38-46d9-b04e-fd8e1a2361c2",
+      "pinned": false,
+      "nameOverride": "Live the Dream Cube",
+      "thumbnail": null,
+      "strategy": "Emulates Commander's splashy, high-variance gameplay in a normal Cube format — expect big mana ramp and swingy bombs."
+    },
+    {
+      "id": "2d231bc9-1b10-4817-a889-9d86f17dacb9",
+      "pinned": false,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": "WU Blink/Tempo · UB Control/Reanimator · BR Sacrifice/Aggro · RG Ramp/Stompy · GW Auras/Voltron · WB Aristocrats · UR Spells Matter · BG Graveyard/Midrange · RW Aggro/Tokens · GU Ramp/Elves"
+    },
+    {
+      "id": "dd8fd6de-353e-43a1-9a2f-e6f764808f72",
+      "pinned": false,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": "Artifact-centric, with blink, sacrifice, and modified-creature subthemes. Most decks land on two colors, though mono and three-color builds are viable."
+    },
+    {
+      "id": "ruo",
+      "pinned": false,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": "WU Flicker · UB Reanimator · BR Sacrifice · RG Power · GW Enchantments · WB Revolt · BG +1/+1 Counters · GU Ramp · UR Prowess · RW Go-wide/Tokens"
+    },
+    {
+      "id": "9j0",
+      "pinned": false,
+      "nameOverride": null,
+      "thumbnail": null,
+      "strategy": null
+    }
+  ],
+  "discord": {
+    "invite": "https://discord.com/invite/dFCXg6QdJW"
+  }
+}

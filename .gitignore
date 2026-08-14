@@ -8,3 +8,4 @@ marketplace/*.db-wal
 .env
 marketplace/.env
 .codex-tmp/
+.wrangler/

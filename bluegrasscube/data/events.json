@@ -1,0 +1,44 @@
+{
+  "_comment": "Event data for the bulletin board. Recurring rules generate weekly events automatically; overrides modify or cancel a specific date's recurring event; specials are one-off events. Times are 24h US Eastern. Poster paths are relative to the site root (e.g. posters/2026-08-20-cube-night.png) and optional everywhere.",
+  "recurring": [
+    {
+      "id": "thursday-cube",
+      "what": "Cube Night",
+      "weekday": "thursday",
+      "start": "18:30",
+      "end": "22:00",
+      "where": "Tabletop Tavern",
+      "poster": null
+    },
+    {
+      "id": "saturday-cube",
+      "what": "Cube Night",
+      "weekday": "saturday",
+      "start": "12:00",
+      "end": "16:00",
+      "where": "Tabletop Tavern",
+      "poster": null
+    }
+  ],
+  "overrides": [
+    {
+      "_example": true,
+      "date": "2026-01-01",
+      "recurringId": "thursday-cube",
+      "action": "cancel",
+      "note": "Example only — remove when adding the first real override. action is 'cancel' or 'replace'; a replace may supply any of what/start/end/where/poster to change just those fields."
+    }
+  ],
+  "specials": [
+    {
+      "_example": true,
+      "date": "2026-01-01",
+      "what": "Example Special Event",
+      "start": "18:00",
+      "end": "21:00",
+      "where": "Tabletop Tavern",
+      "poster": null,
+      "note": "Example only — remove when adding the first real special event."
+    }
+  ]
+}
