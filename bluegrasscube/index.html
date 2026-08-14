@@ -283,6 +283,7 @@
             'ff7caa01-4bc4-451c-b659-dc3424468938',
             '9hd',
             '91af0e8e-033e-4911-acce-2663ca4f50c4',
+            'fc1f6adf-ea38-46d9-b04e-fd8e1a2361c2',
         ];
 
         // CubeCobra descriptions use Markdown (headers, blockquotes, images, [[card]] links).
@@ -294,6 +295,7 @@
                     .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')   // ![alt][ref] images
                     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')    // ![alt](url) images
                     .replace(/\[\[([^\]]+)\]\]/g, '$1')      // [[Card Name]] -> Card Name
+                    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [text](url) -> text
                     .replace(/^[#>*<\s]+|[#>*<\s]+$/g, '')   // strip leading/trailing markup chars
                     .replace(/\*\*/g, '')                    // bold markers
                     .trim();
@@ -334,7 +336,6 @@
                     const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
                     card.querySelector('.meta').innerHTML = `
                         <span>${cardCount} cards</span>
-                        <span>Live from CubeCobra</span>
                     `;
                 })
                 .catch(() => {
