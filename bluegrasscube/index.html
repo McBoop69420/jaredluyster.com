@@ -293,27 +293,46 @@
 
         // Override the display name for specific cubes (e.g. a nickname the group uses).
         const NAME_OVERRIDES = {
-            '9hd': "Austin's \"Bangers Only\" Cube",
+            '9hd': 'Bangers Only Cube (Legacy+)',
+            'fc1f6adf-ea38-46d9-b04e-fd8e1a2361c2': 'Live the Dream Cube',
+            'ff7caa01-4bc4-451c-b659-dc3424468938': 'Commander Cube',
         };
 
-        // CubeCobra descriptions use Markdown (headers, blockquotes, images, [[card]] links).
-        // Pull the first line that reads as actual prose, stripped of markup, for the card primer.
-        function extractPrimer(description) {
-            const lines = (description || '').split('\n');
-            for (let line of lines) {
-                let cleaned = line
-                    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')   // ![alt][ref] images
-                    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')    // ![alt](url) images
-                    .replace(/\[\[([^\]]+)\]\]/g, '$1')      // [[Card Name]] -> Card Name
-                    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [text](url) -> text
-                    .replace(/^[#>*<\s]+|[#>*<\s]+$/g, '')   // strip leading/trailing markup chars
-                    .replace(/\*\*/g, '')                    // bold markers
-                    .trim();
-                if (cleaned.length > 40 && /[a-zA-Z]{3,}/.test(cleaned)) {
-                    return cleaned.length > 220 ? cleaned.slice(0, 217) + '…' : cleaned;
-                }
+        // Compute a factual card-composition summary from the actual mainboard,
+        // instead of relying on the (often logistics-focused) CubeCobra description.
+        function summarizeCube(data) {
+            const mainboard = data.cards?.mainboard || [];
+            if (mainboard.length === 0) return '';
+
+            let creatures = 0, lands = 0, spells = 0;
+            const colorCounts = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+
+            for (const entry of mainboard) {
+                const details = entry.details || {};
+                const type = details.type || '';
+                if (/Land/.test(type)) lands++;
+                else if (/Creature/.test(type)) creatures++;
+                else spells++;
+
+                const identity = details.color_identity || [];
+                if (identity.length === 1) colorCounts[identity[0]] = (colorCounts[identity[0]] || 0) + 1;
             }
-            return '';
+
+            const nonland = mainboard.length - lands;
+            const creaturePct = nonland > 0 ? Math.round((creatures / nonland) * 100) : 0;
+            const spellPct = nonland > 0 ? Math.round((spells / nonland) * 100) : 0;
+            const colorsPresent = Object.values(colorCounts).filter(n => n > 0).length;
+
+            const parts = [`${creaturePct}% creatures`, `${spellPct}% spells`];
+            if (lands > 0) parts.push(`${lands} nonbasic lands`);
+
+            const colorNote = colorsPresent === 5
+                ? 'spanning all five colors'
+                : colorsPresent > 0
+                    ? `spanning ${colorsPresent} color${colorsPresent > 1 ? 's' : ''}`
+                    : '';
+
+            return `${mainboard.length} cards — ${parts.join(', ')}${colorNote ? ', ' + colorNote : ''}.`;
         }
 
         const listEl = document.getElementById('cube-list');
@@ -344,7 +363,7 @@
 
             if (data) {
                 nameEl.textContent = displayName(cubeId, data);
-                primerEl.textContent = extractPrimer(data.description) || 'No description provided.';
+                primerEl.textContent = summarizeCube(data) || 'No card data available.';
 
                 const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
                 const metaEl = document.createElement('div');
