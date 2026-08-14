@@ -66,18 +66,6 @@
             letter-spacing: -0.01em;
         }
 
-        .badge {
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: var(--accent);
-            background: var(--accent-dim);
-            border: 1px solid rgba(129, 140, 248, 0.25);
-            border-radius: 999px;
-            padding: 4px 10px;
-        }
-
         .discord-invite {
             margin-top: 32px;
             position: relative;
@@ -160,25 +148,76 @@
             text-decoration: none;
         }
 
-        .card {
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 40px 0 12px;
+        }
+
+        .cube-card {
+            display: block;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 24px;
-            margin-top: 20px;
+            padding: 20px 22px;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
         }
 
-        .card h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 0 0 8px;
+        .cube-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
         }
 
-        .card p {
-            color: var(--muted);
-            font-size: 0.9rem;
-            line-height: 1.6;
+        .cube-card .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cube-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
             margin: 0;
+            color: var(--text);
+        }
+
+        .cube-card .arrow {
+            color: var(--accent);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            transition: transform 0.15s ease;
+        }
+
+        .cube-card:hover .arrow {
+            transform: translateX(3px);
+        }
+
+        .cube-card .primer {
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin: 10px 0 0;
+        }
+
+        .cube-card .meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+        }
+
+        .cube-card .meta span {
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.25);
+            border-radius: 999px;
+            padding: 3px 10px;
         }
     </style>
 </head>
@@ -186,7 +225,6 @@
     <div class="topbar">
         <div class="topbar-inner">
             <span class="brand">Bluegrass Cube</span>
-            <span class="badge">Staging</span>
         </div>
     </div>
 
@@ -201,13 +239,16 @@
             <span class="join-btn">Join Server</span>
         </a>
 
-        <div class="card">
-            <h2>Cube Options</h2>
-            <p>
-                <a href="./cube.html?id=ff7caa01-4bc4-451c-b659-dc3424468938">Hyrulesavior's Commander Cube</a>
-                — 1000-card Commander cube. List stays in sync automatically, pulled live from CubeCobra.
-            </p>
-        </div>
+        <p class="section-title">Cube Options</p>
+
+        <a class="cube-card" id="cube-card-1" data-cube-id="ff7caa01-4bc4-451c-b659-dc3424468938" href="./cube.html?id=ff7caa01-4bc4-451c-b659-dc3424468938">
+            <div class="row">
+                <h3 id="cube-card-1-name">Hyrulesavior's Commander Cube</h3>
+                <span class="arrow">→</span>
+            </div>
+            <p class="primer" id="cube-card-1-primer">Loading description…</p>
+            <div class="meta" id="cube-card-1-meta"></div>
+        </a>
     </main>
 
     <script>
@@ -237,6 +278,33 @@
                 // Static fallback (already in the markup) stays as-is if the API is unreachable.
             }
         })();
+
+        document.querySelectorAll('.cube-card[data-cube-id]').forEach(async (card) => {
+            const cubeId = card.dataset.cubeId;
+            const nameEl = document.getElementById(`${card.id}-name`);
+            const primerEl = document.getElementById(`${card.id}-primer`);
+            const metaEl = document.getElementById(`${card.id}-meta`);
+            try {
+                const res = await fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`);
+                if (!res.ok) throw new Error('cube fetch failed');
+                const data = await res.json();
+
+                if (nameEl) nameEl.textContent = data.name || nameEl.textContent;
+
+                const primer = (data.description || '').split('\n')[0].trim();
+                if (primerEl) primerEl.textContent = primer || 'No description provided.';
+
+                const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
+                if (metaEl) {
+                    metaEl.innerHTML = `
+                        <span>${cardCount} cards</span>
+                        <span>Live from CubeCobra</span>
+                    `;
+                }
+            } catch (err) {
+                if (primerEl) primerEl.textContent = "Couldn't load live description — view on CubeCobra for details.";
+            }
+        });
     </script>
 </body>
 </html>
