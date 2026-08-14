@@ -2,20 +2,22 @@
    Built up phase by phase; see ../CLAUDE.md and ../DESIGN.md before extending. */
 
 :root {
-    --cork: #c69a5f;
-    --cork-grain-a: rgba(74, 47, 15, 0.16);
-    --cork-grain-b: rgba(74, 47, 15, 0.10);
-    --cork-grain-light: rgba(255, 244, 219, 0.10);
+    --cork: #cbb289;
+    --cork-vignette: rgba(58, 41, 21, 0.14);
 
-    --wood-rail: #5b3d27;
-    --wood-rail-dark: #402a1a;
+    --rail: #221a13;
+    --rail-line: rgba(232, 201, 141, 0.35);
+    --accent: #c99a4f;
 
-    --ink: #2b2116;
-    --paper: #f5edd9;
-    --paper-shadow: rgba(30, 18, 5, 0.35);
+    --ink: #241d15;
+    --ink-soft: rgba(36, 29, 21, 0.68);
+    --paper: #faf7ef;
+    --paper-shadow: rgba(30, 20, 8, 0.22);
 
-    --pin: #b23a3a;
-    --pin-dark: #7a2323;
+    --pin: #a8402f;
+
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 *, *::before, *::after {
@@ -29,22 +31,21 @@ html, body {
 
 body {
     min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-body);
     color: var(--ink);
     background-color: var(--cork);
     background-image:
-        radial-gradient(var(--cork-grain-a) 1px, transparent 1.4px),
-        radial-gradient(var(--cork-grain-b) 1px, transparent 1.6px),
-        radial-gradient(var(--cork-grain-light) 1px, transparent 1.2px);
-    background-size: 17px 17px, 29px 29px, 23px 23px;
-    background-position: 0 0, 9px 14px, 4px 6px;
+        radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255, 250, 235, 0.16), transparent 65%),
+        radial-gradient(ellipse 140% 90% at 50% 110%, var(--cork-vignette), transparent 60%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: auto, auto, 180px 180px;
 }
 
 a {
     color: inherit;
 }
 
-/* Header — a wooden rail mounted above the board, not a floating SaaS bar. */
+/* Header — a flat, quiet rail above the board; not a floating SaaS bar. */
 
 .site-header {
     display: flex;
@@ -52,9 +53,9 @@ a {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem 1.5rem;
-    padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
-    background: linear-gradient(180deg, var(--wood-rail) 0%, var(--wood-rail-dark) 100%);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    padding: 1.1rem clamp(1rem, 4vw, 2.5rem);
+    background: var(--rail);
+    border-bottom: 1px solid var(--rail-line);
     position: relative;
     z-index: 10;
 }
@@ -62,45 +63,49 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.7rem;
     text-decoration: none;
     color: var(--paper);
 }
 
 .brand-mark {
-    width: 2.15rem;
-    height: 2.15rem;
+    width: 2rem;
+    height: 2rem;
     flex-shrink: 0;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ddc99a, #a3813f 75%);
-    border: 2px solid rgba(245, 237, 217, 0.55);
+    background: transparent;
+    border: 1.5px solid var(--accent);
 }
 
 .brand-name {
-    font-size: 1.15rem;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.005em;
 }
 
 .site-nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 1.4rem;
+    gap: 0.4rem 1.6rem;
 }
 
 .site-nav a {
     text-decoration: none;
     color: var(--paper);
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 0.2rem 0.05rem;
-    border-bottom: 2px solid transparent;
-    transition: border-color 0.15s ease;
+    font-weight: 500;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.05rem;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .site-nav a:hover,
 .site-nav a:focus-visible {
-    border-bottom-color: var(--paper);
+    color: var(--accent);
+    border-bottom-color: var(--accent);
 }
 
 /* Board — the cork itself is the page background; this is just where content pins. */
@@ -122,26 +127,28 @@ a {
     max-width: 260px;
     background: var(--paper);
     color: var(--ink);
-    padding: 1.1rem 1.3rem;
-    box-shadow: 0 8px 16px var(--paper-shadow), 0 1px 2px rgba(0, 0, 0, 0.2);
-    transform: rotate(-2deg);
+    padding: 1.15rem 1.35rem;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px var(--paper-shadow), 0 12px 24px -8px var(--paper-shadow);
+    transform: rotate(-1.5deg);
 }
 
 .pinned-note p {
     margin: 0;
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.55;
+    color: var(--ink-soft);
 }
 
 .pinned-note::before {
     content: "";
     position: absolute;
-    top: -0.5rem;
+    top: -0.4rem;
     left: 50%;
     transform: translateX(-50%);
-    width: 0.75rem;
-    height: 0.75rem;
+    width: 0.6rem;
+    height: 0.6rem;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #e06a6a, var(--pin-dark) 75%);
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+    background: var(--pin);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
