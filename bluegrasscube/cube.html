@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bluegrass Cube — live cube list viewer.">
+    <title>Cube — Bluegrass Cube</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --text: #f0f0f0;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .shell {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            height: 56px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand { font-size: 0.85rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+
+        .badge {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(129, 140, 248, 0.25);
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+
+        .hero { padding: 48px 0 24px; }
+
+        .hero h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0 0 8px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-width: 640px;
+            margin: 0 0 12px;
+            white-space: pre-line;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .meta span {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+        }
+
+        .controls {
+            margin-top: 24px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .controls input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text);
+            font-family: "Inter", sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .controls input:focus { outline: none; border-color: var(--border-hover); }
+
+        .group {
+            margin-top: 28px;
+        }
+
+        .group h2 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 7px 0;
+            font-size: 0.88rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-row:last-child { border-bottom: none; }
+
+        .card-name { color: var(--text); }
+
+        .card-meta {
+            color: var(--muted);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .status-line {
+            color: var(--muted);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.8rem;
+            margin-top: 40px;
+        }
+
+        .error {
+            margin-top: 40px;
+            padding: 16px;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            background: rgba(248, 113, 113, 0.08);
+            border-radius: 8px;
+            color: #f87171;
+            font-size: 0.85rem;
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="./index.html">Bluegrass Cube</a>
+            <span class="badge">Live from CubeCobra</span>
+        </div>
+    </div>
+
+    <main class="shell">
+        <section class="hero">
+            <h1 id="cube-name">Loading cube…</h1>
+            <p id="cube-description"></p>
+            <div class="meta" id="cube-meta"></div>
+        </section>
+
+        <div class="controls">
+            <input type="text" id="search" placeholder="Filter by card name…" autocomplete="off">
+        </div>
+
+        <div id="results"></div>
+        <div class="status-line" id="status">Fetching latest list from CubeCobra…</div>
+
+        <div class="footer" id="source-link"></div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const cubeId = params.get('id') || 'ff7caa01-4bc4-451c-b659-dc3424468938';
+
+        const COLOR_ORDER = ['W', 'U', 'B', 'R', 'G'];
+        const COLOR_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
+
+        function colorLabel(identity) {
+            if (!identity || identity.length === 0) return 'Colorless';
+            if (identity.length > 1) return 'Multicolor';
+            return COLOR_NAMES[identity[0]] || identity[0];
+        }
+
+        function colorSortKey(identity) {
+            if (!identity || identity.length === 0) return 100;
+            if (identity.length > 1) return 50;
+            const idx = COLOR_ORDER.indexOf(identity[0]);
+            return idx === -1 ? 90 : idx;
+        }
+
+        async function loadCube() {
+            const statusEl = document.getElementById('status');
+            try {
+                const res = await fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`);
+                if (!res.ok) throw new Error(`CubeCobra returned ${res.status}`);
+                const data = await res.json();
+
+                document.title = `${data.name} — Bluegrass Cube`;
+                document.getElementById('cube-name').textContent = data.name || 'Untitled Cube';
+                document.getElementById('cube-description').textContent = data.description || '';
+
+                const mainboard = (data.cards && data.cards.mainboard) || [];
+                const metaEl = document.getElementById('cube-meta');
+                metaEl.innerHTML = `
+                    <span>${mainboard.length} cards</span>
+                    <span>Owner: ${data.owner?.username || 'unknown'}</span>
+                `;
+
+                const sourceEl = document.getElementById('source-link');
+                sourceEl.innerHTML = `View on <a href="https://cubecobra.com/cube/list/${cubeId}" target="_blank" rel="noopener">CubeCobra ↗</a> — this page always reflects the current list.`;
+
+                const groups = {};
+                for (const entry of mainboard) {
+                    const details = entry.details || {};
+                    const identity = details.color_identity || [];
+                    const label = colorLabel(identity);
+                    if (!groups[label]) groups[label] = [];
+                    groups[label].push({
+                        name: details.name || 'Unknown card',
+                        cmc: details.cmc ?? '',
+                        set: (details.set || '').toUpperCase(),
+                        sortKey: colorSortKey(identity),
+                    });
+                }
+
+                const sortedLabels = Object.keys(groups).sort((a, b) => {
+                    const ka = groups[a][0]?.sortKey ?? 99;
+                    const kb = groups[b][0]?.sortKey ?? 99;
+                    return ka - kb;
+                });
+
+                for (const label of sortedLabels) {
+                    groups[label].sort((a, b) => (a.cmc - b.cmc) || a.name.localeCompare(b.name));
+                }
+
+                function render(filterText) {
+                    const resultsEl = document.getElementById('results');
+                    resultsEl.innerHTML = '';
+                    const needle = filterText.trim().toLowerCase();
+                    let shown = 0;
+
+                    for (const label of sortedLabels) {
+                        const cards = groups[label].filter(c => !needle || c.name.toLowerCase().includes(needle));
+                        if (cards.length === 0) continue;
+                        shown += cards.length;
+
+                        const groupEl = document.createElement('div');
+                        groupEl.className = 'group';
+                        groupEl.innerHTML = `<h2>${label} (${cards.length})</h2>`;
+
+                        for (const card of cards) {
+                            const row = document.createElement('div');
+                            row.className = 'card-row';
+                            row.innerHTML = `
+                                <span class="card-name">${card.name}</span>
+                                <span class="card-meta">${card.set} · MV ${card.cmc}</span>
+                            `;
+                            groupEl.appendChild(row);
+                        }
+                        resultsEl.appendChild(groupEl);
+                    }
+
+                    statusEl.textContent = needle
+                        ? `Showing ${shown} of ${mainboard.length} cards`
+                        : `${mainboard.length} cards, synced live from CubeCobra`;
+                }
+
+                render('');
+                document.getElementById('search').addEventListener('input', (e) => render(e.target.value));
+
+            } catch (err) {
+                statusEl.textContent = '';
+                const errorEl = document.createElement('div');
+                errorEl.className = 'error';
+                errorEl.textContent = `Couldn't load cube from CubeCobra: ${err.message}. Try refreshing, or view it directly at cubecobra.com.`;
+                document.getElementById('results').appendChild(errorEl);
+            }
+        }
+
+        loadCube();
+    </script>
+</body>
+</html>
