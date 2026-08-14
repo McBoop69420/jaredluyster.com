@@ -157,6 +157,12 @@
             margin: 40px 0 12px;
         }
 
+        #cube-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         .cube-card {
             display: block;
             background: var(--surface);
@@ -241,14 +247,7 @@
 
         <p class="section-title">Cube Options</p>
 
-        <a class="cube-card" id="cube-card-1" data-cube-id="ff7caa01-4bc4-451c-b659-dc3424468938" href="./cube.html?id=ff7caa01-4bc4-451c-b659-dc3424468938">
-            <div class="row">
-                <h3 id="cube-card-1-name">Hyrulesavior's Commander Cube</h3>
-                <span class="arrow">→</span>
-            </div>
-            <p class="primer" id="cube-card-1-primer">Loading description…</p>
-            <div class="meta" id="cube-card-1-meta"></div>
-        </a>
+        <div id="cube-list"></div>
     </main>
 
     <script>
@@ -279,31 +278,49 @@
             }
         })();
 
-        document.querySelectorAll('.cube-card[data-cube-id]').forEach(async (card) => {
-            const cubeId = card.dataset.cubeId;
-            const nameEl = document.getElementById(`${card.id}-name`);
-            const primerEl = document.getElementById(`${card.id}-primer`);
-            const metaEl = document.getElementById(`${card.id}-meta`);
-            try {
-                const res = await fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`);
-                if (!res.ok) throw new Error('cube fetch failed');
-                const data = await res.json();
+        // Add a CubeCobra ID (full UUID or short ID) here for each cube option.
+        const CUBE_IDS = [
+            'ff7caa01-4bc4-451c-b659-dc3424468938',
+            '9hd',
+        ];
 
-                if (nameEl) nameEl.textContent = data.name || nameEl.textContent;
+        const listEl = document.getElementById('cube-list');
 
-                const primer = (data.description || '').split('\n')[0].trim();
-                if (primerEl) primerEl.textContent = primer || 'No description provided.';
+        CUBE_IDS.forEach((cubeId) => {
+            const card = document.createElement('a');
+            card.className = 'cube-card';
+            card.href = `./cube.html?id=${cubeId}`;
+            card.innerHTML = `
+                <div class="row">
+                    <h3 class="cube-name">Loading…</h3>
+                    <span class="arrow">→</span>
+                </div>
+                <p class="primer">Loading description…</p>
+                <div class="meta"></div>
+            `;
+            listEl.appendChild(card);
 
-                const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
-                if (metaEl) {
-                    metaEl.innerHTML = `
+            fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('cube fetch failed');
+                    return res.json();
+                })
+                .then(data => {
+                    card.querySelector('.cube-name').textContent = data.name || 'Untitled Cube';
+
+                    const primer = (data.description || '').split('\n')[0].trim();
+                    card.querySelector('.primer').textContent = primer || 'No description provided.';
+
+                    const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
+                    card.querySelector('.meta').innerHTML = `
                         <span>${cardCount} cards</span>
                         <span>Live from CubeCobra</span>
                     `;
-                }
-            } catch (err) {
-                if (primerEl) primerEl.textContent = "Couldn't load live description — view on CubeCobra for details.";
-            }
+                })
+                .catch(() => {
+                    card.querySelector('.cube-name').textContent = 'Cube unavailable';
+                    card.querySelector('.primer').textContent = "Couldn't load live description — view on CubeCobra for details.";
+                });
         });
     </script>
 </body>
