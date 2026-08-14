@@ -312,41 +312,61 @@
         }
 
         const listEl = document.getElementById('cube-list');
+        const PINNED_ID = 'BluegrassCube';
 
-        CUBE_IDS.forEach((cubeId) => {
+        function renderCube(cubeId, data) {
             const card = document.createElement('a');
             card.className = 'cube-card';
             card.href = `./cube.html?id=${cubeId}`;
-            card.innerHTML = `
-                <div class="row">
-                    <h3 class="cube-name">Loading…</h3>
-                    <span class="arrow">→</span>
-                </div>
-                <p class="primer">Loading description…</p>
-                <div class="meta"></div>
-            `;
+
+            const row = document.createElement('div');
+            row.className = 'row';
+            const nameEl = document.createElement('h3');
+            nameEl.className = 'cube-name';
+            const arrowEl = document.createElement('span');
+            arrowEl.className = 'arrow';
+            arrowEl.textContent = '→';
+            row.append(nameEl, arrowEl);
+
+            const primerEl = document.createElement('p');
+            primerEl.className = 'primer';
+
+            card.append(row, primerEl);
+
+            if (data) {
+                nameEl.textContent = (data.name || 'Untitled Cube').trim();
+                primerEl.textContent = extractPrimer(data.description) || 'No description provided.';
+
+                const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
+                const metaEl = document.createElement('div');
+                metaEl.className = 'meta';
+                const countSpan = document.createElement('span');
+                countSpan.textContent = `${cardCount} cards`;
+                metaEl.appendChild(countSpan);
+                card.appendChild(metaEl);
+            } else {
+                nameEl.textContent = 'Cube unavailable';
+                primerEl.textContent = "Couldn't load live description — view on CubeCobra for details.";
+            }
             listEl.appendChild(card);
+        }
 
-            fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`)
-                .then(res => {
-                    if (!res.ok) throw new Error('cube fetch failed');
-                    return res.json();
-                })
-                .then(data => {
-                    card.querySelector('.cube-name').textContent = (data.name || 'Untitled Cube').trim();
-
-                    const primer = extractPrimer(data.description);
-                    card.querySelector('.primer').textContent = primer || 'No description provided.';
-
-                    const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
-                    card.querySelector('.meta').innerHTML = `
-                        <span>${cardCount} cards</span>
-                    `;
-                })
-                .catch(() => {
-                    card.querySelector('.cube-name').textContent = 'Cube unavailable';
-                    card.querySelector('.primer').textContent = "Couldn't load live description — view on CubeCobra for details.";
-                });
+        Promise.all(
+            CUBE_IDS.map(cubeId =>
+                fetch(`https://cubecobra.com/cube/api/cubejson/${cubeId}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .catch(() => null)
+                    .then(data => ({ cubeId, data }))
+            )
+        ).then(results => {
+            results.sort((a, b) => {
+                if (a.cubeId === PINNED_ID) return -1;
+                if (b.cubeId === PINNED_ID) return 1;
+                const nameA = (a.data?.name || a.cubeId).trim().toLowerCase();
+                const nameB = (b.data?.name || b.cubeId).trim().toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+            results.forEach(({ cubeId, data }) => renderCube(cubeId, data));
         });
     </script>
 </body>
