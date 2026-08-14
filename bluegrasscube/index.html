@@ -78,8 +78,90 @@
             padding: 4px 10px;
         }
 
+        .discord-invite {
+            margin-top: 24px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: radial-gradient(circle at 15% 30%, rgba(88, 101, 242, 0.35), transparent 55%),
+                        radial-gradient(circle at 85% 15%, rgba(88, 101, 242, 0.25), transparent 50%),
+                        linear-gradient(160deg, #1a1a2e 0%, #14141f 100%);
+            border: 1px solid rgba(88, 101, 242, 0.25);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .discord-invite .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: var(--surface);
+            flex-shrink: 0;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .discord-invite .info {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .discord-invite .info .label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin: 0 0 2px;
+        }
+
+        .discord-invite .info h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+            color: var(--text);
+        }
+
+        .discord-invite .counts {
+            display: flex;
+            gap: 14px;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .discord-invite .counts span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot.online { background: #23a55a; }
+        .dot.total { background: var(--muted); }
+
+        .discord-invite .join-btn {
+            background: #5865f2;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            white-space: nowrap;
+            transition: background 0.15s ease;
+        }
+
+        .discord-invite .join-btn:hover {
+            background: #4752c4;
+            text-decoration: none;
+        }
+
         .hero {
-            padding: 64px 0 32px;
+            padding: 40px 0 32px;
         }
 
         .hero h1 {
@@ -139,6 +221,16 @@
     </div>
 
     <main class="shell">
+        <a class="discord-invite" id="discord-invite" href="https://discord.com/invite/dFCXg6QdJW" target="_blank" rel="noopener" style="text-decoration: none;">
+            <img class="icon" id="discord-icon" src="" alt="" hidden>
+            <div class="info">
+                <p class="label" id="discord-label">Join us on Discord</p>
+                <h2 id="discord-name">Bluegrass Cube</h2>
+                <div class="counts" id="discord-counts"></div>
+            </div>
+            <span class="join-btn">Join Server</span>
+        </a>
+
         <section class="hero">
             <h1>Bluegrass Cube — Staging Area</h1>
             <p>
@@ -160,5 +252,34 @@
             bluegrasscube.jaredluyster.com — internal staging, not the live site
         </div>
     </main>
+
+    <script>
+        (async () => {
+            try {
+                const res = await fetch('https://discord.com/api/v9/invites/dFCXg6QdJW?with_counts=true');
+                if (!res.ok) throw new Error('invite fetch failed');
+                const data = await res.json();
+                const guild = data.guild || {};
+                const profile = data.profile || {};
+
+                document.getElementById('discord-name').textContent = guild.name || 'Bluegrass Cube';
+
+                if (guild.icon) {
+                    const iconEl = document.getElementById('discord-icon');
+                    iconEl.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp?size=128`;
+                    iconEl.hidden = false;
+                }
+
+                const online = data.approximate_presence_count ?? profile.online_count;
+                const members = data.approximate_member_count ?? profile.member_count;
+                document.getElementById('discord-counts').innerHTML = `
+                    <span><span class="dot online"></span>${online} Online</span>
+                    <span><span class="dot total"></span>${members} Members</span>
+                `;
+            } catch (err) {
+                // Static fallback (already in the markup) stays as-is if the API is unreachable.
+            }
+        })();
+    </script>
 </body>
 </html>
