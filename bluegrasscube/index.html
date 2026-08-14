@@ -210,6 +210,19 @@
             margin: 10px 0 0;
         }
 
+        .cube-card .strategy {
+            color: var(--text);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin: 10px 0 0;
+        }
+
+        .cube-card .strategy .label {
+            color: var(--accent);
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
         .cube-card .meta {
             display: flex;
             gap: 10px;
@@ -298,6 +311,18 @@
             'ff7caa01-4bc4-451c-b659-dc3424468938': 'Commander Cube',
         };
 
+        // Curated drafting-strategy notes, pulled from each cube's CubeCobra description
+        // where it names color pairs / archetypes (not auto-generated — hand-checked per cube).
+        const STRATEGY_NOTES = {
+            'BluegrassCube': 'Leans into combo and synergy over classic Vintage archetypes (e.g. Doomsday), and is currently featuring the Initiative mechanic from Commander Legends: Battle for Baldur’s Gate.',
+            '9hd': 'Cross-synergies center on ETBs, +1/+1 counters, and cheating creatures into play.',
+            '91af0e8e-033e-4911-acce-2663ca4f50c4': 'WR Aggro/Heroic · GB Graveyard · WB Drain/Reanimator · WU Heroic/Flyers · UB Mill/Control · RB Burn/Minotaurs · RG Stompy/Satyrs · WG +1/+1 Counters/Centaurs · UR Burn/Spells Matter',
+            'fc1f6adf-ea38-46d9-b04e-fd8e1a2361c2': 'Emulates Commander’s splashy, high-variance gameplay in a normal Cube format — expect big mana ramp and swingy bombs.',
+            '2d231bc9-1b10-4817-a889-9d86f17dacb9': 'WU Blink/Tempo · UB Control/Reanimator · BR Sacrifice/Aggro · RG Ramp/Stompy · GW Auras/Voltron · WB Aristocrats · UR Spells Matter · BG Graveyard/Midrange · RW Aggro/Tokens · GU Ramp/Elves',
+            'dd8fd6de-353e-43a1-9a2f-e6f764808f72': 'Artifact-centric, with blink, sacrifice, and modified-creature subthemes. Most decks land on two colors, though mono and three-color builds are viable.',
+            'ruo': 'WU Flicker · UB Reanimator · BR Sacrifice · RG Power · GW Enchantments · WB Revolt · BG +1/+1 Counters · GU Ramp · UR Prowess · RW Go-wide/Tokens',
+        };
+
         // Compute a factual card-composition summary from the actual mainboard,
         // instead of relying on the (often logistics-focused) CubeCobra description.
         function summarizeCube(data) {
@@ -364,6 +389,17 @@
             if (data) {
                 nameEl.textContent = displayName(cubeId, data);
                 primerEl.textContent = summarizeCube(data) || 'No card data available.';
+
+                const strategyNote = STRATEGY_NOTES[cubeId];
+                if (strategyNote) {
+                    const strategyEl = document.createElement('p');
+                    strategyEl.className = 'strategy';
+                    const labelEl = document.createElement('span');
+                    labelEl.className = 'label';
+                    labelEl.textContent = 'Archetypes:';
+                    strategyEl.append(labelEl, document.createTextNode(strategyNote));
+                    card.appendChild(strategyEl);
+                }
 
                 const cardCount = data.cards?.mainboard?.length ?? data.cardCount;
                 const metaEl = document.createElement('div');
