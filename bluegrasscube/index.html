@@ -370,7 +370,9 @@
         function renderCube(cubeId, data) {
             const card = document.createElement('a');
             card.className = 'cube-card';
-            card.href = `./cube.html?id=${cubeId}`;
+            card.href = `https://cubecobra.com/cube/list/${cubeId}`;
+            card.target = '_blank';
+            card.rel = 'noopener';
 
             const row = document.createElement('div');
             row.className = 'row';
