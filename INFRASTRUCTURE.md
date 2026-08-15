@@ -55,6 +55,12 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
   1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → `McBoop69420/jaredluyster.com`.
   2. Build settings: Framework preset **None**, build command *(empty)*, root/output directory **`bluegrasscube`**.
   3. Deploy, then add `bluegrasscube.jaredluyster.com` as a custom domain on that Pages project (dashboard walks through the DNS record — no manual CNAME needed since Cloudflare manages it automatically for Pages custom domains on a zone it already controls).
+- **Caching gotcha:** Cloudflare Pages defaults static assets (`.css`, `.js`) to a 24h
+  edge+browser cache (`Cache-Control: public, max-age=86400`) and does **not** purge it
+  on redeploy — HTML updates instantly but a stylesheet can keep serving an
+  hours-old cached copy after a push. `bluegrasscube/_headers` overrides this to
+  `max-age=0, must-revalidate` while the site is still being actively built
+  phase-by-phase; revisit for longer caching once it stabilizes post-Phase-7.
 
 ### 2. Wizard Battle Site — GitHub Pages (static)
 

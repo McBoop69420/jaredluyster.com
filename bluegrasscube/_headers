@@ -1,0 +1,19 @@
+# Cloudflare Pages response headers for bluegrasscube.jaredluyster.com
+# Docs: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# Cloudflare Pages applies a 24h edge+browser cache to static assets (css/js/images)
+# by default, and does not purge it on redeploy. That's fine for a stable site, but
+# actively fights this project while it's still being built phase-by-phase — a push
+# can go live in index.html while board.css keeps serving an edge-cached copy from
+# hours earlier. Force immediate revalidation on every request until the site
+# stabilizes post-Phase-7, then revisit for longer caching if desired.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
