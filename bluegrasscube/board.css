@@ -2,8 +2,7 @@
    Built up phase by phase; see ../CLAUDE.md and ../DESIGN.md before extending. */
 
 :root {
-    --cork: #cbb289;
-    --cork-vignette: rgba(58, 41, 21, 0.14);
+    --cork: #c7ae86;
 
     --rail: #221a13;
     --rail-line: rgba(232, 201, 141, 0.35);
@@ -12,9 +11,8 @@
     --ink: #241d15;
     --ink-soft: rgba(36, 29, 21, 0.68);
     --paper: #faf7ef;
-    --paper-shadow: rgba(30, 20, 8, 0.22);
-
-    --pin: #a8402f;
+    --paper-edge: rgba(34, 26, 19, 0.08);
+    --paper-shadow: rgba(34, 26, 19, 0.16);
 
     --font-display: "Fraunces", Georgia, serif;
     --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -35,10 +33,8 @@ body {
     color: var(--ink);
     background-color: var(--cork);
     background-image:
-        radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255, 250, 235, 0.16), transparent 65%),
-        radial-gradient(ellipse 140% 90% at 50% 110%, var(--cork-vignette), transparent 60%),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: auto, auto, 180px 180px;
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
 }
 
 a {
@@ -79,9 +75,9 @@ a {
 
 .brand-name {
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    letter-spacing: 0.005em;
+    letter-spacing: -0.015em;
 }
 
 .site-nav {
@@ -128,9 +124,8 @@ a {
     background: var(--paper);
     color: var(--ink);
     padding: 1.15rem 1.35rem;
-    border-radius: 2px;
-    box-shadow: 0 1px 2px var(--paper-shadow), 0 12px 24px -8px var(--paper-shadow);
-    transform: rotate(-1.5deg);
+    box-shadow: 3px 4px 0 var(--paper-shadow), 0 0 0 1px var(--paper-edge);
+    transform: rotate(-1deg);
 }
 
 .pinned-note p {
@@ -138,17 +133,4 @@ a {
     font-size: 0.95rem;
     line-height: 1.55;
     color: var(--ink-soft);
-}
-
-.pinned-note::before {
-    content: "";
-    position: absolute;
-    top: -0.4rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 50%;
-    background: var(--pin);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
