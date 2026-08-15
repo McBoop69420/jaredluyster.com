@@ -58,9 +58,13 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 - **Caching gotcha:** Cloudflare Pages defaults static assets (`.css`, `.js`) to a 24h
   edge+browser cache (`Cache-Control: public, max-age=86400`) and does **not** purge it
   on redeploy — HTML updates instantly but a stylesheet can keep serving an
-  hours-old cached copy after a push. `bluegrasscube/_headers` overrides this to
-  `max-age=0, must-revalidate` while the site is still being actively built
-  phase-by-phase; revisit for longer caching once it stabilizes post-Phase-7.
+  hours-old cached copy after a push. `bluegrasscube/_headers` requests
+  `max-age=0, must-revalidate` for `.css`/`.js`, but Cloudflare Pages appears to floor
+  this at `max-age=14400` (4h) regardless — confirmed via curl 2026-08-14, the origin
+  still returned 14400 even fresh from a cache MISS. **The header alone is not enough.**
+  When `board.css` changes, bump the query string on its `<link>` in `index.html`
+  (`board.css?v=1` → `?v=2`, etc.) — that's a brand-new cache key, so it's guaranteed
+  to bypass any stale edge copy immediately rather than waiting up to 4h.
 
 ### 2. Wizard Battle Site — GitHub Pages (static)
 
