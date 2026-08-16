@@ -112,27 +112,49 @@ a {
     top: -1rem;
 }
 
-.pinned-note {
-    position: relative;
+/* This Week — each event is one flat, taped-down announcement. */
+
+.week-section {
+    margin-bottom: 3rem;
+}
+
+.section-label {
     display: inline-block;
-    max-width: 280px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink);
+    padding: 0.35rem 0.7rem;
+    margin: 0 0 1.5rem;
+    border: 2px solid var(--ink);
+}
+
+.week-events {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2.25rem 1.75rem;
+}
+
+.event-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 300px;
     background: var(--paper);
     color: var(--ink);
-    padding: 1.25rem 1.4rem;
+    padding: 1.25rem 1.4rem 1.4rem;
     border: 2.5px solid var(--ink);
     box-shadow: 7px 7px 0 var(--accent);
-    transform: rotate(-1.5deg);
-    margin-top: 0.75rem;
+    transform: rotate(var(--tilt, -1deg));
 }
 
-.pinned-note p {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
-    line-height: 1.55;
-}
-
-.pinned-note::before {
+.event-card::before {
     content: "";
     position: absolute;
     top: -0.85rem;
@@ -142,4 +164,71 @@ a {
     background: var(--accent);
     border: 2px solid var(--ink);
     transform: rotate(-5deg);
+}
+
+.event-card--passed {
+    opacity: 0.5;
+}
+
+.event-when {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.event-what {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+
+.event-where {
+    margin: 0;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.event-poster {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 0.4rem;
+    border: 2px solid var(--ink);
+}
+
+.empty-week-note {
+    position: relative;
+    display: inline-block;
+    max-width: 280px;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 1.25rem 1.4rem;
+    border: 2.5px solid var(--ink);
+    box-shadow: 7px 7px 0 var(--accent);
+    transform: rotate(-1deg);
+}
+
+.empty-week-note::before {
+    content: "";
+    position: absolute;
+    top: -0.85rem;
+    left: 1.2rem;
+    width: 2.75rem;
+    height: 1rem;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    transform: rotate(-5deg);
+}
+
+.empty-week-note p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.55;
 }

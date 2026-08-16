@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="board.css?v=1">
+    <link rel="stylesheet" href="board.css?v=2">
 </head>
 <body>
     <header class="site-header">
@@ -25,13 +25,15 @@
     </header>
 
     <main class="board" id="top">
-        <div id="this-week" class="board-anchor"></div>
+        <section id="this-week" class="week-section">
+            <p class="section-label">This Week</p>
+            <div id="this-week-events" class="week-events"></div>
+        </section>
+
         <div id="calendar" class="board-anchor"></div>
         <div id="cubes" class="board-anchor"></div>
-
-        <div class="pinned-note">
-            <p>Board's coming together — check back soon.</p>
-        </div>
     </main>
+
+    <script src="board.js?v=1" defer></script>
 </body>
 </html>
