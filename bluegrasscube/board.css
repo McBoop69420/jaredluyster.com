@@ -112,9 +112,9 @@ a {
     top: -1rem;
 }
 
-/* This Week — each event is one flat, taped-down announcement. */
+/* Upcoming Events — each event is one flat, taped-down announcement. */
 
-.week-section {
+.upcoming-section {
     margin-bottom: 3rem;
 }
 
@@ -132,7 +132,7 @@ a {
     border: 2px solid var(--ink);
 }
 
-.week-events {
+.upcoming-events {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -202,7 +202,7 @@ a {
     border: 2px solid var(--ink);
 }
 
-.empty-week-note {
+.empty-upcoming-note {
     position: relative;
     display: inline-block;
     max-width: 280px;
@@ -214,7 +214,7 @@ a {
     transform: rotate(-1deg);
 }
 
-.empty-week-note::before {
+.empty-upcoming-note::before {
     content: "";
     position: absolute;
     top: -0.85rem;
@@ -226,14 +226,16 @@ a {
     transform: rotate(-5deg);
 }
 
-.empty-week-note p {
+.empty-upcoming-note p {
     margin: 0;
     font-size: 1rem;
     font-weight: 500;
     line-height: 1.55;
 }
 
-/* Announcements — a loose grid; current items full-weight, older ones quieter. */
+/* Announcements — built in Phase 3, currently OFF (no markup in index.html hooks into
+   this). Left in place so the section can be turned back on later; see board.js header
+   comment. A loose grid; current items full-weight, older ones quieter. */
 
 .announcements-section {
     margin-bottom: 3rem;

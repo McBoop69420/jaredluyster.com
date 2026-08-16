@@ -1,6 +1,12 @@
-// Bluegrass Cube — This Week event engine.
-// Computes the current Sun–Sat week's events from data/events.json: recurring rules,
-// date-specific overrides (cancel/replace), and one-off specials. Times are US Eastern.
+// Bluegrass Cube — Upcoming Events engine.
+// Computes the near-term event list from data/events.json: this week's recurring
+// instances (with same-week overrides applied), any future "replace" override surfaced
+// early so people can plan ahead, and all upcoming one-off specials. Times are US Eastern.
+//
+// The Announcements engine (renderAnnouncement/renderAnnouncements below) is built but
+// currently OFF — Jared felt it didn't make sense yet with only a couple of posts. To
+// turn it back on: re-add the #announcements-section markup to index.html (see PLAN.md
+// or git history for the Phase 3 commit) and call renderAnnouncements() below.
 
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const ROTATIONS = [-1.5, 1, -0.75, 1.25, -1];
@@ -98,11 +104,15 @@ function formatAnnouncementDate(dateStr) {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
 }
 
-function buildWeekEvents(data, weekStart) {
+function buildUpcomingEvents(data, now) {
+    const weekStart = startOfWeek(now);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 6);
+    const weekEndKey = toDateKey(weekEnd);
+    const todayKey = toDateKey(now);
     const events = [];
 
+    // This week's recurring instances, with same-week overrides applied.
     for (const rule of data.recurring) {
         const weekdayIndex = WEEKDAYS.indexOf(rule.weekday.toLowerCase());
         if (weekdayIndex === -1) continue;
@@ -129,15 +139,31 @@ function buildWeekEvents(data, weekStart) {
         events.push(instance);
     }
 
+    // Future "replace" overrides beyond this week — surfaced early (not just the week
+    // they land in) so people can plan/RSVP ahead, e.g. a special draft weeks out.
+    for (const override of data.overrides) {
+        if (override._example || override.action !== "replace") continue;
+        if (override.date <= weekEndKey) continue; // already covered above, or in the past
+        const rule = data.recurring.find((r) => r.id === override.recurringId);
+        if (!rule) continue;
+        let instance = {
+            date: override.date, what: rule.what, start: rule.start, end: rule.end,
+            where: rule.where, poster: rule.poster,
+        };
+        for (const field of ["what", "start", "end", "where", "poster"]) {
+            if (override[field] !== undefined) instance[field] = override[field];
+        }
+        events.push(instance);
+    }
+
+    // All upcoming specials, regardless of how far out — not just this week's.
     for (const special of data.specials) {
         if (special._example) continue;
-        const specialDate = new Date(`${special.date}T00:00:00`);
-        if (specialDate >= weekStart && specialDate <= weekEnd) {
-            events.push({
-                date: special.date, what: special.what, start: special.start,
-                end: special.end, where: special.where, poster: special.poster,
-            });
-        }
+        if (special.date < todayKey) continue;
+        events.push({
+            date: special.date, what: special.what, start: special.start,
+            end: special.end, where: special.where, poster: special.poster,
+        });
     }
 
     events.sort((a, b) => (a.date !== b.date ? (a.date < b.date ? -1 : 1) : (a.start || "").localeCompare(b.start || "")));
@@ -222,34 +248,34 @@ function renderAnnouncement(item, now) {
     return card;
 }
 
-function renderEmptyWeek(container, message) {
+function renderEmptyState(container, message) {
     container.innerHTML = "";
     const note = document.createElement("div");
-    note.className = "empty-week-note";
+    note.className = "empty-upcoming-note";
     const p = document.createElement("p");
     p.textContent = message;
     note.appendChild(p);
     container.appendChild(note);
 }
 
-async function renderThisWeek() {
-    const container = document.getElementById("this-week-events");
+async function renderUpcomingEvents() {
+    const container = document.getElementById("upcoming-events-list");
     if (!container) return;
     try {
         const res = await fetch("data/events.json", { cache: "no-store" });
         if (!res.ok) throw new Error("events.json fetch failed");
         const data = await res.json();
         const now = getEasternNow();
-        const events = buildWeekEvents(data, startOfWeek(now));
+        const events = buildUpcomingEvents(data, now);
 
         if (events.length === 0) {
-            renderEmptyWeek(container, "Nothing on the board this week.");
+            renderEmptyState(container, "Nothing on the board right now.");
             return;
         }
         container.innerHTML = "";
         events.forEach((event, i) => container.appendChild(renderEvent(event, now, i)));
     } catch (err) {
-        renderEmptyWeek(container, "Couldn't load this week's events.");
+        renderEmptyState(container, "Couldn't load upcoming events.");
     }
 }
 
@@ -279,6 +305,6 @@ async function renderAnnouncements() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    renderThisWeek();
-    renderAnnouncements();
+    renderUpcomingEvents();
+    // renderAnnouncements() intentionally not called — see file header comment.
 });

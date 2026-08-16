@@ -17,20 +17,25 @@ when a phase's build work is complete.
 
 ## Current state of this directory
 
-- `index.html` — the site shell (header, nav, cork surface) plus `#this-week` and
-  `#announcements-section`, both populated at runtime by `board.js`. Phases 4–5 pin more
-  content into `.board`.
+- `index.html` — the site shell (header, nav, cork surface) plus `#upcoming-events`,
+  populated at runtime by `board.js`. Phases 4–5 pin more content into `.board`.
 - `board.css` — shared stylesheet (shell + event-card + announcement-card styles),
   reused by later phases.
-- `board.js` — event + announcement engine. This Week: computes the current Sun–Sat
-  week's events from `data/events.json` (recurring rules + date overrides + specials),
-  dims passed events, shows a fallback when the week is empty. Announcements: reads
+- `board.js` — event + announcement engine. Upcoming Events: computes a near-term event
+  list from `data/events.json` — this week's recurring instances (with same-week
+  overrides applied), any future "replace" override surfaced early (not just the week
+  it lands in), and all upcoming specials regardless of date — dims passed events, shows
+  a fallback when there's nothing upcoming. Announcements: reads
   `data/announcements.json`, sorts newest-first, buckets each into current/recent/old
   by age (`RECENCY_CURRENT_DAYS`/`RECENCY_RECENT_DAYS` — 14/60 days) for the recency-fade
-  look, gives current items with a poster a wider "featured" grid span, and hides the
-  whole section if there's nothing to show. Rotation on both event and announcement
-  cards is deterministic (hashed from date+title), not random per reload. Both fetches
-  use `cache: "no-store"` so edits to the JSON files show up immediately.
+  look, gives current items with a poster a wider "featured" grid span. **Currently
+  disabled** (2026-08-16, Jared: "doesn't make sense yet") — the function is fully built
+  and the CSS is in place, but nothing in `index.html` calls it or hooks into it. To
+  re-enable: re-add the `#announcements-section` markup (see the Phase 3 commit) and
+  call `renderAnnouncements()` in the `DOMContentLoaded` handler. Rotation on both event
+  and announcement cards is deterministic (hashed from date+title), not random per
+  reload. Both fetches use `cache: "no-store"` so edits to the JSON files show up
+  immediately.
 - `cube.html` — old local cube viewer, no longer linked from index.html (cards now link
   straight to CubeCobra). Delete it during Phase 5 unless something still uses it.
 - `data/events.json` — recurring rules + `_example` override/special (left in place as
@@ -60,3 +65,8 @@ Local preview: `wrangler pages dev bluegrasscube` from repo root.
 - 2026-08-14 — Hosting decided: everything stays at bluegrasscube.jaredluyster.com on the
   existing Cloudflare Pages project. A later migration is possible, so keep the site
   portable (relative URLs only; Cloudflare coupling confined to Phase 6's function layer).
+- 2026-08-16 — "This Week" renamed to "Upcoming Events" and its window broadened
+  (this week's recurring instances + future replace-overrides + all upcoming specials,
+  not just the current Sun–Sat week) after Jared asked to see a birthday roto draft
+  scheduled weeks out. Announcements section turned off — built, but "doesn't make sense
+  yet" with only a couple of posts; revisit once there's more to show.
