@@ -94,7 +94,8 @@ a {
 }
 
 .site-nav a:hover,
-.site-nav a:focus-visible {
+.site-nav a:focus-visible,
+.site-nav a[aria-current="page"] {
     background: var(--paper);
     color: var(--ink);
 }
@@ -334,4 +335,128 @@ a {
     .announcement-card--featured {
         grid-column: span 1;
     }
+}
+
+/* Calendar — a printed schedule sheet pinned to the board: one paper block, typography
+   does the work, hairline grid instead of heavy SaaS-widget chrome. */
+
+.calendar-sheet {
+    background: var(--paper);
+    color: var(--ink);
+    max-width: 800px;
+    padding: 1.5rem 1.25rem 1.75rem;
+    border: 2.5px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--accent);
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.calendar-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    text-align: center;
+    flex: 1;
+}
+
+.calendar-nav-btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.5rem 0.85rem;
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.calendar-nav-btn:hover,
+.calendar-nav-btn:focus-visible {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--ink);
+    border: 1.5px solid var(--ink);
+}
+
+.calendar-weekday {
+    background: var(--ink);
+    color: var(--paper);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.1rem;
+}
+
+.calendar-day {
+    background: var(--paper);
+    min-height: 4.25rem;
+    padding: 0.3rem 0.3rem 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.calendar-day--outside {
+    background: var(--cork);
+    opacity: 0.55;
+}
+
+.calendar-day--past {
+    opacity: 0.55;
+}
+
+.calendar-day--today {
+    box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.calendar-day-num {
+    font-weight: 700;
+    font-size: 0.72rem;
+    color: var(--ink);
+}
+
+.calendar-event {
+    margin: 0;
+    font-size: 0.62rem;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--ink);
+    overflow-wrap: break-word;
+}
+
+.calendar-event-time {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.calendar-event--cancelled {
+    text-decoration: line-through;
+    opacity: 0.55;
+    font-weight: 500;
+}
+
+.calendar-error {
+    grid-column: 1 / -1;
+    background: var(--paper);
+    margin: 0;
+    padding: 1rem;
+    font-weight: 500;
 }

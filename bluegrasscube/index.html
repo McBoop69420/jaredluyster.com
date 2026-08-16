@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="board.css?v=4">
+    <link rel="stylesheet" href="board.css?v=5">
 </head>
 <body>
     <header class="site-header">
@@ -17,8 +17,8 @@
             <span class="brand-name">Bluegrass Cube</span>
         </a>
         <nav class="site-nav" aria-label="Primary">
-            <a href="#upcoming-events">Upcoming Events</a>
-            <a href="#calendar">Calendar</a>
+            <a href="#upcoming-events" aria-current="page">Upcoming Events</a>
+            <a href="calendar.html">Calendar</a>
             <a href="#cubes">Cubes</a>
             <a href="https://discord.com/invite/dFCXg6QdJW" target="_blank" rel="noopener noreferrer">Discord</a>
         </nav>
@@ -30,10 +30,10 @@
             <div id="upcoming-events-list" class="upcoming-events"></div>
         </section>
 
-        <div id="calendar" class="board-anchor"></div>
         <div id="cubes" class="board-anchor"></div>
     </main>
 
-    <script src="board.js?v=3" defer></script>
+    <script src="events.js?v=1" defer></script>
+    <script src="board.js?v=4" defer></script>
 </body>
 </html>
