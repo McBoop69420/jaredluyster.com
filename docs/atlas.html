@@ -10,7 +10,7 @@
     <script src="tagify.js"></script>
     <style>
         :root {
-            --wiki-gold:  #d4af37;
+            --wiki-gold:  var(--accent);
             --wiki-sky:   #88ddff;
             --wiki-moss:  #22c55e;
             --wiki-plum:  #bb33ee;
@@ -40,7 +40,7 @@
 
         /* ── Sidebar ── */
         .sidebar {
-            border-right: 1px solid var(--border);
+            border-right: var(--border-w) solid var(--accent);
             background: var(--bg);
             display: flex;
             flex-direction: column;
@@ -49,13 +49,15 @@
 
         .sidebar-header {
             padding: 20px 16px 14px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--paper);
             flex-shrink: 0;
         }
 
         .sidebar-header strong {
             display: block;
+            font-family: var(--font-display);
             font-size: 0.7rem;
+            font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: var(--wiki-gold);
@@ -96,9 +98,11 @@
         }
 
         .file-list li button.active {
-            color: var(--wiki-gold);
-            border-left-color: var(--wiki-gold);
-            background: rgba(240, 190, 99, 0.06);
+            color: var(--accent-ink);
+            font-weight: 700;
+            border-left-width: 4px;
+            border-left-color: var(--accent);
+            background: var(--accent);
         }
 
         /* ── Main content ── */
@@ -110,7 +114,7 @@
 
         .content-header {
             padding: 16px 32px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--accent);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -121,8 +125,8 @@
         .content-header h1 {
             margin: 0;
             font-size: 1rem;
-            font-family: inherit;
-            font-weight: 600;
+            font-family: var(--font-display);
+            font-weight: 700;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--text);
@@ -157,20 +161,25 @@
 
         /* ── Markdown rendering ── */
         .md h1, .md h2, .md h3 {
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: var(--font-display);
+            font-weight: 700;
             color: var(--text);
         }
 
         .md h1 {
             font-size: 2rem;
+            letter-spacing: -0.02em;
             margin: 0 0 24px;
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-strong);
+            border-bottom: 3px solid var(--accent);
         }
 
         .md h2 {
             font-size: 1.3rem;
+            letter-spacing: -0.01em;
             margin: 36px 0 12px;
+            padding-left: 12px;
+            border-left: 4px solid var(--wiki-gold);
             color: var(--wiki-gold);
         }
 
@@ -220,15 +229,15 @@
             font-size: 0.85em;
             background: rgba(255, 255, 255, 0.07);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 0;
             padding: 1px 6px;
             color: var(--wiki-sky);
         }
 
         .md pre {
             background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            border: 2px solid var(--border);
+            border-radius: 0;
             padding: 18px 20px;
             overflow-x: auto;
             margin: 0 0 18px;
@@ -246,9 +255,9 @@
         .md blockquote {
             margin: 0 0 16px;
             padding: 10px 16px;
-            border-left: 3px solid var(--wiki-plum);
+            border-left: 4px solid var(--wiki-plum);
             background: rgba(164, 123, 255, 0.06);
-            border-radius: 0 6px 6px 0;
+            border-radius: 0;
         }
 
         .md blockquote p {
@@ -272,7 +281,7 @@
         }
 
         .md thead tr {
-            border-bottom: 2px solid var(--border-strong);
+            border-bottom: 3px solid var(--border-strong);
         }
 
         .md th {
@@ -319,8 +328,8 @@
             width: 100%;
             box-sizing: border-box;
             background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            border: 2px solid var(--border);
+            border-radius: 0;
             padding: 7px 10px;
             font-size: 0.82rem;
             color: var(--text);
@@ -407,11 +416,14 @@
         /* ── Refresh button ── */
         .refresh-btn {
             background: none;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            border: 2px solid var(--border);
+            border-radius: 0;
             color: var(--muted);
             cursor: pointer;
-            font-size: 0.78rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
             letter-spacing: 0.06em;
             padding: 5px 10px;
             display: flex;
@@ -446,12 +458,12 @@
 
         /* ── Term entry cards (classes, status effects, decks, type matchups) ── */
         .term-entry {
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--border);
-            border-radius: 10px;
+            border: 2px solid var(--border);
+            border-left: 4px solid var(--border);
+            border-radius: 0;
             padding: 18px 20px;
             margin: 0 0 18px;
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--surface);
         }
 
         .term-entry h3 {
@@ -469,13 +481,15 @@
         }
 
         .term-entry .tag {
-            font-size: 0.7rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.68rem;
             letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--muted);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 999px;
+            background: transparent;
+            border: 1.5px solid var(--muted);
+            border-radius: 0;
             padding: 3px 10px;
         }
 
@@ -561,8 +575,8 @@
 
             .sidebar-toggle {
                 background: none;
-                border: 1px solid var(--border);
-                border-radius: 6px;
+                border: 2px solid var(--border);
+                border-radius: 0;
                 color: var(--muted);
                 width: 28px;
                 height: 28px;
