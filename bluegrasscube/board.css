@@ -447,6 +447,11 @@ a {
     font-weight: 700;
 }
 
+.calendar-event-where {
+    font-weight: 500;
+    opacity: 0.7;
+}
+
 .calendar-event--cancelled {
     text-decoration: line-through;
     opacity: 0.55;

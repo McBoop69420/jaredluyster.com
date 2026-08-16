@@ -83,6 +83,12 @@ async function renderCalendar() {
                 timeEl.className = "calendar-event-time";
                 timeEl.textContent = formatCompactTime(event.start);
                 evEl.append(timeEl, document.createTextNode(` ${event.what}`));
+                if (event.where) {
+                    const whereEl = document.createElement("span");
+                    whereEl.className = "calendar-event-where";
+                    whereEl.textContent = ` · ${event.where}`;
+                    evEl.appendChild(whereEl);
+                }
                 cell.appendChild(evEl);
             }
 

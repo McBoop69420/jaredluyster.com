@@ -59,7 +59,9 @@ when a phase's build work is complete.
   today, and renders cancelled recurring instances **struck-through** (chosen over
   disappearing per the phase brief — "pick one, be consistent" — since Upcoming Events
   already omits cancelled ones and the calendar benefits from showing "this would
-  normally happen but doesn't" transparently).
+  normally happen but doesn't" transparently). Each event line also shows location
+  (` · Tabletop Tavern`, de-emphasized) per 2026-08-16 community feedback — see
+  decisions log.
 - `cubes.js` (new in Phase 5, moved to run on index.html 2026-08-16) — fetches
   `data/cubes.json` (source of truth for id, pinned, nameOverride, thumbnail, strategy),
   then fetches each cube's CubeCobra API entry in parallel (`Promise.all`, each wrapped
@@ -117,3 +119,12 @@ repo root.
   the cubes to be on this page below the upcoming events section. It doesn't need to be
   in the nav bar." `cubes.html` deleted (content relocated, not duplicated); nav is now
   just Upcoming Events · Calendar · Discord on every page.
+- 2026-08-16 — Community feedback relayed via Jared (Discord, from "riahim"): asked
+  about clicking an event for more detail (description/location) on Calendar or
+  Upcoming Events, then self-resolved to "I guess you already have the location in the
+  upcoming events. Maybe just add it to the calendar" — no click-to-expand UI built;
+  each calendar day cell's event line now also shows location, de-emphasized after the
+  what text (`6:30p Cube Night · Tabletop Tavern`).
+- 2026-08-16 — Saturday recurring event renamed from "Cube Night" to
+  "Saturday Drafternoon" (Jared). Only the recurring rule's `what` changed — the
+  2026-09-05 birthday-draft override already sets its own `what` and is unaffected.
