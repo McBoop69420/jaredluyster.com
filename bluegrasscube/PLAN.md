@@ -13,7 +13,7 @@ when a phase's build work is complete.
 | 4 | [phases/phase-4-calendar.md](phases/phase-4-calendar.md) | Calendar view from shared event data | done |
 | 5 | [phases/phase-5-cubes.md](phases/phase-5-cubes.md) | Cube directory: CubeCobra links, thumbnails, community context | done |
 | 6 | [phases/phase-6-admin.md](phases/phase-6-admin.md) | Admin interface: events, posters, cubes, announcements (KV + R2) | **tabled** — see decisions log 2026-08-16 |
-| 7 | [phases/phase-7-mobile.md](phases/phase-7-mobile.md) | Mobile tuning: this-week-first hierarchy | not started |
+| 7 | [phases/phase-7-mobile.md](phases/phase-7-mobile.md) | Mobile tuning: this-week-first hierarchy | done |
 
 ## Current state of this directory
 
@@ -86,6 +86,9 @@ when a phase's build work is complete.
 - `posters/` — created in Phase 2, currently just a `.gitkeep`. Drop a poster image here
   and reference its path (`posters/filename.ext`) from an event's or announcement's
   `poster` field.
+- `fonts/` (new in Phase 7) — self-hosted Inter + Space Grotesk (Latin-subset variable
+  woff2, one file per family covers the whole weight range used). Replaces the Google
+  Fonts `<link>`; see decisions log for why.
 
 ## Deployment
 
@@ -134,3 +137,55 @@ repo root.
   `MAPS_QUERY_OVERRIDES` in `events.js` sends a more specific query for known venues
   while keeping the displayed text just the venue name. Add future venues to that map
   if a plain "<name>, Lexington, KY" search ever turns out wrong for them too.
+- 2026-08-16 — **Phase 7 (mobile tuning) done.** Real findings, verified with actual
+  Lighthouse CLI runs (`npx lighthouse`, works fine in this environment) rather than
+  guessing:
+  - Zero-scroll acceptance criterion was already met going in (header + 2 event cards
+    comfortably fit at 390×844) — no structural change needed there.
+  - **The real performance bug:** the Google Fonts `<link>` was a confirmed
+    render-blocking request (Lighthouse's render-blocking-insight: ~900ms). Measured
+    mobile performance before any Phase 7 fix (both locally and against the live
+    production site): ~0.54–0.68. Fixed by self-hosting (`fonts/`) — both families
+    turned out to be variable fonts, so despite requesting 6 weight combinations only
+    2 files were actually needed (Latin subset covers everything the copy uses,
+    including em dashes/curly quotes). After self-hosting: **0.92 locally**, LCP
+    dropped from ~10s to 1.8s, FCP 2.6s→0.8s, Speed Index 4.2s→0.8s.
+  - Second real bug found via Lighthouse network trace: the Cubes section's 9 parallel
+    CubeCobra API calls each return the cube's *entire* card list (100–450KB each,
+    ~2.6MB total) and were firing immediately on page load even though Cubes sits
+    below the fold. `cubes.js` now defers that fetch behind an `IntersectionObserver`
+    (200px rootMargin) — only fires once the section is about to be visible.
+  - CLS fixed to 0 via `.cube-thumb { aspect-ratio: 1.4; object-fit: cover; }`
+    (CubeCobra art crops are consistently landscape, so this reserves space
+    accurately) — was contributing to a 0.308 CLS before. Reintroducing the deferred
+    Cubes section adds back a small 0.1 CLS in Lighthouse's own measurement (the
+    section growing in when it loads) — an accepted, understood trade-off for the LCP
+    win, not investigated further since it doesn't block the ≥90 threshold.
+  - `.event-poster`/`.announcement-poster` capped at `max-height: 65vh` (verified with
+    an intentionally extreme 300×1400 test SVG — capped correctly, no distortion,
+    since `max-width/max-height` + `width/height: auto` preserves aspect ratio) so an
+    unusually tall community poster can never dominate the viewport. No fixed
+    aspect/crop forced — Phase 2's "posters must support any orientation" constraint
+    still holds.
+  - Tap targets bumped via a `@media (max-width: 480px)` block: nav pills 32px→40px
+    tall, calendar prev/next 34px→39px, `.event-where` link given padding. Not fully
+    44px (the brief's "compact but stable" header constraint and the calendar's
+    deliberately tight cell layout limit how far this can go), but meaningfully
+    better. Loose-grid tilt also halved on mobile (`calc(var(--tilt) * 0.5)`) per the
+    brief's own suggestion — verified this doesn't reintroduce overflow risk even with
+    a poster-bearing card at 360px width.
+  - **Flagged for Jared, not fixed (needs his Cloudflare dashboard access):** the
+    live site's network trace shows Cloudflare's own auto-injected Web Analytics
+    beacon (`static.cloudflareinsights.com/beacon.min.js`) as part of the request
+    chain. It's loaded async (not in Lighthouse's own render-blocking-resources list),
+    so it's a secondary finding, not the main fix — but if he doesn't actively want
+    that beacon, it'd need disabling in the Cloudflare zone's Web Analytics settings.
+  - iOS Safari real-device check requested by the brief: nothing in this codebase uses
+    `position: sticky`, and the only `vh` usage is `.board{min-height:60vh}` and the
+    new `max-height:65vh` poster cap — neither is the classic full-`100vh` bug case,
+    but flagging per the brief's ask since I can't test real iOS Safari from here.
+  - Verification note: the Browser pane's screenshot tool and `loading="lazy"`/
+    `IntersectionObserver` triggering were both unreliable this session (confirmed via
+    manual override that the underlying code was correct both times — see memory).
+    Relied on DOM assertions (`getBoundingClientRect`, `document.fonts`, etc.) instead,
+    plus real Lighthouse CLI runs for the performance numbers.

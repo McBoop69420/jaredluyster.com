@@ -17,3 +17,8 @@
   Cache-Control: public, max-age=0, must-revalidate
 /*.js
   Cache-Control: public, max-age=0, must-revalidate
+
+# Font files are immutable once added (Phase 7, self-hosted from Google Fonts) — a
+# change means a new filename, not an edit to this one, so they're safe to cache hard.
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable

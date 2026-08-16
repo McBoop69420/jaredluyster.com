@@ -94,4 +94,21 @@ async function renderCubes() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", renderCubes);
+// Cubes sits below the fold, but its 9 CubeCobra fetches each return the cube's full
+// card list (each response commonly runs into the hundreds of KB) — fetching all of
+// them immediately on page load, before anyone has scrolled anywhere near this section,
+// was tanking initial load performance. Defer until the section is about to be visible.
+document.addEventListener("DOMContentLoaded", () => {
+    const section = document.getElementById("cubes");
+    if (!section) return;
+    if (!("IntersectionObserver" in window)) {
+        renderCubes();
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        if (!entries[0].isIntersecting) return;
+        observer.disconnect();
+        renderCubes();
+    }, { rootMargin: "200px" });
+    observer.observe(section);
+});

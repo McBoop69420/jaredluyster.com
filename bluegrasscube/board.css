@@ -1,6 +1,29 @@
 /* Bluegrass Cube — shared bulletin-board stylesheet.
    Built up phase by phase; see ../CLAUDE.md and ../DESIGN.md before extending. */
 
+/* Self-hosted (Phase 7) instead of a Google Fonts <link> — that stylesheet was a
+   confirmed render-blocking request adding a full extra external round-trip to the
+   critical path (Lighthouse's render-blocking-insight flagged ~900ms). Both are the
+   Latin-subset variable font files (covers everything this site's copy uses, including
+   em dashes/curly quotes — U+2000-206F), one file per family covering the whole weight
+   range via the variable axis, so this replaces all the weight-specific requests too. */
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("fonts/inter-latin-variable.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Space Grotesk";
+    font-style: normal;
+    font-weight: 500 700;
+    font-display: swap;
+    src: url("fonts/space-grotesk-latin-variable.woff2") format("woff2");
+}
+
 :root {
     --cork: #c7ae86;
 
@@ -205,9 +228,11 @@ a {
 
 .event-poster {
     display: block;
-    width: 100%;
+    max-width: 100%;
+    max-height: 65vh;
+    width: auto;
     height: auto;
-    margin-top: 0.4rem;
+    margin: 0.4rem auto 0;
     border: 2px solid var(--ink);
 }
 
@@ -333,9 +358,11 @@ a {
 
 .announcement-poster {
     display: block;
-    width: 100%;
+    max-width: 100%;
+    max-height: 65vh;
+    width: auto;
     height: auto;
-    margin-top: 0.3rem;
+    margin: 0.3rem auto 0;
     border: 2px solid var(--ink);
 }
 
@@ -528,6 +555,8 @@ a.calendar-event-where {
     display: block;
     width: 100%;
     height: auto;
+    aspect-ratio: 1.4;
+    object-fit: cover;
     border: 2px solid var(--ink);
 }
 
@@ -554,4 +583,35 @@ a.calendar-event-where {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--accent);
+}
+
+/* Mobile tuning (Phase 7) — additive only; desktop composition above is unchanged.
+   Bigger tap targets (nav pills and the calendar's prev/next were sub-44px tall), and
+   the loose-grid tilt calms down a little — full desktop rotation reads as "organized
+   DIY" at a glance, but on a narrow column of stacked cards it reads more like clutter. */
+
+@media (max-width: 480px) {
+    .site-nav a {
+        padding: 0.65rem 0.7rem;
+    }
+
+    .calendar-nav-btn {
+        padding: 0.65rem 0.85rem;
+    }
+
+    .event-where a {
+        display: inline-block;
+        padding: 0.3rem 0;
+    }
+
+    .event-card,
+    .announcement-card,
+    .cube-card {
+        transform: rotate(calc(var(--tilt, 0deg) * 0.5));
+    }
+
+    .cube-card:hover,
+    .cube-card:focus-visible {
+        transform: rotate(calc(var(--tilt, 0deg) * 0.5)) translateY(-3px);
+    }
 }
