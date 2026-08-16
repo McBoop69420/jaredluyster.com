@@ -200,3 +200,28 @@ repo root.
     manual override that the underlying code was correct both times — see memory).
     Relied on DOM assertions (`getBoundingClientRect`, `document.fonts`, etc.) instead,
     plus real Lighthouse CLI runs for the performance numbers.
+  - Follow-up same day: first Phase 7 push only got live production to ~0.72, not the
+    0.92 seen locally — root cause was total blocking time (main-thread cost of the
+    Cubes fetch/parse/render), not network timing; the `IntersectionObserver` alone
+    wasn't enough since `#cubes` sits close enough to Lighthouse's mobile viewport that
+    it fired immediately anyway. Fixed with `fetch(..., {priority:"low"})` +
+    `requestIdleCallback` around `renderCubes()` + batching the 9 card insertions into
+    one `DocumentFragment`. **Final verified production score: 97/100**, TBT and CLS
+    both perfect (0).
+- 2026-08-16 — **Official brand palette adopted.** Jared shared the real Bluegrass Cube
+  brand guide (logo + fonts + 4 Pantone swatches) and chose to shift the whole site's
+  palette to match rather than keep the arbitrary neubrutalist terracotta scheme.
+  `board.css` tokens updated: `--ink` → Pantone 286 navy `#071b2c` (this is also the
+  logo's own background plate, so the header now reads as one continuous surface with
+  the logo rather than a boxed placeholder once it's added), `--cork` → Pantone 7530
+  taupe `#a59482`, `--accent` → Pantone 7505 brown `#83603f`, new `--muted` token for
+  Pantone Cool Gray 4 `#bdbbbb` (used on the calendar's out-of-month day cells).
+  `--paper` (`#f7f3ec`) and `--link` (unchanged blue) aren't official swatches — no
+  light neutral exists in the brand guide, so `--paper` stays close to the family,
+  picking up warmth from the logo's own cream lettering; `--link` is a functional
+  "this is clickable" affordance, not a brand-identity color. All color usage was
+  already tokenized (verified via grep — zero hardcoded hex outside `:root`), so this
+  was a clean 4-value swap, not a file-by-file hunt. **Still pending:** Jared hasn't
+  sent the actual logo image file yet — the header still uses the circle placeholder
+  from Phase 1, just recolored. Swap it for the real logo once he sends an isolated
+  asset (ideally transparent PNG or SVG).

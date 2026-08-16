@@ -24,13 +24,21 @@
     src: url("fonts/space-grotesk-latin-variable.woff2") format("woff2");
 }
 
+/* Official Bluegrass Cube brand palette (2026-08-16, from the brand guide — logo,
+   fonts, Pantone swatches). --ink is Pantone 286, the logo's own background plate, so
+   the header now reads as one continuous surface with the logo rather than a boxed-in
+   placeholder. --cork/--accent are the closest brand swatches to "warm board surface"
+   and "confident accent"; --paper/--muted aren't official swatches (the brand guide has
+   no light neutral) but stay close to the family — --paper picks up warmth from the
+   logo's own cream lettering, --muted is literally Cool Gray 4. */
 :root {
-    --cork: #c7ae86;
+    --cork: #a59482; /* Pantone 7530 */
 
-    --ink: #221a13;
-    --paper: #fffdf8;
+    --ink: #071b2c; /* Pantone 286 */
+    --paper: #f7f3ec;
+    --muted: #bdbbbb; /* Pantone Cool Gray 4 */
 
-    --accent: #d1481f;
+    --accent: #83603f; /* Pantone 7505 */
     --link: #2454d1;
 
     --font-display: "Space Grotesk", "Arial Black", sans-serif;
@@ -450,7 +458,7 @@ a {
 }
 
 .calendar-day--outside {
-    background: var(--cork);
+    background: var(--muted);
     opacity: 0.55;
 }
 
