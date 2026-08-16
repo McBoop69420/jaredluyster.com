@@ -12,19 +12,20 @@ when a phase's build work is complete.
 | 3 | [phases/phase-3-board.md](phases/phase-3-board.md) | Community board: announcements, recent flyers, loose grid, recency fade | done |
 | 4 | [phases/phase-4-calendar.md](phases/phase-4-calendar.md) | Calendar view from shared event data | done |
 | 5 | [phases/phase-5-cubes.md](phases/phase-5-cubes.md) | Cube directory: CubeCobra links, thumbnails, community context | done |
-| 6 | [phases/phase-6-admin.md](phases/phase-6-admin.md) | Admin interface: events, posters, cubes, announcements (KV + R2) | not started |
+| 6 | [phases/phase-6-admin.md](phases/phase-6-admin.md) | Admin interface: events, posters, cubes, announcements (KV + R2) | **tabled** — see decisions log 2026-08-16 |
 | 7 | [phases/phase-7-mobile.md](phases/phase-7-mobile.md) | Mobile tuning: this-week-first hierarchy | not started |
 
 ## Current state of this directory
 
-- `index.html` — the site shell (header, nav, cork surface) plus `#upcoming-events`,
-  populated at runtime by `board.js`.
-- `cubes.html` (new in Phase 5) — separate page, same header/nav/cork treatment,
-  reachable from the "Cubes" nav item. Directory of the group's cubes as a reference
-  sheet, not a uniform card grid — reuses `.board-grid` (the loose grid from
-  Announcements) so cards vary naturally by content (thumbnail or not, strategy note or
-  not) rather than by any artificial size hierarchy. No cube, including the pinned one,
-  is styled bigger/more prominent than the rest (DESIGN.md: no single-cube identity).
+- `index.html` — the site shell (header, nav, cork surface) plus `#upcoming-events` and
+  `#cubes`, both populated at runtime (`board.js` and `cubes.js` respectively). Cubes
+  moved here from its own page in Phase 5 (see decisions log, 2026-08-16) — Jared wanted
+  it below Upcoming Events on the same page, not a separate nav destination. Directory
+  of the group's cubes as a reference sheet, not a uniform card grid — reuses
+  `.board-grid` (the loose grid from Announcements) so cards vary naturally by content
+  (thumbnail or not, strategy note or not) rather than by any artificial size hierarchy.
+  No cube, including the pinned one, is styled bigger/more prominent than the rest
+  (DESIGN.md: no single-cube identity).
 - `calendar.html` (new in Phase 4) — separate page, same header/nav/cork treatment,
   reachable from the "Calendar" nav item. Month-grid view styled as a printed schedule
   sheet pinned to the board (thick border, hard offset shadow, hairline grid — not a
@@ -59,15 +60,18 @@ when a phase's build work is complete.
   disappearing per the phase brief — "pick one, be consistent" — since Upcoming Events
   already omits cancelled ones and the calendar benefits from showing "this would
   normally happen but doesn't" transparently).
-- `cubes.js` (new in Phase 5) — fetches `data/cubes.json` (source of truth for id,
-  pinned, nameOverride, thumbnail, strategy), then fetches each cube's CubeCobra API
-  entry in parallel (`Promise.all`, each wrapped in its own try/catch) to fill in a
-  display name and cover-art thumbnail (`image.uri` in the API response) when the local
-  data doesn't already have one. Every card's CubeCobra link is built from the local
-  `id` alone, so the directory always renders with working links even if CubeCobra is
-  completely unreachable — verified by stubbing `fetch` to reject for cubecobra.com and
-  confirming all 9 cards still render (falling back to `nameOverride` or the raw id) with
-  correct links. Sort: pinned first, then alphabetical by whatever display name is known.
+- `cubes.js` (new in Phase 5, moved to run on index.html 2026-08-16) — fetches
+  `data/cubes.json` (source of truth for id, pinned, nameOverride, thumbnail, strategy),
+  then fetches each cube's CubeCobra API entry in parallel (`Promise.all`, each wrapped
+  in its own try/catch) to fill in a display name and cover-art thumbnail (`image.uri`
+  in the API response) when the local data doesn't already have one. Every card's
+  CubeCobra link is built from the local `id` alone, so the directory always renders
+  with working links even if CubeCobra is completely unreachable — verified by stubbing
+  `fetch` to reject for cubecobra.com and confirming all 9 cards still render (falling
+  back to `nameOverride` or the raw id) with correct links. Sort: pinned first, then
+  alphabetical by whatever display name is known. Relies on `hashString`/
+  `seededRotation` from `events.js` (loaded first on index.html) rather than defining
+  its own copies now that both scripts run on the same page.
 - `data/events.json` — recurring rules + `_example` override/special (left in place as
   format documentation) + one real override: 2026-09-05 Saturday Cube Night is replaced
   by Jared's birthday roto draft. Add real overrides/specials by editing this file
@@ -85,8 +89,9 @@ when a phase's build work is complete.
 
 Cloudflare Pages project rooted at `bluegrasscube/`, custom domain
 `bluegrasscube.jaredluyster.com`. INFRASTRUCTURE.md (repo root, §1b) has the setup steps if
-the Pages project isn't connected yet. Pure static through Phase 5 — deploy is just a push.
-Local preview: `wrangler pages dev bluegrasscube` from repo root.
+the Pages project isn't connected yet. Pure static, indefinitely (Phase 6/KV/R2/admin
+tabled) — deploy is just a push. Local preview: `wrangler pages dev bluegrasscube` from
+repo root.
 
 ## Decisions log
 
@@ -100,3 +105,15 @@ Local preview: `wrangler pages dev bluegrasscube` from repo root.
   not just the current Sun–Sat week) after Jared asked to see a birthday roto draft
   scheduled weeks out. Announcements section turned off — built, but "doesn't make sense
   yet" with only a couple of posts; revisit once there's more to show.
+- 2026-08-16 — **Phase 6 (admin interface) tabled.** Asked Jared to choose an auth
+  approach and who'd provision the KV namespace/R2 bucket (wrangler isn't authenticated
+  on this machine, so Cloudflare resource creation needs his account either way); his
+  answer: "let's table admin access for now. I just want this to be a bulletin board
+  that only we update." No auth, no KV, no R2, no Pages Functions — the manual
+  edit-JSON-and-push workflow from Phases 2–5 stays as-is indefinitely. Don't re-propose
+  Phase 6 unprompted; only pick it back up if Jared brings it up.
+- 2026-08-16 — Cubes moved from its own page (`cubes.html`, Phase 5) into a section on
+  `index.html` below Upcoming Events, and dropped from the nav entirely — Jared: "I want
+  the cubes to be on this page below the upcoming events section. It doesn't need to be
+  in the nav bar." `cubes.html` deleted (content relocated, not duplicated); nav is now
+  just Upcoming Events · Calendar · Discord on every page.

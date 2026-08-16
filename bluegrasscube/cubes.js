@@ -1,19 +1,11 @@
-// Bluegrass Cube — cubes.html rendering. data/cubes.json is the source of truth (id,
-// pinned, nameOverride, thumbnail, strategy); CubeCobra's API is used only to fill in a
-// display name and cover-art thumbnail when the local data doesn't already have them.
-// Every card's link is built from the local id alone, so the directory always renders
-// with working links even if CubeCobra is unreachable.
-
-function hashString(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return h;
-}
-
-function seededRotation(seed) {
-    const options = [-1.5, -1, -0.5, 0.5, 1, 1.5];
-    return options[hashString(seed) % options.length];
-}
+// Bluegrass Cube — Cubes section of index.html. data/cubes.json is the source of truth
+// (id, pinned, nameOverride, thumbnail, strategy); CubeCobra's API is used only to fill
+// in a display name and cover-art thumbnail when the local data doesn't already have
+// them. Every card's link is built from the local id alone, so the directory always
+// renders with working links even if CubeCobra is unreachable.
+//
+// Uses hashString/seededRotation from events.js (loaded first on index.html) rather
+// than redefining them here.
 
 async function fetchCubeInfo(id) {
     try {

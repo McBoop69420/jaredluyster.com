@@ -19,7 +19,6 @@
         <nav class="site-nav" aria-label="Primary">
             <a href="#upcoming-events" aria-current="page">Upcoming Events</a>
             <a href="calendar.html">Calendar</a>
-            <a href="cubes.html">Cubes</a>
             <a href="https://discord.com/invite/dFCXg6QdJW" target="_blank" rel="noopener noreferrer">Discord</a>
         </nav>
     </header>
@@ -29,9 +28,16 @@
             <p class="section-label">Upcoming Events</p>
             <div id="upcoming-events-list" class="upcoming-events"></div>
         </section>
+
+        <section id="cubes" class="upcoming-section">
+            <p class="section-label">Cubes</p>
+            <p class="cubes-status" id="cubes-status">Loading cube details from CubeCobra…</p>
+            <div id="cubes-grid" class="board-grid"></div>
+        </section>
     </main>
 
     <script src="events.js?v=1" defer></script>
     <script src="board.js?v=4" defer></script>
+    <script src="cubes.js?v=1" defer></script>
 </body>
 </html>
