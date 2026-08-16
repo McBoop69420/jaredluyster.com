@@ -128,3 +128,9 @@ repo root.
 - 2026-08-16 — Saturday recurring event renamed from "Cube Night" to
   "Saturday Drafternoon" (Jared). Only the recurring rule's `what` changed — the
   2026-09-05 birthday-draft override already sets its own `what` and is unaffected.
+- 2026-08-16 — Location text (Upcoming Events + Calendar) is now a Google Maps search
+  link (`events.js` → `mapsUrl()`), skipped for "TBD". A plain name search landed on a
+  stale listing for Tabletop Tavern — Jared: "They are on southland drive now" — so
+  `MAPS_QUERY_OVERRIDES` in `events.js` sends a more specific query for known venues
+  while keeping the displayed text just the venue name. Add future venues to that map
+  if a plain "<name>, Lexington, KY" search ever turns out wrong for them too.

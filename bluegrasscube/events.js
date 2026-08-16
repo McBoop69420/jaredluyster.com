@@ -67,6 +67,27 @@ function formatAnnouncementDate(dateStr) {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
 }
 
+// "TBD" (case-insensitive) is a real value some events use when the venue isn't set
+// yet — not an actual place, so it shouldn't become a maps link.
+function isRealLocation(where) {
+    return !!where && where.trim().toUpperCase() !== "TBD";
+}
+
+// A plain "<name>, Lexington, KY" search can land on a stale Google listing (confirmed
+// for Tabletop Tavern, which moved to Southland Drive) — override the query for known
+// venues rather than trusting name-only search to find the current location. Display
+// text stays just the venue name; only the maps query gets the extra specificity.
+const MAPS_QUERY_OVERRIDES = {
+    "Tabletop Tavern": "Tabletop Tavern, Southland Drive, Lexington, KY",
+};
+
+// The group is Lexington, KY-based (DESIGN.md §3); appending the city/state keeps the
+// search from matching a same-named venue elsewhere.
+function mapsUrl(where) {
+    const query = MAPS_QUERY_OVERRIDES[where] || `${where}, Lexington, KY`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 function isPassed(event, now) {
     if (!event.end) return false;
     const [h, m] = event.end.split(":").map(Number);

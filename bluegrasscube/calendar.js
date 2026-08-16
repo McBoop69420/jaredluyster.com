@@ -84,10 +84,21 @@ async function renderCalendar() {
                 timeEl.textContent = formatCompactTime(event.start);
                 evEl.append(timeEl, document.createTextNode(` ${event.what}`));
                 if (event.where) {
-                    const whereEl = document.createElement("span");
-                    whereEl.className = "calendar-event-where";
-                    whereEl.textContent = ` · ${event.where}`;
-                    evEl.appendChild(whereEl);
+                    evEl.appendChild(document.createTextNode(" · "));
+                    if (isRealLocation(event.where)) {
+                        const whereLink = document.createElement("a");
+                        whereLink.className = "calendar-event-where";
+                        whereLink.href = mapsUrl(event.where);
+                        whereLink.target = "_blank";
+                        whereLink.rel = "noopener noreferrer";
+                        whereLink.textContent = event.where;
+                        evEl.appendChild(whereLink);
+                    } else {
+                        const whereEl = document.createElement("span");
+                        whereEl.className = "calendar-event-where";
+                        whereEl.textContent = event.where;
+                        evEl.appendChild(whereEl);
+                    }
                 }
                 cell.appendChild(evEl);
             }

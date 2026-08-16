@@ -195,6 +195,13 @@ a {
     font-size: 0.95rem;
 }
 
+.event-where a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 2px;
+}
+
 .event-poster {
     display: block;
     width: 100%;
@@ -450,6 +457,18 @@ a {
 .calendar-event-where {
     font-weight: 500;
     opacity: 0.7;
+}
+
+a.calendar-event-where {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-underline-offset: 1px;
+}
+
+a.calendar-event-where:hover,
+a.calendar-event-where:focus-visible {
+    opacity: 1;
 }
 
 .calendar-event--cancelled {

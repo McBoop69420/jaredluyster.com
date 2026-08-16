@@ -23,7 +23,16 @@ function renderEvent(event, now, index) {
 
     const where = document.createElement("p");
     where.className = "event-where";
-    where.textContent = event.where;
+    if (isRealLocation(event.where)) {
+        const whereLink = document.createElement("a");
+        whereLink.href = mapsUrl(event.where);
+        whereLink.target = "_blank";
+        whereLink.rel = "noopener noreferrer";
+        whereLink.textContent = event.where;
+        where.appendChild(whereLink);
+    } else {
+        where.textContent = event.where;
+    }
 
     card.append(when, what, where);
 
