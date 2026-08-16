@@ -9,35 +9,39 @@
     <style>
         body {
             overflow-x: hidden;
-            padding-bottom: 64px;
         }
 
         .download-page {
-            max-width: 680px;
+            max-width: 720px;
             margin: 0 auto;
-            padding: 64px 16px 0;
+            padding: 64px 16px 96px;
             position: relative;
             z-index: 1;
         }
 
         .platform-badge {
             display: inline-block;
-            font-size: 0.75rem;
+            font-family: var(--font-display);
+            font-size: 0.72rem;
             font-weight: 700;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            border-radius: 999px;
+            color: var(--accent-ink);
+            background: var(--accent);
+            border: 2px solid var(--ink);
+            border-radius: 0;
             padding: 4px 12px;
             margin-bottom: 20px;
         }
 
         .page-title {
             margin: 0 0 32px;
-            font-size: clamp(2.6rem, 8vw, 5rem);
-            line-height: 0.95;
-            color: var(--muted);
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: clamp(2.6rem, 8vw, 4.4rem);
+            letter-spacing: -0.03em;
+            line-height: 0.98;
+            color: var(--text);
         }
 
         /* ── Download block ── */
@@ -61,13 +65,15 @@
         }
 
         .meta-chip {
-            font-size: 0.75rem;
+            font-family: var(--font-display);
+            font-size: 0.72rem;
             font-weight: 700;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            border-radius: 999px;
+            color: var(--paper);
+            background: var(--ink);
+            border: 2px solid var(--paper);
+            border-radius: 0;
             padding: 4px 12px;
         }
 
@@ -79,18 +85,19 @@
         }
 
         .info-panel {
-            border: 1px solid var(--border);
-            border-radius: 18px;
+            border: 2px solid var(--border);
+            border-radius: 0;
             padding: 20px 22px;
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--surface);
         }
 
         .info-panel-label {
+            font-family: var(--font-display);
             font-size: 0.68rem;
             font-weight: 700;
-            letter-spacing: 0.16em;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--muted);
+            color: var(--accent);
             margin-bottom: 14px;
         }
 
@@ -115,19 +122,29 @@
             content: "—";
             position: absolute;
             left: 0;
-            color: var(--line-strong);
+            color: var(--accent);
         }
 
         @media (max-width: 560px) {
             .info-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 560px) {
             .download-page { padding-top: 36px; }
         }
     </style>
 </head>
 <body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="index.html">
+                <img class="brand-wordmark" src="wordmark-horizontal.svg" alt="Wizard Battle — Roguelike Deckbuilder">
+            </a>
+            <nav class="nav">
+                <a href="index.html">Home</a>
+                <a href="atlas.html">Wiki</a>
+                <a class="active" href="download.html">Download</a>
+            </nav>
+        </div>
+    </header>
+
     <main class="download-page">
         <div class="platform-badge">Windows</div>
         <h1 class="page-title">Download Wizard Battle</h1>
@@ -177,5 +194,10 @@
         </div>
     </main>
 
+    <footer class="footer">
+        <div class="shell footer-inner">
+            <span class="footer-copy">&copy; 2026 Jared Luyster</span>
+        </div>
+    </footer>
 </body>
 </html>

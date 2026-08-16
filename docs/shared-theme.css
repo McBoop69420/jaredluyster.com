@@ -56,6 +56,8 @@ img {
 button {
     font: inherit;
     color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .shell {
@@ -155,6 +157,23 @@ button {
     background: var(--ink);
     border-color: var(--paper);
     color: var(--paper);
+}
+
+/* Footer */
+.footer {
+    border-top: var(--border-w) solid var(--paper);
+    padding: 32px 0;
+}
+
+.footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-copy {
+    font-size: 0.78rem;
+    color: var(--muted);
 }
 
 /* Eyebrow */
