@@ -232,3 +232,104 @@ a {
     font-weight: 500;
     line-height: 1.55;
 }
+
+/* Announcements — a loose grid; current items full-weight, older ones quieter. */
+
+.announcements-section {
+    margin-bottom: 3rem;
+}
+
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 2rem;
+    align-items: start;
+}
+
+.announcement-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 1.1rem 1.25rem 1.25rem;
+    border: 2.5px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--accent);
+    transform: rotate(var(--tilt, 0deg));
+}
+
+.announcement-card::before {
+    content: "";
+    position: absolute;
+    top: -0.8rem;
+    left: 1.1rem;
+    width: 2.5rem;
+    height: 0.9rem;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    transform: rotate(-5deg);
+}
+
+.announcement-card--featured {
+    grid-column: span 2;
+}
+
+.announcement-card--recent {
+    opacity: 0.82;
+    box-shadow: 5px 5px 0 var(--accent);
+}
+
+.announcement-card--old {
+    opacity: 0.6;
+    padding: 0.9rem 1.05rem 1.05rem;
+    box-shadow: 4px 4px 0 var(--accent);
+}
+
+.announcement-card--old .announcement-title {
+    font-size: 1.05rem;
+}
+
+.announcement-date {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.announcement-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.announcement-title a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 2px solid var(--accent);
+}
+
+.announcement-body {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.announcement-poster {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 0.3rem;
+    border: 2px solid var(--ink);
+}
+
+@media (max-width: 640px) {
+    .announcement-card--featured {
+        grid-column: span 1;
+    }
+}

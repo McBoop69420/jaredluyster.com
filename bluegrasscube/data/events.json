@@ -26,7 +26,14 @@
       "date": "2026-01-01",
       "recurringId": "thursday-cube",
       "action": "cancel",
-      "note": "Example only — remove when adding the first real override. action is 'cancel' or 'replace'; a replace may supply any of what/start/end/where/poster to change just those fields."
+      "note": "Example only — for format reference. action is 'cancel' or 'replace'; a replace may supply any of what/start/end/where/poster to change just those fields."
+    },
+    {
+      "date": "2026-09-05",
+      "recurringId": "saturday-cube",
+      "action": "replace",
+      "what": "Jared's Birthday Draft-Ahead: Bangers Only Roto Draft",
+      "where": "TBD"
     }
   ],
   "specials": [

@@ -4,6 +4,13 @@
 
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const ROTATIONS = [-1.5, 1, -0.75, 1.25, -1];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Recency thresholds for the community board (DESIGN.md §14 — recency affects visual
+// prominence, not existence). current: <=14 days old, full size/contrast. recent:
+// <=60 days, slightly quieter. older than that: old, clearly quieter but still shown.
+const RECENCY_CURRENT_DAYS = 14;
+const RECENCY_RECENT_DAYS = 60;
 
 function getEasternNow() {
     const parts = new Intl.DateTimeFormat("en-US", {
@@ -59,6 +66,36 @@ function isPassed(event, now) {
     const [h, m] = event.end.split(":").map(Number);
     const [y, mo, d] = event.date.split("-").map(Number);
     return new Date(y, mo - 1, d, h, m) < now;
+}
+
+function hashString(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h;
+}
+
+function seededRotation(seed) {
+    const options = [-1.5, -1, -0.5, 0.5, 1, 1.5];
+    return options[hashString(seed) % options.length];
+}
+
+function daysAgo(dateStr, now) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const itemDate = new Date(y, m - 1, d);
+    return Math.floor((now - itemDate) / DAY_MS);
+}
+
+function recencyTier(dateStr, now) {
+    const age = daysAgo(dateStr, now);
+    if (age <= RECENCY_CURRENT_DAYS) return "current";
+    if (age <= RECENCY_RECENT_DAYS) return "recent";
+    return "old";
+}
+
+function formatAnnouncementDate(dateStr) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
 }
 
 function buildWeekEvents(data, weekStart) {
@@ -138,6 +175,53 @@ function renderEvent(event, now, index) {
     return card;
 }
 
+function renderAnnouncement(item, now) {
+    const tier = recencyTier(item.date, now);
+    const seed = `${item.date}::${item.title}`;
+
+    const card = document.createElement("article");
+    card.className = "announcement-card" + (tier !== "current" ? ` announcement-card--${tier}` : "");
+    if (tier === "current" && item.poster) card.classList.add("announcement-card--featured");
+    card.style.setProperty("--tilt", `${seededRotation(seed)}deg`);
+
+    const when = document.createElement("p");
+    when.className = "announcement-date";
+    when.textContent = formatAnnouncementDate(item.date);
+
+    const titleEl = document.createElement("h3");
+    titleEl.className = "announcement-title";
+    if (item.link) {
+        const a = document.createElement("a");
+        a.href = item.link;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = item.title;
+        titleEl.appendChild(a);
+    } else {
+        titleEl.textContent = item.title;
+    }
+
+    card.append(when, titleEl);
+
+    if (item.body) {
+        const bodyEl = document.createElement("p");
+        bodyEl.className = "announcement-body";
+        bodyEl.textContent = item.body;
+        card.appendChild(bodyEl);
+    }
+
+    if (item.poster) {
+        const img = document.createElement("img");
+        img.className = "announcement-poster";
+        img.src = item.poster;
+        img.alt = `${item.title} image`;
+        img.loading = "lazy";
+        card.appendChild(img);
+    }
+
+    return card;
+}
+
 function renderEmptyWeek(container, message) {
     container.innerHTML = "";
     const note = document.createElement("div");
@@ -169,4 +253,32 @@ async function renderThisWeek() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", renderThisWeek);
+async function renderAnnouncements() {
+    const section = document.getElementById("announcements-section");
+    const container = document.getElementById("announcements-grid");
+    if (!section || !container) return;
+    try {
+        const res = await fetch("data/announcements.json", { cache: "no-store" });
+        if (!res.ok) throw new Error("announcements.json fetch failed");
+        const data = await res.json();
+        const now = getEasternNow();
+        const items = (data.announcements || [])
+            .filter((a) => !a._example)
+            .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+        if (items.length === 0) {
+            section.style.display = "none";
+            return;
+        }
+        section.style.display = "";
+        container.innerHTML = "";
+        items.forEach((item) => container.appendChild(renderAnnouncement(item, now)));
+    } catch (err) {
+        section.style.display = "none";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderThisWeek();
+    renderAnnouncements();
+});

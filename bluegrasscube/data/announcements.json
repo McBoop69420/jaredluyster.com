@@ -1,0 +1,28 @@
+{
+  "_comment": "Curated community announcements for the board. date is YYYY-MM-DD (US Eastern) — when it was posted, not necessarily an event date. title is required; body/poster/link are optional. Recency affects visual prominence, not existence — see recencyTier() in board.js for the current/recent/old day thresholds. Same _example convention as events.json: entries with \"_example\": true are ignored by the site.",
+  "announcements": [
+    {
+      "_example": true,
+      "date": "2026-01-01",
+      "title": "Example Announcement",
+      "body": "Optional longer note about the announcement.",
+      "poster": null,
+      "link": null,
+      "note": "Example only — for format reference."
+    },
+    {
+      "date": "2026-08-06",
+      "title": "Jared's Birthday Draft-Ahead: Bangers Only Roto Draft",
+      "body": "A roto draft of Austin's \"Bangers Only\" Legacy+ cube — draft-ahead, play-on-the-day, run through Rotato. Drafting begins once 8 people have signed up. Saturday, September 5, 12:00–4:00 PM. Where: TBD. Sign up in Discord.",
+      "poster": null,
+      "link": "https://discord.com/invite/dFCXg6QdJW"
+    },
+    {
+      "date": "2026-08-16",
+      "title": "The Bulletin Board Is Live",
+      "body": "Bluegrass Cube's site just got rebuilt from the ground up as a real community bulletin board — this page will keep growing phase by phase.",
+      "poster": null,
+      "link": null
+    }
+  ]
+}

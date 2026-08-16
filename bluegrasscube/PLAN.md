@@ -9,7 +9,7 @@ when a phase's build work is complete.
 |-------|-------|-------|--------|
 | 1 | [phases/phase-1-shell.md](phases/phase-1-shell.md) | Site shell: header, logo placeholder, nav, cork surface, responsive basics | done |
 | 2 | [phases/phase-2-this-week.md](phases/phase-2-this-week.md) | This Week: recurring events, overrides, posters, WHAT/WHEN/WHERE | done |
-| 3 | [phases/phase-3-board.md](phases/phase-3-board.md) | Community board: announcements, recent flyers, loose grid, recency fade | not started |
+| 3 | [phases/phase-3-board.md](phases/phase-3-board.md) | Community board: announcements, recent flyers, loose grid, recency fade | done |
 | 4 | [phases/phase-4-calendar.md](phases/phase-4-calendar.md) | Calendar view from shared event data | not started |
 | 5 | [phases/phase-5-cubes.md](phases/phase-5-cubes.md) | Cube directory: CubeCobra links, thumbnails, community context | not started |
 | 6 | [phases/phase-6-admin.md](phases/phase-6-admin.md) | Admin interface: events, posters, cubes, announcements (KV + R2) | not started |
@@ -17,22 +17,34 @@ when a phase's build work is complete.
 
 ## Current state of this directory
 
-- `index.html` — the site shell (header, nav, cork surface) plus a `#this-week` section
-  populated at runtime by `board.js`. Phases 3–5 pin more content into `.board`.
-- `board.css` — shared stylesheet (shell + event-card styles), reused by later phases.
-- `board.js` — This Week event engine: computes the current Sun–Sat week's events from
-  `data/events.json` (recurring rules + date overrides + specials), renders each as a
-  bulletin-board announcement, dims passed events, shows a fallback when the week is
-  empty. Fetches with `cache: "no-store"` so edits to `events.json` show up immediately.
+- `index.html` — the site shell (header, nav, cork surface) plus `#this-week` and
+  `#announcements-section`, both populated at runtime by `board.js`. Phases 4–5 pin more
+  content into `.board`.
+- `board.css` — shared stylesheet (shell + event-card + announcement-card styles),
+  reused by later phases.
+- `board.js` — event + announcement engine. This Week: computes the current Sun–Sat
+  week's events from `data/events.json` (recurring rules + date overrides + specials),
+  dims passed events, shows a fallback when the week is empty. Announcements: reads
+  `data/announcements.json`, sorts newest-first, buckets each into current/recent/old
+  by age (`RECENCY_CURRENT_DAYS`/`RECENCY_RECENT_DAYS` — 14/60 days) for the recency-fade
+  look, gives current items with a poster a wider "featured" grid span, and hides the
+  whole section if there's nothing to show. Rotation on both event and announcement
+  cards is deterministic (hashed from date+title), not random per reload. Both fetches
+  use `cache: "no-store"` so edits to the JSON files show up immediately.
 - `cube.html` — old local cube viewer, no longer linked from index.html (cards now link
   straight to CubeCobra). Delete it during Phase 5 unless something still uses it.
-- `data/events.json` — seed event data: recurring rules + `_example` override/special
-  (left in place as format documentation — the engine skips anything with `_example: true`).
-  Add real overrides/specials by editing this file directly until Phase 6's admin UI exists.
+- `data/events.json` — recurring rules + `_example` override/special (left in place as
+  format documentation) + one real override: 2026-09-05 Saturday Cube Night is replaced
+  by Jared's birthday roto draft. Add real overrides/specials by editing this file
+  directly until Phase 6's admin UI exists.
+- `data/announcements.json` (new in Phase 3) — curated board posts: `_example` entry +
+  two real ones (the roto-draft heads-up, linking to Discord; the site-launch post).
+  Same manual-edit-for-now workflow as events.json.
 - `data/cubes.json` — cube directory data migrated from old index.html inline JS
   (IDs, name overrides, strategy notes, pinned flag).
 - `posters/` — created in Phase 2, currently just a `.gitkeep`. Drop a poster image here
-  and reference its path (`posters/filename.ext`) from an event's `poster` field.
+  and reference its path (`posters/filename.ext`) from an event's or announcement's
+  `poster` field.
 
 ## Deployment
 
