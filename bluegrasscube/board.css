@@ -460,3 +460,77 @@ a {
     padding: 1rem;
     font-weight: 500;
 }
+
+/* Cubes — a reference directory, not a uniform card grid. Reuses .board-grid (loose
+   grid, from Announcements); cards vary naturally by content (thumbnail or not,
+   strategy note or not) rather than by any artificial size hierarchy — no cube,
+   including the pinned one, is styled as more "the identity" than another. */
+
+.cubes-status {
+    margin: 0 0 1.5rem;
+    font-weight: 500;
+}
+
+.cube-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--paper);
+    color: var(--ink);
+    text-decoration: none;
+    padding: 1.1rem 1.25rem 1.25rem;
+    border: 2.5px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--accent);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 0.15s ease;
+}
+
+.cube-card:hover,
+.cube-card:focus-visible {
+    transform: rotate(var(--tilt, 0deg)) translateY(-3px);
+}
+
+.cube-card::before {
+    content: "";
+    position: absolute;
+    top: -0.8rem;
+    left: 1.1rem;
+    width: 2.5rem;
+    height: 0.9rem;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    transform: rotate(-5deg);
+}
+
+.cube-thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 2px solid var(--ink);
+}
+
+.cube-name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.cube-strategy {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.cube-link {
+    padding-top: 0.4rem;
+    border-top: 1.5px solid var(--ink);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+}

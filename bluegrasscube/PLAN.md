@@ -11,14 +11,20 @@ when a phase's build work is complete.
 | 2 | [phases/phase-2-this-week.md](phases/phase-2-this-week.md) | This Week: recurring events, overrides, posters, WHAT/WHEN/WHERE | done |
 | 3 | [phases/phase-3-board.md](phases/phase-3-board.md) | Community board: announcements, recent flyers, loose grid, recency fade | done |
 | 4 | [phases/phase-4-calendar.md](phases/phase-4-calendar.md) | Calendar view from shared event data | done |
-| 5 | [phases/phase-5-cubes.md](phases/phase-5-cubes.md) | Cube directory: CubeCobra links, thumbnails, community context | not started |
+| 5 | [phases/phase-5-cubes.md](phases/phase-5-cubes.md) | Cube directory: CubeCobra links, thumbnails, community context | done |
 | 6 | [phases/phase-6-admin.md](phases/phase-6-admin.md) | Admin interface: events, posters, cubes, announcements (KV + R2) | not started |
 | 7 | [phases/phase-7-mobile.md](phases/phase-7-mobile.md) | Mobile tuning: this-week-first hierarchy | not started |
 
 ## Current state of this directory
 
 - `index.html` — the site shell (header, nav, cork surface) plus `#upcoming-events`,
-  populated at runtime by `board.js`. Phase 5 pins more content into `.board`.
+  populated at runtime by `board.js`.
+- `cubes.html` (new in Phase 5) — separate page, same header/nav/cork treatment,
+  reachable from the "Cubes" nav item. Directory of the group's cubes as a reference
+  sheet, not a uniform card grid — reuses `.board-grid` (the loose grid from
+  Announcements) so cards vary naturally by content (thumbnail or not, strategy note or
+  not) rather than by any artificial size hierarchy. No cube, including the pinned one,
+  is styled bigger/more prominent than the rest (DESIGN.md: no single-cube identity).
 - `calendar.html` (new in Phase 4) — separate page, same header/nav/cork treatment,
   reachable from the "Calendar" nav item. Month-grid view styled as a printed schedule
   sheet pinned to the board (thick border, hard offset shadow, hairline grid — not a
@@ -53,8 +59,15 @@ when a phase's build work is complete.
   disappearing per the phase brief — "pick one, be consistent" — since Upcoming Events
   already omits cancelled ones and the calendar benefits from showing "this would
   normally happen but doesn't" transparently).
-- `cube.html` — old local cube viewer, no longer linked from index.html (cards now link
-  straight to CubeCobra). Delete it during Phase 5 unless something still uses it.
+- `cubes.js` (new in Phase 5) — fetches `data/cubes.json` (source of truth for id,
+  pinned, nameOverride, thumbnail, strategy), then fetches each cube's CubeCobra API
+  entry in parallel (`Promise.all`, each wrapped in its own try/catch) to fill in a
+  display name and cover-art thumbnail (`image.uri` in the API response) when the local
+  data doesn't already have one. Every card's CubeCobra link is built from the local
+  `id` alone, so the directory always renders with working links even if CubeCobra is
+  completely unreachable — verified by stubbing `fetch` to reject for cubecobra.com and
+  confirming all 9 cards still render (falling back to `nameOverride` or the raw id) with
+  correct links. Sort: pinned first, then alphabetical by whatever display name is known.
 - `data/events.json` — recurring rules + `_example` override/special (left in place as
   format documentation) + one real override: 2026-09-05 Saturday Cube Night is replaced
   by Jared's birthday roto draft. Add real overrides/specials by editing this file
