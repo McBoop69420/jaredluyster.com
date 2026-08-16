@@ -8,6 +8,7 @@
     --paper: #fffdf8;
 
     --accent: #d1481f;
+    --link: #2454d1;
 
     --font-display: "Space Grotesk", "Arial Black", sans-serif;
     --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -196,9 +197,9 @@ a {
 }
 
 .event-where a {
-    color: inherit;
+    color: var(--link);
     text-decoration: underline;
-    text-decoration-color: var(--accent);
+    text-decoration-color: var(--link);
     text-underline-offset: 2px;
 }
 
@@ -460,15 +461,11 @@ a {
 }
 
 a.calendar-event-where {
-    color: inherit;
-    text-decoration: underline;
-    text-decoration-color: currentColor;
-    text-underline-offset: 1px;
-}
-
-a.calendar-event-where:hover,
-a.calendar-event-where:focus-visible {
+    color: var(--link);
     opacity: 1;
+    text-decoration: underline;
+    text-decoration-color: var(--link);
+    text-underline-offset: 1px;
 }
 
 .calendar-event--cancelled {
