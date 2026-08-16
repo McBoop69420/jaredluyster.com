@@ -1,15 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-    --bg: #0e0e0e;
-    --surface: #161616;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --text: #f0f0f0;
-    --muted: #888;
-    --card: #161616;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --bg: #131113;
+    --surface: #1c191c;
+    --border: var(--paper);
+    --border-strong: var(--accent);
+    --text: #f3ede0;
+    --muted: #9c948a;
+    --card: #1c191c;
+    --shadow: 6px 6px 0 var(--accent);
+    --shadow-soft: 4px 4px 0 var(--accent);
+
+    --paper: #f3ede0;
+    --ink: #131113;
+    --accent: #f2971d;
+    --accent-ink: #1c1206;
+    --border-w: 3px;
+
+    --fire: #ff4422;
+    --water: #2277ff;
+    --rock: #a87832;
+    --arc: #f97316;
+    --ice: #4fc9e8;
+    --shadow-type: #c2569a;
+    --light: #ffe234;
+    --plant: #22c55e;
+
+    --font-display: "Space Grotesk", "Arial Black", sans-serif;
 }
 
 html {
@@ -21,7 +40,7 @@ body {
     min-height: 100vh;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 a {
@@ -49,9 +68,8 @@ button {
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgba(14, 14, 14, 0.88);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
+    background: var(--ink);
+    border-bottom: var(--border-w) solid var(--accent);
 }
 
 .topbar-inner {
@@ -77,67 +95,89 @@ button {
 .nav {
     display: flex;
     align-items: center;
-    gap: 20px;
-    color: var(--muted);
+    gap: 8px;
+    color: var(--paper);
     font-size: 0.88rem;
 }
 
-.nav a:hover { color: var(--text); }
-.nav a.active { color: var(--text); }
+.nav a {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 2px solid var(--paper);
+    transition: background-color 120ms, color 120ms;
+}
+
+.nav a:hover,
+.nav a.active {
+    background: var(--paper);
+    color: var(--ink);
+}
 
 /* Buttons */
 .button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     min-height: 40px;
-    padding: 0 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 0.88rem;
-    font-weight: 500;
+    padding: 0 20px;
+    border-radius: 0;
+    border: 2px solid var(--ink);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: border-color 120ms, background 120ms;
+    transition: transform 120ms, box-shadow 120ms;
     white-space: nowrap;
+    box-shadow: 4px 4px 0 var(--accent);
 }
 
-.button:hover { border-color: var(--border-strong); }
+.button:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--accent); }
 .button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .button-primary {
-    background: var(--text);
-    color: #0e0e0e;
-    border-color: var(--text);
-    font-weight: 600;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--ink);
 }
 
 .button-primary:hover {
-    background: #d8d8d8;
-    border-color: #d8d8d8;
+    background: var(--accent);
 }
 
 .button-secondary {
-    background: transparent;
-    color: var(--text);
+    background: var(--ink);
+    border-color: var(--paper);
+    color: var(--paper);
 }
 
 /* Eyebrow */
 .eyebrow {
     display: inline-flex;
     align-items: center;
-    padding: 5px 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border);
-    color: var(--muted);
+    padding: 5px 14px;
+    border-radius: 0;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--paper);
+    color: var(--accent-ink);
+    font-family: var(--font-display);
     font-size: 0.72rem;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
 /* Typography */
 h1, h2 {
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.1;
 }
