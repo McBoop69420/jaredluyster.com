@@ -9,7 +9,11 @@
 
 async function fetchCubeInfo(id) {
     try {
-        const res = await fetch(`https://cubecobra.com/cube/api/cubejson/${id}`);
+        // priority:"low" (Chromium) keeps these ~9 multi-hundred-KB responses from
+        // competing with the page's actually-critical resources on a slow connection —
+        // matters regardless of exactly when the fetch fires, unlike the scroll-based
+        // deferral below, which a short Upcoming Events list can render moot.
+        const res = await fetch(`https://cubecobra.com/cube/api/cubejson/${id}`, { priority: "low" });
         if (!res.ok) throw new Error(`CubeCobra returned ${res.status}`);
         const data = await res.json();
         return {
@@ -88,27 +92,45 @@ async function renderCubes() {
 
         if (statusEl) statusEl.remove();
         container.innerHTML = "";
-        merged.forEach((cube) => container.appendChild(renderCubeCard(cube)));
+        // One batched DOM write (a fragment) instead of 9 separate appendChild calls —
+        // each of those triggers its own layout pass, adding up to real main-thread
+        // blocking time right when this data lands.
+        const fragment = document.createDocumentFragment();
+        merged.forEach((cube) => fragment.appendChild(renderCubeCard(cube)));
+        container.appendChild(fragment);
     } catch (err) {
         if (statusEl) statusEl.textContent = "Couldn't load the cube directory.";
     }
 }
 
 // Cubes sits below the fold, but its 9 CubeCobra fetches each return the cube's full
-// card list (each response commonly runs into the hundreds of KB) — fetching all of
-// them immediately on page load, before anyone has scrolled anywhere near this section,
-// was tanking initial load performance. Defer until the section is about to be visible.
+// card list (each response commonly runs into the hundreds of KB) — fetching + parsing
+// + rendering all of them immediately on page load, before anyone has scrolled anywhere
+// near this section, was tanking initial load performance. Two layers: intersection
+// (don't bother at all if no one's scrolled anywhere close — real below-fold pages
+// never pay this cost) and requestIdleCallback (a short Upcoming Events list can put
+// #cubes close enough to the fold that the observer fires immediately, so this is what
+// actually keeps the JSON-parsing/DOM work from competing with critical initial render,
+// regardless of timing).
+function scheduleRenderCubes() {
+    if ("requestIdleCallback" in window) {
+        requestIdleCallback(renderCubes, { timeout: 2000 });
+    } else {
+        renderCubes();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const section = document.getElementById("cubes");
     if (!section) return;
     if (!("IntersectionObserver" in window)) {
-        renderCubes();
+        scheduleRenderCubes();
         return;
     }
     const observer = new IntersectionObserver((entries) => {
         if (!entries[0].isIntersecting) return;
         observer.disconnect();
-        renderCubes();
-    }, { rootMargin: "200px" });
+        scheduleRenderCubes();
+    }, { rootMargin: "50px" });
     observer.observe(section);
 });

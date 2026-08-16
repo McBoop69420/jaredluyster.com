@@ -148,19 +148,30 @@ repo root.
     production site): ~0.54–0.68. Fixed by self-hosting (`fonts/`) — both families
     turned out to be variable fonts, so despite requesting 6 weight combinations only
     2 files were actually needed (Latin subset covers everything the copy uses,
-    including em dashes/curly quotes). After self-hosting: **0.92 locally**, LCP
-    dropped from ~10s to 1.8s, FCP 2.6s→0.8s, Speed Index 4.2s→0.8s.
+    including em dashes/curly quotes). LCP dropped from ~10s to 1.8s, FCP 2.6s→0.8s,
+    Speed Index 4.2s→0.8s.
   - Second real bug found via Lighthouse network trace: the Cubes section's 9 parallel
     CubeCobra API calls each return the cube's *entire* card list (100–450KB each,
     ~2.6MB total) and were firing immediately on page load even though Cubes sits
-    below the fold. `cubes.js` now defers that fetch behind an `IntersectionObserver`
-    (200px rootMargin) — only fires once the section is about to be visible.
+    below the fold. First fix attempt was an `IntersectionObserver` alone — didn't
+    actually help much, since with only 3 short Upcoming Events cards and no posters,
+    `#cubes` sits close enough to Lighthouse's 412×823 mobile viewport that the
+    observer fires almost immediately regardless of any real scrolling. The metric
+    that actually mattered was **total blocking time** (main-thread cost of parsing
+    9 large JSON payloads + building 9 DOM cards), not network timing — fixed with
+    `fetch(url, { priority: "low" })` on the CubeCobra calls (helps bandwidth
+    contention regardless of timing) plus wrapping the actual render in
+    `requestIdleCallback(renderCubes, { timeout: 2000 })` so that work is explicitly
+    scheduled off the critical path. TBT 340ms→0ms. Kept the `IntersectionObserver`
+    too (50px rootMargin) — still worthwhile for a page with more content above Cubes,
+    where it'll skip the fetch entirely for anyone who never scrolls that far.
   - CLS fixed to 0 via `.cube-thumb { aspect-ratio: 1.4; object-fit: cover; }`
     (CubeCobra art crops are consistently landscape, so this reserves space
-    accurately) — was contributing to a 0.308 CLS before. Reintroducing the deferred
-    Cubes section adds back a small 0.1 CLS in Lighthouse's own measurement (the
-    section growing in when it loads) — an accepted, understood trade-off for the LCP
-    win, not investigated further since it doesn't block the ≥90 threshold.
+    accurately) — was contributing to a 0.308 CLS before. Also batched the 9 card
+    insertions into one `DocumentFragment` append instead of 9 separate ones.
+  - **End result: Lighthouse mobile performance 1.00 (100/100) locally**, up from a
+    ~0.54–0.68 baseline (measured both locally and against the live production site
+    before any Phase 7 fix).
   - `.event-poster`/`.announcement-poster` capped at `max-height: 65vh` (verified with
     an intentionally extreme 300×1400 test SVG — capped correctly, no distortion,
     since `max-width/max-height` + `width/height: auto` preserves aspect ratio) so an
