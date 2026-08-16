@@ -221,7 +221,26 @@ repo root.
   picking up warmth from the logo's own cream lettering; `--link` is a functional
   "this is clickable" affordance, not a brand-identity color. All color usage was
   already tokenized (verified via grep — zero hardcoded hex outside `:root`), so this
-  was a clean 4-value swap, not a file-by-file hunt. **Still pending:** Jared hasn't
-  sent the actual logo image file yet — the header still uses the circle placeholder
-  from Phase 1, just recolored. Swap it for the real logo once he sends an isolated
-  asset (ideally transparent PNG or SVG).
+  was a clean 4-value swap, not a file-by-file hunt.
+- 2026-08-16 — **Real logo added, replacing the Phase 1 circle placeholder.** Jared
+  pasted the actual lockup (ornate scrollwork, "BLUEGRASS" arched over "CUBE", on a
+  navy plate) in chat; pasted images aren't saved to a file I can access directly, so
+  it had to be located in `~/Downloads` (`image-1786919119577.webp`) by timestamp.
+  Sampled the image's background — `rgb(9,26,45)`, within 2 units of `--ink`
+  (`#071b2c`) per channel — so no palette adjustment was actually needed for the logo
+  to sit seamlessly in the header (confirmed no visible box/seam once placed). Cropped
+  a 1px white artifact line off the bottom edge (present across the full width,
+  confirmed via pixel sampling with PIL) and saved the result as `bluegrasscube/logo.png`
+  (1500×894). `.brand` in `index.html`/`calendar.html` is now a single `<img
+  class="brand-logo">` (explicit width/height attributes to avoid layout shift; `alt`
+  carries the accessible name) — removed the now-unused `.brand-mark`/`.brand-name`
+  CSS rules.
+- 2026-08-16 — **`--cork` swapped from taupe to Cool Gray 4.** Once the real navy logo
+  was live in the header, Jared: "I don't like the dark brown background combined with
+  the navy. it clashes" — the taupe board surface read muddy against navy once they
+  were both actually visible together (a judgment call that's hard to make from
+  swatches alone). `--cork` → Pantone Cool Gray 4 `#bdbbbb` (was `--muted`); the taupe
+  swatch moved to `--muted` instead (still used on the calendar's out-of-month day
+  cells) — all 4 official Pantone colors stay in use, just swapped roles. Navy header +
+  gray board + cream cards + brown accent reads as a more resolved, less "earthy"
+  combination.

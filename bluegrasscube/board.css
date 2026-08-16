@@ -26,17 +26,18 @@
 
 /* Official Bluegrass Cube brand palette (2026-08-16, from the brand guide — logo,
    fonts, Pantone swatches). --ink is Pantone 286, the logo's own background plate, so
-   the header now reads as one continuous surface with the logo rather than a boxed-in
-   placeholder. --cork/--accent are the closest brand swatches to "warm board surface"
-   and "confident accent"; --paper/--muted aren't official swatches (the brand guide has
-   no light neutral) but stay close to the family — --paper picks up warmth from the
-   logo's own cream lettering, --muted is literally Cool Gray 4. */
+   the header reads as one continuous surface with the logo rather than a boxed-in
+   placeholder. --cork was originally the taupe swatch, but that read as a muddy clash
+   against the navy header once the real logo was in place — swapped for Cool Gray 4,
+   a cleaner, more neutral pairing with navy; taupe moved to --muted instead. --paper
+   isn't an official swatch (the brand guide has no light neutral) but stays close to
+   the family, picking up warmth from the logo's own cream lettering. */
 :root {
-    --cork: #a59482; /* Pantone 7530 */
+    --cork: #bdbbbb; /* Pantone Cool Gray 4 */
 
     --ink: #071b2c; /* Pantone 286 */
     --paper: #f7f3ec;
-    --muted: #bdbbbb; /* Pantone Cool Gray 4 */
+    --muted: #a59482; /* Pantone 7530 */
 
     --accent: #83603f; /* Pantone 7505 */
     --link: #2454d1;
@@ -86,25 +87,14 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
     text-decoration: none;
     color: var(--paper);
 }
 
-.brand-mark {
-    width: 2.1rem;
-    height: 2.1rem;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--paper);
-}
-
-.brand-name {
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+.brand-logo {
+    display: block;
+    height: 2.75rem;
+    width: auto;
 }
 
 .site-nav {
