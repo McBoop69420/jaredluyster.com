@@ -411,49 +411,6 @@
             color: inherit;
         }
 
-        /* ── Refresh button ── */
-        .refresh-btn {
-            background: none;
-            border: 2px solid var(--border);
-            border-radius: 0;
-            color: var(--muted);
-            cursor: pointer;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 5px 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 120ms, border-color 120ms, background 120ms;
-            flex-shrink: 0;
-        }
-
-        .refresh-btn:hover {
-            color: var(--text);
-            border-color: var(--wiki-gold);
-            background: rgba(240, 190, 99, 0.06);
-        }
-
-        .refresh-btn:active {
-            background: rgba(240, 190, 99, 0.12);
-        }
-
-        .refresh-btn svg {
-            transition: transform 400ms ease;
-        }
-
-        .refresh-btn.spinning svg {
-            animation: spin 500ms linear;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-
         /* ── Term entry cards (classes, status effects, decks, type matchups) ── */
         .term-entry {
             border: 2px solid var(--border);
@@ -628,16 +585,7 @@
     <div class="content">
         <div class="content-header">
             <h1 id="contentTitle">Select a document</h1>
-            <div style="display:flex;align-items:center;gap:14px">
-                <span class="filepath" id="contentPath"></span>
-                <button class="refresh-btn" id="refreshBtn" title="Reload file (R)">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10.5 6A4.5 4.5 0 1 1 8.25 2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                        <polyline points="8.25,0.5 8.25,2.5 10.25,2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Reload
-                </button>
-            </div>
+            <span class="filepath" id="contentPath"></span>
         </div>
         <div class="scroll-area">
             <div class="md" id="mdContent">
@@ -984,7 +932,6 @@
     const mdContent     = document.getElementById('mdContent');
     const contentTitle  = document.getElementById('contentTitle');
     const contentPath   = document.getElementById('contentPath');
-    const refreshBtn    = document.getElementById('refreshBtn');
     const searchInput   = document.getElementById('searchInput');
     const sidebar       = document.querySelector('.sidebar');
     const sidebarHeader = document.getElementById('sidebarHeader');
@@ -1110,12 +1057,8 @@
 
     function refresh() {
         if (!activeFile) return;
-        refreshBtn.classList.add('spinning');
-        setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
         loadFile(activeFile, activeLabel, activeBtn, true);
     }
-
-    refreshBtn.addEventListener('click', refresh);
 
     // ── Search ──────────────────────────────────────────────
 
