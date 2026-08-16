@@ -14,6 +14,7 @@
         }
 
         .chart-section-label {
+            font-family: var(--font-display);
             font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.16em;
@@ -21,13 +22,13 @@
             color: var(--muted);
             margin: 0 0 12px;
             padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
         }
 
         .chart-panel {
-            background: rgba(14, 10, 22, 0.55);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 0;
             padding: 28px 24px;
         }
 
@@ -50,28 +51,29 @@
         }
 
         .cc-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: transparent;
+            border: 2px solid var(--border);
             color: var(--muted);
-            border-radius: 999px;
+            border-radius: 0;
             padding: 6px 14px;
-            font-size: 0.78rem;
+            font-size: 0.74rem;
             font-weight: 700;
             letter-spacing: 0.04em;
+            text-transform: uppercase;
             cursor: pointer;
             transition: color 0.15s, border-color 0.15s, background 0.15s;
-            font-family: inherit;
+            font-family: var(--font-display);
         }
 
         .cc-btn:hover {
             color: var(--text);
-            border-color: var(--gold);
+            border-color: var(--accent);
         }
 
         .cc-btn.active {
-            background: rgba(240, 190, 99, 0.12);
-            border-color: var(--gold);
-            color: var(--gold);
+            background: var(--accent);
+            border-color: var(--ink);
+            color: var(--accent-ink);
         }
 
         .chart-hint {
@@ -121,15 +123,15 @@
         #typeTooltip {
             position: fixed;
             z-index: 100;
-            background: rgba(10, 7, 18, 0.97);
-            border: 1px solid rgba(255, 236, 209, 0.22);
-            border-radius: 14px;
+            background: var(--ink);
+            border: 2px solid var(--accent);
+            border-radius: 0;
             padding: 14px 18px;
             min-width: 186px;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.15s;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: 4px 4px 0 var(--accent);
             font-size: 0.82rem;
             line-height: 1.5;
         }
@@ -137,8 +139,9 @@
         #typeTooltip.visible { opacity: 1; }
 
         .tt-title {
+            font-family: var(--font-display);
             font-size: 0.88rem;
-            font-weight: 800;
+            font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-bottom: 12px;
@@ -255,7 +258,7 @@
             font-size: 0.78rem;
             color: var(--muted);
             padding-top: 18px;
-            border-top: 1px solid var(--border);
+            border-top: 2px solid var(--border);
         }
 
         .legend-item {
@@ -269,7 +272,7 @@
             align-items: center;
             gap: 3px;
             padding: 3px 8px;
-            border-radius: 8px;
+            border-radius: 0;
             font-weight: 800;
             font-size: 0.75rem;
         }
