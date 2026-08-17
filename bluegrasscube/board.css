@@ -33,7 +33,7 @@
    isn't an official swatch (the brand guide has no light neutral) but stays close to
    the family, picking up warmth from the logo's own cream lettering. */
 :root {
-    --cork: #bdbbbb; /* Pantone Cool Gray 4 */
+    --cork: #e4e2dd; /* lightened from Pantone Cool Gray 4 (#bdbbbb) -- was reading washed-out/flat */
 
     --ink: #071b2c; /* Pantone 286 */
     --paper: #f7f3ec;
@@ -149,10 +149,10 @@ a {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--paper);
-    background: var(--ink);
+    background: var(--accent);
     padding: 0.35rem 0.7rem;
     margin: 0 0 1.5rem;
-    border: 2px solid var(--ink);
+    border: 2px solid var(--accent);
 }
 
 .upcoming-events {
@@ -184,7 +184,7 @@ a {
     left: 1.2rem;
     width: 2.75rem;
     height: 1rem;
-    background: var(--accent);
+    background: var(--ink);
     border: 2px solid var(--ink);
     transform: rotate(-5deg);
 }
@@ -253,7 +253,7 @@ a {
     left: 1.2rem;
     width: 2.75rem;
     height: 1rem;
-    background: var(--accent);
+    background: var(--ink);
     border: 2px solid var(--ink);
     transform: rotate(-5deg);
 }
@@ -300,7 +300,7 @@ a {
     left: 1.1rem;
     width: 2.5rem;
     height: 0.9rem;
-    background: var(--accent);
+    background: var(--ink);
     border: 2px solid var(--ink);
     transform: rotate(-5deg);
 }
@@ -544,7 +544,7 @@ a.calendar-event-where {
     left: 1.1rem;
     width: 2.5rem;
     height: 0.9rem;
-    background: var(--accent);
+    background: var(--ink);
     border: 2px solid var(--ink);
     transform: rotate(-5deg);
 }
