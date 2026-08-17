@@ -1,0 +1,306 @@
+:root{
+  --ink:#14110d;--paper:#f6f2e9;--rule:#2b2620;--muted:#625b50;
+  --accent:#7a1f1f;--card:#ece5d6;--highlight:#f1ead9;--accent-soft:#a84242;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{
+  background:#d9d4c7;color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;line-height:1.5;
+  padding:18px 12px 50px;
+}
+.paper{
+  max-width:1160px;margin:0 auto;background:var(--paper);
+  padding:20px 28px 38px;box-shadow:0 10px 40px rgba(0,0,0,.3);border:1px solid #cabfa6;
+}
+.toprule{height:4px;background:var(--rule);margin-bottom:8px}
+.masthead{text-align:center;border-bottom:3px double var(--rule);padding-bottom:7px}
+h1{
+  font-family:"Playfair Display",Georgia,serif;font-weight:900;
+  font-size:clamp(42px,8vw,78px);letter-spacing:1px;line-height:.95;
+  text-transform:uppercase;margin:6px 0 3px;
+}
+.dateline{font-size:15px;font-style:italic;color:var(--muted)}
+.strip{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:7px;
+  padding-top:6px;border-top:1px solid var(--rule);font-size:11px;
+  text-transform:uppercase;letter-spacing:.45px;color:var(--muted);
+}
+a{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent)}
+a:hover{border-bottom-style:solid}
+
+/* Filter chips */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px;justify-content:center}
+.chip{
+  font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:6px 13px;border:1px solid var(--rule);border-radius:999px;
+  background:var(--card);color:var(--ink);cursor:pointer;transition:all .12s ease;
+}
+.chip:hover{background:var(--highlight)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+
+.board-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:4px 0 18px}
+.refresh-btn{
+  font-family:Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;
+  padding:6px 14px;border:1px solid var(--rule);border-radius:6px;
+  background:var(--card);color:var(--ink);
+}
+.refresh-btn:hover{background:var(--highlight)}
+.refresh-btn:disabled{opacity:.5;cursor:default}
+
+/* Hermes simulated bet tracker */
+.paper-bets{margin:0 0 24px;border:2px solid var(--rule);background:#f0e9da;box-shadow:inset 0 0 0 1px #fff8ea;padding:12px}
+.paper-bets-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2px solid var(--rule);padding-bottom:7px}
+.paper-bets-kicker{font-family:Arial,sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:var(--accent)}
+.paper-bets h2{font-family:"Playfair Display",Georgia,serif;font-size:24px;line-height:1;margin:2px 0 0;text-transform:uppercase;letter-spacing:.35px}
+.paper-bets-record{font-family:Arial,sans-serif;font-size:11px;font-weight:800;text-align:right;text-transform:uppercase;letter-spacing:.35px;color:var(--muted)}
+.paper-bets-card-summary{font-family:Arial,sans-serif;font-size:12px;font-weight:800;padding:7px 0 6px;text-transform:uppercase;letter-spacing:.25px}
+.paper-bet-tabs{display:flex;gap:0;margin-top:9px;border-bottom:1px solid #9e927b}
+.paper-bet-tabs button{appearance:none;border:1px solid #9e927b;border-bottom:0;background:#ddd2bd;color:var(--muted);padding:7px 13px;font:800 10px Arial,sans-serif;text-transform:uppercase;letter-spacing:.45px;cursor:pointer}
+.paper-bet-tabs button+button{border-left:0}
+.paper-bet-tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink);position:relative;top:1px}
+.paper-bet-tabs button:focus-visible{outline:2px solid #24536a;outline-offset:2px}
+[role="tabpanel"][hidden]{display:none}
+.paper-bet-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.paper-bet{display:grid;grid-template-columns:minmax(0,1fr) minmax(106px,max-content);align-items:center;gap:9px;min-width:0;padding:8px 9px;background:var(--paper);border:1px solid #d3c7ae;border-left:4px solid #8a8378;border-radius:3px}
+.paper-bet-copy{min-width:0}
+.paper-bet-pick{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;font-size:13px;line-height:1.15}
+.paper-bet-price{font-family:Arial,sans-serif;font-size:10px;font-weight:800;color:var(--muted);white-space:nowrap}
+.paper-bet-event{font-family:Arial,sans-serif;font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paper-bet-market{font-family:Arial,sans-serif;font-size:10px;font-weight:800;color:#24536a;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paper-bet-state{display:grid;justify-items:end;align-content:center;line-height:1.05;text-align:right}
+.paper-bet-label{font-family:Arial,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.55px}
+.paper-bet-score{font-family:"Courier New",monospace;font-size:12px;font-weight:800;margin-top:3px;white-space:nowrap}
+.paper-bet-detail{font-family:Arial,sans-serif;font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap}
+.paper-bet-units{font-family:Arial,sans-serif;font-size:10px;font-weight:800;margin-top:2px}
+.paper-bet--winning,.paper-bet--won{border-left-color:#28623d}
+.paper-bet--winning .paper-bet-label,.paper-bet--won .paper-bet-label,.paper-bet--won .paper-bet-units{color:#28623d}
+.paper-bet--losing,.paper-bet--lost{border-left-color:#a12b27}
+.paper-bet--losing .paper-bet-label,.paper-bet--lost .paper-bet-label,.paper-bet--lost .paper-bet-units{color:#a12b27}
+.paper-bet--live,.paper-bet--tied{border-left-color:#aa751d}
+.paper-bet--live .paper-bet-label,.paper-bet--tied .paper-bet-label{color:#895e14}
+.paper-bet--scheduled,.paper-bet--pending,.paper-bet--push{border-left-color:#777064}
+.paper-bet-empty{font-family:Arial,sans-serif;font-size:9px;color:var(--muted);margin-top:7px}
+.paper-bets--error{border-color:#a12b27}
+.paper-bet-history{margin-top:10px;border-top:1px solid #b9ad95;padding-top:8px}
+.paper-bet-history-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.paper-bet-history h3{margin:0;font-family:Arial,sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.35px}
+.paper-bet-simulation{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:16px;margin:10px 0;padding:10px;border:1px solid #b9ad95;background:#e8deca}
+.paper-bet-simulation h4{margin:0 0 3px;font:800 11px Arial,sans-serif;text-transform:uppercase;letter-spacing:.35px}
+.paper-bet-simulation p{margin:0;color:var(--muted);font:10px/1.35 Arial,sans-serif}
+.paper-bet-simulation dl{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:8px;margin:0}
+.paper-bet-simulation dl div{padding-left:8px;border-left:2px solid #9e927b}
+.paper-bet-simulation dt{color:var(--muted);font:800 8px Arial,sans-serif;text-transform:uppercase;letter-spacing:.4px}
+.paper-bet-simulation dd{margin:2px 0 0;font:800 16px Georgia,serif}
+.paper-bet-simulation .positive{color:#28623d}
+@media (max-width:700px){
+  .paper-bet-simulation{grid-template-columns:1fr}
+  .paper-bet-simulation dl{grid-template-columns:repeat(2,minmax(90px,1fr))}
+}
+.paper-bet-audit{color:#28623d;text-align:right}
+.paper-bet-audit--warning{color:#a12b27}
+.paper-bet-history-tools{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 7px;font:700 10px Arial,sans-serif;text-transform:uppercase}
+.paper-bet-history-tools label{display:flex;align-items:center;gap:6px}
+.paper-bet-history-tools select,.paper-bet-history-tools input{border:1px solid #9e927b;background:var(--paper);padding:5px 7px;font:11px Arial,sans-serif;text-transform:none}
+.paper-bet-history-tools input{width:min(260px,60vw)}
+.paper-bet-history-count{margin-bottom:5px;color:var(--muted);font:10px Arial,sans-serif}
+.paper-bet-history-scroll{max-height:460px;overflow:auto;border:1px solid #c9bda5;background:var(--paper)}
+.paper-bet-history table{width:100%;border-collapse:collapse;font:11px Arial,sans-serif}
+.paper-bet-history th{position:sticky;top:0;z-index:1;background:#ddd2bd;text-align:left;text-transform:uppercase;font-size:9px;letter-spacing:.4px}
+.paper-bet-history th,.paper-bet-history td{padding:7px 8px;border-bottom:1px solid #ddd3bf;vertical-align:top}
+.paper-bet-history-id{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.paper-bet-history-grade{font-weight:800;text-transform:uppercase}
+.paper-bet-history-grade--win{color:#28623d}.paper-bet-history-grade--loss{color:#a12b27}
+.paper-bet-history-notes{max-width:360px;color:var(--muted);font-size:10px;line-height:1.3}
+.paper-bet-verified,.paper-bet-recorded,.paper-bet-correction{display:inline-block;margin:0 6px 3px 0;padding:2px 4px;font:800 8px Arial,sans-serif;text-transform:uppercase;letter-spacing:.3px}
+.paper-bet-verified{background:#dce9dd;color:#28623d}
+.paper-bet-recorded{background:#e3dfd6;color:#5e584f}
+.paper-bet-correction{background:#f1dfbd;color:#7a5413}
+
+/* Spotlight: every live game + any game involving my teams, across all
+   leagues, surfaced above the per-league sections so "what's happening
+   right now" never requires scrolling through 17 fixed-order leagues. */
+.spotlight{margin:0 0 22px;border:2px solid var(--accent);background:var(--highlight);padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.spotlight-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:2px solid var(--rule);padding-bottom:6px;margin-bottom:10px}
+.spotlight-kicker{font-family:Arial,sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:var(--accent)}
+.spotlight-head h2{font-family:"Playfair Display",Georgia,serif;font-size:22px;line-height:1;margin:2px 0 0;text-transform:uppercase;letter-spacing:.35px}
+.spotlight-league-tag{font-family:Arial,sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);margin-bottom:2px}
+.spotlight-empty{padding:4px 2px;font-style:italic;color:var(--muted);font-size:13px}
+
+/* League block */
+.league{margin:26px 0 8px}
+.league-head{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid var(--rule);margin-bottom:12px}
+.league-name{font-family:"Playfair Display",Georgia,serif;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--accent)}
+.league-sub{font-family:Arial,sans-serif;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+/* Game cards */
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.game{
+  background:var(--card);border:1px solid #d8cfba;border-left:4px solid var(--muted);
+  border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;
+}
+.game--live{border-left-color:#b3271f}
+.game--final{border-left-color:#888}
+.game--me{background:var(--highlight);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.matchup{display:grid;grid-template-columns:minmax(0,1fr) minmax(54px,max-content) minmax(0,1fr);align-items:center;gap:8px}
+.team{display:flex;align-items:center;gap:7px;min-width:0;flex:1 1 0}
+.team--home{flex-direction:row-reverse;text-align:right}
+.team-logo{width:26px;height:26px;object-fit:contain;flex:0 0 auto}
+.team-badge{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--rule);color:var(--paper);font-family:"Playfair Display",Georgia,serif;font-weight:800;font-size:10px;flex:0 0 auto}
+.team-cell{display:flex;align-items:center;gap:7px;min-width:0}
+.team-text{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.12}
+.team-name{font-size:12.5px;font-weight:700;overflow-wrap:anywhere;word-break:break-word}
+.team-name-row{display:flex;align-items:center;gap:3px;min-width:0}
+.team-rec{font-size:10.5px;color:var(--muted);font-weight:400;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-star{color:var(--accent);font-size:13px;margin-left:2px;flex:0 0 auto}
+.score{display:flex;justify-content:center;align-items:center;gap:9px}
+.score-num{font-size:22px;font-weight:800}
+.score-num.win{color:var(--ink)}
+.score-num.lose{color:var(--muted)}
+.score-vs{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em}
+.status{text-align:center;font-size:11px;color:var(--muted)}
+.status--live{color:#b3271f;font-weight:700}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#b3271f;margin-right:4px;vertical-align:middle}
+.baseball-situation{border-top:1px dotted #b8ae9b;padding-top:6px;display:grid;gap:4px;font-family:Arial,sans-serif}
+.baseball-players{text-align:center;font-size:10.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.baseball-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.25px;color:var(--muted)}
+.baseball-separator{color:var(--muted)}
+.baseball-between{font-size:10px;font-style:italic;color:var(--muted)}
+.baseball-state-row{display:flex;align-items:center;justify-content:center;gap:6px;min-height:18px}
+.base-diamond{position:relative;display:inline-block;width:25px;height:16px;flex:0 0 25px}
+.base{position:absolute;width:7px;height:7px;background:var(--paper);border:1px solid #817a70;transform:rotate(45deg);box-sizing:border-box}
+.base--second{left:9px;top:0}
+.base--third{left:2px;top:7px}
+.base--first{left:16px;top:7px}
+.base--occupied{background:#b3271f;border-color:#8f1d18}
+.baseball-state-text{font-size:10px;line-height:1;color:var(--muted);white-space:nowrap}
+.final-line-score{border-top:1px dotted #b8ae9b;padding-top:6px;font-family:Arial,sans-serif}
+.final-line-title{font-size:9px;font-weight:800;line-height:1;text-align:left;color:var(--muted);letter-spacing:.45px;margin-bottom:4px}
+.final-line-scroll{overflow-x:auto;scrollbar-width:thin}
+.final-line-table{width:100%;min-width:280px;border-collapse:collapse;table-layout:fixed;font-size:9.5px;line-height:1.15;font-variant-numeric:tabular-nums}
+.final-line-table th,.final-line-table td{padding:2px 2px;text-align:center;border-bottom:1px dotted #c7bdab;white-space:nowrap}
+.final-line-table thead th{font-size:8.5px;color:var(--muted);font-weight:700;border-bottom:1px solid #9d9589}
+.final-line-table .box-team-col{width:32px;text-align:left;font-weight:800;color:var(--ink)}
+.final-line-table .box-total-start{border-left:1px solid #9d9589}
+.final-line-table .box-runs{font-weight:800}
+.final-line-table tbody tr:last-child th,.final-line-table tbody tr:last-child td{border-bottom:0}
+.game:has(.player-box-details[open]){grid-column:1 / -1}
+.player-box-details{border-top:1px dotted #b8ae9b;padding-top:5px;font-family:Arial,sans-serif}
+.player-box-summary{cursor:pointer;list-style:none;font-size:10px;font-weight:800;letter-spacing:.45px;color:var(--accent);text-align:center;padding:3px 0}
+.player-box-summary::-webkit-details-marker{display:none}
+.player-box-summary::after{content:" +"}
+.player-box-details[open] .player-box-summary::after{content:" −"}
+.player-box-content{margin-top:7px}
+.player-box-message{text-align:center;padding:8px;color:var(--muted);font-size:11px;font-style:italic}
+.player-box-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.player-box-team{min-width:0}
+.player-box-team-name{font-family:"Playfair Display",Georgia,serif;font-size:15px;margin:0 0 6px;color:var(--ink);border-bottom:1px solid var(--rule);padding-bottom:3px}
+.player-stat-section{min-width:0;margin-bottom:10px}
+.player-stat-title{font-size:9px;font-weight:800;letter-spacing:.4px;color:var(--muted);margin-bottom:2px}
+.player-stat-scroll{overflow-x:auto;scrollbar-width:thin}
+.player-stat-table{width:100%;min-width:390px;border-collapse:collapse;font-size:10px;line-height:1.2;font-variant-numeric:tabular-nums}
+.player-stat-table th,.player-stat-table td{padding:3px 5px;text-align:right;border-bottom:1px dotted #c7bdab;white-space:nowrap}
+.player-stat-table thead th{font-size:8.5px;color:var(--muted);border-bottom:1px solid #9d9589}
+.player-stat-table .player-name-col{width:42%;text-align:left}
+.player-stat-table tbody th{font-weight:600}
+.player-name{display:inline}
+.player-position{font-size:8px;color:var(--muted);margin-left:4px;text-transform:uppercase}
+.player-stat-table tfoot th,.player-stat-table tfoot td{font-weight:800;border-top:1px solid #9d9589;border-bottom:0}
+
+/* Standings table */
+.standings{margin:14px 0 4px}
+.standings-head{font-family:"Playfair Display",Georgia,serif;font-weight:800;font-size:16px;text-transform:uppercase;color:var(--accent);margin:16px 0 6px;letter-spacing:.4px}
+.standings-conferences{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:8px}
+.standings-conference{min-width:0}
+.conference-head{font-family:"Playfair Display",Georgia,serif;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:.45px;border-bottom:3px double var(--rule);padding:3px 0 5px;color:var(--ink)}
+.standings-division{min-width:0;margin:12px 0 20px;overflow-x:auto}
+.division-head{font-family:"Playfair Display",Georgia,serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);margin-bottom:3px}
+table.stand{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px}
+table.stand th{text-align:right;padding:5px 7px;border-bottom:2px solid var(--rule);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+table.stand th.col-team{text-align:left}
+table.stand td{padding:5px 7px;border-bottom:1px dotted #9d9589;text-align:right}
+table.stand td.col-team{text-align:left;font-weight:700}
+table.stand tr.me{background:#efe2c7}
+table.stand td.col-rank{text-align:center;color:#817a70}
+.team-cell{display:flex;align-items:center;gap:7px;min-width:0}
+.team-cell .team-logo{width:20px;height:20px}
+.team-cell .team-badge{width:20px;height:20px;font-size:8px}
+.team-cell .team-text{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.12}
+.team-cell .team-name{font-size:12px;font-weight:700;overflow-wrap:anywhere;word-break:break-word}
+.team-cell .team-rec{display:block;font-size:10px;color:var(--muted);font-weight:400;line-height:1.05}
+
+/* States */
+.empty,.error{padding:10px 2px;font-style:italic;color:var(--muted);font-size:14px}
+.error{color:var(--accent-soft)}
+.skeleton{height:64px;background:linear-gradient(90deg,#e6dfd0,#f1ead9,#e6dfd0);background-size:200% 100%;animation:sk 1.2s infinite; border-radius:6px;margin-bottom:10px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.colophon{margin-top:30px;padding-top:10px;border-top:3px double var(--rule);font-size:12px;color:var(--muted);text-align:center}
+
+@media(max-width:800px){
+  .standings-conferences,.player-box-grid,.paper-bet-list{grid-template-columns:1fr}
+  /* Paper bets: stack the state column below the bet copy so the 106px
+     min-content width doesn't squeeze the pick text on tablets. */
+  .paper-bet{grid-template-columns:1fr;gap:6px}
+  .paper-bet-state{text-align:right}
+  /* Standings: shrink padding so more columns survive on a 768px tablet */
+  table.stand{font-size:12px}
+  table.stand th,table.stand td{padding:4px 5px}
+}
+@media(max-width:620px){
+  body{padding:0}.paper{padding:16px 14px;box-shadow:none;border:0}
+  .strip{display:block}.strip span{display:block;margin:3px 0}
+  .games-grid{grid-template-columns:1fr 1fr}
+  .game{padding:8px}.team-logo,.team-badge{width:22px;height:22px}
+  .league-name{font-size:19px}
+  /* Game cards: on a 2-up grid the matchup score column can shrink */
+  .matchup{grid-template-columns:minmax(0,1fr) minmax(44px,max-content) minmax(0,1fr)}
+  .team-name{font-size:11.5px}
+  .team-rec{font-size:9.5px}
+  .score-num{font-size:20px}
+  .score-vs{font-size:10px}
+  .status{font-size:10px}
+  /* Paper bets: reduce font size for density */
+  .paper-bet-pick{font-size:12px}
+  .paper-bet-price,.paper-bet-event,.paper-bet-market,.paper-bet-label,.paper-bet-detail,.paper-bet-units{font-size:9px}
+  .paper-bet-score{font-size:11px}
+  /* Standings: smaller text, tighter padding */
+  table.stand{font-size:11px}
+  table.stand th,table.stand td{padding:3px 4px}
+  .standings-head{font-size:15px}
+  .division-head{font-size:12px}
+  .conference-head{font-size:15px}
+  /* League sub-label */
+  .league-sub{font-size:10px}
+}
+@media(max-width:520px){
+  /* Standings tables with many columns: let them scroll horizontally
+     rather than squishing team names into illegibility. The .standings-division
+     already has overflow-x:auto; ensure it's active and give the table a
+     sensible minimum width so columns don't collapse to nothing. */
+  .standings-division{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.stand{min-width:420px}
+  table.stand th,table.stand td{padding:3px 4px;font-size:10px}
+  .team-cell .team-logo,.team-cell .team-badge{width:18px;height:18px}
+  .team-cell .team-name{font-size:11px}
+  .team-cell .team-rec{font-size:9px}
+}
+@media(max-width:430px){
+  .games-grid{grid-template-columns:1fr}
+  /* Single-column game cards: full-width matchup, larger text */
+  .matchup{grid-template-columns:minmax(0,1fr) minmax(48px,max-content) minmax(0,1fr)}
+  .team-name{font-size:12px}
+  .team-rec{font-size:10px}
+  .score-num{font-size:22px}
+  /* Paper bets: single column, full-width rows */
+  .paper-bet-list{grid-template-columns:1fr}
+  .paper-bet{grid-template-columns:1fr}
+  .paper-bet-pick{font-size:13px}
+  .paper-bet-price,.paper-bet-event,.paper-bet-market,.paper-bet-label,.paper-bet-detail,.paper-bet-units{font-size:10px}
+  .paper-bet-score{font-size:12px}
+  /* Standings: still scrollable but slightly smaller */
+  table.stand{min-width:380px;font-size:10px}
+  table.stand th,table.stand td{padding:2px 3px}
+  .standings-head{font-size:14px}
+  .division-head{font-size:11px}
+  .conference-head{font-size:14px}
+}

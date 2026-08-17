@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="McBoop's live scoreboards and standings for the leagues I follow — MLB, MLS, Liga MX, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem, Super Lig, NWSL, USL, NFL.">
+<title>McBoop Sports — Live</title>
+<link rel="preconnect" href="https://site.api.espn.com">
+<link rel="stylesheet" href="/sports/sports.css?v=43">
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1>McBoop Sports</h1>
+    <div class="dateline">Lexington, Kentucky &middot; Live scores &amp; standings</div>
+    <div class="strip">
+      <span>My leagues &middot; auto-refreshing</span>
+      <span><a href="https://news.jaredluyster.com/">The McBoop Daily</a> &middot; <span id="updated">loading&hellip;</span></span>
+    </div>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="League filter"></nav>
+
+  <div class="board-toolbar">
+    <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
+  </div>
+
+  <section class="spotlight" id="spotlight" aria-label="Live and important games">
+    <header class="spotlight-head">
+      <div>
+        <div class="spotlight-kicker">Right now</div>
+        <h2>Spotlight</h2>
+      </div>
+    </header>
+    <div class="games-grid" id="spotlightGrid" aria-live="polite"></div>
+  </section>
+
+  <section class="paper-bets" id="paperBets" aria-labelledby="paperBetsTitle">
+    <header class="paper-bets-head">
+      <div>
+        <div class="paper-bets-kicker">Hermes experiment log</div>
+        <h2 id="paperBetsTitle">Paper Bets — Live</h2>
+      </div>
+      <div class="paper-bets-record" id="paperBetSummary">Loading tracker&hellip;</div>
+    </header>
+    <div class="paper-bet-tabs" role="tablist" aria-label="Paper bet views">
+      <button id="paperBetLiveTab" type="button" role="tab" aria-selected="true" aria-controls="paperBetLivePanel">Live card</button>
+      <button id="paperBetLedgerTab" type="button" role="tab" aria-selected="false" aria-controls="paperBetLedgerPanel" tabindex="-1">Ledger</button>
+    </div>
+    <section id="paperBetLivePanel" role="tabpanel" aria-labelledby="paperBetLiveTab">
+      <div class="paper-bets-card-summary" id="paperBetCardSummary"></div>
+      <div class="paper-bet-list" id="paperBetList" aria-live="polite"></div>
+    </section>
+    <section class="paper-bet-history" id="paperBetLedgerPanel" role="tabpanel" aria-labelledby="paperBetLedgerTab" hidden>
+      <header class="paper-bet-history-head">
+        <h3 id="paperBetHistoryTitle">Bet history &amp; audit</h3>
+        <span class="paper-bet-audit" id="paperBetAudit">Loading ledger&hellip;</span>
+      </header>
+      <section class="paper-bet-simulation" aria-labelledby="paperBetSimulationTitle">
+        <div>
+          <h4 id="paperBetSimulationTitle">$2.50 flat-bet simulation</h4>
+          <p>Recomputed from each settled pick's recorded American odds—not the ledger's stored profit field.</p>
+        </div>
+        <dl id="paperBetSimulation"></dl>
+      </section>
+      <div class="paper-bet-history-tools">
+        <label>Result
+          <select id="paperBetHistoryFilter">
+            <option value="all">All results</option>
+            <option value="win">Wins</option>
+            <option value="loss">Losses</option>
+            <option value="push">Pushes / voids</option>
+          </select>
+        </label>
+        <label>Search
+          <input id="paperBetHistorySearch" type="search" placeholder="Team, pick, date or ID">
+        </label>
+      </div>
+      <div class="paper-bet-history-count" id="paperBetHistoryCount"></div>
+      <div class="paper-bet-history-scroll">
+        <table>
+          <thead><tr><th>Date / ID</th><th>Pick</th><th>Final result</th><th>Grade</th><th>Net</th><th>Evidence</th></tr></thead>
+          <tbody id="paperBetHistoryBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <main id="board" class="board" aria-live="polite"></main>
+
+  <footer class="colophon">
+    <p>Live data from ESPN. Scores and standings refresh automatically; times shown in Eastern (ET).</p>
+  </footer>
+</article>
+<script src="/sports/sports.js?v=43"></script>
+</body>
+</html>
