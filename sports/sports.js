@@ -1113,7 +1113,7 @@
 
   async function loadPaperBets() {
     try {
-      const response = await fetch("/sports/fake-bets.json?_=" + Date.now(), { cache: "no-store" });
+      const response = await fetch("/fake-bets.json?_=" + Date.now(), { cache: "no-store" });
       if (!response.ok) throw new Error("paper bet feed " + response.status);
       paperBetsData = await response.json();
       paperBetsLoadError = false;
