@@ -370,6 +370,60 @@
         font-style: italic;
     }
 
+    /* Taxonomy */
+    .taxonomy-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .taxonomy-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px 24px;
+    }
+    .taxonomy-card-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .taxonomy-num {
+        flex-shrink: 0;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: var(--surface-2);
+        border: 1px solid var(--border-strong);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--mono);
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--accent);
+    }
+    .taxonomy-card h3 {
+        margin: 0;
+        font-size: 1.02rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+    .taxonomy-field { margin-bottom: 12px; }
+    .taxonomy-field:last-child { margin-bottom: 0; }
+    .taxonomy-field-label {
+        display: block;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted-dim);
+        margin-bottom: 4px;
+    }
+    .taxonomy-field p {
+        margin: 0;
+        color: #c3c9d6;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
     /* Vision */
     .vision {
         background: linear-gradient(180deg, var(--surface), var(--surface-2));
@@ -416,6 +470,7 @@
     @media (max-width: 640px) {
         .shell { width: min(100%, calc(100% - 28px)); }
         .thesis-grid { grid-template-columns: 1fr; }
+        .taxonomy-grid { grid-template-columns: 1fr; }
         .topnav { display: none; }
         h1 { max-width: none; }
         .vision { padding: 26px; }
@@ -437,6 +492,7 @@
         </a>
         <nav class="topnav">
             <a href="#pipeline">Pipeline</a>
+            <a href="#taxonomy">Taxonomy</a>
             <a href="#roadmap">Roadmap</a>
             <a href="#vision">Vision</a>
         </nav>
@@ -460,6 +516,7 @@
             </p>
             <div class="hero-foot">
                 <span><b>8</b> phases</span>
+                <span><b>13</b> policy buckets</span>
                 <span><b>10-step</b> production pipeline</span>
                 <span><b>v1.0</b> — Bluegrass Cybersecurity Documentation Standard</span>
             </div>
@@ -498,6 +555,304 @@
             </div>
 
             <div class="pipe-note">Phase 1 defines this pipeline formally. Every phase after it runs documents through it.</div>
+        </div>
+    </section>
+
+    <section class="section" id="taxonomy">
+        <div class="shell">
+            <div class="section-header">
+                <span class="section-label">Policy Architecture</span>
+                <h2>Thirteen buckets, not forty policies</h2>
+                <p>Every policy lives in exactly one bucket. Buckets are grouped by who owns the
+                    decision and what question the documents inside answer — not by which
+                    framework happens to mention them. Each bucket can grow a supporting standard,
+                    procedure, or evidence layer underneath it without spawning a new bucket.</p>
+            </div>
+
+            <div class="example" style="margin-bottom:36px;">
+                <div class="ex-block">
+                    <span class="ex-label">Bucket</span>
+                    Identity &amp; Access Management
+                </div>
+                <span class="ex-arrow">→</span>
+                <div class="ex-block">
+                    <span class="ex-label">Policy</span>
+                    Access Control Policy
+                </div>
+                <span class="ex-arrow">→</span>
+                <div class="ex-block">
+                    <span class="ex-label">Standard / Procedure / Evidence</span>
+                    Password Standard, MFA Standard, Access Review Procedure
+                </div>
+            </div>
+
+            <div class="taxonomy-grid">
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">1</span>
+                        <h3>Governance &amp; Security Management</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Security program ownership, risk management, policy lifecycle, exceptions.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Sets the rules everything else operates under — the constitution, not a technical control.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Information Security Policy</span>
+                        <span class="chip">Risk Management Policy</span>
+                        <span class="chip">Policy Management Standard</span>
+                        <span class="chip">Exception Management Policy</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">2</span>
+                        <h3>Asset &amp; Configuration Management</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Hardware and software inventories, configuration baselines.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>You can't secure, patch, or govern what you haven't inventoried and defined a baseline for.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Asset Management Policy</span>
+                        <span class="chip">Configuration Standard</span>
+                        <span class="chip">Software Inventory Standard</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">3</span>
+                        <h3>Identity &amp; Access Management</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Accounts, authentication, MFA, privileged access, access reviews.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Every other technical bucket assumes an identity layer underneath it.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Access Control Policy</span>
+                        <span class="chip">Password Standard</span>
+                        <span class="chip">MFA Standard</span>
+                        <span class="chip">Privileged Access Procedure</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">4</span>
+                        <h3>Data Protection &amp; Privacy</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Classification, handling, retention, encryption, disposal, privacy.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>One question — what happens to data at each stage of its life — regardless of which system holds it.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Data Classification Policy</span>
+                        <span class="chip">Data Retention Policy</span>
+                        <span class="chip">Encryption Standard</span>
+                        <span class="chip">Data Disposal Procedure</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">5</span>
+                        <h3>Network &amp; Infrastructure Security</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Firewalls, segmentation, remote access, wireless, infrastructure hardening.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Perimeter and transport-layer controls — decides what's allowed to talk to what.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Firewall Policy</span>
+                        <span class="chip">Remote Access Policy</span>
+                        <span class="chip">Wireless Security Standard</span>
+                        <span class="chip">Network Segmentation Standard</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">6</span>
+                        <h3>Endpoint &amp; Mobile Security</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Workstations, laptops, mobile devices, endpoint protection, removable media.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>User-owned hardware — a different owner and threat model than the network layer, even though it's adjacent.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Endpoint Protection Policy</span>
+                        <span class="chip">Mobile Device Policy</span>
+                        <span class="chip">BYOD Policy</span>
+                        <span class="chip">Removable Media Standard</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">7</span>
+                        <h3>Application &amp; Change Management</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Software development, application security, change control, patch deployment.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Change is change — a code deploy and a patch install run the same approve/test/rollback discipline.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Change Management Policy</span>
+                        <span class="chip">Secure SDLC Policy</span>
+                        <span class="chip">Patch Management Policy</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">8</span>
+                        <h3>Security Operations</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Logging, monitoring, malware protection, vulnerability scanning.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>The watch-and-detect layer — day-to-day visibility into everything the other buckets put in place.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Logging &amp; Monitoring Policy</span>
+                        <span class="chip">Malware Protection Policy</span>
+                        <span class="chip">Vulnerability Management Policy</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">9</span>
+                        <h3>Incident &amp; Continuity Management</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Incident response, breach reporting, business continuity, disaster recovery, backup.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>"Something went wrong" runs the same playbook — detect, contain, recover, report — whether the cause is an attacker or a flood.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Incident Response Policy</span>
+                        <span class="chip">Business Continuity Policy</span>
+                        <span class="chip">Backup &amp; Disaster Recovery Policy</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">10</span>
+                        <h3>Third-Party &amp; Supply Chain Security</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Vendor due diligence, contracts, ongoing monitoring of service providers.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Risk that lives outside your own perimeter but still lands on you — a distinct discipline from internal controls.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Vendor Management Policy</span>
+                        <span class="chip">Third-Party Risk Assessment Procedure</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">11</span>
+                        <h3>Personnel &amp; Security Awareness</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Training, acceptable use, onboarding/offboarding, personnel responsibilities.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>The human layer — controls that depend on people knowing and doing the right thing, not a system enforcing it.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Security Awareness Training Policy</span>
+                        <span class="chip">Acceptable Use Policy</span>
+                        <span class="chip">Onboarding/Offboarding Procedure</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">12</span>
+                        <h3>Physical &amp; Environmental Security</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Facility access, equipment protection, environmental controls.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>Security controls that live in physical space, not on a network — a separate threat model even for cloud-first businesses.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Physical Access Policy</span>
+                        <span class="chip">Visitor Procedure</span>
+                        <span class="chip">Equipment Disposal Standard</span>
+                    </div>
+                </div>
+
+                <div class="taxonomy-card">
+                    <div class="taxonomy-card-head">
+                        <span class="taxonomy-num">13</span>
+                        <h3>Compliance, Audit &amp; Assurance</h3>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Governs</span>
+                        <p>Regulatory requirements, internal/external audits, control testing.</p>
+                    </div>
+                    <div class="taxonomy-field">
+                        <span class="taxonomy-field-label">Why grouped</span>
+                        <p>The verification layer that proves the other twelve buckets actually work — not a control itself.</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="chip">Internal Audit Policy</span>
+                        <span class="chip">Risk Assessment Procedure</span>
+                        <span class="chip">Control Testing Procedure</span>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </section>
 
@@ -542,37 +897,25 @@
                         <h3>Core Library</h3>
                         <span class="phase-tag">The documents every organization needs</span>
                     </div>
-                    <p class="phase-goal">Build the baseline every client needs on day one, organized by who it governs.</p>
+                    <p class="phase-goal">Build the baseline every client needs on day one, drawn from the <a href="#taxonomy" style="color:var(--accent);">policy taxonomy</a> below.</p>
                     <div class="phase-body">
-                        <div class="cat-block">
-                            <div class="cat-label">Governance</div>
-                            <div class="chip-row">
-                                <span class="chip">Information Security Policy</span>
-                                <span class="chip">Risk Management Policy</span>
-                                <span class="chip">Asset Management Policy</span>
-                                <span class="chip">Acceptable Use Policy</span>
-                                <span class="chip">Password Policy</span>
-                            </div>
-                        </div>
-                        <div class="cat-block">
-                            <div class="cat-label">Operations</div>
-                            <div class="chip-row">
-                                <span class="chip">Backup Policy</span>
-                                <span class="chip">Patch Management</span>
-                                <span class="chip">Change Management</span>
-                                <span class="chip">Incident Response</span>
-                                <span class="chip">Vulnerability Management</span>
-                            </div>
-                        </div>
-                        <div class="cat-block">
-                            <div class="cat-label">People</div>
-                            <div class="chip-row">
-                                <span class="chip">Security Awareness</span>
-                                <span class="chip">Remote Work</span>
-                                <span class="chip">BYOD</span>
-                                <span class="chip">Mobile Device</span>
-                                <span class="chip">Clean Desk</span>
-                            </div>
+                        <p style="margin:0 0 14px;color:var(--muted);font-size:0.88rem;line-height:1.65;">
+                            The v1 Starter Kit isn't all thirteen buckets at once — it's the one or
+                            two highest-priority policies pulled out of each bucket, enough for a
+                            small business to stand up a defensible baseline program on day one.
+                            Everything else in a bucket (its standards, procedures, evidence) fills
+                            in over Phases 3–4.
+                        </p>
+                        <div class="chip-row">
+                            <span class="chip">Governance</span>
+                            <span class="chip">Asset &amp; Config</span>
+                            <span class="chip">Identity &amp; Access</span>
+                            <span class="chip">App &amp; Change</span>
+                            <span class="chip">Security Operations</span>
+                            <span class="chip">Incident &amp; Continuity</span>
+                            <span class="chip">Endpoint &amp; Mobile</span>
+                            <span class="chip">Personnel &amp; Awareness</span>
+                            <span class="chip">Physical &amp; Environmental</span>
                         </div>
                         <div class="output-line">→ Output: the "Starter Kit"</div>
                     </div>
