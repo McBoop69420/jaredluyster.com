@@ -66,6 +66,24 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
   (`board.css?v=1` → `?v=2`, etc.) — that's a brand-new cache key, so it's guaranteed
   to bypass any stale edge copy immediately rather than waiting up to 4h.
 
+### 1c. BCS Documentation Roadmap — Cloudflare Pages (static, separate project)
+
+- **Purpose:** Internal roadmap page for Bluegrass Cybersecurity Solutions' documentation
+  practice (the "Documentation Operating System" plan — foundation → core library →
+  procedures → evidence → compliance mapping → industry editions → complete systems →
+  living documents). Not the public BCS marketing site (that's `bluegrasscybersecurity.com`,
+  hosted separately on Namecheap, linked from the homepage project grid).
+- **Files served from:** `bcs/` directory in repo root (`index.html`, `bcs-logo-t.png`,
+  own `wrangler.toml` and `_headers`) — same pattern as `sports/` and `bluegrasscube/`.
+- **Subdomain:** `bcs.jaredluyster.com`
+- **Indexing:** `_headers` sends `X-Robots-Tag: noindex, nofollow` and the page itself has
+  `<meta name="robots" content="noindex, nofollow">` — internal roadmap, not meant to be
+  publicly discoverable.
+- **Setup required (not yet done as of this writing):**
+  1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → `McBoop69420/jaredluyster.com`.
+  2. Build settings: Framework preset **None**, build command *(empty)*, root/output directory **`bcs`**.
+  3. Deploy, then add `bcs.jaredluyster.com` as a custom domain on that Pages project.
+
 ### 2. Wizard Battle Site — GitHub Pages (static)
 
 - **Host:** GitHub Pages
@@ -186,6 +204,7 @@ jaredluyster.com/
 │       ├── forgot_password.html
 │       └── reset_password.html
 ├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
+├── bcs/                    # BCS documentation roadmap, internal (Cloudflare Pages: bcs.jaredluyster.com)
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -227,6 +246,7 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `wizardbattle.jaredluyster.com` | Wizard Battle site | GitHub Pages (docs/) |
 | `shop.jaredluyster.com` | Marketplace (redirect) | Render (Flask) |
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
+| `bcs.jaredluyster.com` | BCS documentation roadmap (internal) | Cloudflare Pages (separate project) — not yet created |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper | Self-hosted (Cloudflare Tunnel + Access) |
 | `sports.jaredluyster.com` | McBoop Sports (live scores) | Cloudflare-hosted (Pages/Worker) + Access |
