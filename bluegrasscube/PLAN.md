@@ -62,18 +62,16 @@ when a phase's build work is complete.
   normally happen but doesn't" transparently). Each event line also shows location
   (` · Tabletop Tavern`, de-emphasized) per 2026-08-16 community feedback — see
   decisions log.
-- `cubes.js` (new in Phase 5, moved to run on index.html 2026-08-16) — fetches
-  `data/cubes.json` (source of truth for id, pinned, nameOverride, thumbnail, strategy),
-  then fetches each cube's CubeCobra API entry in parallel (`Promise.all`, each wrapped
-  in its own try/catch) to fill in a display name and cover-art thumbnail (`image.uri`
-  in the API response) when the local data doesn't already have one. Every card's
-  CubeCobra link is built from the local `id` alone, so the directory always renders
-  with working links even if CubeCobra is completely unreachable — verified by stubbing
-  `fetch` to reject for cubecobra.com and confirming all 9 cards still render (falling
-  back to `nameOverride` or the raw id) with correct links. Sort: pinned first, then
-  alphabetical by whatever display name is known. Relies on `hashString`/
-  `seededRotation` from `events.js` (loaded first on index.html) rather than defining
-  its own copies now that both scripts run on the same page.
+- `cubes.js` (new in Phase 5, moved to run on index.html 2026-08-16; live CubeCobra
+  fetches replaced with a build-time cache 2026-08-17) — fetches only local
+  `data/cubes.json` (source of truth for id, pinned, nameOverride, thumbnail, strategy,
+  plus `cachedName`/`cachedThumbnail`) and renders directly from it — no runtime network
+  call to CubeCobra at all. Every card's CubeCobra link is built from the local `id`
+  alone, so the directory always renders with working links even if CubeCobra is
+  completely unreachable. Sort: pinned first, then alphabetical by whatever display name
+  is known. Relies on `hashString`/`seededRotation` from `events.js` (loaded first on
+  index.html) rather than defining its own copies now that both scripts run on the same
+  page.
 - `data/events.json` — recurring rules + `_example` override/special (left in place as
   format documentation) + one real override: 2026-09-05 Saturday Cube Night is replaced
   by Jared's birthday roto draft. Add real overrides/specials by editing this file
@@ -82,13 +80,20 @@ when a phase's build work is complete.
   two real ones (the roto-draft heads-up, linking to Discord; the site-launch post).
   Same manual-edit-for-now workflow as events.json.
 - `data/cubes.json` — cube directory data migrated from old index.html inline JS
-  (IDs, name overrides, strategy notes, pinned flag).
+  (IDs, name overrides, strategy notes, pinned flag), plus `cachedName`/
+  `cachedThumbnail`/`cachedAt` per cube (see `scripts/refresh-cube-cache.js`).
 - `posters/` — created in Phase 2, currently just a `.gitkeep`. Drop a poster image here
   and reference its path (`posters/filename.ext`) from an event's or announcement's
   `poster` field.
 - `fonts/` (new in Phase 7) — self-hosted Inter + Space Grotesk (Latin-subset variable
   woff2, one file per family covers the whole weight range used). Replaces the Google
   Fonts `<link>`; see decisions log for why.
+- `scripts/refresh-cube-cache.js` (new 2026-08-17) — manual maintenance script, not part
+  of any build/deploy step (there is none). Run with `node scripts/refresh-cube-cache.js`
+  from this directory whenever a cube's CubeCobra name or cover art changes and you want
+  the site to reflect it; it hits the CubeCobra API for each cube in `data/cubes.json`
+  and writes `cachedName`/`cachedThumbnail`/`cachedAt` back into that file. Commit the
+  result.
 
 ## Deployment
 
@@ -244,3 +249,17 @@ repo root.
   cells) — all 4 official Pantone colors stay in use, just swapped roles. Navy header +
   gray board + cream cards + brown accent reads as a more resolved, less "earthy"
   combination.
+- 2026-08-17 — **Cubes section switched from live CubeCobra fetches to a build-time
+  cache.** Jared: the section was "taking forever to populate" — the Phase 7 fixes
+  (idle callback, low-priority fetch, intersection observer) had already gotten
+  main-thread blocking time to ~0, but the 9 CubeCobra API round-trips themselves are
+  slow (confirmed manually: `scripts/refresh-cube-cache.js` took over a minute to fetch
+  all 9 sequentially, each response 100–450KB). Since Jared is the sole curator and
+  these names/art rarely change, moved the CubeCobra calls out of the page entirely:
+  `data/cubes.json` gained `cachedName`/`cachedThumbnail`/`cachedAt` per cube, populated
+  by the new `scripts/refresh-cube-cache.js` (run manually, then commit — same
+  edit-JSON-and-push workflow as events/announcements, not a real build step).
+  `cubes.js` now only ever fetches the local JSON; the IntersectionObserver/
+  requestIdleCallback machinery from Phase 7 was removed since there's no longer any
+  expensive work to defer. Cards render instantly, verified via local server with zero
+  requests to cubecobra.com.

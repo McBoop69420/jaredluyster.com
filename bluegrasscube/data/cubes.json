@@ -1,68 +1,95 @@
 {
-  "_comment": "Cube directory. id is the CubeCobra ID (short or UUID); link target is https://cubecobra.com/cube/list/<id>. nameOverride replaces the CubeCobra name when set (group nicknames). strategy is hand-curated, not auto-generated. pinned cubes sort first; the rest sort alphabetically by display name. thumbnail is an optional community-art image path; when null, try pulling art from the CubeCobra API.",
+  "_comment": "Cube directory. id is the CubeCobra ID (short or UUID); link target is https://cubecobra.com/cube/list/<id>. nameOverride replaces the CubeCobra name when set (group nicknames). strategy is hand-curated, not auto-generated. pinned cubes sort first; the rest sort alphabetically by display name. thumbnail is an optional community-art image path, checked before cachedThumbnail. cachedName/cachedThumbnail/cachedAt are filled in by `node scripts/refresh-cube-cache.js` (run manually, then commit) — the site itself never calls the CubeCobra API, it only reads this file. Re-run the script whenever a cube's CubeCobra name or cover art changes and you want the site to pick it up.",
   "cubes": [
     {
       "id": "BluegrassCube",
       "pinned": true,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": "Leans into combo and synergy over classic Vintage archetypes (e.g. Doomsday), and is currently featuring the Initiative mechanic from Commander Legends: Battle for Baldur's Gate."
+      "strategy": "Leans into combo and synergy over classic Vintage archetypes (e.g. Doomsday), and is currently featuring the Initiative mechanic from Commander Legends: Battle for Baldur's Gate.",
+      "cachedName": "Bluegrass Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/4a2e428c-dd25-484c-bbc8-2d6ce10ef42c/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "ff7caa01-4bc4-451c-b659-dc3424468938",
       "pinned": false,
       "nameOverride": "Commander Cube",
       "thumbnail": null,
-      "strategy": null
+      "strategy": null,
+      "cachedName": "Hyrulesavior's Commander Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/3edb78c2-0a3c-46e1-a7ff-97dbd8402495/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "9hd",
       "pinned": false,
       "nameOverride": "Bangers Only Cube (Legacy+)",
       "thumbnail": null,
-      "strategy": "Cross-synergies center on ETBs, +1/+1 counters, and cheating creatures into play."
+      "strategy": "Cross-synergies center on ETBs, +1/+1 counters, and cheating creatures into play.",
+      "cachedName": "Austin's Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/7f1fe849-b407-4252-b175-3f4afbbcea1b/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "91af0e8e-033e-4911-acce-2663ca4f50c4",
       "pinned": false,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": "WR Aggro/Heroic · GB Graveyard · WB Drain/Reanimator · WU Heroic/Flyers · UB Mill/Control · RB Burn/Minotaurs · RG Stompy/Satyrs · WG +1/+1 Counters/Centaurs · UR Burn/Spells Matter"
+      "strategy": "WR Aggro/Heroic · GB Graveyard · WB Drain/Reanimator · WU Heroic/Flyers · UB Mill/Control · RB Burn/Minotaurs · RG Stompy/Satyrs · WG +1/+1 Counters/Centaurs · UR Burn/Spells Matter",
+      "cachedName": "Chosen by the Gods: Champions of Theros",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/abafabb3-b2e7-4d78-b4b7-d8f701d3ee8b/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "fc1f6adf-ea38-46d9-b04e-fd8e1a2361c2",
       "pinned": false,
       "nameOverride": "Live the Dream Cube",
       "thumbnail": null,
-      "strategy": "Emulates Commander's splashy, high-variance gameplay in a normal Cube format — expect big mana ramp and swingy bombs."
+      "strategy": "Emulates Commander's splashy, high-variance gameplay in a normal Cube format — expect big mana ramp and swingy bombs.",
+      "cachedName": "Clone of The Live the Dream Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/318c363b-61cc-4e2f-8f86-a4287539ea07/art_crop_back.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "2d231bc9-1b10-4817-a889-9d86f17dacb9",
       "pinned": false,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": "WU Blink/Tempo · UB Control/Reanimator · BR Sacrifice/Aggro · RG Ramp/Stompy · GW Auras/Voltron · WB Aristocrats · UR Spells Matter · BG Graveyard/Midrange · RW Aggro/Tokens · GU Ramp/Elves"
+      "strategy": "WU Blink/Tempo · UB Control/Reanimator · BR Sacrifice/Aggro · RG Ramp/Stompy · GW Auras/Voltron · WB Aristocrats · UR Spells Matter · BG Graveyard/Midrange · RW Aggro/Tokens · GU Ramp/Elves",
+      "cachedName": "Supreme Masters Set Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/871c4ccc-5a14-4583-b4c7-6f2d2aeb8253/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "dd8fd6de-353e-43a1-9a2f-e6f764808f72",
       "pinned": false,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": "Artifact-centric, with blink, sacrifice, and modified-creature subthemes. Most decks land on two colors, though mono and three-color builds are viable."
+      "strategy": "Artifact-centric, with blink, sacrifice, and modified-creature subthemes. Most decks land on two colors, though mono and three-color builds are viable.",
+      "cachedName": "Sam’s Pauper Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/875df3ef-fab4-455f-bfdb-8f6361b27bf6/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "ruo",
       "pinned": false,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": "WU Flicker · UB Reanimator · BR Sacrifice · RG Power · GW Enchantments · WB Revolt · BG +1/+1 Counters · GU Ramp · UR Prowess · RW Go-wide/Tokens"
+      "strategy": "WU Flicker · UB Reanimator · BR Sacrifice · RG Power · GW Enchantments · WB Revolt · BG +1/+1 Counters · GU Ramp · UR Prowess · RW Go-wide/Tokens",
+      "cachedName": "Bulk Uncommons Cube",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/6384d135-7780-4d75-9e95-71bce506948e/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     },
     {
       "id": "9j0",
       "pinned": false,
       "nameOverride": null,
       "thumbnail": null,
-      "strategy": null
+      "strategy": null,
+      "cachedName": "Mirage-Apocalypse 360",
+      "cachedThumbnail": "https://assets.cubecobra.com/cardimages/beb755c1-9221-480e-bef9-73f1f13a3345/art_crop.webp",
+      "cachedAt": "2026-08-18T01:45:49.083Z"
     }
   ],
   "discord": {
