@@ -1,6 +1,0 @@
-# Cloudflare Pages configuration for the bcs.jaredluyster.com project.
-# Static, no build step — Pages serves this directory directly.
-
-name = "mcboop-bcs"
-compatibility_date = "2026-08-17"
-pages_build_output_dir = "."
