@@ -11,24 +11,60 @@
   // ---- Leagues I follow -------------------------------------------------
   // key = ESPN sport/league path. standings = preferred block type
   // (division for baseball/football, overall for soccer). null = skip.
+  // playoffPoolMode + implicationZones drive the Spotlight "playoff/qualification
+  // implications" boost (see isPlayoffImplicated below):
+  //   confFromDiv = MLB/NFL: wild-card races span every division in a
+  //     conference, so the pool is AL/NL or AFC/NFC, not each division alone.
+  //   confDirect  = MLS/USL: conference is the top level already (no division
+  //     layer beneath it).
+  //   whole       = single league-wide table (WNBA/NWSL/Liga MX, and every
+  //     top-flight soccer league here).
+  // implicationZones: { count, fromTop } — fromTop:true counts down from 1st
+  // (playoff/continental-qualification cutoff), fromTop:false counts up from
+  // last place (relegation cutoff). Liga MX suspended promotion/relegation
+  // through the 2026-27 season, so it uses a playoff cutoff like the US
+  // leagues, not a relegation zone. Verified 2026-27 season formats; the
+  // continental-qualification zones below are rounded to a stable whole-zone
+  // count (covers UCL+UEL+UECL together) rather than tracking the exact
+  // competition split, which shifts most seasons on UEFA coefficient swing
+  // spots.
   const LEAGUES = [
-    { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division" },
-    { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall" },
-    { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall" },
-    { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool"],                standings: "overall" },
-    { key: "soccer/esp.1",    label: "La Liga",          myTeams: [],                           standings: "overall" },
-    { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall" },
-    { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall" },
-    { key: "soccer/fra.1",    label: "Ligue 1",          myTeams: [],                           standings: "overall" },
-    { key: "soccer/uefa.champions", label: "UCL",         myTeams: [],                           standings: null },
-    { key: "soccer/uefa.europa",    label: "UEL",         myTeams: [],                           standings: null },
-    { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall" },
-    { key: "soccer/por.1",    label: "Primeira Liga",    myTeams: [],                           standings: "overall" },
-    { key: "soccer/sco.1",    label: "Scottish Prem",    myTeams: [],                           standings: "overall" },
-    { key: "soccer/tur.1",    label: "Super Lig",        myTeams: [],                           standings: "overall" },
-    { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall" },
-    { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall" },
-    { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division" },
+    { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }] },
+    { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }] },
+    { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
+    { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool"],                standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/esp.1",    label: "La Liga",          myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/fra.1",    label: "Ligue 1",          myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 5, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/uefa.champions", label: "UCL",         myTeams: [],                           standings: null,
+      playoffPoolMode: null, implicationZones: [] },
+    { key: "soccer/uefa.europa",    label: "UEL",         myTeams: [],                           standings: null,
+      playoffPoolMode: null, implicationZones: [] },
+    { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/por.1",    label: "Primeira Liga",    myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/sco.1",    label: "Scottish Prem",    myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 3, fromTop: true }, { count: 2, fromTop: false }] },
+    { key: "soccer/tur.1",    label: "Super Lig",        myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }] },
+    { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
+    { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }] },
+    { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }] },
+    { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
   ];
 
   // Substring patterns (lowercased) marking "my" teams, so we catch
@@ -618,12 +654,25 @@
     // today," so scope every entry to today's date in Eastern regardless of
     // league, live state, or followed-team status.
     const todayET = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    // Playoff/qualification pools are rebuilt once per league per render
+    // (not per game) — cheap, and standings may not have loaded yet for a
+    // given league, in which case isPlayoffImplicated() just returns false
+    // for it until renderSpotlight() re-runs after that league's standings arrive.
+    const poolsCache = new Map();
+    const poolsFor = league => {
+      if (!poolsCache.has(league.key)) {
+        poolsCache.set(league.key, buildPlayoffPools(league, standingsRawByLeague.get(league.key)));
+      }
+      return poolsCache.get(league.key);
+    };
     const entries = [];
     gamesByLeague.forEach((games, key) => {
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
         if (g.dateET !== todayET) return;
-        if (g.state === "in" || g.isMyGame) entries.push({ g, label: league ? league.label : "" });
+        const big = g.state === "in" || g.isMyGame ||
+          (league && isPlayoffImplicated(league, g, poolsFor(league)));
+        if (big) entries.push({ g, label: league ? league.label : "" });
       });
     });
     entries.sort((a, b) => gameRank(a.g) - gameRank(b.g));
@@ -786,6 +835,120 @@
     return standingsRowsTable(blocks[0]);
   }
 
+  // ---- Playoff / qualification implications (Spotlight "biggest games") --
+  // "In the mix" = within IMPLICATION_THRESHOLD rank positions of a cutoff
+  // line (playoff/continental-qualification from the top, relegation from
+  // the bottom) — a rank-distance proxy for games/points back that works
+  // identically whether the league sorts by win-pct or by points, so one
+  // formula covers every league. Standings load non-blocking and separately
+  // from the scoreboard (see loadStandings), so this only has an answer once
+  // a league's standings have actually arrived; renderSpotlight() re-runs
+  // each time a league's standings resolve so it can pick that up.
+  const IMPLICATION_THRESHOLD = 3;
+  const standingsRawByLeague = new Map();
+
+  function sortedPool(entries) {
+    if (!entries.length) return [];
+    const g = statGetter({ entries });
+    const usePts = g.points(entries[0]) !== "";
+    return entries.slice().sort((a, b) => {
+      if (usePts) {
+        const pa = parseInt(g.points(a) || "0", 10), pb = parseInt(g.points(b) || "0", 10);
+        if (pa !== pb) return pb - pa;
+      }
+      const wa = parseInt(g.wins(a) || "0", 10), wb = parseInt(g.wins(b) || "0", 10);
+      if (wa !== wb) return wb - wa;
+      return parseFloat(g.pct(b) || "0") - parseFloat(g.pct(a) || "0");
+    });
+  }
+
+  // Builds the pool(s) a league's playoff/qualification cutoff is actually
+  // drawn against — independent of how the standings TABLE renders. E.g. MLB's
+  // wild card race spans all three divisions in a league, so the pool is
+  // AL/NL, not each division's own table.
+  function buildPlayoffPools(league, rawData) {
+    if (!league.playoffPoolMode || !rawData) return null;
+    const pools = new Map(); // groupKey -> deduped raw entries
+    const addTo = (key, entries) => {
+      if (!pools.has(key)) pools.set(key, []);
+      const list = pools.get(key);
+      const seen = new Set(list.map(e => e.team && (e.team.id || e.team.displayName)));
+      entries.forEach(e => {
+        const id = e.team && (e.team.id || e.team.displayName);
+        if (id && seen.has(id)) return;
+        if (id) seen.add(id);
+        list.push(e);
+      });
+    };
+
+    if (league.playoffPoolMode === "whole") {
+      findStandingsBlock({ standings: "overall" }, rawData).forEach(b => addTo("", b.entries));
+    } else if (league.playoffPoolMode === "confDirect") {
+      // MLS/USL: the conference is the top level already (no division layer
+      // beneath it). findStandingsBlock() would merge these into one table
+      // for an "overall" league, so walk manually and keep them separate —
+      // and skip the many "...Playoffs - ..." bracket nodes ESPN also
+      // returns alongside the real regular-season conference tables.
+      const found = [];
+      (function walk(node, depth) {
+        if (!node || depth > 5) return;
+        if (Array.isArray(node)) { node.forEach(n => walk(n, depth + 1)); return; }
+        if (typeof node !== "object") return;
+        if (node.standings && Array.isArray(node.standings.entries) && node.standings.entries.length && node.name) {
+          found.push({ name: node.name, entries: node.standings.entries });
+        }
+        if (Array.isArray(node.children)) node.children.forEach(c => walk(c, depth + 1));
+        if (Array.isArray(node.standings)) node.standings.forEach(s => walk(s, depth + 1));
+      })(rawData, 0);
+      found.filter(b => /^(Eastern|Western) Conference$/.test(b.name))
+        .forEach(b => addTo(b.name, b.entries));
+    } else if (league.playoffPoolMode === "confFromDiv") {
+      // MLB/NFL: pool by conference (division blocks' parentName), not by division.
+      findStandingsBlock({ standings: "division" }, rawData).forEach(b => addTo(b.parentName || "", b.entries));
+    }
+
+    const result = new Map();
+    pools.forEach((entries, key) => result.set(key, sortedPool(entries)));
+    return result;
+  }
+
+  // Early in a season, 1-2 games played bunches every team near the top of
+  // the table by sheer small-sample noise — that's not a real "close to the
+  // cutoff" signal, just an artifact of how little data exists yet. Require
+  // a team to have played at least this many games before its rank distance
+  // means anything.
+  const MIN_GAMES_FOR_IMPLICATIONS = 5;
+
+  function teamRank(pools, teamName) {
+    if (!pools) return null;
+    for (const list of pools.values()) {
+      const idx = list.findIndex(e => e.team && e.team.displayName === teamName);
+      if (idx < 0) continue;
+      const g = statGetter({ entries: list });
+      const e = list[idx];
+      const gamesPlayed = parseInt(g.wins(e) || "0", 10) + parseInt(g.losses(e) || "0", 10) + parseInt(g.ties(e) || "0", 10);
+      return { rank: idx + 1, poolSize: list.length, gamesPlayed };
+    }
+    return null;
+  }
+
+  function isPlayoffImplicated(league, game, pools) {
+    if (!pools || !league.implicationZones || !league.implicationZones.length) return false;
+    // "Upcoming" implies not-yet-decided; live games are already covered by
+    // the state === "in" check in renderSpotlight, so this only needs to add
+    // scheduled games — a game that's already final has no more implications
+    // left to play out today.
+    if (game.state === "post") return false;
+    return [game.away.name, game.home.name].some(name => {
+      const info = teamRank(pools, name);
+      if (!info || info.gamesPlayed < MIN_GAMES_FOR_IMPLICATIONS) return false;
+      return league.implicationZones.some(z => {
+        const cutoffRank = z.fromTop ? z.count : (info.poolSize - z.count + 1);
+        return Math.abs(info.rank - cutoffRank) <= IMPLICATION_THRESHOLD;
+      });
+    });
+  }
+
   async function loadStandings(league) {
     // Best-effort league standings via the /apis/v2/ standings endpoint
     // (needs ?season). Each call is timeout-wrapped so a hung/blocked host can
@@ -804,6 +967,7 @@
         clearTimeout(to);
         if (!r.ok) continue;
         const d = await r.json();
+        standingsRawByLeague.set(league.key, d);
         const tbl = standingsTable(league, d);
         if (tbl) return tbl;
       } catch (e) { /* try next */ }
@@ -1156,9 +1320,13 @@
     section.appendChild(slot);
     if (league.standings) {
       loadStandings(league).then(tbl => {
-        if (!tbl) return;
-        slot.appendChild(el("div", "standings-head", esc(league.label + " Standings")));
-        slot.appendChild(tbl);
+        if (tbl) {
+          slot.appendChild(el("div", "standings-head", esc(league.label + " Standings")));
+          slot.appendChild(tbl);
+        }
+        // Standings for this league just became available (or were attempted) —
+        // re-check Spotlight's playoff-implications boost, which depends on them.
+        renderSpotlight();
       }).catch(() => {});
     }
     return section;
