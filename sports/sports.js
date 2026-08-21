@@ -736,7 +736,6 @@
       ties: ["ties", "tie", "draws", "draw"],
       points: ["points", "pts"],
       pct: ["winPercent", "winpct", "pct", "winningPercentage"],
-      gb: ["gamesBehind", "gb"],
     };
     const get = namePool => entry => {
       const stats = entry.stats || [];
@@ -752,21 +751,43 @@
     return g;
   }
 
-  function standingsRowsTable(block) {
+  function standingsRowsTable(block, league) {
     const g = statGetter(block);
     const sample = block.entries[0];
     const has = k => g[k](sample) !== "";
-    const usePts = has("points");
+    // Some non-soccer leagues (confirmed on WNBA) carry their own internal
+    // stat literally named "points" that has nothing to do with a standings
+    // points table — it's a wins/losses-derived value ESPN uses for seeding
+    // math, and showing or sorting by it produces a nonsense "Pts" column
+    // (including negative values for teams under .500). Real points tables
+    // only exist for soccer, so gate on that rather than trusting the name.
+    const isSoccer = league && league.key.indexOf("soccer/") === 0;
+    const usePts = isSoccer && has("points");
     const useTies = has("ties");
+    const hasWL = has("wins") && has("losses");
 
     const entries = block.entries.slice().sort((a, b) => {
       const pa = parseInt(g.points(a) || "0", 10), pb = parseInt(g.points(b) || "0", 10);
       const wa = parseInt(g.wins(a) || "0", 10), wb = parseInt(g.wins(b) || "0", 10);
       const pcta = parseFloat(g.pct(a) || "0"), pctb = parseFloat(g.pct(b) || "0");
       if (usePts && pa !== pb) return pb - pa;
-      if (wa !== wb) return wb - wa;
-      return pctb - pcta;
+      if (pcta !== pctb) return pctb - pcta;
+      return wb - wa;
     });
+
+    // Games behind, computed ourselves against the leader of THIS table
+    // rather than trusted from the API: ESPN's own gamesBehind is relative to
+    // each team's conference/division, which reads as nonsense (multiple
+    // teams showing "-", or numbers that don't reconcile) once several of
+    // those groups get merged into one flat table for display.
+    const leader = hasWL ? entries[0] : null;
+    const leaderWins = leader ? parseInt(g.wins(leader) || "0", 10) : 0;
+    const leaderLosses = leader ? parseInt(g.losses(leader) || "0", 10) : 0;
+    const gb = e => {
+      const w = parseInt(g.wins(e) || "0", 10), l = parseInt(g.losses(e) || "0", 10);
+      const val = ((leaderWins - w) + (l - leaderLosses)) / 2;
+      return val <= 0 ? "-" : (Number.isInteger(val) ? String(val) : val.toFixed(1));
+    };
 
     const tbl = el("table", "stand");
     const head = el("tr");
@@ -776,7 +797,7 @@
     if (useTies) headCols.push("T");
     if (usePts) headCols.push("Pts");
     if (has("pct")) headCols.push("Pct");
-    if (has("gb")) headCols.push("GB");
+    if (hasWL) headCols.push("GB");
     headCols.forEach((h, i) => head.appendChild(el("th", i === 1 ? "col-team" : "", h)));
     tbl.appendChild(head);
 
@@ -791,7 +812,7 @@
       if (useTies) tr.appendChild(el("td", "", g.ties(e)));
       if (usePts) tr.appendChild(el("td", "", g.points(e)));
       if (has("pct")) tr.appendChild(el("td", "", g.pct(e)));
-      if (has("gb")) tr.appendChild(el("td", "", g.gb(e)));
+      if (hasWL) tr.appendChild(el("td", "", gb(e)));
       tbl.appendChild(tr);
     });
     return tbl;
@@ -818,7 +839,7 @@
             ? block.name.slice(conference.length).trim() + " Division"
             : block.name;
           divisionBox.appendChild(el("div", "division-head", esc(shortName)));
-          divisionBox.appendChild(standingsRowsTable(block));
+          divisionBox.appendChild(standingsRowsTable(block, league));
           conferenceBox.appendChild(divisionBox);
         });
         wrap.appendChild(conferenceBox);
@@ -826,7 +847,7 @@
       return wrap;
     }
 
-    return standingsRowsTable(blocks[0]);
+    return standingsRowsTable(blocks[0], league);
   }
 
   // ---- Playoff / qualification implications (Spotlight "biggest games") --
@@ -841,18 +862,22 @@
   const IMPLICATION_THRESHOLD = 3;
   const standingsRawByLeague = new Map();
 
-  function sortedPool(entries) {
+  function sortedPool(entries, league) {
     if (!entries.length) return [];
     const g = statGetter({ entries });
-    const usePts = g.points(entries[0]) !== "";
+    // Same "points" caveat as standingsRowsTable: only soccer's points stat
+    // is a real standings points table — some other sports (confirmed WNBA)
+    // carry their own unrelated stat also named "points".
+    const isSoccer = league && league.key.indexOf("soccer/") === 0;
+    const usePts = isSoccer && g.points(entries[0]) !== "";
     return entries.slice().sort((a, b) => {
       if (usePts) {
         const pa = parseInt(g.points(a) || "0", 10), pb = parseInt(g.points(b) || "0", 10);
         if (pa !== pb) return pb - pa;
       }
-      const wa = parseInt(g.wins(a) || "0", 10), wb = parseInt(g.wins(b) || "0", 10);
-      if (wa !== wb) return wb - wa;
-      return parseFloat(g.pct(b) || "0") - parseFloat(g.pct(a) || "0");
+      const pcta = parseFloat(g.pct(a) || "0"), pctb = parseFloat(g.pct(b) || "0");
+      if (pcta !== pctb) return pctb - pcta;
+      return parseInt(g.wins(b) || "0", 10) - parseInt(g.wins(a) || "0", 10);
     });
   }
 
@@ -902,7 +927,7 @@
     }
 
     const result = new Map();
-    pools.forEach((entries, key) => result.set(key, sortedPool(entries)));
+    pools.forEach((entries, key) => result.set(key, sortedPool(entries, league)));
     return result;
   }
 
