@@ -90,7 +90,7 @@
       const b = document.createElement("button");
       b.className = "tab" + (i === activeTab ? " active" : "");
       b.type = "button";
-      b.innerHTML = esc(sec.short) + (sec.liveWeather ? ' <span class="live-dot" title="Live weather"></span>' : "");
+      b.innerHTML = esc(sec.short);
       b.addEventListener("click", () => { activeTab = i; render(); });
       tabs.appendChild(b);
     });

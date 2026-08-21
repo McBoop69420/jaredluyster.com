@@ -393,6 +393,7 @@
       state,
       away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner },
       home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner },
+      dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
       startTime,
       statusText: formatGameStatus(status, state, startTime, leagueKey),
       baseballSituation: parseBaseballSituation(comp, state, leagueKey),
@@ -612,10 +613,16 @@
     const section = $("#spotlight");
     const grid = $("#spotlightGrid");
     if (!section || !grid) return;
+    // Some leagues' scoreboard endpoints return more than just today's slate
+    // (e.g. NFL returns the full week) — Spotlight is "what's happening
+    // today," so scope every entry to today's date in Eastern regardless of
+    // league, live state, or followed-team status.
+    const todayET = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     const entries = [];
     gamesByLeague.forEach((games, key) => {
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
+        if (g.dateET !== todayET) return;
         if (g.state === "in" || g.isMyGame) entries.push({ g, label: league ? league.label : "" });
       });
     });
