@@ -13,6 +13,15 @@
 // label doesn't really apply, but every item still carries one for a
 // consistent UI.
 const FEED_SOURCES = {
+  local: [
+    { name: "LEX 18", url: "https://www.lex18.com/news.rss", bias: "center" },
+    { name: "ABC 36 (WTVQ)", url: "https://www.wtvq.com/category/local-news/feed", bias: "center" },
+    { name: "WKYT", url: "https://www.wkyt.com/arc/outboundfeeds/rss/", bias: "center" },
+    // kentucky.com (Lexington Herald-Leader) has no public RSS feed — the site
+    // blocks automated fetches outright. This Google News search feed, scoped
+    // to kentucky.com via allinurl, is the closest working substitute.
+    { name: "Herald-Leader (via Google News)", url: "https://news.google.com/rss/search?q=when:24h+allinurl:kentucky.com&hl=en-US&gl=US&ceid=US:en", bias: "center" },
+  ],
   national: [
     { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml", bias: "lean-left" },
     { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main", bias: "center" },

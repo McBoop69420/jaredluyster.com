@@ -31,7 +31,7 @@
   // in-browser model + paper-bet ledger. No per-day authored content exists.
   const SECTIONS = [
     { name: "Calendar & Day Plan", short: "Calendar", calendar: true, planHtml: "" },
-    { name: "Local & Weather", short: "Local", liveWeather: true },
+    { name: "Local & Weather", short: "Local", liveWeather: true, liveFeed: "local" },
     ...LIVE_NEWS_SECTIONS.map((s) => Object.assign({}, s)),
     { name: "Sports & Betting", short: "Sports", liveSports: true },
   ];
@@ -115,6 +115,7 @@
     if (sec.liveFeed) {
       if (stageWrap) stageWrap.style.minHeight = "";
       renderLiveFeed(sec);
+      if (sec.liveWeather) loadWeather();
       stampUpdated();
       return;
     }
@@ -153,6 +154,7 @@
   function renderLiveFeed(sec) {
     const stage = $("stage");
     let html = '<h2 class="sec-head">' + esc(sec.name) + "</h2>";
+    if (sec.liveWeather) html += weatherPlaceholder();
     html += '<div class="feed-live-head"><span class="live-dot" title="Live"></span> ' +
       'Live headlines &middot; refreshes automatically</div>';
     html += '<div class="feed-list" id="feedList">' + feedItemsHtml(sec.liveFeed) + "</div>";
