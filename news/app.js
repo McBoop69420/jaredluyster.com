@@ -12,6 +12,7 @@
   const REFRESH_MS = 5 * 60 * 1000;        // re-check for a newer edition
   const WEATHER_REFRESH_MS = 10 * 60 * 1000; // NWS data is slow-moving
   const LIVE_FEED_REFRESH_MS = 4 * 60 * 1000; // matches the worker's edge-cache TTL
+  const TRAFFIC_REFRESH_MS = 10 * 60 * 1000; // matches the LFUCG feed's own 10-min cache
   const NWS_POINT = "38.0297,-84.4947";     // Lexington, KY (ZIP 40517)
   const UA = "McBoopNews/1.0 (jaredluyster.com)";
 
@@ -40,6 +41,7 @@
   let activeTab = 0;
   let refreshTimer = null;
   let weatherTimer = null;
+  let trafficTimer = null;
   let liveFeedTimer = null;
   let sportsTimer = null;
   let calEvents = null;   // loaded from /calendar.json (null = not yet fetched)
@@ -115,7 +117,7 @@
     if (sec.liveFeed) {
       if (stageWrap) stageWrap.style.minHeight = "";
       renderLiveFeed(sec);
-      if (sec.liveWeather) loadWeather();
+      if (sec.liveWeather) { loadWeather(); loadTraffic(); }
       stampUpdated();
       return;
     }
@@ -126,11 +128,11 @@
       return;
     }
     let html = '<h2 class="sec-head">' + esc(sec.name) + "</h2>";
-    if (sec.liveWeather) html += weatherPlaceholder();
+    if (sec.liveWeather) html += weatherPlaceholder() + trafficPlaceholder();
     html += sec.html || "";   // synthesized sections have no authored html
     stage.innerHTML = '<div class="panel-inner">' + html + "</div>";
 
-    if (sec.liveWeather) loadWeather();
+    if (sec.liveWeather) { loadWeather(); loadTraffic(); }
     stampUpdated();
   }
 
@@ -139,6 +141,131 @@
       '<div><div class="weather-live-kicker">Live &middot; National Weather Service</div>' +
       '<h3>Local Forecast</h3></div></div>' +
       '<div class="weather-err">Loading live conditions&hellip;</div></div>';
+  }
+
+  // ---- Live local traffic (LFUCG Traffic Engineering) -------------------
+  // The city's own real-time traffic ticker (lexingtonky.gov) is a JS-rendered
+  // widget with no documented API, but its bundle fetches three CORS-open CSVs
+  // published by LFUCG on GitHub Pages — the same data the city page shows.
+  // Fetched client-side (like NWS weather above), no worker involved.
+  const TRAFFIC_BASE = "https://lfucg.github.io/traffic-data";
+
+  function trafficPlaceholder() {
+    return '<div class="traffic-live" id="trafficLive"><div class="weather-live-head">' +
+      '<div><div class="weather-live-kicker">Live &middot; LFUCG Traffic Engineering</div>' +
+      '<h3>Local Traffic</h3></div></div>' +
+      '<div class="weather-err">Loading live traffic&hellip;</div></div>';
+  }
+
+  // Minimal CSV line splitter — handles double-quoted fields that may contain
+  // commas (e.g. event descriptions like "Love, Broadway 2026: ..."). These
+  // feeds are simple exports with no embedded newlines-in-quotes or escaped
+  // quotes, so a full RFC 4180 parser isn't needed.
+  function splitCsvLine(line) {
+    const out = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"') { inQ = false; } else { cur += c; }
+      } else if (c === '"') {
+        inQ = true;
+      } else if (c === ",") {
+        out.push(cur); cur = "";
+      } else {
+        cur += c;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function parseCsv(text) {
+    const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
+    if (!lines.length) return [];
+    const header = splitCsvLine(lines[0]).map((h) => h.trim());
+    return lines.slice(1).map((line) => {
+      const cells = splitCsvLine(line);
+      const row = {};
+      header.forEach((h, i) => { row[h] = (cells[i] || "").trim(); });
+      return row;
+    });
+  }
+
+  async function fetchTrafficCsv(name) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 7000);
+    try {
+      const r = await fetch(TRAFFIC_BASE + "/" + name + "?breakcache=" + Date.now(), { signal: ctrl.signal });
+      if (!r.ok) return [];
+      return parseCsv(await r.text());
+    } catch (e) {
+      return [];
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  // Every feed is an Excel export via Jekyll: real rows are mixed with blank
+  // spacer rows and a trailing "Cells.EntireColumn.AutoFit" artifact row left
+  // over from the spreadsheet macro that generates these files.
+  function isCsvJunkRow(row) {
+    return Object.values(row).some((v) => v.indexOf("Cells.EntireColumn.AutoFit") >= 0);
+  }
+
+  async function loadTraffic() {
+    const box = $("trafficLive");
+    if (!box) return;
+    try {
+      const [incidents, closures, weekend] = await Promise.all([
+        fetchTrafficCsv("traffic-incidents.csv"),
+        fetchTrafficCsv("scheduled-closures.csv"),
+        fetchTrafficCsv("weekend-impacts.csv"),
+      ]);
+
+      const liveIncidents = incidents.filter((r) => !isCsvJunkRow(r) && r.location);
+      const liveClosures = closures.filter((r) => !isCsvJunkRow(r) && r.location);
+      const liveEvents = weekend.filter((r) => !isCsvJunkRow(r) && r.event && r.day && r.day !== "Note:");
+
+      let html = '<div class="weather-live-head">' +
+        '<div><div class="weather-live-kicker">Live &middot; LFUCG Traffic Engineering</div>' +
+        '<h3>Local Traffic</h3></div>' +
+        '<div class="weather-live-kicker"><a href="https://www.lexingtonky.gov/government/departments-programs/environmental-quality-public-works/traffic-engineering/real-time-traffic-ticker" target="_blank" rel="noopener">Full ticker &rarr;</a></div></div>';
+
+      html += '<div class="traffic-section"><h4>Current Incidents</h4>';
+      html += liveIncidents.length
+        ? '<ul class="traffic-list">' + liveIncidents.map((r) =>
+            '<li><strong>' + esc(r.incidentType.replace(/:$/, "")) + ':</strong> ' + esc(r.location) +
+            (r.description ? " &mdash; " + esc(r.description) : "") + "</li>"
+          ).join("") + "</ul>"
+        : '<div class="traffic-empty">No incidents currently reported.</div>';
+      html += "</div>";
+
+      html += '<div class="traffic-section"><h4>Scheduled Closures</h4>';
+      html += liveClosures.length
+        ? '<div class="traffic-scroll"><ul class="traffic-list">' + liveClosures.map((r) =>
+            '<li>' + (r.isNew ? '<span class="traffic-new">New</span> ' : "") +
+            '<strong>' + esc(r.location) + ':</strong> ' + esc(r.impact) +
+            (r.closureBegin ? ' <span class="traffic-meta">(' + esc(r.closureBegin.replace(/:$/, "")) + ")</span>" : "") +
+            (r.closedUntil ? ' <span class="traffic-meta">until ' + esc(r.closedUntil.replace(/\.$/, "")) + "</span>" : "") +
+            "</li>"
+          ).join("") + "</ul></div>"
+        : '<div class="traffic-empty">No scheduled closures posted.</div>';
+      html += "</div>";
+
+      if (liveEvents.length) {
+        html += '<div class="traffic-section"><h4>Weekend Events &amp; Impacts</h4>';
+        html += '<ul class="traffic-list">' + liveEvents.map((r) =>
+          '<li><strong>' + esc(r.day.replace(/:$/, "")) + ':</strong> ' + esc(r.event) + "</li>"
+        ).join("") + "</ul></div>";
+      }
+
+      box.innerHTML = html;
+    } catch (e) {
+      box.innerHTML = '<div class="weather-live-head"><div class="weather-live-kicker">Live &middot; LFUCG Traffic Engineering</div>' +
+        '<h3>Local Traffic</h3></div>' +
+        '<div class="weather-err">Live traffic data unavailable right now.</div>';
+    }
   }
 
   function stampUpdated() {
@@ -154,7 +281,7 @@
   function renderLiveFeed(sec) {
     const stage = $("stage");
     let html = '<h2 class="sec-head">' + esc(sec.name) + "</h2>";
-    if (sec.liveWeather) html += weatherPlaceholder();
+    if (sec.liveWeather) html += weatherPlaceholder() + trafficPlaceholder();
     html += '<div class="feed-live-head"><span class="live-dot" title="Live"></span> ' +
       'Live headlines &middot; refreshes automatically</div>';
     html += '<div class="feed-list" id="feedList">' + feedItemsHtml(sec.liveFeed) + "</div>";
@@ -801,6 +928,7 @@
   function startLoops() {
     if (refreshTimer) clearInterval(refreshTimer);
     if (weatherTimer) clearInterval(weatherTimer);
+    if (trafficTimer) clearInterval(trafficTimer);
     if (liveFeedTimer) clearInterval(liveFeedTimer);
     if (sportsTimer) clearInterval(sportsTimer);
     refreshTimer = setInterval(refresh, REFRESH_MS);
@@ -810,6 +938,10 @@
       const sec = data && data.sections[activeTab];
       if (sec && sec.liveWeather) loadWeather();
     }, WEATHER_REFRESH_MS);
+    trafficTimer = setInterval(() => {
+      const sec = data && data.sections[activeTab];
+      if (sec && sec.liveWeather) loadTraffic();
+    }, TRAFFIC_REFRESH_MS);
     // Live news feed re-poll, independent of the edition refresh cadence.
     liveFeedTimer = setInterval(() => loadLiveFeeds(true), LIVE_FEED_REFRESH_MS);
     // Live sports slate (odds + model) re-poll while the Sports tab is open.

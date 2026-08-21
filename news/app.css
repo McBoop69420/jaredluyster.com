@@ -87,6 +87,20 @@ strong{font-weight:700;}
 .weather-alert{background:var(--live);color:var(--paper);border:2px solid var(--ink);padding:7px 10px;margin:6px 0;font-size:13px;font-weight:700;}
 .weather-err{font-size:12.5px;color:var(--muted);font-style:italic;}
 
+/* Live local traffic block (LFUCG), injected on the Local tab below weather */
+.traffic-live{border:2px solid var(--ink);background:var(--tab-bg);padding:12px 14px;margin:0 0 16px;box-shadow:6px 6px 0 var(--accent);}
+.traffic-live h3{font-family:var(--font-display);font-size:18px;margin:0;text-transform:uppercase;letter-spacing:-.01em;}
+.traffic-section{margin-top:12px;}
+.traffic-section:first-of-type{margin-top:0;}
+.traffic-section h4{font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:0 0 5px;border-bottom:1px solid var(--ink);padding-bottom:3px;}
+.traffic-list{list-style:none;margin:0;padding:0;}
+.traffic-list li{font-size:13px;line-height:1.4;padding:6px 0;border-bottom:1px dotted var(--ink);}
+.traffic-list li:last-child{border-bottom:none;}
+.traffic-scroll{max-height:260px;overflow-y:auto;}
+.traffic-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:4px 0;}
+.traffic-meta{font-size:11px;color:var(--muted);}
+.traffic-new{display:inline-block;background:var(--live);color:var(--paper);font-family:var(--font-display);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;margin-right:4px;vertical-align:middle;}
+
 /* Live news feed (National/World/Business/Technology/Science & Health) */
 .feed-live-head{
   display:flex;align-items:center;gap:7px;font-family:var(--font-display);
