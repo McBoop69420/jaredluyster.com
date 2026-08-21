@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The McBoop Daily — a living page, not a newspaper run. Live weather, live headlines, the live MLB slate with value calls, the calendar, and the paper-bet ledger, all auto-refreshing.">
+<title>The McBoop Daily</title>
+<link rel="preconnect" href="https://api.weather.gov">
+<link rel="preconnect" href="https://statsapi.mlb.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css?v=19">
+<style>
+  /* Live Sports tab */
+  .tracker-strip { margin: 10px 0 14px; padding: 10px 12px; background: var(--tab-bg); border: 2px solid var(--ink); font-size: 0.92rem; line-height: 1.5; }
+  .tracker-strip a { color: var(--accent); border-bottom: 2px solid var(--accent); }
+  .live-slate-wrap { overflow-x: auto; }
+  table.live-slate { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: var(--font-body); }
+  table.live-slate th { text-align: left; font-size: 0.68rem; letter-spacing: 0.05em; color: var(--muted); text-transform: uppercase; padding: 6px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+  table.live-slate td { padding: 7px 10px; border-bottom: 1px dotted var(--ink); vertical-align: top; white-space: nowrap; }
+  table.live-slate tr.pos-starter td { padding: 0 10px 8px; border-bottom: 1px dotted var(--ink); }
+  .pos-note { color: var(--muted); font-size: 0.82rem; font-weight: normal; }
+  .edge-hot { color: #1b8a3f; font-weight: 700; }
+  .call { display: inline-block; padding: 2px 8px; border: 1px solid var(--ink); font-family: var(--font-body); font-size: 0.76rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; }
+  .call--value { background: #e3f3ea; color: #1b8a3f; }
+  .call--fade { background: #fdeaea; color: var(--live); }
+  .call--check { background: var(--highlight); color: #8a6414; }
+  .call--none { background: var(--tab-bg); color: var(--muted); }
+  .pos-legend { margin-top: 10px; font-size: 0.78rem; color: var(--muted); line-height: 1.8; }
+  .pos-legend .call { margin-right: 4px; }
+</style>
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1 class="title" id="title">The McBoop Daily</h1>
+    <div class="dateline" id="dateline">loading&hellip;</div>
+    <div class="strip">
+      <span>Lexington, Kentucky &middot; ZIP 40517</span>
+      <span><a href="https://sports.jaredluyster.com/">Sports</a> &middot; <span id="updated">updating&hellip;</span></span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+
+  <div class="stage">
+    <div class="panel active" id="stage">
+      <div class="panel-inner"><p>Loading the live page&hellip;</p></div>
+    </div>
+  </div>
+
+  <div class="board-toolbar">
+    <button class="refresh-btn" id="refreshBtn" type="button">&#8635; Refresh now</button>
+  </div>
+
+  <footer class="colophon">
+    <p>Auto-refreshing &middot; live weather &middot; live headlines &middot; live MLB odds, model &amp; paper-bet ledger on Sports &middot; times in Eastern (ET).</p>
+  </footer>
+</article>
+<script src="/app.js?v=27"></script>
+</body>
+</html>

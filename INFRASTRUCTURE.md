@@ -116,24 +116,63 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 - **Art endpoint:** `https://radio.jaredluyster.com/art/now`
 - **Tunnel:** Cloudflare Tunnel (`~/.cloudflared/config.yml`)
   - Tunnel ID: `<TUNNEL_ID>`
-  - Routes: `news.jaredluyster.com` → `localhost:8213`, `radio.jaredluyster.com` → `localhost:8081`
+  - Routes: `radio.jaredluyster.com` → `localhost:8081` (the `news.jaredluyster.com` route in this file is legacy/unused — see §4, news is Pages-hosted, not tunneled)
 - **Player page:** `radio.html` (static, served via Render from site root)
 
-### 4. McBoop Newspaper — Self-hosted (Cloudflare Access + Tunnel)
+### 4. McBoop Newspaper + McBoop Sports — Cloudflare Pages (single project, two custom domains)
 
-- **Host:** Self-hosted on `localhost:8213` behind Cloudflare Tunnel
-- **URL:** `https://news.jaredluyster.com`
-- **Access control:** Behind **Cloudflare Access** (requires authentication — redirects to `cloudflareaccess.com` login)
-- **Verified via HTTP headers:** `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`
+**Corrected 2026-08-21** — both `news.jaredluyster.com` and `sports.jaredluyster.com` are the
+**same Cloudflare Pages project** (`mcboop-daily`), not separate hosts, and not the
+Cloudflare Tunnel. Confirmed via `public/_worker.js` (a Pages Functions worker that
+special-cases `url.hostname === "sports.jaredluyster.com"` to serve `/sports/*`, and
+falls through to `env.ASSETS.fetch` — i.e. `public/index.html` — for everything else,
+which is what serves `news.jaredluyster.com`) and via `.claude/launch.json`'s
+`news-preview` config, which points at the real local project root.
 
-### 5. McBoop Sports — Cloudflare-hosted (Cloudflare Access)
-
-- **URL:** `https://sports.jaredluyster.com` ("McBoop Sports — Live")
-- **Host:** Served **directly on Cloudflare** (Pages/Worker — proxied edge origin). **Not** the tunnel and **not** Render. Assets live under `/sports/` (`sports.css`, `sports.js`).
-- **Content:** Live scoreboards and standings pulled **client-side from ESPN's public API** (`site.api.espn.com`) for the leagues Jared follows (MLB, MLS, Liga MX, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem, Super Lig, NWSL, USL, NFL). Also includes a "Paper Bets — Live / Hermes experiment log" panel.
-- **Origin/source:** Part of the **hermes** system (source resembles `.codex-tmp/hermes-audit/public/sports/`). Deployed to Cloudflare (likely a dashboard-connected Pages/Git integration — no local Wrangler token or `wrangler.toml` for it on this machine).
-- **Access control:** Behind **Cloudflare Access**, in the **same Zero Trust org as news** (`quiet-frost-ed57.cloudflareaccess.com`), but a **separate Access application** with its own policy/allow-list — **independently editable** from news (distinct app `aud`, so editing one list never affects the other).
-- **Verified via HTTP headers (2026-07-29):** `302 Found` → `Location: https://quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/sports.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`. (Allow-list *contents* are managed in the Zero Trust dashboard and not externally verifiable.)
+- **Local project root:** `C:\Users\Jared\McBoop Newspaper\` (NOT in this repo — a
+  separate, non-git-tracked directory containing the content-generation pipeline:
+  `generate.py`, `archive.py`, `jsonize.py`, `export_betting_tracker.py`, betting
+  tracker data, RSS/odds scraping scripts, etc.)
+- **Deployable site shell — moved into this repo 2026-08-21**, matching every other
+  subdomain's pattern (source lives in the git repo, not hand-edited in a deploy
+  scratch directory):
+  - [`news/`](news/index.html) — `index.html`, `app.css`, `app.js`, `robots.txt`,
+    and `_worker.js` (the Pages Worker/router described above — also handles the
+    `/api/feeds` and `/api/odds` proxy endpoints and the sports.jaredluyster.com
+    routing, so it governs both domains even though it lives under `news/`)
+  - [`sports/`](sports/index.html) — `index.html`, `sports.css`, `sports.js`,
+    `robots.txt` (self-contained scoreboard page; fetches ESPN's public API
+    client-side — see below)
+- **Deploy pipeline:** two Hermes cron jobs (`McBoop Daily — Morning` 7:30a,
+  `McBoop Daily — Evening` 8p, defined inside the Hermes session — only fire if
+  Hermes is open) run `cd "C:\Users\Jared\McBoop Newspaper" && python3 generate.py
+  edition.md && bash deploy-pages.sh`. `deploy-pages.sh` copies the shell fresh
+  from this repo's `news/` and `sports/` into a local `public/` staging dir,
+  layers in generated data (`edition.json`, `calendar.json`, `archive/` gallery,
+  `sports/fake-bets.json`), then runs `wrangler pages deploy public
+  --project-name mcboop-daily` (token in `~/.config/cloudflare_pages_token.txt`).
+  **Editing `news/` or `sports/` in this repo does nothing live until the next
+  cron run (or a manual `bash deploy-pages.sh`) actually deploys it** — unlike
+  Render/GitHub Pages, there's no git-push-triggered auto-deploy here.
+- **Content:** News tab shell auto-refreshes from `edition.json`/`calendar.json`
+  (regenerated per cron run) plus live RSS (`/api/feeds`) and MLB odds
+  (`/api/odds`), both proxied through `_worker.js`. Sports page pulls live
+  scoreboards/standings **client-side from ESPN's public API**
+  (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
+  Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish
+  Prem, Super Lig, NWSL, USL, NFL, plus a "Paper Bets — Live" panel fed by
+  `sports/fake-bets.json` (regenerated each deploy by `export_betting_tracker.py`).
+- **Access control — news:** Behind **Cloudflare Access** (redirects to
+  `quiet-frost-ed57.cloudflareaccess.com` login). `deploy-pages.sh` also does a
+  post-deploy live check against news.jaredluyster.com via a Cloudflare Access
+  Service Token (`~/.config/cloudflare_news_access.txt`).
+- **Access control — sports:** Behind **Cloudflare Access**, same Zero Trust org
+  as news, but a **separate Access application** with its own policy/allow-list —
+  independently editable from news (distinct app `aud`).
+- **Verified via HTTP headers (2026-07-29):** both hosts `302 Found` →
+  `.../cdn-cgi/access/login/<host>`, `Www-Authenticate: Cloudflare-Access`,
+  `Set-Cookie: CF_AppSession=...`. (Allow-list *contents* are managed in the
+  Zero Trust dashboard and not externally verifiable.)
 
 ## Cloudflare Tunnel Configuration
 
@@ -151,8 +190,12 @@ ingress:
   - service: http_status:404
 ```
 
-- `news.jaredluyster.com` → McBoop newspaper (port 8213, behind Cloudflare Access)
 - `radio.jaredluyster.com` → Radio service (port 8081, public)
+- The `news.jaredluyster.com` route above is **legacy/unused** — news is
+  actually Cloudflare-Pages-hosted (see §4), not tunneled. `localhost:8213` is
+  a LAN-only local mirror (`serve.py` in `C:\Users\Jared\McBoop Newspaper\`,
+  launched by `start-server.bat` from the Windows Startup folder) that the
+  public domain does not depend on.
 
 ## Directory Structure
 
@@ -218,6 +261,17 @@ jaredluyster.com/
 │       ├── forgot_password.html
 │       └── reset_password.html
 ├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
+├── news/                   # News site shell (Cloudflare Pages project "mcboop-daily": news.jaredluyster.com)
+│   ├── index.html          # News UI shell (reads edition.json/calendar.json via app.js)
+│   ├── app.css             # News site styles
+│   ├── app.js              # News UI logic (tabs, live weather/feed/calendar rendering)
+│   ├── _worker.js          # Pages Worker: routes sports.jaredluyster.com to /sports/*, proxies /api/feeds + /api/odds
+│   └── robots.txt
+├── sports/                 # Sports scoreboard site (same Pages project, routed via news/_worker.js: sports.jaredluyster.com)
+│   ├── index.html
+│   ├── sports.css
+│   ├── sports.js           # Fetches ESPN's public API client-side
+│   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -261,8 +315,8 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
-| `news.jaredluyster.com` | McBoop newspaper | Self-hosted (Cloudflare Tunnel + Access) |
-| `sports.jaredluyster.com` | McBoop Sports (live scores) | Cloudflare-hosted (Pages/Worker) + Access |
+| `news.jaredluyster.com` | McBoop newspaper | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
+| `sports.jaredluyster.com` | McBoop Sports (live scores) | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `sports/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 
 ## How to Work With This Repo
