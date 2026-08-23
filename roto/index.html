@@ -22,6 +22,7 @@
           </div>
         </div>
         <div class="topbar-actions">
+          <span id="connection-status" class="connection" hidden></span>
           <span id="draft-progress" class="progress" hidden></span>
           <button id="restart" class="button button-secondary" type="button" hidden>New Draft</button>
         </div>
@@ -33,10 +34,51 @@
       <section id="setup-view" class="view">
         <p class="eyebrow">Setup</p>
         <h1>Draft a cube</h1>
-        <p class="lead">
+        <p id="setup-lead" class="lead">
           Paste a CubeCobra cube link, pick your table size, and draft against bots.
           Everything runs in your browser — share the seed to replay the exact same draft.
         </p>
+
+        <div class="mode-switch" role="tablist" aria-label="Draft mode">
+          <button
+            id="mode-solo"
+            class="mode-option is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+          >
+            <strong>Draft vs bots</strong>
+            <span>Runs in your browser. Works offline.</span>
+          </button>
+          <button
+            id="mode-friends"
+            class="mode-option"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            <strong>Draft with friends</strong>
+            <span>Share a room code. Bots fill empty seats.</span>
+          </button>
+        </div>
+
+        <form id="join-form" class="setup-form join-form" hidden>
+          <div class="field field-wide">
+            <label for="join-code">Have a room code?</label>
+            <div class="inline-field">
+              <input
+                id="join-code"
+                name="joinCode"
+                type="text"
+                placeholder="XXXX-XXXX"
+                autocomplete="off"
+                spellcheck="false"
+              >
+              <button id="join-room" class="button button-secondary" type="submit">Join Room</button>
+            </div>
+            <p class="hint">Or fill in the settings below to start a new table.</p>
+          </div>
+        </form>
 
         <form id="setup-form" class="setup-form">
           <div class="field field-wide">
@@ -52,10 +94,16 @@
             <p class="hint">Any CubeCobra link works — overview, list, or the raw ID.</p>
           </div>
 
+          <div class="field field-wide" id="name-field" hidden>
+            <label for="player-name">Your name</label>
+            <input id="player-name" name="playerName" type="text" maxlength="24" placeholder="Ann" autocomplete="off">
+            <p class="hint">Shown to everyone else at the table.</p>
+          </div>
+
           <div class="field">
             <label for="players">Players at the table</label>
             <input id="players" name="players" type="number" min="2" max="8" value="8" required>
-            <p class="hint">You are seat 1. The rest are bots.</p>
+            <p class="hint" id="players-hint">You are seat 1. The rest are bots.</p>
           </div>
 
           <div class="field">
@@ -93,8 +141,27 @@
         </form>
       </section>
 
+      <!-- Lobby -->
+      <section id="lobby-view" class="view" hidden>
+        <p class="eyebrow">Waiting room</p>
+        <h1>Room <span id="lobby-code" class="room-code"></span></h1>
+        <p class="lead">
+          Share the code — or the link — and everyone lands at this table. Any seat still
+          empty when you start is drafted by a bot.
+        </p>
+
+        <div class="results-actions">
+          <button id="copy-room-link" class="button button-primary" type="button">Copy Invite Link</button>
+          <button id="start-room" class="button button-secondary" type="button">Start Draft</button>
+        </div>
+        <p id="lobby-status" class="status" role="status" aria-live="polite"></p>
+
+        <div id="seat-list" class="seat-list"></div>
+      </section>
+
       <!-- Draft -->
       <section id="draft-view" class="view" hidden>
+        <div id="table-status" class="table-status" hidden></div>
         <div class="draft-layout">
           <div class="pack-column">
             <div class="section-head">
@@ -124,6 +191,7 @@
           <button id="copy-seed-link" class="button button-secondary" type="button">Copy Replay Link</button>
         </div>
         <div id="results-grid" class="card-grid"></div>
+        <div id="table-pools" class="table-pools" hidden></div>
       </section>
     </main>
 

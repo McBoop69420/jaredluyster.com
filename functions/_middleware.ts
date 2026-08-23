@@ -9,6 +9,10 @@ const HIDDEN = new Set([
   "/caddyfile",
 ]);
 
+// Source that lives in the repo but must never be served. Pages serves the repo root
+// (pages_build_output_dir = "."), so the Worker sources would otherwise be public URLs.
+const HIDDEN_PREFIXES = ["/roto-worker/"];
+
 // <subdomain>.jaredluyster.com serves the matching repo folder at the root path.
 const SUBDOMAIN_ROOTS: Record<string, string> = {
   roto: "/roto",
@@ -21,8 +25,22 @@ export const onRequest = async (context: {
   const url = new URL(context.request.url);
   const path = url.pathname.toLowerCase();
 
-  if (HIDDEN.has(path) || path.endsWith("/server.py") || path.endsWith("/store.py")) {
+  if (
+    HIDDEN.has(path) ||
+    HIDDEN_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
+    path.endsWith("/server.py") ||
+    path.endsWith("/store.py") ||
+    path.endsWith(".test.js") ||
+    path.includes("/tests/")
+  ) {
     return new Response("Not found", { status: 404 });
+  }
+
+  // A WebSocket upgrade must reach its Function untouched. Rebuilding the Request below
+  // would strip the upgrade, so hand these straight through — /roto/api/* is already an
+  // absolute path and needs no subdomain rewrite anyway.
+  if (context.request.headers.get("Upgrade") === "websocket") {
+    return context.next();
   }
 
   const root = SUBDOMAIN_ROOTS[url.hostname.split(".")[0].toLowerCase()];

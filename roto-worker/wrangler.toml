@@ -1,0 +1,24 @@
+# Hosts the DraftRoom Durable Object for roto's multiplayer drafts.
+#
+# Deploy this BEFORE the Pages project — the Pages binding in the root wrangler.toml
+# references this Worker by name and points at nothing until it exists.
+#
+# Deploy:  npx wrangler deploy --config roto-worker/wrangler.toml
+# Dev:     npx wrangler dev --config roto-worker/wrangler.toml
+
+name = "roto-draft-room"
+main = "index.js"
+compatibility_date = "2026-07-01"
+
+# Nothing should reach this Worker except through the Pages Function's binding.
+workers_dev = false
+
+[[durable_objects.bindings]]
+name = "DRAFT_ROOM"
+class_name = "DraftRoom"
+
+# SQLite-backed Durable Objects are the ones available on the Workers Free plan;
+# key-value backed classes require a paid plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DraftRoom"]
