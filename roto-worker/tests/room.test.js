@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   AFK_MS,
   CLEANUP_MS,
+  IDLE_STOP_MS,
   createRoomState,
   handleAlarm,
   handleDisconnect,
@@ -484,6 +485,228 @@ test("picks after completion are refused", () => {
   assert.equal(room.state.phase, "complete");
   const effects = room.send(0, { t: "pick", seq: 0, index: 0, ref: 0 });
   assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "not-drafting");
+});
+
+/* ---------- double picks over the wire ---------- */
+
+// packSize 4 with doublePickAfter 1 gives quotas [1, 2, 1]: one single pick, then a
+// two-card step, then a final single because the pack runs dry. Everything below runs
+// inside that middle step, where a seat owes two cards and `seq` moves twice.
+function doublePickRoom() {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4, doublePickAfter: 1 });
+  room.join("Ann");
+  room.join("Ben");
+  room.send(0, { t: "start" });
+
+  // Clear the opening single-pick step so both seats land on the two-card step.
+  room.send(0, room.pickFor(0));
+  room.send(1, room.pickFor(1));
+
+  return room;
+}
+
+test("a two-card step advances seq once per card, not once per step", () => {
+  const room = doublePickRoom();
+
+  assert.equal(room.state.draft.pickNumber, 2, "reached the double-pick step");
+  assert.equal(room.state.draft.pools[0].length, 1, "one card from the opening step");
+
+  const first = room.send(0, room.pickFor(0));
+  const firstAck = first.find((e) => e.msg.t === "picked").msg;
+  assert.equal(firstAck.seq, 1, "seq is the seat's pool length before the pick");
+  assert.equal(firstAck.remaining, 1, "one card still owed");
+
+  const second = room.send(0, room.pickFor(0));
+  const secondAck = second.find((e) => e.msg.t === "picked").msg;
+  assert.equal(secondAck.seq, 2, "seq moved again inside the same step");
+  assert.equal(secondAck.remaining, 0, "the seat is now settled");
+
+  assert.equal(room.state.draft.pools[0].length, 3);
+});
+
+test("a retry inside a two-card step replays rather than taking a third card", () => {
+  const room = doublePickRoom();
+
+  const pick = room.pickFor(0);
+  room.send(0, pick);
+  assert.equal(room.state.draft.pools[0].length, 2);
+
+  // The ack for the first card never arrived, so the client sends the same seq again.
+  const retry = room.send(0, pick);
+  const ack = retry.find((e) => e.msg.t === "picked").msg;
+
+  assert.equal(ack.replay, true);
+  assert.equal(ack.ref, pick.ref);
+  assert.equal(room.state.draft.pools[0].length, 2, "no third card was taken");
+  assert.equal(
+    retry.some((e) => e.msg.t === "seatPicked"),
+    false,
+    "a replay is not re-announced to the table"
+  );
+});
+
+test("the table waits for both cards before the packs pass", () => {
+  const room = doublePickRoom();
+  const stepBefore = room.state.draft.step;
+
+  // Ben settles his whole quota; Ann takes only the first of her two.
+  room.send(1, room.pickFor(1));
+  room.send(1, room.pickFor(1));
+  room.send(0, room.pickFor(0));
+
+  assert.equal(room.state.draft.step, stepBefore, "the step has not resolved");
+
+  const pending = room.log.filter((e) => e.msg.t === "step").at(-1).msg.pending;
+  assert.deepEqual(pending, [0], "only Ann is still owed a card");
+
+  room.send(0, room.pickFor(0));
+  assert.ok(room.state.draft.step > stepBefore, "the last card releases the pass");
+});
+
+test("botifying a seat mid-two-card-step settles only what it owed", () => {
+  const room = doublePickRoom();
+
+  // Ben takes one of two, then vanishes. Ann has not picked at all, so the step cannot
+  // resolve and the bot sweep stops after Ben's outstanding card.
+  room.send(1, room.pickFor(1));
+  assert.equal(room.state.draft.pools[1].length, 2);
+
+  room.disconnect(1);
+  room.send(0, { t: "botify", seat: 1 });
+
+  assert.equal(room.state.draft.pools[1].length, 3, "exactly the one owed card");
+  assert.equal(room.state.seats[1].kind, "bot");
+});
+
+test("the afk alarm fills a whole two-card quota for an absent seat", () => {
+  const room = doublePickRoom();
+  const before = room.state.draft.pools[1].length;
+
+  room.disconnect(1);
+  room.now += AFK_MS + 1;
+  room.alarmNow();
+
+  assert.equal(room.state.draft.pools[1].length, before + 2, "both owed cards were taken");
+  assert.equal(room.state.seats[1].kind, "human", "the seat is still theirs to reclaim");
+  assert.equal(room.state.seats[1].afk, true);
+});
+
+test("a reconnect mid-two-card-step reports the remaining card, not the full quota", () => {
+  const room = doublePickRoom();
+  room.send(0, room.pickFor(0));
+
+  room.disconnect(0);
+  const effects = room.rejoin(0);
+  const hand = effects.find((e) => e.msg.t === "hand").msg;
+
+  assert.equal(hand.remaining, 1, "one card still owed, not two");
+  assert.equal(hand.seq, 2, "seq matches the pool length so the fence lines up");
+});
+
+/* ---------- rename, resync, leave ---------- */
+
+test("rename updates the roster and is cleaned up", () => {
+  const room = new Harness();
+  room.join("Ann");
+
+  room.send(0, { t: "rename", name: "  Ann   Marie  " });
+  assert.equal(room.state.seats[0].name, "Ann Marie", "whitespace is collapsed and trimmed");
+
+  const roster = room.log.filter((e) => e.msg.t === "room").at(-1);
+  assert.equal(roster.to, "all", "the table is told");
+  assert.equal(roster.msg.seats[0].name, "Ann Marie");
+
+  room.send(0, { t: "rename", name: "x".repeat(60) });
+  assert.equal(room.state.seats[0].name.length, 24, "long names are capped");
+
+  room.send(0, { t: "rename", name: "   " });
+  assert.equal(room.state.seats[0].name.length, 24, "a blank rename keeps the old name");
+});
+
+test("resync replays the seat's whole view without touching the draft", () => {
+  const room = new Harness();
+  room.join("Ann");
+  room.join("Ben");
+  room.send(0, { t: "start" });
+  room.send(0, room.pickFor(0));
+
+  const before = JSON.stringify(room.state.draft);
+  const effects = room.send(0, { t: "resync", haveCatalog: true });
+
+  assert.deepEqual(
+    effects.map((e) => e.msg.t),
+    ["room", "pool", "hand", "step"],
+    "the full seat view, in render order"
+  );
+  assert.equal(JSON.stringify(room.state.draft), before, "resync is read-only");
+
+  // A client that lost its catalog gets it again.
+  const cold = room.send(0, { t: "resync", haveCatalog: false });
+  assert.ok(cold.some((e) => e.msg.t === "catalog"), "the catalog is resent on request");
+});
+
+test("leave marks the seat disconnected without freeing it", () => {
+  const room = new Harness();
+  room.join("Ann");
+  room.join("Ben");
+
+  room.send(1, { t: "leave" });
+
+  assert.equal(room.state.seats[1].connected, false);
+  assert.equal(room.state.seats[1].claimed, true, "the seat is still held");
+  assert.equal(room.state.hostSeat, 0, "the host is unaffected");
+
+  // The token still works, so leaving is recoverable.
+  const back = room.rejoin(1);
+  assert.equal(back.find((e) => e.msg.t === "welcome").msg.seat, 1);
+  assert.equal(room.state.seats[1].connected, true);
+});
+
+test("an unseated socket cannot rename, resync or leave", () => {
+  const room = new Harness();
+  room.join("Ann");
+
+  for (const msg of [{ t: "rename", name: "Nope" }, { t: "resync" }]) {
+    const effects = room.send(null, msg);
+    assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "no-seat", msg.t);
+  }
+  assert.equal(room.state.seats[0].name, "Ann", "the seated player is untouched");
+});
+
+/* ---------- idle rooms ---------- */
+
+test("an abandoned room stops scheduling alarms", () => {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  room.join("Ann");
+  room.join("Ben");
+  room.send(0, { t: "start" });
+
+  room.disconnect(0);
+  room.disconnect(1);
+
+  // Long enough that the room is past both the afk grace period and the idle cutoff.
+  room.now += IDLE_STOP_MS + 1;
+  room.alarmNow();
+
+  assert.equal(room.state.phase, "drafting", "the draft is paused, not finished");
+  assert.equal(room.alarm, null, "nothing is rescheduled for a room nobody is in");
+});
+
+test("a rejoin revives an idled room's alarm scheduling", () => {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  room.join("Ann");
+  room.join("Ben");
+  room.send(0, { t: "start" });
+
+  room.disconnect(0);
+  room.disconnect(1);
+  room.now += IDLE_STOP_MS + 1;
+  room.alarmNow();
+  assert.equal(room.alarm, null);
+
+  room.rejoin(0);
+  assert.equal(room.state.seats[0].connected, true);
+  assert.equal(room.alarm, room.now + AFK_MS, "seat 1 is still absent, so the clock restarts");
 });
 
 /* ---------- cleanup ---------- */
