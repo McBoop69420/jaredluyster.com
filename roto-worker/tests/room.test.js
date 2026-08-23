@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   AFK_MS,
+  CLEANUP_MS,
   createRoomState,
   handleAlarm,
   handleDisconnect,
@@ -64,6 +65,8 @@ class Harness {
     const result = handleAlarm(this.state, this.now);
     this.state = result.state;
     this.record(result.effects, null);
+    this.alarm = result.alarm;
+    this.destroy = result.destroy === true;
     return result.effects;
   }
 
@@ -481,6 +484,60 @@ test("picks after completion are refused", () => {
   assert.equal(room.state.phase, "complete");
   const effects = room.send(0, { t: "pick", seq: 0, index: 0, ref: 0 });
   assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "not-drafting");
+});
+
+/* ---------- cleanup ---------- */
+
+test("a finished draft schedules its own cleanup alarm", () => {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  room.join("Ann");
+  room.send(0, { t: "start" });
+  room.playToCompletion([0]);
+
+  assert.equal(room.state.phase, "complete");
+  assert.equal(room.state.completedAt, room.now, "completion time is recorded");
+  assert.equal(room.alarm, room.now + CLEANUP_MS, "the cleanup alarm is scheduled for +CLEANUP_MS");
+});
+
+test("the cleanup alarm does nothing before the threshold", () => {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  room.join("Ann");
+  room.send(0, { t: "start" });
+  room.playToCompletion([0]);
+
+  room.now += CLEANUP_MS - 1;
+  room.alarmNow();
+
+  assert.equal(room.destroy, false, "not yet due");
+  assert.equal(room.state.phase, "complete", "the room is untouched");
+  assert.equal(room.alarm, room.state.completedAt + CLEANUP_MS, "still scheduled for the same time");
+});
+
+test("the cleanup alarm signals destroy once the threshold passes", () => {
+  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  room.join("Ann");
+  room.send(0, { t: "start" });
+  room.playToCompletion([0]);
+
+  room.now += CLEANUP_MS;
+  room.alarmNow();
+
+  assert.equal(room.destroy, true);
+  assert.equal(room.alarm, null, "nothing left to schedule once destroyed");
+});
+
+test("a room still in the lobby or mid-draft never schedules a cleanup alarm", () => {
+  const lobby = new Harness();
+  lobby.join("Ann");
+  assert.equal(lobby.state.phase, "lobby");
+  assert.equal(lobby.alarm, null, "a lobby has nothing to schedule");
+
+  const drafting = new Harness({ players: 2, packs: 2, packSize: 4 });
+  drafting.join("Ann");
+  drafting.send(0, { t: "start" });
+  drafting.now += CLEANUP_MS * 2;
+  drafting.alarmNow();
+  assert.equal(drafting.destroy, false, "an in-progress draft is never destroyed by the cleanup path");
 });
 
 test("unknown and malformed frames are rejected without touching state", () => {

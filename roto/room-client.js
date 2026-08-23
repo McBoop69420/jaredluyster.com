@@ -238,6 +238,11 @@ export class RoomClient {
         }
         break;
 
+      case "roomClosed":
+        this.onEvent({ type: "error", code: msg.reason, message: msg.message, fatal: true });
+        this.close();
+        break;
+
       default:
         break;
     }

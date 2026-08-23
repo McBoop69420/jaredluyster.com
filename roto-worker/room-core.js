@@ -24,6 +24,10 @@ export const CATALOG_CHUNK = 100;
 export const AFK_MS = 90_000;
 // A room with nobody connected stops scheduling alarms after this and resumes on rejoin.
 export const IDLE_STOP_MS = 30 * 60_000;
+// How long a finished draft's room stays readable before the Durable Object deletes
+// itself. Long enough that a table can casually revisit its results, short enough that
+// abandoned rooms don't accumulate in storage forever.
+export const CLEANUP_MS = 7 * 24 * 60 * 60 * 1000;
 
 /* ---------- construction ---------- */
 
@@ -509,6 +513,15 @@ export function handleReconnect(state, seatIndex, now) {
 export function handleAlarm(state, now) {
   const effects = [];
 
+  if (state.phase === "complete") {
+    if (state.completedAt && now - state.completedAt >= CLEANUP_MS) {
+      // room.js wipes storage and drops this instance on `destroy: true` — nothing
+      // left to schedule.
+      return { state, effects, alarm: null, destroy: true };
+    }
+    return { state, effects, alarm: nextAlarm(state, now) };
+  }
+
   if (state.phase !== "drafting") {
     return { state, effects, alarm: nextAlarm(state, now) };
   }
@@ -549,6 +562,7 @@ function applyAdvance(state, now, effects) {
 
   if (state.draft.finished && state.phase !== "complete") {
     state.phase = "complete";
+    state.completedAt = now;
     effects.push({ to: "all", msg: doneFrame(state) });
     effects.push({ to: "all", msg: roomFrame(state) });
   }
@@ -573,6 +587,10 @@ function broadcastRound(state, effects) {
 }
 
 function nextAlarm(state, now) {
+  if (state.phase === "complete") {
+    return state.completedAt ? state.completedAt + CLEANUP_MS : null;
+  }
+
   if (state.phase !== "drafting") {
     return null;
   }

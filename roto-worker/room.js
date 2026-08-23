@@ -199,7 +199,27 @@ export class DraftRoom {
     if (!this.state) {
       return;
     }
-    this.dispatch(this.apply(handleAlarm(this.state, Date.now())).effects, null);
+
+    const result = handleAlarm(this.state, Date.now());
+
+    if (result.destroy) {
+      // Any player still connected to a room that's about to vanish should know why,
+      // rather than just losing the socket with no explanation.
+      this.sendTo(this.ctx.getWebSockets(ROOM_TAG), JSON.stringify({
+        t: "roomClosed",
+        reason: "expired",
+        message: "This room's results have expired and were removed.",
+      }));
+
+      // deleteAll() clears every table this DO owns and cancels any pending alarm in
+      // one call, which is simpler and more thorough than deleting rows individually.
+      await this.ctx.storage.deleteAll();
+      this.state = null;
+      this.persistedPicks = 0;
+      return;
+    }
+
+    this.dispatch(this.apply(result).effects, null);
   }
 
   /* ---------- plumbing ---------- */

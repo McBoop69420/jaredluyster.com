@@ -98,6 +98,13 @@ Then open `http://127.0.0.1:8788/roto/`. The Pages output should list
   in the same file the Worker's source would be downloadable at
   `jaredluyster.com/roto-worker/room.js`.
 
+### Room cleanup
+
+A finished draft's room stays readable for 7 days (`CLEANUP_MS` in `room-core.js`), then
+the Durable Object deletes its own storage on its next scheduled alarm and the room code
+frees up. Anyone still connected gets a `roomClosed` frame first. There's no standing
+cron for this — each room schedules its own cleanup alarm the moment it completes.
+
 ### Rollback
 
 Multiplayer is additive. Removing the binding (or leaving the Worker undeployed) makes

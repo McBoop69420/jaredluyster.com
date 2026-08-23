@@ -24,6 +24,7 @@ function liveSlice(state) {
     phase: state.phase,
     hostSeat: state.hostSeat,
     lastSeenAny: state.lastSeenAny,
+    completedAt: state.completedAt ?? null,
     seats: state.seats,
     round: draft.round,
     pickNumber: draft.pickNumber,
@@ -125,6 +126,7 @@ export function makeStore(exec) {
         phase: live.phase,
         hostSeat: live.hostSeat,
         lastSeenAny: live.lastSeenAny,
+        completedAt: live.completedAt ?? null,
         seats: live.seats,
         pickLog,
         draft: {
