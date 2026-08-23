@@ -16,3 +16,12 @@ pages_build_output_dir = "."
 # dashboard — the service is named "jaredluyster-com" so this is the likely value.
 # In production, set/override this in the Pages project's environment variables.
 MARKETPLACE_ORIGIN = "https://jaredluyster-com.onrender.com"
+
+# Roto's multiplayer rooms. The class is defined in the separate roto-draft-room Worker
+# (Pages cannot declare a Durable Object itself), so script_name is required here — it is
+# optional only for Worker-to-Worker bindings. Deploy that Worker first, and add the same
+# binding under the Pages project's Settings → Bindings for production.
+[[durable_objects.bindings]]
+name = "DRAFT_ROOM"
+class_name = "DraftRoom"
+script_name = "roto-draft-room"

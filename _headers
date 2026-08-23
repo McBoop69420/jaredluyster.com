@@ -17,3 +17,9 @@
   Cache-Control: public, max-age=86400
 /*.js
   Cache-Control: public, max-age=86400
+
+# Roto is the exception: its multiplayer client talks a versioned protocol to the
+# DraftRoom Worker, and the two deploy separately. A day-old cached module could be
+# speaking last week's protocol, so keep these short-lived rather than cache-busted.
+/roto/*
+  Cache-Control: public, max-age=60, must-revalidate

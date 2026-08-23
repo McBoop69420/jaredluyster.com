@@ -29,6 +29,80 @@ Worker and Render/Turso are retired.
    npx wrangler pages deploy .
    ```
 
+## Tool subdomains (roto.jaredluyster.com)
+
+Tools live as folders in the repo (`roto/`, `card-designer/`, `dropoutcube/`…) and are
+reachable at `/<folder>/`. To also serve one from its own subdomain:
+
+1. Add the hostname to `SUBDOMAIN_ROOTS` in `functions/_middleware.ts`
+   (`roto` → `/roto` is already there). The middleware rewrites requests on that
+   hostname so `roto.jaredluyster.com/` serves `roto/index.html`.
+2. Pages project → **Custom domains** → add `roto.jaredluyster.com`. Cloudflare
+   creates the CNAME for you since the zone is already on Cloudflare.
+3. No build change is needed — the folder is static and ships with the root deploy.
+
+The path form (`jaredluyster.com/roto/`) keeps working, so the subdomain is additive
+and safe to roll back by removing the custom domain.
+
+## Roto multiplayer (the DraftRoom Durable Object)
+
+Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is
+unaffected by any of this — it runs entirely in the browser and needs no backend.
+
+**Order matters: deploy the Worker first.** The Pages binding references it by name and
+resolves to nothing until it exists.
+
+1. **Deploy the Worker that hosts the class.** Pages cannot define a Durable Object
+   itself, only bind to one.
+   ```bash
+   npx wrangler deploy --config roto-worker/wrangler.toml
+   ```
+   It has `workers_dev = false`, so it is not publicly reachable — the only way in is the
+   Pages binding.
+
+2. **Bind it to the Pages project.** `[[durable_objects.bindings]]` in the root
+   `wrangler.toml` covers `wrangler pages dev` and `wrangler pages deploy`. For the
+   dashboard-managed production project, also add it under
+   **Settings → Bindings → Durable Object**: variable `DRAFT_ROOM`, class `DraftRoom`,
+   from the `roto-draft-room` Worker. `script_name` is *required* for Pages bindings —
+   it is optional only when one Worker binds another.
+
+3. **Deploy Pages as usual.** No build step changes.
+
+The class uses the **SQLite** storage backend (`new_sqlite_classes` in the migration),
+which is the variant available on the Workers Free plan; key-value backed Durable Objects
+require a paid plan. Rooms hold their own state, so there is no D1 database to provision.
+
+### Running it locally
+
+Two processes — the second connects to the first through the local service registry:
+
+```bash
+npx wrangler dev --config roto-worker/wrangler.toml --port 8787
+```
+```bash
+npx wrangler pages dev . --port 8788 --do DRAFT_ROOM=DraftRoom@roto-draft-room
+```
+
+Then open `http://127.0.0.1:8788/roto/`. The Pages output should list
+`env.DRAFT_ROOM (DraftRoom, defined in roto-draft-room) … [connected]`; if it says
+`[not connected]`, the Worker process is not running.
+
+### Two things to re-check after any middleware change
+
+- **The WebSocket upgrade.** `functions/_middleware.ts` rebuilds the Request to rewrite
+  subdomains, which strips a WebSocket upgrade. It returns early for
+  `Upgrade: websocket` — if that guard is removed, multiplayer breaks while everything
+  else keeps working.
+- **`/roto-worker/*` must 404.** Pages serves the repo root, so without the prefix guard
+  in the same file the Worker's source would be downloadable at
+  `jaredluyster.com/roto-worker/room.js`.
+
+### Rollback
+
+Multiplayer is additive. Removing the binding (or leaving the Worker undeployed) makes
+"Draft with friends" fail at room creation while solo drafting continues to work.
+
 ## DNS cutover (do this when you're ready to go live on Cloudflare)
 
 The domain currently points at Render (`216.24.57.x`). To move the front door to Cloudflare:
