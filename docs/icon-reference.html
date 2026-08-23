@@ -6,14 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
     --ink:      #efe6d8;
     --ink-dim:  #a89a85;
     --ink-mute: #6b5f4e;
     --bg:       #000000;
-    --rune:     #c9b06b;
+    --rune:     #f2971d;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
@@ -21,42 +21,42 @@
   .wrap { max-width: 1320px; margin: 0 auto; padding: 72px 48px 120px; }
 
   .logos { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
-    gap: 48px; padding: 12px 0 44px; border-bottom: 1px solid rgba(201,176,107,0.2); margin-bottom: 12px; }
+    gap: 48px; padding: 12px 0 44px; border-bottom: 3px solid var(--rune); margin-bottom: 12px; }
   .logos img { display: block; }
   .logos .sigil { width: 150px; height: 150px; }
   .logos .hori  { width: 360px; height: auto; }
   .logos .vert  { width: 130px; height: auto; }
   .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.28em;
     text-transform: uppercase; color: var(--rune); margin-bottom: 20px; }
-  h1 { font-family: 'Cinzel', serif; font-size: 52px; letter-spacing: 0.05em; text-transform: uppercase;
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 52px; letter-spacing: 0.05em; text-transform: uppercase;
     margin: 0 0 18px; line-height: 1; }
   header p { color: var(--ink-dim); font-size: 15px; line-height: 1.7; max-width: 760px; margin: 0; }
   .count { display: flex; flex-wrap: wrap; gap: 40px; margin-top: 28px; }
   .count .c { font-family: 'JetBrains Mono', monospace; }
-  .count .c b { font-family: 'Cinzel', serif; font-size: 30px; color: var(--rune); font-weight: 600; }
+  .count .c b { font-family: 'Space Grotesk', sans-serif; font-size: 30px; color: var(--rune); font-weight: 600; }
   .count .c span { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-mute); margin-top: 4px; }
 
   section { margin-top: 80px; }
   .shead { display: flex; align-items: baseline; justify-content: space-between;
     border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 36px; }
-  .shead h2 { font-family: 'Cinzel', serif; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0; }
+  .shead h2 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0; }
   .shead .meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--ink-mute); }
 
   .cgrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
-  .cell { background: linear-gradient(180deg, #0a0710, #000);
-    border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+  .cell { background: #0a0710;
+    border: 2px solid rgba(255,255,255,0.1); border-radius: 0;
     display: flex; flex-direction: column; align-items: center; padding: 18px 10px 14px; gap: 10px; }
   .icon { width: 96px; height: 96px; display: block; }
   .sprite { width: 88px; height: 88px; display: block; object-fit: contain; border-radius: 50%;
     background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.05), #06070e 72%);
     border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 0 12px rgba(255,255,255,0.06); }
-  .nm { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .nm { font-family: 'Space Grotesk', sans-serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
   .el { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
 
   .variants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .vcol { border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 22px 14px 18px;
-    background: linear-gradient(180deg,#0a0710,#000); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .vcol { border: 2px solid rgba(255,255,255,0.1); border-radius: 0; padding: 22px 14px 18px;
+    background: #0a0710; display: flex; flex-direction: column; align-items: center; gap: 14px; }
   .vlabel { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--rune); }
   .vrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; }
@@ -73,7 +73,7 @@
   .matrix .colhead { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--ink-mute); text-align: center; padding-bottom: 18px; }
   .matrix .rowhead { display: flex; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-left: 4px; }
-  .matrix .rowhead .n { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .matrix .rowhead .n { font-family: 'Space Grotesk', sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
   .matrix .rowhead .fn { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.04em;
     color: var(--ink-mute); text-transform: none; margin-top: 3px; }
   .matrix .nc { display: flex; align-items: center; justify-content: center; padding: 18px;
@@ -86,7 +86,7 @@
   .sigil-hero .cap { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.16em;
     text-transform: uppercase; color: var(--ink-dim); text-align: center; max-width: 640px; line-height: 1.8; }
 
-  footer { margin-top: 96px; padding-top: 28px; border-top: 1px solid rgba(201,176,107,0.2);
+  footer { margin-top: 96px; padding-top: 28px; border-top: 3px solid var(--rune);
     font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-mute); letter-spacing: 0.1em; line-height: 1.9; }
   footer b { color: var(--ink-dim); font-weight: 500; }
 
