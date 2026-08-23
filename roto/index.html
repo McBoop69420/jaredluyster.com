@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Roto — Cube Draft</title>
+    <meta
+      name="description"
+      content="Draft any CubeCobra cube against bots. Configure players, packs, and pick pace, then draft in the browser."
+    >
+    <link rel="preconnect" href="https://cubecobra.com">
+    <link rel="preconnect" href="https://cards.scryfall.io">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner shell">
+        <div class="brand">
+          <div class="brand-copy">
+            <strong>Roto</strong>
+            <span>Cube draft simulator</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="draft-progress" class="progress" hidden></span>
+          <button id="restart" class="button button-secondary" type="button" hidden>New Draft</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <!-- Setup -->
+      <section id="setup-view" class="view">
+        <p class="eyebrow">Setup</p>
+        <h1>Draft a cube</h1>
+        <p class="lead">
+          Paste a CubeCobra cube link, pick your table size, and draft against bots.
+          Everything runs in your browser — share the seed to replay the exact same draft.
+        </p>
+
+        <form id="setup-form" class="setup-form">
+          <div class="field field-wide">
+            <label for="cube-url">CubeCobra URL or cube ID</label>
+            <input
+              id="cube-url"
+              name="cubeUrl"
+              type="text"
+              required
+              placeholder="https://cubecobra.com/cube/overview/your-cube"
+              autocomplete="off"
+            >
+            <p class="hint">Any CubeCobra link works — overview, list, or the raw ID.</p>
+          </div>
+
+          <div class="field">
+            <label for="players">Players at the table</label>
+            <input id="players" name="players" type="number" min="2" max="8" value="8" required>
+            <p class="hint">You are seat 1. The rest are bots.</p>
+          </div>
+
+          <div class="field">
+            <label for="packs">Packs per player</label>
+            <input id="packs" name="packs" type="number" min="1" max="6" value="3" required>
+          </div>
+
+          <div class="field">
+            <label for="pack-size">Cards per pack</label>
+            <input id="pack-size" name="packSize" type="number" min="4" max="24" value="15" required>
+          </div>
+
+          <div class="field">
+            <label for="seed">Seed <span class="optional">(optional)</span></label>
+            <input id="seed" name="seed" type="text" placeholder="random" autocomplete="off">
+            <p class="hint">Same seed + same settings reproduces the draft exactly.</p>
+          </div>
+
+          <div class="field field-wide">
+            <label class="checkbox">
+              <input id="double-picks" name="doublePicks" type="checkbox">
+              <span>Enable double picks partway through each pack</span>
+            </label>
+            <div id="double-picks-config" class="subfield" hidden>
+              <label for="double-pick-after">Start taking two cards per pick after pick</label>
+              <input id="double-pick-after" name="doublePickAfter" type="number" min="1" max="23" value="8">
+              <p class="hint">Speeds up the back half of every pack.</p>
+            </div>
+          </div>
+
+          <div class="field field-wide form-actions">
+            <button id="start-draft" class="button button-primary" type="submit">Start Draft</button>
+            <p id="setup-status" class="status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+
+      <!-- Draft -->
+      <section id="draft-view" class="view" hidden>
+        <div class="draft-layout">
+          <div class="pack-column">
+            <div class="section-head">
+              <h2 id="pack-heading">Pack 1, Pick 1</h2>
+              <p id="pick-instruction" class="muted-line">Choose a card.</p>
+            </div>
+            <div id="pack-grid" class="card-grid"></div>
+          </div>
+
+          <aside class="pool-column">
+            <div class="section-head">
+              <h2>Your pool</h2>
+              <p id="pool-count" class="muted-line">0 cards</p>
+            </div>
+            <div id="pool-list" class="pool-list"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section id="results-view" class="view" hidden>
+        <p class="eyebrow">Draft complete</p>
+        <h1>Your pool</h1>
+        <p id="results-summary" class="lead"></p>
+        <div class="results-actions">
+          <button id="copy-decklist" class="button button-primary" type="button">Copy Decklist</button>
+          <button id="copy-seed-link" class="button button-secondary" type="button">Copy Replay Link</button>
+        </div>
+        <div id="results-grid" class="card-grid"></div>
+      </section>
+    </main>
+
+    <template id="card-template">
+      <article class="card-tile">
+        <button class="card-button" type="button">
+          <img alt="" loading="lazy">
+        </button>
+        <div class="card-meta">
+          <span class="card-name"></span>
+          <span class="card-cost"></span>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
