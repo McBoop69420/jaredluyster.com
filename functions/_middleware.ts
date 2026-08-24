@@ -18,6 +18,13 @@ const SUBDOMAIN_ROOTS: Record<string, string> = {
   roto: "/roto",
 };
 
+// Assets that live at the repo root and are shared by the tools. A tool page links these
+// as ../shared-theme.css, which resolves to /shared-theme.css — and on a subdomain the
+// rewrite below would send that into the tool's own folder, where it does not exist.
+// Pages then serves index.html for the miss with a 200 and text/html, so the stylesheet
+// is silently dropped rather than 404ing. These pass through unrewritten instead.
+const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
+
 export const onRequest = async (context: {
   request: Request;
   next: (input?: Request) => Promise<Response>;
@@ -44,7 +51,7 @@ export const onRequest = async (context: {
   }
 
   const root = SUBDOMAIN_ROOTS[url.hostname.split(".")[0].toLowerCase()];
-  if (root && !path.startsWith(`${root}/`) && path !== root) {
+  if (root && !SHARED_ROOT_ASSETS.has(path) && !path.startsWith(`${root}/`) && path !== root) {
     const rewritten = new URL(url);
     rewritten.pathname = path === "/" ? `${root}/` : root + url.pathname;
     return context.next(new Request(rewritten, context.request));
