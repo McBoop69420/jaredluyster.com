@@ -4,7 +4,7 @@
   position: static;
   background: transparent;
   backdrop-filter: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-w) solid var(--accent);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -48,38 +48,38 @@ h1 {
 
 .color-header {
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: center;
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
 }
 
 .color-col[data-color="W"] .color-header {
   background: rgba(249, 248, 228, 0.08);
-  color: #e8e4c8;
+  color: var(--mtg-w);
   border-color: rgba(249, 248, 228, 0.18);
 }
 .color-col[data-color="U"] .color-header {
   background: rgba(14, 104, 171, 0.14);
-  color: #8bbfe8;
+  color: var(--mtg-u);
   border-color: rgba(14, 104, 171, 0.32);
 }
 .color-col[data-color="B"] .color-header {
   background: rgba(100, 80, 110, 0.14);
-  color: #c0b0c8;
+  color: var(--mtg-b);
   border-color: rgba(100, 80, 110, 0.28);
 }
 .color-col[data-color="R"] .color-header {
   background: rgba(211, 32, 42, 0.14);
-  color: #e89090;
+  color: var(--mtg-r);
   border-color: rgba(211, 32, 42, 0.32);
 }
 .color-col[data-color="G"] .color-header {
   background: rgba(0, 115, 62, 0.14);
-  color: #7fc890;
+  color: var(--mtg-g);
   border-color: rgba(0, 115, 62, 0.32);
 }
 
@@ -92,30 +92,30 @@ h1 {
 .section-header {
   display: inline-block;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   margin-bottom: 14px;
 }
 
 .color-section[data-color="Gold"] .section-header {
   background: rgba(200, 160, 32, 0.1);
-  color: #dfc060;
+  color: var(--mtg-gold);
   border-color: rgba(200, 160, 32, 0.28);
 }
 
 .color-section[data-color="C"] .section-header {
   background: rgba(160, 160, 160, 0.1);
-  color: #c0c0c0;
+  color: var(--mtg-colorless);
   border-color: rgba(160, 160, 160, 0.28);
 }
 
 .color-section[data-color="Land"] .section-header {
   background: rgba(140, 120, 90, 0.1);
-  color: #c0b090;
+  color: var(--mtg-land);
   border-color: rgba(140, 120, 90, 0.28);
 }
 
@@ -130,9 +130,9 @@ h1 {
 .tile {
   margin: 0;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   background: var(--card);
   transition: transform 140ms ease, border-color 140ms ease;
 }
@@ -173,7 +173,7 @@ h1 {
   color: var(--text);
   font-size: 1.3rem;
   padding: 5px 14px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--border-strong);
   pointer-events: none;
   white-space: nowrap;
@@ -196,7 +196,6 @@ h1 {
   display: grid;
   place-items: center;
   background: rgba(6, 4, 9, 0.92);
-  backdrop-filter: blur(12px);
   padding: 24px;
 }
 
@@ -216,8 +215,8 @@ h1 {
 .lb-inner img {
   max-width: 100%;
   max-height: 80vh;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: var(--border-w) solid var(--border);
   box-shadow: var(--shadow);
   object-fit: contain;
 }
@@ -239,7 +238,7 @@ h1 {
   flex-shrink: 0;
   padding: 0 20px;
   min-height: 40px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
@@ -263,8 +262,8 @@ h1 {
   right: 24px;
   width: 44px;
   height: 44px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: var(--border-w) solid var(--border);
   background: rgba(22, 22, 22, 0.9);
   color: var(--text);
   font-size: 1.1rem;

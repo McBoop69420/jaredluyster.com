@@ -7,184 +7,112 @@
     <title>Theatre — Jared Luyster</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-theme.css?v=2">
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
+        /* Page-specific only. shared-theme.css supplies the zine palette, reset,
+           topbar, nav, eyebrow chip and base typography. */
 
-        :root {
-            --bg: #09090b;
-            --surface: #131316;
-            --surface-hover: #1a1a1f;
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
-            --text: #f0f0f0;
-            --muted: #71717a;
-            --accent: #818cf8;
-            --accent-dim: rgba(129, 140, 248, 0.12);
-        }
-
-        html, body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        a { color: inherit; text-decoration: none; }
-
-        .shell {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* Topbar */
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: rgba(9, 9, 11, 0.8);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .topbar-inner {
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        .topbar-inner { height: 56px; }
 
         .brand {
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--text);
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-transform: uppercase;
         }
-
-        .nav { display: flex; gap: 22px; }
-
-        .nav a {
-            font-size: 0.82rem;
-            color: var(--muted);
-            transition: color 200ms;
-        }
-
-        .nav a:hover { color: var(--text); }
-        .nav a.active { color: var(--accent); }
 
         @media (max-width: 620px) {
-            .nav { gap: 14px; }
-            .nav a { font-size: 0.72rem; }
+            .nav { gap: 8px; }
+            .nav a { font-size: 0.7rem; padding: 6px 10px; }
         }
 
         /* Stage */
-        .stage {
-            padding: 72px 0 64px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stage::before {
-            content: "";
-            position: absolute;
-            top: -140px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 640px;
-            height: 420px;
-            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.10) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 14px;
-            border-radius: 999px;
-            background: var(--accent-dim);
-            border: 1px solid rgba(129, 140, 248, 0.15);
-            color: var(--accent);
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.04em;
-            margin-bottom: 28px;
-        }
-
-        .dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
-        }
-        .eyebrow.off { color: #ef4444; background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.18); }
-        .eyebrow.off .dot { background: #ef4444; box-shadow: none; }
+        .stage { padding: 88px 0 72px; }
 
         h1 {
             margin: 0 0 12px;
             font-size: clamp(2.2rem, 6vw, 3.6rem);
-            font-weight: 700;
             letter-spacing: -0.04em;
             line-height: 1.05;
-            position: relative;
         }
 
         .lede {
+            margin: 0 0 36px;
+            max-width: 640px;
             color: var(--muted);
             font-size: 1rem;
             line-height: 1.6;
-            margin: 0 0 36px;
-            max-width: 640px;
         }
+
+        /* Live indicator inside the shared eyebrow chip. */
+        .eyebrow {
+            gap: 10px;
+            margin-bottom: 28px;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-ink);
+        }
+
+        /* Off air inverts the chip so the state reads without relying on the dot alone. */
+        .eyebrow.off {
+            background: var(--ink);
+            color: var(--danger);
+            border-color: var(--danger);
+            box-shadow: 4px 4px 0 var(--danger);
+        }
+
+        .eyebrow.off .dot { background: var(--danger); }
 
         /* Player (hidden until a video is chosen) */
         .player {
-            margin-bottom: 40px;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            background: var(--surface);
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
             display: none;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--surface);
+            border: var(--border-w) solid var(--paper);
+            box-shadow: 6px 6px 0 var(--accent);
         }
+
         .player.show { display: block; }
-        .player::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.08), transparent 55%);
-            pointer-events: none;
-        }
+
         .player-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 14px;
-            position: relative;
         }
-        .now-title { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+
+        .now-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
         .close-btn {
-            border: 1px solid var(--border);
-            background: var(--surface-hover);
-            color: var(--muted);
-            border-radius: 999px;
             padding: 6px 12px;
-            font-size: 0.75rem;
+            background: var(--ink);
+            color: var(--paper);
+            border: 2px solid var(--paper);
+            font-family: var(--font-display);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: 200ms;
+            transition: background-color 120ms, color 120ms;
         }
-        .close-btn:hover { color: var(--text); border-color: var(--border-hover); }
+
+        .close-btn:hover { background: var(--paper); color: var(--ink); }
+
         video {
             width: 100%;
-            border-radius: 12px;
             display: block;
             background: #000;
-            position: relative;
         }
 
         /* Grid */
@@ -195,16 +123,22 @@
         }
 
         .card {
-            border: 1px solid var(--border);
-            border-radius: 16px;
             background: var(--surface);
-            overflow: hidden;
+            border: var(--border-w) solid var(--paper);
+            box-shadow: 5px 5px 0 var(--accent);
             cursor: pointer;
-            transition: transform 200ms, border-color 200ms;
+            transition: transform 120ms, box-shadow 120ms;
         }
-        .card:hover { transform: translateY(-3px); border-color: var(--border-hover); }
+
+        .card:hover {
+            transform: translate(3px, 3px);
+            box-shadow: 2px 2px 0 var(--accent);
+        }
+
+        /* 16:9 is the video frame, not decoration — leave it alone. */
         .thumb-wrap { position: relative; aspect-ratio: 16 / 9; background: #000; }
         .thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+
         .play-badge {
             position: absolute;
             inset: 0;
@@ -212,35 +146,48 @@
             place-items: center;
             opacity: 0;
             transition: opacity 200ms;
-            background: rgba(9, 9, 11, 0.35);
+            background: rgba(19, 17, 19, 0.45);
         }
+
         .card:hover .play-badge { opacity: 1; }
+
         .play-badge span {
-            width: 54px; height: 54px; border-radius: 50%;
-            background: rgba(129, 140, 248, 0.92);
-            display: grid; place-items: center;
-            box-shadow: 0 8px 28px rgba(129, 140, 248, 0.4);
+            width: 54px;
+            height: 54px;
+            display: grid;
+            place-items: center;
+            background: var(--accent);
+            border: 2px solid var(--ink);
         }
+
         .play-badge span::after {
             content: "";
-            width: 0; height: 0;
-            border-left: 16px solid #fff;
+            width: 0;
+            height: 0;
+            margin-left: 4px;
+            border-left: 16px solid var(--accent-ink);
             border-top: 10px solid transparent;
             border-bottom: 10px solid transparent;
-            margin-left: 4px;
         }
+
         .meta { padding: 14px 16px; }
-        .title { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
-        .sub { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+
+        .title {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .sub { margin-top: 4px; color: var(--muted); font-size: 0.78rem; }
 
         .empty, .error {
-            color: var(--muted);
-            border: 1px dashed var(--border);
-            border-radius: 16px;
             padding: 40px;
             text-align: center;
+            color: var(--muted);
+            border: var(--border-w) dashed var(--muted);
         }
-        .error { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+
+        .error { color: var(--danger); border-color: var(--danger); }
     </style>
 </head>
 <body>
