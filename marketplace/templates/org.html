@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Storefront Margins — Bluegrass Memorabilia &amp; Collectibles</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #0e0e0e; --surface: #161616; --surface-2: #1c1c1c; --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0; --muted: #888; --accent: #f89800;
+    --green: #4cb87a; --red: #e8362a; --blue: #2496b0;
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; min-height: 100vh; }
+  a { color: inherit; }
+  .shell { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+  .topbar { padding: 40px 0 8px; }
+  .eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; }
+  h1 { margin: 6px 0 4px; font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 32px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
+  .kpi { background: var(--surface); padding: 18px 20px; }
+  .kpi .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+  .kpi .value { font-size: 1.5rem; font-weight: 700; margin-top: 6px; letter-spacing: -0.01em; }
+  .kpi .value.green { color: var(--green); }
+  .kpi .value.accent { color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin-bottom: 24px; }
+  .card h2 { margin: 0 0 14px; font-size: 1.05rem; font-weight: 600; }
+  .card p.note { color: var(--muted); font-size: 0.82rem; margin: 0 0 16px; line-height: 1.55; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: right; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 10px 10px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  tr.total td { font-weight: 700; border-top: 1px solid var(--border); border-bottom: none; padding-top: 12px; }
+  td.margin { font-weight: 600; }
+
+  .bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; align-items: end; height: 130px; margin: 4px 0 8px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .bar { width: 100%; max-width: 44px; background: var(--accent); border-radius: 4px 4px 0 0; opacity: 0.9; }
+  .bar-pct { font-size: 0.72rem; font-weight: 700; color: var(--text); }
+  .bar-labels { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 24px; }
+  .bar-labels span { display: block; text-align: center; font-size: 0.68rem; color: var(--muted); font-family: ui-monospace, monospace; }
+
+  .rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .rules .col h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .rules ul { margin: 0; padding-left: 18px; font-size: 0.85rem; line-height: 1.9; }
+  .rules ul li b { color: var(--text); }
+
+  .notes { display: flex; flex-direction: column; gap: 10px; }
+  .notes .n { display: flex; gap: 10px; font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+  .notes .n .mark { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .notes .n strong { color: var(--text); font-weight: 600; }
+
+  footer { color: var(--muted); font-size: 0.75rem; text-align: center; padding-top: 8px; }
+
+  @media (max-width: 640px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .rules { grid-template-columns: 1fr; }
+    .shell { padding: 0 16px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div class="eyebrow">Internal — Seller Financials</div>
+    <h1>Storefront Margins, At a Glance</h1>
+    <p class="sub">TCGplayer sales · last 2 years · 1,833 orders · modeled cost structure below</p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Revenue</div><div class="value">$9,134.92</div></div>
+    <div class="kpi"><div class="label">COGS</div><div class="value">$2,643.25</div></div>
+    <div class="kpi"><div class="label">Profit</div><div class="value green">$2,553.97</div></div>
+    <div class="kpi"><div class="label">Margin</div><div class="value accent">28.0%</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Margin by order size</h2>
+    <p class="note">Every shipped order bucketed by product price. Fees at TCGplayer's real blended rate (22.66%), $1.49 buyer-paid shipping, $1/$6 mailing cost split at the $50 threshold.</p>
+
+    <div class="bars">
+      <div class="bar-col"><div class="bar-pct">16.8%</div><div class="bar" style="height:43%"></div></div>
+      <div class="bar-col"><div class="bar-pct">16.1%</div><div class="bar" style="height:41%"></div></div>
+      <div class="bar-col"><div class="bar-pct">22.0%</div><div class="bar" style="height:56%"></div></div>
+      <div class="bar-col"><div class="bar-pct">28.5%</div><div class="bar" style="height:73%"></div></div>
+      <div class="bar-col"><div class="bar-pct">34.7%</div><div class="bar" style="height:88%"></div></div>
+      <div class="bar-col"><div class="bar-pct">39.3%</div><div class="bar" style="height:100%"></div></div>
+    </div>
+    <div class="bar-labels">
+      <span>&lt;$1</span><span>$1&#8211;2</span><span>$2&#8211;5</span><span>$5&#8211;10</span><span>$10&#8211;20</span><span>$20+</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>Orders</th><th>Revenue</th><th>COGS</th><th>Profit</th><th>Margin</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&lt;$1</td><td>963</td><td>$1,770.15</td><td>$108.75</td><td>$297.34</td><td class="margin">16.8%</td></tr>
+        <tr><td>$1&#8211;2</td><td>216</td><td>$625.98</td><td>$167.28</td><td>$100.88</td><td class="margin">16.1%</td></tr>
+        <tr><td>$2&#8211;5</td><td>309</td><td>$1,468.44</td><td>$504.02</td><td>$322.72</td><td class="margin">22.0%</td></tr>
+        <tr><td>$5&#8211;10</td><td>173</td><td>$1,479.60</td><td>$549.82</td><td>$421.54</td><td class="margin">28.5%</td></tr>
+        <tr><td>$10&#8211;20</td><td>112</td><td>$1,693.18</td><td>$610.52</td><td>$587.03</td><td class="margin">34.7%</td></tr>
+        <tr><td>$20+</td><td>60</td><td>$2,097.57</td><td>$702.86</td><td>$824.46</td><td class="margin">39.3%</td></tr>
+        <tr class="total"><td>Total</td><td>1,833</td><td>$9,134.92</td><td>$2,643.25</td><td>$2,553.97</td><td class="margin">28.0%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Cost structure modeled</h2>
+    <div class="rules">
+      <div class="col">
+        <h3>Buy cost, under $1</h3>
+        <ul>
+          <li>&lt; $0.10 &rarr; <b>$0.05</b></li>
+          <li>$0.10&#8211;0.25 &rarr; <b>$0.05</b></li>
+          <li>$0.25&#8211;0.50 &rarr; <b>$0.10</b></li>
+          <li>$0.50&#8211;1.00 &rarr; <b>$0.25</b></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Buy cost, $1 and up (% of market)</h3>
+        <ul>
+          <li>$1&#8211;2 &rarr; <b>55%</b></li>
+          <li>$2&#8211;5 &rarr; <b>50%</b></li>
+          <li>$5&#8211;10 &rarr; <b>45%</b></li>
+          <li>$10&#8211;20 &rarr; <b>40%</b></li>
+          <li>$20+ &rarr; <b>35%</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Reading this</h2>
+    <div class="notes">
+      <div class="n"><span class="mark">&rarr;</span><p><strong>Margin climbs with order size, all the way up.</strong> Sub-$1 bulk sits at 16.8% while $20+ orders clear 39.3% &#8212; the buy-cost tiers were built to widen margin as card value rises.</p></div>
+      <div class="n"><span class="mark">&rarr;</span><p><strong>$20+ orders are 3.3% of packages but carry the largest profit share</strong> of any tier &#8212; $824 of the $2,554 total from just 60 orders.</p></div>
+      <div class="n"><span class="mark">&rarr;</span><p><strong>Numbers are pulled from real per-order TCGplayer data</strong> (1,833 non-canceled orders, last 2 years), not estimated &#8212; only the buy-cost percentages are a modeled assumption, not yet validated against actual purchase records.</p></div>
+    </div>
+  </div>
+
+  <footer>Private page &middot; not linked from the storefront &middot; generated for internal reference</footer>
+</div>
+</body>
+</html>

@@ -498,6 +498,11 @@ def home_page():
     return send_from_directory(str(SITE_ROOT), "index.html")
 
 
+@app.route("/org")
+def org_dashboard():
+    return render_template("org.html")
+
+
 @app.route("/<path:filename>")
 def site_static(filename):
     if os.path.isfile(SITE_ROOT / filename):
