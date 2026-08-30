@@ -128,6 +128,25 @@
             gap: 14px;
         }
 
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .meta-chip {
+            font-family: var(--font-display);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--paper);
+            background: var(--ink);
+            border: 2px solid var(--paper);
+            padding: 4px 12px;
+        }
+
         .button {
             display: inline-flex;
             align-items: center;
@@ -295,7 +314,6 @@
             <nav class="nav">
                 <a class="active" href="index.html">Home</a>
                 <a href="atlas.html">Wiki</a>
-                <a href="download.html">Download</a>
             </nav>
         </div>
     </header>
@@ -308,6 +326,11 @@
                     <a class="button button-secondary" href="https://doctormcboop.itch.io/wizard-battle-demo">Windows Beta (Itch.io)</a>
                     <a class="button button-secondary" href="https://testflight.apple.com/join/gsfA43KM">iOS Beta (TestFlight)</a>
                     <a class="button button-secondary" href="https://appdistribution.firebase.dev/i/cca7766ed91d420d">Android Beta (Firebase)</a>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-chip">Windows: Aug 16 2026</span>
+                    <span class="meta-chip">iOS: Aug 10 2026</span>
+                    <span class="meta-chip">Android: Aug 10 2026</span>
                 </div>
             </div>
         </section>
