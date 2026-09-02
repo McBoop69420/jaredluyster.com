@@ -837,7 +837,9 @@ button { font-family: inherit; }
 
 /* ---------- Designer Page (DESIGN.md §13) ---------- */
 
-.designer-body { padding: var(--space-4) 0 var(--space-5); max-width: 720px; }
+.designer-body-section { padding: var(--space-4) 0 var(--space-5); }
+
+.designer-body { max-width: 720px; }
 
 .designer-description { color: var(--text-secondary); font-size: 1.0625rem; margin-bottom: var(--space-2); }
 
