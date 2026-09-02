@@ -45,7 +45,12 @@ class ShopSubdomainRewrite:
         host = environ.get("HTTP_HOST", "").split(":")[0]
         path = environ.get("PATH_INFO", "/")
         if host.startswith("shop.") and not path.startswith("/marketplace"):
-            environ["PATH_INFO"] = "/marketplace" + path
+            # Shared static assets (logos, etc.) live at the site root and are
+            # referenced by marketplace templates as absolute paths -- leave
+            # those alone so they keep resolving via site_static below rather
+            # than getting hijacked into a nonexistent /marketplace/<asset>.
+            if not (SITE_ROOT / path.lstrip("/")).is_file():
+                environ["PATH_INFO"] = "/marketplace" + path
         return self.wsgi_app(environ, start_response)
 
 
