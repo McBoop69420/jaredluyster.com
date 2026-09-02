@@ -13,7 +13,7 @@ when a phase's build work is complete.
 | 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | done |
 | 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | done |
 | 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | done |
-| 7 | [phases/phase-7-cart-mobile.md](phases/phase-7-cart-mobile.md) | Cart UI (static, no checkout), full mobile pass | in progress |
+| 7 | [phases/phase-7-cart-mobile.md](phases/phase-7-cart-mobile.md) | Cart UI (static, no checkout), full mobile pass | done |
 
 ## Current state of this directory
 
@@ -97,6 +97,41 @@ when a phase's build work is complete.
   survives a skim. `designer.js` links "Shop [Designer] Terrain" to
   `/wintergreen/shop/?designer=<id>` — `shop.js` already supported that query param since
   Phase 3, no change needed there.
+- `cart.js`, `cart-page.js`, `cart/index.html` (new, Phase 7) — real cart state on
+  `window.WintergreenCart`, backed by `localStorage`, loaded on every page so the header
+  badge always reflects persisted truth. `product.js`'s Add to Cart and `location.js`'s
+  tier buttons now call it instead of faking a badge increment. Checkout visibly becomes
+  a disabled "Checkout Coming Soon" button on click, with an explanatory note — never
+  pretends to process a real order, per CLAUDE.md's static-catalog-only scope.
+  **Three real bugs found and fixed during this phase's live verification, all now
+  documented in CLAUDE.md so they don't recur:**
+  1. `product.js`/`location.js` were rewired to call the new cart API but their `?v=1`
+     cache-busting query wasn't bumped — a browser that had visited the product page
+     earlier kept running the *old* handler (fake in-memory increment, no real write)
+     with no error and no visible sign anything was wrong. Fixed by bumping both to
+     `?v=2`; generalized CLAUDE.md's cache-busting rule from a named list of "the
+     well-known files" to "any `.js`/`.css` file, every time its content changes."
+  2. `.cart-layout` (and, latently since Phase 3, `#product-grid` / Phase 6's
+     `#collection-product-grid`) sets `display: grid` in the author stylesheet, which
+     ties in specificity with the browser's built-in `[hidden]{display:none}` — the
+     author rule won, so an "empty" grid stayed visually present even though its
+     `hidden` DOM property read `true` the whole time (which is exactly why earlier
+     phases' automated checks, which read that property, never caught it — only a
+     visual check did). Fixed with a global `[hidden]{display:none!important}` rule,
+     which corrected all three call sites at once.
+  3. Right after deploying that fix, verification itself got caught by a Cloudflare
+     edge-cache race: the first request to the brand-new `?v=9` URL landed on an edge
+     node before it had finished propagating the new build, and that edge then cached
+     the *stale* response under the new key for its full 24h TTL — meaning even a
+     correct version bump doesn't fully protect against the very first request racing
+     a not-yet-propagated deploy. Resolved by bumping again to a genuinely untouched
+     `?v=10` and waiting longer before the first request. No code change needed; this is
+     a timing hazard for verification (and for real early visitors) to keep in mind, not
+     a defect to fix.
+  Full mobile pass at 360-375px across all 7 pages (home, shop, product, location,
+  collection, designer, cart) confirmed: no horizontal scroll anywhere, correct grid
+  column counts at each breakpoint, product page's photo-first DOM order preserved, cart
+  page's item rows correctly rearrange to a 2-row layout via `grid-template-areas`.
 
 ## Deployment
 
