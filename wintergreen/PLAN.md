@@ -42,3 +42,11 @@ rewrites that hostname to `/wintergreen`. Deploy is just a push to `main`. See r
 - 2026-09-02 — Scaffolded. Full design brief (28-section spec from Jared) captured in
   DESIGN.md. Decided: static catalog only for now, no cart/checkout backend; phased build
   like bluegrasscube; placeholder content/photography until real supplier data exists.
+- 2026-09-02 — Phase 1 committed and pushed (`aa7c1d1`), live at
+  wintergreen.jaredluyster.com. Root cause of an earlier "shows the main homepage instead"
+  report: the custom domain was active on Cloudflare but the code had only ever been
+  written locally, never committed/pushed — the Pages project auto-deploys on push to
+  `main`, so nothing was live until that happened.
+- 2026-09-02 — **Online-only, no physical location for now.** Jared: a physical location
+  may happen later but isn't part of this build. See the CLAUDE.md note — affects About
+  page, footer, and the Shipping accordion (Phase 4) once those are built.

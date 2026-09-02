@@ -13,6 +13,12 @@ A premium e-commerce storefront selling commercially licensed, professionally 3D
 tabletop terrain. It sells **complete environments** (locations built from multiple
 products) as the primary asset, not just individual terrain pieces. See DESIGN.md §1–3, 23.
 
+**Online-only — decided 2026-09-02.** No physical storefront/showroom exists (a physical
+location may come later, but isn't part of this build). Don't add a "Visit Us" section,
+store hours, a physical address, or in-person pickup as a checkout/fulfillment option to
+the About page, footer, or Shipping accordion (DESIGN.md §11) — shipping is the only
+fulfillment path until this changes.
+
 ## Hard constraints (never violate)
 
 See DESIGN.md §24 in full. In short: no fantasy-themed decorative UI by default, no
