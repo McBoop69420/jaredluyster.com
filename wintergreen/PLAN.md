@@ -11,7 +11,7 @@ when a phase's build work is complete.
 | 2 | [phases/phase-2-homepage.md](phases/phase-2-homepage.md) | Full homepage: hero, shop-by-environment, featured location, featured designers | done |
 | 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | done |
 | 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | done |
-| 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | not started |
+| 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | done |
 | 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | not started |
 | 7 | [phases/phase-7-cart-mobile.md](phases/phase-7-cart-mobile.md) | Cart UI (static, no checkout), full mobile pass | not started |
 
@@ -69,6 +69,24 @@ when a phase's build work is complete.
   Verified server-side via `wrangler pages dev` + `curl -H "Host: wintergreen..."` (correct
   content-types for every asset) since local testing has no real subdomain DNS to exercise
   client-side relative-path resolution the way production does.
+- `locations/index.html`, `location.js` (new, Phase 5) — same shared-template pattern as
+  products/, added to `../functions/_middleware.ts`'s `DETAIL_PAGE_TEMPLATES`. Hero is
+  tinted by the location's new `environment` field (not derivable from its products alone,
+  since a location can span more than one). Included Terrain reuses Phase 3's
+  `.product-grid`/`.product-card` markup rather than duplicating it. Build Your Own renders
+  the 3 tiers from `location.tiers`, Complete Set visually primary (accent border +
+  "Recommended" badge) per DESIGN.md §23's funnel — each tier's button reuses the same
+  increment-cart-badge-plus-fading-confirmation pattern as the Phase 4 product page.
+  `data/locations.json` gained `environment` and `useCases` fields (documented in
+  `data/README.md`); the existing tiers now bundle both seed products instead of just one,
+  so Included Terrain has more than a single card to prove the grid.
+  **Trigger for this phase:** Jared reported the homepage's "Explore the Location" link
+  actually fell through to the *main* jaredluyster.com homepage (unstyled) rather than a
+  clean 404 — Cloudflare Pages' fallback behavior for an unmatched path on this project,
+  not something specific to wintergreen. Building the location page is the direct fix for
+  that one link; other still-unbuilt links (Collections, Designers, About, Cart, Account)
+  will show the same fallback until their own phases land — this is expected, not a
+  regression, but worth remembering if it gets reported again before Phase 6/7 ship.
 
 ## Deployment
 

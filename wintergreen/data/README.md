@@ -63,7 +63,9 @@ by hand.
   "tagline": "A fortified desert outpost built for markets, intrigue, ambushes, and adventure.",
   "story": "Longer paragraph: what the environment supports (social, combat, exploration, markets, inns, ambushes).",
   "heroImage": "images/locations/desert-caravanserai-hero.jpg",
+  "environment": "desert", // one of the environment slugs — used to tint the hero placeholder until real photography exists
   "featured": true, // shown in the homepage Featured Location section — exactly one should be true
+  "useCases": ["Markets", "Intrigue", "Ambushes", "Exploration"], // short tags shown on the location page's story section
   "stats": { "buildings": 12, "terrainPieces": 34, "expandable": true },
   "tiers": [
     { "name": "Complete Set", "priceCents": 32000, "productIds": ["sandstone-watchtower"] },

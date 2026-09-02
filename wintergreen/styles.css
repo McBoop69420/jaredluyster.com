@@ -733,6 +733,103 @@ button { font-family: inherit; }
 
 .designed-by-note { font-size: 0.8125rem; color: var(--text-secondary); margin: 0.4rem 0 var(--space-2); }
 
+/* ---------- Location Detail Page (DESIGN.md §8) ---------- */
+
+.location-hero {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.location-hero[data-env="desert"] { background: #2b2419; }
+.location-hero[data-env="harbor"] { background: #16232a; }
+.location-hero[data-env="medieval-town"] { background: #241f1a; }
+.location-hero[data-env="temples-ruins"] { background: #2a2318; }
+.location-hero[data-env="dungeons"] { background: #1a1a1d; }
+.location-hero[data-env="wilderness"] { background: #1a2420; }
+
+.location-hero-media {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(18, 20, 22, 0) 0%, rgba(18, 20, 22, 0.9) 100%);
+}
+
+.location-hero-content {
+    position: relative;
+    padding: var(--space-6) var(--space-3) var(--space-5);
+    max-width: 640px;
+}
+
+.location-hero-content h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    margin-bottom: var(--space-2);
+}
+
+.location-hero-content > p {
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin-bottom: var(--space-3);
+    font-size: 1.0625rem;
+}
+
+.location-story { padding: var(--space-5) 0; text-align: center; }
+
+.location-story-text {
+    max-width: 70ch;
+    margin: 0 auto var(--space-2);
+    font-size: 1.0625rem;
+}
+
+.use-case-tags {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.location-terrain { padding: var(--space-5) 0; }
+
+.location-tiers { padding: var(--space-5) 0 var(--space-6); }
+
+.tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+}
+
+.tier-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: var(--space-4) var(--space-3);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid transparent;
+}
+
+.tier-card-primary { border-color: var(--accent); background: var(--surface-elevated); }
+
+.tier-badge {
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: var(--space-1);
+}
+
+.tier-name { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 0.3rem; }
+
+.tier-price { font-size: 1.375rem; font-weight: 600; margin-bottom: 0.3rem; }
+
+.tier-meta { color: var(--text-secondary); font-size: 0.8125rem; margin-bottom: var(--space-3); }
+
+.tier-cta { width: 100%; margin-top: auto; }
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -793,6 +890,7 @@ button { font-family: inherit; }
     .filter-sidebar.open { display: flex; }
 
     .product-page { grid-template-columns: 1fr; }
+    .tiers-grid { grid-template-columns: 1fr; }
     .menu-toggle {
         display: inline-flex;
         align-items: center;

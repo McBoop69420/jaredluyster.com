@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Shop commercially licensed, professionally printed tabletop terrain by environment, product type, scale, and designer.">
-    <title>Shop Terrain — Wintergreen</title>
-    <link rel="stylesheet" href="../styles.css?v=5">
+    <meta name="description" content="A complete tabletop location from Wintergreen, built from commercially licensed, professionally printed terrain.">
+    <title>Location — Wintergreen</title>
+    <link rel="stylesheet" href="/styles.css?v=5">
 </head>
 <body>
     <header class="site-header">
@@ -76,68 +76,39 @@
     </header>
 
     <main>
-        <section class="shop-header">
-            <div class="container">
-                <h1 id="shop-title">Shop Terrain</h1>
-                <p class="shop-description" id="shop-description">Browse the full terrain catalog.</p>
-            </div>
-        </section>
+        <p id="location-not-found" class="container product-not-found" hidden>
+            We couldn't find that location. <a href="/wintergreen/locations/">Back to Locations</a>.
+        </p>
 
-        <section class="shop-layout container">
-            <button class="filter-drawer-toggle" id="filter-drawer-toggle" aria-expanded="false">
-                Filters
-            </button>
-
-            <aside class="filter-sidebar" id="filter-sidebar">
-                <div class="filter-group" data-facet="environment">
-                    <h3>Environment</h3>
-                    <label><input type="checkbox" name="environment" value="desert"> Desert</label>
-                    <label><input type="checkbox" name="environment" value="harbor"> Harbor &amp; Coastal</label>
-                    <label><input type="checkbox" name="environment" value="medieval-town"> Medieval Town</label>
-                    <label><input type="checkbox" name="environment" value="temples-ruins"> Temples &amp; Ruins</label>
-                    <label><input type="checkbox" name="environment" value="dungeons"> Dungeons</label>
-                    <label><input type="checkbox" name="environment" value="wilderness"> Wilderness</label>
+        <div id="location-content">
+            <section class="location-hero" id="location-hero">
+                <div class="location-hero-media" aria-hidden="true"></div>
+                <div class="location-hero-content">
+                    <h1 id="location-name"></h1>
+                    <p id="location-tagline"></p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#tiers">Shop the Complete Set</a>
+                        <a class="btn btn-secondary" href="#included-terrain">Explore the Pieces</a>
+                    </div>
                 </div>
+            </section>
 
-                <div class="filter-group" data-facet="type">
-                    <h3>Product Type</h3>
-                    <label><input type="checkbox" name="type" value="buildings"> Buildings</label>
-                    <label><input type="checkbox" name="type" value="terrain"> Terrain</label>
-                    <label><input type="checkbox" name="type" value="scatter"> Scatter</label>
-                    <label><input type="checkbox" name="type" value="modular-tiles"> Modular Tiles</label>
-                    <label><input type="checkbox" name="type" value="centerpieces"> Centerpieces</label>
-                    <label><input type="checkbox" name="type" value="encounter-sets"> Encounter Sets</label>
-                </div>
+            <section class="location-story container">
+                <p class="location-story-text" id="location-story"></p>
+                <p class="use-case-tags" id="use-case-tags"></p>
+            </section>
 
-                <div class="filter-group" data-facet="scale">
-                    <h3>Scale</h3>
-                    <label><input type="checkbox" name="scale" value="small"> Small Terrain</label>
-                    <label><input type="checkbox" name="scale" value="medium"> Medium Terrain</label>
-                    <label><input type="checkbox" name="scale" value="large"> Large Terrain</label>
-                    <label><input type="checkbox" name="scale" value="centerpiece"> Table Centerpieces</label>
-                </div>
+            <section class="location-terrain container" id="included-terrain">
+                <h2 class="section-heading">Included Terrain</h2>
+                <div class="product-grid" id="included-terrain-grid"></div>
+            </section>
 
-                <div class="filter-group" data-facet="designer">
-                    <h3>Designer</h3>
-                    <div id="designer-filter-options"></div>
-                </div>
-
-                <div class="filter-group" data-facet="price">
-                    <h3>Price</h3>
-                    <label><input type="radio" name="price" value="under-25"> Under $25</label>
-                    <label><input type="radio" name="price" value="25-50"> $25 &ndash; $50</label>
-                    <label><input type="radio" name="price" value="over-50"> Over $50</label>
-                </div>
-
-                <button type="button" class="btn btn-secondary filter-clear-all" id="clear-filters">Clear All Filters</button>
-            </aside>
-
-            <div class="shop-results">
-                <p class="shop-result-count" id="result-count"></p>
-                <div class="product-grid" id="product-grid"></div>
-                <p class="shop-empty" id="shop-empty" hidden>No terrain matches these filters yet.</p>
-            </div>
-        </section>
+            <section class="location-tiers container" id="tiers">
+                <h2 class="section-heading">Build Your Own</h2>
+                <div class="tiers-grid" id="tiers-grid"></div>
+                <p class="add-to-cart-confirmation" id="tier-add-confirmation" hidden></p>
+            </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -154,7 +125,7 @@
         </div>
     </footer>
 
-    <script src="../app.js?v=2"></script>
-    <script src="../shop.js?v=1"></script>
+    <script src="/app.js?v=2"></script>
+    <script src="/location.js?v=1"></script>
 </body>
 </html>

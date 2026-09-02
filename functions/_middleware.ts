@@ -38,6 +38,7 @@ const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
 // type (locations, collections, designers) gets a detail page too.
 const DETAIL_PAGE_TEMPLATES: Record<string, string> = {
   "/wintergreen/products/": "/wintergreen/products/",
+  "/wintergreen/locations/": "/wintergreen/locations/",
 };
 
 export const onRequest = async (context: {
