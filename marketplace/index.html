@@ -5,24 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>Marketplace — Bluegrass Memorabilia & Collectibles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
         :root {
-            --bg: #0e0e0e;
-            --surface: #161616;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg: #131113;
+            --surface: #1a171a;
+            --border: rgba(243, 237, 224, 0.1);
             --text: #f0f0f0;
-            --muted: #888;
-            --accent: #f89800;
+            --muted: #948d80;
+            --accent: #f2971d;
+            --paper: #f3ede0;
+            --paper-ink: #171514;
+            --font-display: 'Anton', Impact, 'Arial Black', sans-serif;
+            --font-mark: 'Permanent Marker', cursive;
+            --font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
         }
 
         html, body {
             margin: 0;
             background: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: var(--font-body);
             min-height: 100vh;
+        }
+
+        body { position: relative; }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: 500;
+            pointer-events: none; opacity: .05; mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         a { color: inherit; text-decoration: none; }
@@ -38,9 +53,16 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            background: rgba(14, 14, 14, 0.88);
+            background: rgba(19, 17, 19, 0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
+        }
+
+        .topbar::after {
+            content: "";
+            display: block;
+            height: 1px;
+            background-image: repeating-linear-gradient(90deg, rgba(243,237,224,.22) 0 5px, transparent 5px 11px);
         }
 
         .topbar-inner {
@@ -64,25 +86,61 @@
             width: auto;
         }
 
-        /* Hero — compact */
+        .brand-tag {
+            font-family: var(--font-mono);
+            font-size: .62rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-left: 1px dashed var(--border);
+            padding-left: 10px;
+            line-height: 1.4;
+        }
+
+        .topbar-nav a {
+            font-family: var(--font-mono);
+            font-size: .7rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: 6px 10px 6px 12px;
+            border-left: 2px dashed var(--border);
+        }
+
+        /* Hero — flyer */
         .hero {
-            padding: 36px 0 16px;
+            padding: 44px 0 20px;
         }
 
         .hero-row {
             display: flex;
-            align-items: baseline;
+            align-items: flex-end;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 8px 24px;
+            gap: 12px 24px;
         }
 
         h1 {
             margin: 0;
-            font-size: clamp(1.6rem, 4vw, 2.2rem);
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
+            font-family: var(--font-mark);
+            font-weight: 400;
+            font-size: clamp(2rem, 5.5vw, 2.9rem);
+            letter-spacing: 0;
+            line-height: 1;
+            transform: rotate(-1deg);
+            position: relative;
+            display: inline-block;
+            text-wrap: balance;
+        }
+
+        h1::after {
+            content: "";
+            display: block;
+            width: 78%;
+            height: 6px;
+            margin-top: 4px;
+            background: var(--accent);
+            transform: rotate(-1.4deg);
+            border-radius: 2px;
         }
 
         .lead {
@@ -92,39 +150,41 @@
             line-height: 1.5;
         }
 
-        /* Trust bar */
+        /* Trust bar — stamped notices */
         .trust-bar {
             display: flex;
-            gap: 6px 20px;
+            gap: 10px 14px;
             flex-wrap: wrap;
-            padding: 12px 0 0;
-            font-size: 0.78rem;
-            color: var(--muted);
+            padding: 14px 0 0;
         }
 
         .trust-bar span {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: .02em;
+            color: var(--paper-ink);
+            background: var(--accent);
+            padding: 5px 10px;
+            border-radius: 2px;
+            transform: rotate(-1deg);
         }
 
-        .trust-bar span::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--accent);
-            flex-shrink: 0;
+        .trust-bar span:nth-child(2n) {
+            background: transparent;
+            color: var(--muted);
+            border: 1.5px dashed var(--border);
+            transform: rotate(1deg);
         }
 
         /* Controls block */
         .controls {
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            border: 1.5px dashed var(--border);
+            border-radius: 4px;
             padding: 14px 16px;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .controls-row {
@@ -138,27 +198,27 @@
             flex: 1;
             min-width: 180px;
             background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1.5px dashed var(--border);
+            border-radius: 3px;
             padding: 9px 12px;
             color: var(--text);
             font-size: 0.84rem;
-            font-family: inherit;
+            font-family: var(--font-mono);
             outline: none;
             transition: border-color 120ms;
         }
 
         .search-bar::placeholder { color: var(--muted); }
-        .search-bar:focus { border-color: rgba(255, 255, 255, 0.22); }
+        .search-bar:focus { border-color: var(--accent); border-style: solid; }
 
         .sort-select, .set-select {
             background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1.5px dashed var(--border);
+            border-radius: 3px;
             padding: 9px 12px;
             color: var(--text);
-            font-size: 0.8rem;
-            font-family: inherit;
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
             outline: none;
             cursor: pointer;
         }
@@ -167,13 +227,13 @@
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-            gap: 14px;
+            gap: 22px 14px;
             padding-bottom: 64px;
         }
 
         .listing {
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            border: 1.5px dashed var(--border);
+            border-radius: 4px;
             background: var(--surface);
             overflow: hidden;
             transition: border-color 120ms, transform 120ms;
@@ -181,9 +241,14 @@
             flex-direction: column;
         }
 
+        .listing:nth-child(4n+1) { transform: rotate(-1deg); }
+        .listing:nth-child(4n+2) { transform: rotate(0.8deg); }
+        .listing:nth-child(4n+3) { transform: rotate(-0.6deg); }
+        .listing:nth-child(4n+4) { transform: rotate(1.2deg); }
+
         .listing:hover {
-            border-color: rgba(255, 255, 255, 0.18);
-            transform: translateY(-2px);
+            border-color: var(--accent);
+            transform: rotate(0deg) translateY(-3px);
         }
 
         .listing-img-wrap {
@@ -192,6 +257,19 @@
             background: #111;
             overflow: hidden;
         }
+
+        .listing-img-wrap::before {
+            content: "";
+            position: absolute;
+            top: -6px; left: 14px;
+            width: 32px; height: 13px;
+            background: rgba(243,237,224,.6);
+            transform: rotate(-7deg);
+            box-shadow: 0 2px 4px rgba(0,0,0,.4);
+            z-index: 3;
+        }
+
+        .listing:nth-child(3n) .listing-img-wrap::before { display: none; }
 
         .listing-img-wrap img {
             width: 100%;
@@ -234,11 +312,10 @@
         }
 
         .badge {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-            border-radius: 6px;
+            border-radius: 2px;
             padding: 4px 8px;
-            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            font-size: 0.64rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -246,12 +323,16 @@
         }
 
         .badge-foil {
-            color: var(--accent);
-            border: 1px solid rgba(248, 152, 0, 0.3);
+            color: var(--paper-ink);
+            background: linear-gradient(120deg, #fff6df, var(--accent) 45%, #fff6df 80%);
+            transform: rotate(-3deg);
+            box-shadow: 0 2px 4px rgba(0,0,0,.4);
         }
 
         .badge-qty {
             color: var(--text);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
         }
 
         /* Card info */
@@ -265,63 +346,80 @@
         .listing-name {
             font-size: 0.88rem;
             font-weight: 700;
+            font-family: var(--font-body);
             margin: 0 0 2px;
             line-height: 1.3;
         }
 
         .listing-set {
-            font-size: 0.68rem;
-            color: #555;
+            font-size: 0.66rem;
+            font-family: var(--font-mono);
+            color: var(--muted);
             margin: 0 0 10px;
             letter-spacing: 0.02em;
         }
 
         .listing-bottom {
             display: flex;
-            align-items: baseline;
+            align-items: center;
             justify-content: space-between;
             margin-top: auto;
         }
 
         .listing-price {
-            font-size: 1.1rem;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--accent);
+            background: var(--bg);
+            padding: 4px 7px;
+            border-radius: 2px;
+            transform: rotate(-2deg);
+            font-variant-numeric: tabular-nums;
         }
 
         .listing-condition {
-            font-size: 0.68rem;
-            font-weight: 600;
+            font-family: var(--font-mono);
+            font-size: 0.64rem;
+            font-weight: 700;
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.04em;
+            border: 1.5px solid var(--muted);
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            display: inline-flex; align-items: center; justify-content: center;
+            transform: rotate(8deg);
         }
 
         .add-to-cart-btn {
             width: 100%;
             padding: 9px;
             margin-top: 10px;
-            background: rgba(248, 152, 0, 0.08);
-            border: 1px solid rgba(248, 152, 0, 0.25);
-            border-radius: 8px;
+            background: transparent;
+            border: 1.5px dashed var(--accent);
+            border-radius: 3px;
             color: var(--accent);
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 120ms;
-            font-family: inherit;
-            letter-spacing: 0.01em;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .add-to-cart-btn:hover {
-            background: rgba(248, 152, 0, 0.15);
-            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--paper-ink);
+            border-style: solid;
         }
 
         .add-to-cart-btn.added {
-            background: rgba(76, 184, 122, 0.1);
+            background: transparent;
             color: #4cb87a;
-            border-color: rgba(76, 184, 122, 0.35);
+            border-color: #4cb87a;
+            border-style: solid;
         }
 
 
@@ -384,7 +482,8 @@
             text-align: center;
             padding: 48px 0;
             color: var(--muted);
-            font-size: 0.9rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
         }
         .skeleton-grid {
             display: grid;
@@ -425,12 +524,13 @@
 <body>
     <header class="topbar">
         <div class="shell topbar-inner">
-            <a class="brand" href="/marketplace/">
+            <a class="brand" href="/">
                 <img class="brand-logo" src="/bmc-logo-header.png" alt="Bluegrass Memorabilia & Collectibles">
+                <span class="brand-tag">Vol. 04<br>Trade &amp; Sell Sheet</span>
             </a>
-            <nav style="display:flex;gap:16px;align-items:center;font-size:0.85rem;">
-<a href="/marketplace/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:#000;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
-                <a href="/marketplace/orders" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">My Orders</a>
+            <nav class="topbar-nav" style="display:flex;gap:8px;align-items:center;font-size:0.85rem;">
+<a href="/cart" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cart<span id="cart-badge" style="background:var(--accent);color:var(--paper-ink);font-size:0.65rem;font-family:var(--font-mono);font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;display:none">0</span></a>
+                <a href="/orders" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">My Orders</a>
                 <span id="auth-link"></span>
             </nav>
         </div>
@@ -613,27 +713,27 @@
             grid.innerHTML = html;
         }
 
-        fetch('/marketplace/api/me').then(function(r) { return r.json(); }).then(function(data) {
+        fetch('/api/me').then(function(r) { return r.json(); }).then(function(data) {
             var authLink = document.getElementById('auth-link');
             var badge = document.getElementById('cart-badge');
             if (data.logged_in) {
                 authLink.innerHTML = '<a href="#" onclick="doLogout()" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">' + data.name + ' (logout)</a>';
                 if (data.is_admin) {
-                    authLink.innerHTML += ' <a href="/marketplace/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
+                    authLink.innerHTML += ' <a href="/admin" style="color:var(--accent);margin-left:8px">Admin</a>';
                 }
             } else {
-                authLink.innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+                authLink.innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
             }
             if (data.cart_count > 0) {
                 badge.textContent = data.cart_count;
                 badge.style.display = '';
             }
         }).catch(function() {
-            document.getElementById('auth-link').innerHTML = '<a href="/marketplace/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
+            document.getElementById('auth-link').innerHTML = '<a href="/login" style="color:var(--muted);transition:color 120ms" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--muted)\'">Sign In</a>';
         });
 
         function addToCart(id, btn) {
-            fetch('/marketplace/api/cart/add', {
+            fetch('/api/cart/add', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: id, quantity: 1})
             }).then(function(r) { return r.json(); })
@@ -653,7 +753,7 @@
         }
 
         function doLogout() {
-            fetch('/marketplace/api/logout', {method:'POST'}).then(function() { location.reload(); });
+            fetch('/api/logout', {method:'POST'}).then(function() { location.reload(); });
         }
     </script>
 </body>

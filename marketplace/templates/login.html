@@ -47,7 +47,7 @@
             </div>
             <div id="login-error" class="error-msg" style="display:none"></div>
             <button class="btn btn-accent" onclick="doLogin()">Sign In</button>
-            <a href="/marketplace/forgot-password" style="display:block; text-align:center; margin-top:14px; color:var(--muted); font-size:0.82rem;">Forgot password?</a>
+            <a href="/forgot-password" style="display:block; text-align:center; margin-top:14px; color:var(--muted); font-size:0.82rem;">Forgot password?</a>
         </div>
 
         <div id="signup-form" class="form-section">
@@ -80,12 +80,12 @@ function showTab(tab) {
     document.getElementById('signup-form').classList.toggle('active', tab === 'signup');
 }
 
-var returnTo = new URLSearchParams(location.search).get('return_to') || '/marketplace/';
+var returnTo = new URLSearchParams(location.search).get('return_to') || '/';
 
 function doLogin() {
     var err = document.getElementById('login-error');
     err.style.display = 'none';
-    fetch('/marketplace/api/login', {
+    fetch('/api/login', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             email: document.getElementById('login-email').value,
@@ -101,7 +101,7 @@ function doLogin() {
 function doSignup() {
     var err = document.getElementById('signup-error');
     err.style.display = 'none';
-    fetch('/marketplace/api/signup', {
+    fetch('/api/signup', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: document.getElementById('signup-name').value,
