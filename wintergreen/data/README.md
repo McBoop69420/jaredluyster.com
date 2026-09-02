@@ -14,7 +14,8 @@ locations at once (DESIGN.md §21) instead of one rigid parent.
   "tagline": "Fantasy environments built for exploration.",
   "description": "Longer paragraph for the designer page.",
   "logo": "images/designers/aether-studios-logo.png", // optional
-  "categories": ["temples-ruins", "wilderness"] // environment slugs this designer covers
+  "categories": ["temples-ruins", "wilderness"], // environment slugs this designer covers
+  "featured": true // shown in the homepage Featured Designers row (2-4 should be true)
 }
 ```
 
@@ -62,6 +63,7 @@ by hand.
   "tagline": "A fortified desert outpost built for markets, intrigue, ambushes, and adventure.",
   "story": "Longer paragraph: what the environment supports (social, combat, exploration, markets, inns, ambushes).",
   "heroImage": "images/locations/desert-caravanserai-hero.jpg",
+  "featured": true, // shown in the homepage Featured Location section — exactly one should be true
   "stats": { "buildings": 12, "terrainPieces": 34, "expandable": true },
   "tiers": [
     { "name": "Complete Set", "priceCents": 32000, "productIds": ["sandstone-watchtower"] },

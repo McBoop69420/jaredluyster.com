@@ -5,6 +5,25 @@
     "tagline": "Fantasy environments built for exploration.",
     "description": "Aether Studios designs expansive fantasy environments with an emphasis on architectural detail and cinematic scale, from sunbaked trade outposts to sprawling temple ruins.",
     "logo": null,
-    "categories": ["desert", "temples-ruins"]
+    "categories": ["desert", "temples-ruins"],
+    "featured": true
+  },
+  {
+    "id": "miniatureland",
+    "name": "MiniatureLand",
+    "tagline": "Dense, livable town and harbor terrain.",
+    "description": "MiniatureLand focuses on grounded, everyday environments — waterfronts, market streets, and town squares — built to click together into a believable settlement.",
+    "logo": null,
+    "categories": ["harbor", "medieval-town"],
+    "featured": true
+  },
+  {
+    "id": "ironhold-foundry",
+    "name": "Ironhold Foundry",
+    "tagline": "Modular dungeons built for encounter design.",
+    "description": "Ironhold Foundry builds interlocking dungeon terrain — corridors, chambers, and hazards — designed around what a game master actually needs at the table.",
+    "logo": null,
+    "categories": ["dungeons"],
+    "featured": true
   }
 ]

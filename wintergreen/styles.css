@@ -281,6 +281,168 @@ button { font-family: inherit; }
     flex-wrap: wrap;
 }
 
+/* ---------- Section heading (shared) ---------- */
+
+.section-heading {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    text-align: center;
+    margin-bottom: var(--space-5);
+}
+
+/* ---------- Shop by Environment (DESIGN.md §7 Section 2) ---------- */
+
+.env-section { padding: var(--space-6) 0; }
+
+.env-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+}
+
+.env-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.env-card-media {
+    position: absolute;
+    inset: 0;
+    background: var(--surface-elevated);
+    transition: transform 0.3s ease;
+}
+
+.env-card[data-env="desert"] .env-card-media { background: #2b2419; }
+.env-card[data-env="harbor"] .env-card-media { background: #16232a; }
+.env-card[data-env="medieval-town"] .env-card-media { background: #241f1a; }
+.env-card[data-env="temples-ruins"] .env-card-media { background: #2a2318; }
+.env-card[data-env="dungeons"] .env-card-media { background: #1a1a1d; }
+.env-card[data-env="wilderness"] .env-card-media { background: #1a2420; }
+
+.env-card:hover .env-card-media { transform: scale(1.04); }
+
+.env-card-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    background: linear-gradient(0deg, rgba(18,20,22,0.85) 0%, rgba(18,20,22,0) 100%);
+}
+
+.env-card-label span {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    letter-spacing: 0.02em;
+}
+
+.env-card-arrow {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.env-card:hover .env-card-arrow { opacity: 1; transform: translateX(0); }
+
+/* ---------- Featured Location (DESIGN.md §7 Section 3) ---------- */
+
+.featured-location {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    min-height: 480px;
+    background: var(--surface);
+}
+
+.featured-location-media {
+    background: linear-gradient(160deg, #1c2024 0%, #121416 100%);
+}
+
+.featured-location-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5);
+}
+
+.featured-location-content h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.featured-location-tagline {
+    color: var(--text-secondary);
+    max-width: 40ch;
+    margin-bottom: var(--space-1);
+}
+
+.featured-location-content .btn { margin: var(--space-1) 0; }
+
+.featured-location-stats {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: var(--space-1);
+}
+
+/* ---------- Featured Designers (DESIGN.md §7 Section 4) ---------- */
+
+.designers-section { padding: var(--space-6) 0; }
+
+.designers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+}
+
+.designer-card {
+    display: block;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background-color 0.15s ease;
+}
+
+.designer-card:hover { background: var(--surface-elevated); }
+
+.designer-card-media {
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(160deg, #1c2024 0%, #121416 100%);
+}
+
+.designer-card-body { padding: var(--space-3); }
+
+.designer-card-body h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin-bottom: 0.4rem;
+}
+
+.designer-card-body p {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin-bottom: var(--space-2);
+}
+
+.designer-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -324,6 +486,9 @@ button { font-family: inherit; }
 
 @media (max-width: 900px) {
     .primary-nav { display: none; }
+    .env-grid, .designers-grid { grid-template-columns: repeat(2, 1fr); }
+    .featured-location { grid-template-columns: 1fr; min-height: 0; }
+    .featured-location-media { min-height: 280px; }
     .menu-toggle {
         display: inline-flex;
         align-items: center;
@@ -344,4 +509,6 @@ button { font-family: inherit; }
 @media (max-width: 480px) {
     .header-inner { gap: var(--space-2); }
     .brand { font-size: 1.0625rem; }
+    .env-grid, .designers-grid { grid-template-columns: 1fr; }
+    .featured-location-content { padding: var(--space-4) var(--space-3); }
 }

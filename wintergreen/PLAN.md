@@ -8,7 +8,7 @@ when a phase's build work is complete.
 | Phase | Brief | Scope | Status |
 |-------|-------|-------|--------|
 | 1 | [phases/phase-1-foundations.md](phases/phase-1-foundations.md) | Design tokens, fonts, site shell (header/nav/footer, mobile menu), data schema, bare hero | done |
-| 2 | [phases/phase-2-homepage.md](phases/phase-2-homepage.md) | Full homepage: hero, shop-by-environment, featured location, featured designers | not started |
+| 2 | [phases/phase-2-homepage.md](phases/phase-2-homepage.md) | Full homepage: hero, shop-by-environment, featured location, featured designers | done |
 | 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | not started |
 | 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | not started |
 | 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | not started |
@@ -24,11 +24,19 @@ when a phase's build work is complete.
   dark gradient placeholder (no real terrain photography yet — Phase 2 needs real
   photography for shop-by-environment cards and the featured location, so that's likely
   where placeholder image sourcing/generation actually starts in earnest).
-- `data/README.md` — documents the schema; `designers.json` / `products.json` /
-  `collections.json` / `locations.json` each seeded with exactly one placeholder record
-  (Aether Studios / Sandstone Watchtower / Desert Settlements / The Desert Caravanserai)
-  proving the many-to-many shape (a product's `collectionIds`/`locationIds` are arrays).
-- `images/` — still empty. First real placeholder images are needed starting Phase 2.
+- `data/README.md` — documents the schema; `designers.json` (now 3 records, all
+  `featured: true`) / `products.json` / `collections.json` / `locations.json` (1 record,
+  `featured: true`) prove the many-to-many shape (a product's `collectionIds`/
+  `locationIds` are arrays) and now also the `featured` flag Phase 2 added to both
+  designers and locations.
+- `home.js` (new, Phase 2) — renders Shop by Environment (static 6-item list matching the
+  nav dropdown, DESIGN.md §6), Featured Location, and Featured Designers by fetching the
+  JSON data files client-side. No build step, so this is plain `fetch` + template strings,
+  same pattern bluegrasscube uses for its data-driven sections.
+- `images/` — still empty. Environment/location/designer cards currently use flat tinted
+  placeholder colors (see `styles.css` `.env-card[data-env=...]`) instead of real
+  photography — DESIGN.md §3 bans AI-generated fantasy backgrounds, so these stay abstract
+  placeholders rather than faked photos until real terrain photography exists.
 
 ## Deployment
 
