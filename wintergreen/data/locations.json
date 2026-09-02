@@ -1,0 +1,15 @@
+[
+  {
+    "id": "desert-caravanserai",
+    "name": "The Desert Caravanserai",
+    "tagline": "A fortified desert outpost built for markets, intrigue, ambushes, and adventure.",
+    "story": "A walled trading post at the edge of the dunes, the caravanserai supports social encounters at its market stalls, tense negotiations in its courtyard, and a defensible chokepoint if a raid comes over the walls.",
+    "heroImage": null,
+    "stats": { "buildings": 12, "terrainPieces": 34, "expandable": true },
+    "tiers": [
+      { "name": "Complete Set", "priceCents": 32000, "productIds": ["sandstone-watchtower"] },
+      { "name": "Building Bundle", "priceCents": 18000, "productIds": ["sandstone-watchtower"] },
+      { "name": "Individual Pieces", "priceCents": null, "productIds": ["sandstone-watchtower"] }
+    ]
+  }
+]

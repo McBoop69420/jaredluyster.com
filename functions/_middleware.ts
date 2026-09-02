@@ -16,6 +16,7 @@ const HIDDEN_PREFIXES = ["/roto-worker/"];
 // <subdomain>.jaredluyster.com serves the matching repo folder at the root path.
 const SUBDOMAIN_ROOTS: Record<string, string> = {
   roto: "/roto",
+  wintergreen: "/wintergreen",
 };
 
 // Assets that live at the repo root and are shared by the tools. A tool page links these

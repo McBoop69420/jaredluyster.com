@@ -1,0 +1,17 @@
+[
+  {
+    "id": "sandstone-watchtower",
+    "name": "Sandstone Watchtower",
+    "designerId": "aether-studios",
+    "environment": "desert",
+    "productType": "buildings",
+    "scale": "large",
+    "priceCents": 4500,
+    "dimensions": { "widthIn": 4, "depthIn": 4, "heightIn": 7.5 },
+    "printMaterial": "Commercial-quality resin",
+    "description": "A fortified watchtower built to guard a desert outpost's approach, with an interior stair and a lookout platform sized for a full miniature.",
+    "images": [],
+    "collectionIds": ["desert-settlements"],
+    "locationIds": ["desert-caravanserai"]
+  }
+]

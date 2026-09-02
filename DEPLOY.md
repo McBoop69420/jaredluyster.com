@@ -29,15 +29,17 @@ Worker and Render/Turso are retired.
    npx wrangler pages deploy .
    ```
 
-## Tool subdomains (roto.jaredluyster.com)
+## Tool subdomains (roto.jaredluyster.com, wintergreen.jaredluyster.com)
 
-Tools live as folders in the repo (`roto/`, `card-designer/`, `dropoutcube/`…) and are
-reachable at `/<folder>/`. To also serve one from its own subdomain:
+Tools live as folders in the repo (`roto/`, `card-designer/`, `dropoutcube/`,
+`wintergreen/`…) and are reachable at `/<folder>/`. To also serve one from its own
+subdomain:
 
 1. Add the hostname to `SUBDOMAIN_ROOTS` in `functions/_middleware.ts`
-   (`roto` → `/roto` is already there). The middleware rewrites requests on that
-   hostname so `roto.jaredluyster.com/` serves `roto/index.html`.
-2. Pages project → **Custom domains** → add `roto.jaredluyster.com`. Cloudflare
+   (`roto` → `/roto` and `wintergreen` → `/wintergreen` are already there). The
+   middleware rewrites requests on that hostname so `roto.jaredluyster.com/` serves
+   `roto/index.html` (and likewise for wintergreen).
+2. Pages project → **Custom domains** → add `<name>.jaredluyster.com`. Cloudflare
    creates the CNAME for you since the zone is already on Cloudflare.
 3. No build change is needed — the folder is static and ships with the root deploy.
 
