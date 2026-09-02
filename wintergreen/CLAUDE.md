@@ -56,15 +56,23 @@ synthetic id segment).
 ## Tech rules
 
 - Static-first, no build step: plain HTML/CSS/JS. Data lives in `data/*.json`.
-- **Cache-busting, required on every CSS/JS change.** Cloudflare Pages serves `styles.css`/
-  `app.js`/`home.js` with `Cache-Control: public, max-age=86400` and does not purge
-  browser or edge caches on redeploy (same gotcha `bluegrasscube` hit — see its
-  INFRASTRUCTURE.md note). A browser that visited before your change can keep serving a
-  stale stylesheet for up to 24h, and even a hard reload doesn't reliably bypass it.
-  Whenever you edit `styles.css`, `app.js`, or `home.js`, bump the `?v=N` query string on
-  every `<link>`/`<script>` tag that loads it in every HTML file that references it — that
-  changes the cache key and forces a fresh fetch. Don't skip this "just to check" during a
-  phase; it's cheap and the alternative is silently shipping stale styles.
+- **Cache-busting, required on every CSS/JS change — ANY file, not just the well-known
+  ones.** Cloudflare Pages serves every static asset (`styles.css`, `app.js`, `home.js`,
+  `product.js`, `location.js`, `shop.js`, `collection.js`, `designer.js`, `cart.js`,
+  `cart-page.js`, and anything added later) with `Cache-Control: public, max-age=86400`
+  and does not purge browser or edge caches on redeploy (same gotcha `bluegrasscube` hit —
+  see its INFRASTRUCTURE.md note). A browser that visited before your change keeps
+  serving the stale file for up to 24h, and even a hard reload doesn't reliably bypass it.
+  **A real incident, not a hypothetical:** during Phase 7, `product.js`'s Add to Cart
+  handler was rewritten to call the new cart API, but its `?v=1` was left unbumped — a
+  browser tab that had visited the product page earlier kept running the *old* handler
+  (fake in-memory badge increment, no real cart write) with no error and no visible sign
+  anything was wrong, since the stale script still ran without crashing.
+  **The rule, stated generally: whenever ANY `.js` or `.css` file's content changes, bump
+  the `?v=N` query string on every `<link>`/`<script>` tag that loads that specific file,
+  in every HTML file that references it** — new files start at `v=1` and never need
+  bumping until their first edit. Don't reason about which files are "important enough" to
+  bump; bump the one you just edited, every time, with no exceptions.
 - **No cart/checkout backend for now** — decided 2026-09-02. The catalog (homepage, shop,
   product/location/collection/designer pages) is the current scope. A cart UI may be built
   to spec but must not claim to process real orders until a backend exists. Don't add
