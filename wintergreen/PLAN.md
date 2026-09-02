@@ -12,7 +12,7 @@ when a phase's build work is complete.
 | 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | done |
 | 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | done |
 | 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | done |
-| 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | not started |
+| 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | done |
 | 7 | [phases/phase-7-cart-mobile.md](phases/phase-7-cart-mobile.md) | Cart UI (static, no checkout), full mobile pass | not started |
 
 ## Current state of this directory
@@ -87,6 +87,16 @@ when a phase's build work is complete.
   that one link; other still-unbuilt links (Collections, Designers, About, Cart, Account)
   will show the same fallback until their own phases land — this is expected, not a
   regression, but worth remembering if it gets reported again before Phase 6/7 ship.
+- `collections/index.html`, `collection.js`, `designers/index.html`, `designer.js` (new,
+  Phase 6) — same shared-template pattern, both added to
+  `../functions/_middleware.ts`'s `DETAIL_PAGE_TEMPLATES`. Both reuse Phase 3's
+  `.product-grid`/`.product-card` markup and the `.shop-header` heading treatment rather
+  than inventing new ones, per the phase brief's explicit reuse requirement. The designer
+  page's "designed by X" vs. "printed & sold by Wintergreen" distinction (DESIGN.md §13)
+  is a dedicated two-row `.attribution-box` component, not just prose word order, so it
+  survives a skim. `designer.js` links "Shop [Designer] Terrain" to
+  `/wintergreen/shop/?designer=<id>` — `shop.js` already supported that query param since
+  Phase 3, no change needed there.
 
 ## Deployment
 

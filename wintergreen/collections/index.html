@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Commercially licensed, professionally printed tabletop terrain from Wintergreen.">
-    <title>Product — Wintergreen</title>
+    <meta name="description" content="A curated collection of commercially licensed, professionally printed tabletop terrain from Wintergreen.">
+    <title>Collection — Wintergreen</title>
     <link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
@@ -76,57 +76,22 @@
     </header>
 
     <main>
-        <p id="product-not-found" class="container product-not-found" hidden>
-            We couldn't find that piece of terrain. <a href="/wintergreen/shop/">Back to the shop</a>.
+        <p id="collection-not-found" class="container product-not-found" hidden>
+            We couldn't find that collection. <a href="/wintergreen/shop/">Back to the shop</a>.
         </p>
 
-        <div id="product-content" class="container product-page">
-            <div class="product-gallery">
-                <div class="gallery-stage" id="gallery-stage">
-                    <span class="gallery-stage-label"></span>
+        <div id="collection-content">
+            <section class="shop-header">
+                <div class="container">
+                    <h1 id="collection-title"></h1>
+                    <p class="shop-description" id="collection-description"></p>
                 </div>
-                <div class="gallery-thumbs" id="gallery-thumbs"></div>
-            </div>
+            </section>
 
-            <div class="product-info">
-                <p class="product-eyebrow" id="product-eyebrow"></p>
-                <h1 class="product-name" id="product-name"></h1>
-                <p class="product-price" id="product-price"></p>
-                <p class="product-description-short" id="product-description-short"></p>
-
-                <div class="product-dimensions-line">
-                    <span id="product-dimensions-line"></span>
-                    <span class="product-scale-meta" id="product-scale-meta"></span>
-                </div>
-
-                <div class="scale-block" id="scale-block"></div>
-
-                <button type="button" class="btn btn-primary add-to-cart" id="add-to-cart">Add to Cart</button>
-                <p class="add-to-cart-confirmation" id="add-to-cart-confirmation" hidden></p>
-
-                <div class="product-accordions">
-                    <details class="accordion" open>
-                        <summary>Description</summary>
-                        <div class="accordion-body" id="acc-description"></div>
-                    </details>
-                    <details class="accordion">
-                        <summary>Dimensions</summary>
-                        <div class="accordion-body" id="acc-dimensions"></div>
-                    </details>
-                    <details class="accordion">
-                        <summary>Designer</summary>
-                        <div class="accordion-body" id="acc-designer"></div>
-                    </details>
-                    <details class="accordion">
-                        <summary>Print Information</summary>
-                        <div class="accordion-body" id="acc-print"></div>
-                    </details>
-                    <details class="accordion">
-                        <summary>Shipping</summary>
-                        <div class="accordion-body" id="acc-shipping"></div>
-                    </details>
-                </div>
-            </div>
+            <section class="collection-results container">
+                <div class="product-grid" id="collection-product-grid"></div>
+                <p class="shop-empty" id="collection-empty" hidden>This collection doesn't have any terrain yet.</p>
+            </section>
         </div>
     </main>
 
@@ -145,6 +110,6 @@
     </footer>
 
     <script src="/app.js?v=2"></script>
-    <script src="/product.js?v=1"></script>
+    <script src="/collection.js?v=1"></script>
 </body>
 </html>

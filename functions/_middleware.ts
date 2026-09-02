@@ -39,6 +39,8 @@ const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
 const DETAIL_PAGE_TEMPLATES: Record<string, string> = {
   "/wintergreen/products/": "/wintergreen/products/",
   "/wintergreen/locations/": "/wintergreen/locations/",
+  "/wintergreen/collections/": "/wintergreen/collections/",
+  "/wintergreen/designers/": "/wintergreen/designers/",
 };
 
 export const onRequest = async (context: {

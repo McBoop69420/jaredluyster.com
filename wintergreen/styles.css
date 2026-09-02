@@ -789,6 +789,7 @@ button { font-family: inherit; }
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-secondary);
+    margin-bottom: var(--space-3);
 }
 
 .location-terrain { padding: var(--space-5) 0; }
@@ -829,6 +830,38 @@ button { font-family: inherit; }
 .tier-meta { color: var(--text-secondary); font-size: 0.8125rem; margin-bottom: var(--space-3); }
 
 .tier-cta { width: 100%; margin-top: auto; }
+
+/* ---------- Collection Page (DESIGN.md §9) ---------- */
+
+.collection-results { padding-bottom: var(--space-6); }
+
+/* ---------- Designer Page (DESIGN.md §13) ---------- */
+
+.designer-body { padding: var(--space-4) 0 var(--space-5); max-width: 720px; }
+
+.designer-description { color: var(--text-secondary); font-size: 1.0625rem; margin-bottom: var(--space-2); }
+
+.attribution-box {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    max-width: 420px;
+}
+
+.attribution-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+
+.attribution-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.attribution-value { font-weight: 600; }
 
 /* ---------- Footer ---------- */
 
