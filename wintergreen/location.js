@@ -43,8 +43,10 @@ function renderProductCard(p) {
     `;
 }
 
-function renderTiers(location, products, addToCart) {
+function renderTiers(location) {
     const grid = document.getElementById("tiers-grid");
+    const confirmation = document.getElementById("tier-add-confirmation");
+
     grid.innerHTML = location.tiers.map((tier, i) => {
         const isPrimary = i === 0;
         const pieceCount = tier.productIds.length;
@@ -61,21 +63,15 @@ function renderTiers(location, products, addToCart) {
         `;
     }).join("");
 
-    grid.querySelectorAll(".tier-cta").forEach((btn) => {
-        btn.addEventListener("click", () => addToCart());
+    grid.querySelectorAll(".tier-cta").forEach((btn, i) => {
+        btn.addEventListener("click", () => {
+            location.tiers[i].productIds.forEach((productId) => window.WintergreenCart.add(productId, 1));
+            confirmation.hidden = false;
+            confirmation.textContent = "Added to cart.";
+            window.clearTimeout(renderTiers._t);
+            renderTiers._t = window.setTimeout(() => { confirmation.hidden = true; }, 2500);
+        });
     });
-}
-
-function wireAddToCart() {
-    const cartCount = document.querySelector(".cart-count");
-    const confirmation = document.getElementById("tier-add-confirmation");
-    return () => {
-        if (cartCount) cartCount.textContent = String(Number(cartCount.textContent || "0") + 1);
-        confirmation.hidden = false;
-        confirmation.textContent = "Added to cart.";
-        window.clearTimeout(wireAddToCart._t);
-        wireAddToCart._t = window.setTimeout(() => { confirmation.hidden = true; }, 2500);
-    };
 }
 
 async function init() {
@@ -102,7 +98,7 @@ async function init() {
     const included = products.filter((p) => p.locationIds.includes(location.id));
     document.getElementById("included-terrain-grid").innerHTML = included.map(renderProductCard).join("");
 
-    renderTiers(location, products, wireAddToCart());
+    renderTiers(location);
 }
 
 document.addEventListener("DOMContentLoaded", init);

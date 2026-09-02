@@ -107,13 +107,12 @@ function renderAccordions(product, designer) {
     `;
 }
 
-function renderAddToCart() {
+function renderAddToCart(product) {
     const button = document.getElementById("add-to-cart");
     const confirmation = document.getElementById("add-to-cart-confirmation");
-    const cartCount = document.querySelector(".cart-count");
 
     button.addEventListener("click", () => {
-        if (cartCount) cartCount.textContent = String(Number(cartCount.textContent || "0") + 1);
+        window.WintergreenCart.add(product.id, 1);
         confirmation.hidden = false;
         confirmation.textContent = "Added to cart.";
         window.clearTimeout(renderAddToCart._t);
@@ -148,7 +147,7 @@ async function init() {
     renderGallery(product);
     renderScaleBlock(product);
     renderAccordions(product, designer);
-    renderAddToCart();
+    renderAddToCart(product);
 }
 
 document.addEventListener("DOMContentLoaded", init);

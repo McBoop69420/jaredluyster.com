@@ -865,6 +865,113 @@ button { font-family: inherit; }
 
 .attribution-value { font-weight: 600; }
 
+/* ---------- Cart Page (DESIGN.md §20) ---------- */
+
+.cart-empty {
+    padding: var(--space-6) 0;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.cart-empty a { color: var(--accent); }
+
+.cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-4);
+    padding-bottom: var(--space-6);
+    align-items: start;
+}
+
+.cart-items { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.cart-item {
+    display: grid;
+    grid-template-columns: 72px 1fr auto auto auto;
+    grid-template-areas: "media info qty price remove";
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.cart-item-media {
+    grid-area: media;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius);
+    background: var(--surface-elevated);
+}
+
+.cart-item-media[data-env="desert"] { background: #2b2419; }
+.cart-item-media[data-env="harbor"] { background: #16232a; }
+.cart-item-media[data-env="medieval-town"] { background: #241f1a; }
+.cart-item-media[data-env="temples-ruins"] { background: #2a2318; }
+.cart-item-media[data-env="dungeons"] { background: #1a1a1d; }
+.cart-item-media[data-env="wilderness"] { background: #1a2420; }
+
+.cart-item-info { grid-area: info; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+
+.cart-item-name { font-weight: 600; }
+
+.cart-item-variant { font-size: 0.8125rem; color: var(--text-secondary); }
+
+.cart-item-qty { grid-area: qty; display: flex; align-items: center; gap: 0.5rem; }
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qty-btn:hover { background: var(--surface-elevated); }
+
+.qty-value { min-width: 1.5rem; text-align: center; }
+
+.cart-item-price { grid-area: price; font-weight: 600; white-space: nowrap; }
+
+.cart-item-remove {
+    grid-area: remove;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+}
+
+.cart-item-remove:hover { color: var(--text); }
+
+.cart-summary {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-3));
+}
+
+.cart-summary-heading { font-family: var(--font-display); font-size: 1.125rem; margin-bottom: var(--space-2); }
+
+.cart-summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    font-size: 1.0625rem;
+}
+
+.checkout-btn { width: 100%; }
+
+.checkout-note { font-size: 0.8125rem; color: var(--text-secondary); margin-top: var(--space-2); text-align: center; }
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -926,6 +1033,7 @@ button { font-family: inherit; }
 
     .product-page { grid-template-columns: 1fr; }
     .tiers-grid { grid-template-columns: 1fr; }
+    .cart-layout { grid-template-columns: 1fr; }
     .menu-toggle {
         display: inline-flex;
         align-items: center;
@@ -948,4 +1056,13 @@ button { font-family: inherit; }
     .brand { font-size: 1.0625rem; }
     .env-grid, .designers-grid { grid-template-columns: 1fr; }
     .featured-location-content { padding: var(--space-4) var(--space-3); }
+
+    .cart-item {
+        grid-template-columns: 56px 1fr auto;
+        grid-template-areas:
+            "media info remove"
+            "media qty price";
+        row-gap: 0.5rem;
+    }
+    .cart-item-media { width: 56px; height: 56px; }
 }
