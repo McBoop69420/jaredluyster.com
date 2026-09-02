@@ -106,6 +106,15 @@ ABOUT
   Encounter Sets
 - **By Scale:** Small Terrain · Medium Terrain · Large Terrain · Table Centerpieces
 
+**Current build note (2026-09-02):** the persistent header/footer/mobile nav currently
+shows only **Collections, Designers, About** — Jared: with only one location and a
+placeholder-sized catalog, Shop and Locations as standing nav items feel premature. Both
+underlying pages (and the Shop mega-dropdown's filter links) still exist and fully work —
+they're just reached through other paths for now (the homepage hero's "Shop Locations" /
+"Shop Terrain" buttons, the "Shop by Environment" cards, each designer/collection page's
+"Shop [X] Terrain" link, and the cart flow). Revisit restoring Shop and Locations to the
+persistent nav once there's enough real catalog depth for them to earn a permanent spot.
+
 ## 7. Homepage Structure
 
 ### Section 1: Hero

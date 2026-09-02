@@ -148,6 +148,17 @@ when a phase's build work is complete.
   `.designer-card` styling respectively, Designers reuses the exact card markup already
   built for the homepage's Featured Designers section. No new pages/files — the existing
   shared templates now branch on "id present vs. not" instead of always assuming an id.
+- 2026-09-02 — **Trimmed the persistent nav to Collections, Designers, About.** Jared, after
+  seeing the working Locations index show just one card: with only one location and a
+  placeholder-sized catalog, Shop and Locations don't earn a standing nav slot yet. Removed
+  the Shop mega-dropdown and the Locations link from the header, mobile menu, and footer on
+  all 7 pages (same duplicated markup, edited identically everywhere); cleaned up the now-
+  dead `.nav-item`/`.dropdown`/`.dropdown-col` CSS and the dropdown-toggle JS in `app.js`
+  that only that markup used. **Nothing was deleted** — `/wintergreen/shop/` and
+  `/wintergreen/locations/` (and its per-location detail pages) are fully intact and still
+  reachable via the homepage hero buttons, the "Shop by Environment" cards, and every
+  designer/collection page's "Shop [X] Terrain" link. See DESIGN.md §6 for the caveat this
+  adds to the original nav spec, to revisit once there's more catalog depth.
 
 ## Deployment
 
