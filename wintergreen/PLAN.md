@@ -133,6 +133,22 @@ when a phase's build work is complete.
   column counts at each breakpoint, product page's photo-first DOM order preserved, cart
   page's item rows correctly rearrange to a 2-row layout via `grid-template-areas`.
 
+## Post-plan fixes
+
+- 2026-09-02 — **Added missing "browse all" index pages for Locations, Collections,
+  Designers.** Jared clicked the header's "Locations" nav item and got a dead end:
+  `location.js`/`collection.js`/`designer.js` all shared a latent bug where
+  `getXIdFromPath()` fell back to returning the bare segment name itself (e.g.
+  `"locations"`) instead of `null` when no real id followed it in the URL — so visiting
+  the bare `/locations/` tried and failed to find a location literally named
+  `"locations"`, showed "not found," and its own "Back to Locations" link looped right
+  back to the same dead end. Fixed the id-parsing bug in all four detail-page scripts
+  (including `product.js`, which has the same bug but wasn't nav-linked yet), and gave
+  each template a real index view: Locations/Collections reuse `.env-card`/
+  `.designer-card` styling respectively, Designers reuses the exact card markup already
+  built for the homepage's Featured Designers section. No new pages/files — the existing
+  shared templates now branch on "id present vs. not" instead of always assuming an id.
+
 ## Deployment
 
 Same Cloudflare Pages project as the rest of jaredluyster.com (no separate project).

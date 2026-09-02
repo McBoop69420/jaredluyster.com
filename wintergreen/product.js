@@ -36,8 +36,7 @@ function formatPrice(cents) {
 function getProductIdFromPath() {
     const segments = window.location.pathname.split("/").filter(Boolean);
     const idx = segments.indexOf("products");
-    if (idx !== -1 && segments[idx + 1]) return segments[idx + 1];
-    return segments[segments.length - 1] || null;
+    return idx !== -1 && segments[idx + 1] ? segments[idx + 1] : null;
 }
 
 function renderGallery(product) {

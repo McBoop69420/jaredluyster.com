@@ -25,8 +25,20 @@ function formatPrice(cents) {
 function getLocationIdFromPath() {
     const segments = window.location.pathname.split("/").filter(Boolean);
     const idx = segments.indexOf("locations");
-    if (idx !== -1 && segments[idx + 1]) return segments[idx + 1];
-    return segments[segments.length - 1] || null;
+    return idx !== -1 && segments[idx + 1] ? segments[idx + 1] : null;
+}
+
+function renderLocationsIndex(locations) {
+    document.title = "Locations — Wintergreen";
+    document.getElementById("locations-index-grid").innerHTML = locations.map((l) => `
+        <a class="location-index-card env-card" href="/wintergreen/locations/${l.id}/" data-env="${l.environment}">
+            <div class="env-card-media" aria-hidden="true"></div>
+            <div class="env-card-label">
+                <span>${l.name}</span>
+                <svg class="env-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </div>
+        </a>
+    `).join("");
 }
 
 function renderProductCard(p) {
@@ -80,6 +92,14 @@ async function init() {
         fetch("/data/locations.json", { cache: "no-store" }).then((r) => r.json()),
         fetch("/data/products.json", { cache: "no-store" }).then((r) => r.json()),
     ]);
+
+    if (!id) {
+        document.getElementById("location-content").hidden = true;
+        document.getElementById("location-not-found").hidden = true;
+        document.getElementById("locations-index").hidden = false;
+        renderLocationsIndex(locations);
+        return;
+    }
 
     const location = locations.find((l) => l.id === id);
     if (!location) {
