@@ -4,6 +4,13 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Several elements toggle [hidden] via JS while also carrying their own display:grid/flex
+   rule below (e.g. .product-grid, .cart-layout). At equal specificity the author
+   stylesheet beats the browser's built-in [hidden]{display:none}, so those elements stayed
+   visually present even with hidden=true (found live in Phase 7 — the DOM property read
+   true, but the element never actually disappeared). This makes [hidden] always win. */
+[hidden] { display: none !important; }
+
 :root {
     --bg: #121416;
     --surface: #1C2024;
