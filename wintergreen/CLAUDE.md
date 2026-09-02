@@ -38,6 +38,15 @@ between products, collections, and locations from the start.
 ## Tech rules
 
 - Static-first, no build step: plain HTML/CSS/JS. Data lives in `data/*.json`.
+- **Cache-busting, required on every CSS/JS change.** Cloudflare Pages serves `styles.css`/
+  `app.js`/`home.js` with `Cache-Control: public, max-age=86400` and does not purge
+  browser or edge caches on redeploy (same gotcha `bluegrasscube` hit — see its
+  INFRASTRUCTURE.md note). A browser that visited before your change can keep serving a
+  stale stylesheet for up to 24h, and even a hard reload doesn't reliably bypass it.
+  Whenever you edit `styles.css`, `app.js`, or `home.js`, bump the `?v=N` query string on
+  every `<link>`/`<script>` tag that loads it in every HTML file that references it — that
+  changes the cache key and forces a fresh fetch. Don't skip this "just to check" during a
+  phase; it's cheap and the alternative is silently shipping stale styles.
 - **No cart/checkout backend for now** — decided 2026-09-02. The catalog (homepage, shop,
   product/location/collection/designer pages) is the current scope. A cart UI may be built
   to spec but must not claim to process real orders until a backend exists. Don't add
