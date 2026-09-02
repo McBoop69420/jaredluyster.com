@@ -26,6 +26,20 @@ const SUBDOMAIN_ROOTS: Record<string, string> = {
 // is silently dropped rather than 404ing. These pass through unrewritten instead.
 const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
 
+// Record-detail pages (e.g. wintergreen product pages) share one template file per entity
+// type instead of one static file per record, since the catalog is JSON-driven
+// (wintergreen/data/*.json) rather than hand-authored per page. A request for
+// /wintergreen/products/<id>/ is rewritten to the shared template's directory; the
+// template's own JS reads the id back out of the still-unrewritten client-visible URL.
+// Rewrite to the directory (trailing slash), NOT ".../index.html" directly — Pages' asset
+// server 308-redirects an explicit "index.html" path back to its directory form, which
+// would drop the rewrite. The directory form resolves straight to that index.html with no
+// redirect since it's each template's own real path. Add an entry here when another entity
+// type (locations, collections, designers) gets a detail page too.
+const DETAIL_PAGE_TEMPLATES: Record<string, string> = {
+  "/wintergreen/products/": "/wintergreen/products/",
+};
+
 export const onRequest = async (context: {
   request: Request;
   next: (input?: Request) => Promise<Response>;
@@ -51,10 +65,27 @@ export const onRequest = async (context: {
     return context.next();
   }
 
+  let rewritten: URL | null = null;
+
   const root = SUBDOMAIN_ROOTS[url.hostname.split(".")[0].toLowerCase()];
   if (root && !SHARED_ROOT_ASSETS.has(path) && !path.startsWith(`${root}/`) && path !== root) {
-    const rewritten = new URL(url);
+    rewritten = new URL(url);
     rewritten.pathname = path === "/" ? `${root}/` : root + url.pathname;
+  }
+
+  const effectivePath = (rewritten ?? url).pathname.toLowerCase();
+  const detailPrefix = Object.keys(DETAIL_PAGE_TEMPLATES).find(
+    (prefix) =>
+      effectivePath.startsWith(prefix) &&
+      effectivePath !== prefix &&
+      !effectivePath.slice(prefix.length).replace(/\/$/, "").includes("/"),
+  );
+  if (detailPrefix) {
+    rewritten = rewritten ?? new URL(url);
+    rewritten.pathname = DETAIL_PAGE_TEMPLATES[detailPrefix];
+  }
+
+  if (rewritten) {
     return context.next(new Request(rewritten, context.request));
   }
 

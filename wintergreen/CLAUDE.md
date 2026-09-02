@@ -35,6 +35,24 @@ more locations, all at once (DESIGN.md §21). Never build a rigid single-parent 
 system — the JSON schema and any future backend must support many-to-many relationships
 between products, collections, and locations from the start.
 
+## Record-detail page templates (products/, and locations/collections/designers later)
+
+A detail page (e.g. `/wintergreen/products/<id>/`) is served by ONE template file per
+entity type (`products/index.html`) via a rewrite in `functions/_middleware.ts`
+(`DETAIL_PAGE_TEMPLATES`) — there's no per-record file. This means the browser's visible
+URL always has one more path segment (the record id) than the template file's own real
+location, so a normal relative path like `../styles.css` resolves one level too shallow —
+confirmed live in Phase 4 (it broke `styles.css` entirely and made `app.js`/`product.js`
+silently serve HTML content, since the rewrite matched those wrong paths too). **Every
+`<link>`/`<script>` in a detail-page template, and every `fetch()` in its JS, must use an
+absolute path (`/styles.css`, `/data/products.json`) instead of a relative one.** This
+trades off path-form access (`jaredluyster.com/wintergreen/products/<id>/`) for that one
+page type — absolute paths only resolve correctly through the subdomain's rewrite — which
+is an accepted tradeoff, not a bug to fix later. When Phase 5/6 add their own detail
+templates (`locations/index.html` etc.), copy this pattern, not the relative-path one used
+by `shop/index.html` (which is fine there, since `/shop/` is a real directory, not a
+synthetic id segment).
+
 ## Tech rules
 
 - Static-first, no build step: plain HTML/CSS/JS. Data lives in `data/*.json`.

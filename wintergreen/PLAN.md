@@ -10,7 +10,7 @@ when a phase's build work is complete.
 | 1 | [phases/phase-1-foundations.md](phases/phase-1-foundations.md) | Design tokens, fonts, site shell (header/nav/footer, mobile menu), data schema, bare hero | done |
 | 2 | [phases/phase-2-homepage.md](phases/phase-2-homepage.md) | Full homepage: hero, shop-by-environment, featured location, featured designers | done |
 | 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | done |
-| 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | not started |
+| 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | done |
 | 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | not started |
 | 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | not started |
 | 7 | [phases/phase-7-cart-mobile.md](phases/phase-7-cart-mobile.md) | Cart UI (static, no checkout), full mobile pass | not started |
@@ -51,6 +51,24 @@ when a phase's build work is complete.
   scales, all 3 designers each represented).
 - `data/designers.json` — Aether Studios' `categories` extended to include `wilderness`
   after Phase 3 gave them a wilderness product.
+- `products/index.html`, `product.js` (new, Phase 4) — one shared template for every
+  product detail page, routed by a new rule in `../functions/_middleware.ts`
+  (`DETAIL_PAGE_TEMPLATES`) that rewrites `/wintergreen/products/<id>/` to this template's
+  directory. Renders a 5-shot gallery (distinguishable placeholder panels, not one image
+  reused), a scale block (comparative height bars: product vs. a 1.25" standard-miniature
+  reference, drawn to the same px-per-inch scale — not just a printed dimension), and the
+  5 required `<details>`/`<summary>` accordions (Description, Dimensions, Designer, Print
+  Information, Shipping). Add to Cart is real UI (increments the header cart badge,
+  in-memory only) but doesn't persist anything yet — Phase 7 wires up the actual cart
+  state this button should write to, per CLAUDE.md.
+  **Real bug found and fixed during this phase, documented in CLAUDE.md:** this template's
+  visible URL always has one extra segment (the record id) versus its own file location,
+  so it must use absolute paths (`/styles.css`, `/data/products.json`) everywhere — a
+  relative path silently broke both the stylesheet and, worse, made `app.js`/`product.js`
+  themselves get re-routed back to the HTML template by the same detail-page rewrite.
+  Verified server-side via `wrangler pages dev` + `curl -H "Host: wintergreen..."` (correct
+  content-types for every asset) since local testing has no real subdomain DNS to exercise
+  client-side relative-path resolution the way production does.
 
 ## Deployment
 
