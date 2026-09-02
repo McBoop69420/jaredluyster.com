@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Wintergreen — premium, commercially licensed tabletop terrain, professionally printed and curated into complete environments.">
-    <title>Wintergreen — Build a World Worth Playing In</title>
-    <link rel="stylesheet" href="styles.css?v=3">
+    <meta name="description" content="Shop commercially licensed, professionally printed tabletop terrain by environment, product type, scale, and designer.">
+    <title>Shop Terrain — Wintergreen</title>
+    <link rel="stylesheet" href="../styles.css?v=3">
 </head>
 <body>
     <header class="site-header">
@@ -76,32 +76,66 @@
     </header>
 
     <main>
-        <section class="hero">
-            <div class="hero-media" aria-hidden="true"></div>
-            <div class="hero-content">
-                <p class="eyebrow">Professionally Printed Tabletop Terrain</p>
-                <h1>Build a World<br>Worth Playing In.</h1>
-                <p class="hero-sub">Commercially licensed tabletop terrain, professionally printed and curated for your table.</p>
-                <div class="hero-actions">
-                    <a class="btn btn-primary" href="/wintergreen/locations/">Shop Locations</a>
-                    <a class="btn btn-secondary" href="/wintergreen/shop/">Shop Terrain</a>
+        <section class="shop-header">
+            <div class="container">
+                <h1 id="shop-title">Shop Terrain</h1>
+                <p class="shop-description" id="shop-description">Browse the full terrain catalog.</p>
+            </div>
+        </section>
+
+        <section class="shop-layout container">
+            <button class="filter-drawer-toggle" id="filter-drawer-toggle" aria-expanded="false">
+                Filters
+            </button>
+
+            <aside class="filter-sidebar" id="filter-sidebar">
+                <div class="filter-group" data-facet="environment">
+                    <h3>Environment</h3>
+                    <label><input type="checkbox" name="environment" value="desert"> Desert</label>
+                    <label><input type="checkbox" name="environment" value="harbor"> Harbor &amp; Coastal</label>
+                    <label><input type="checkbox" name="environment" value="medieval-town"> Medieval Town</label>
+                    <label><input type="checkbox" name="environment" value="temples-ruins"> Temples &amp; Ruins</label>
+                    <label><input type="checkbox" name="environment" value="dungeons"> Dungeons</label>
+                    <label><input type="checkbox" name="environment" value="wilderness"> Wilderness</label>
                 </div>
-            </div>
-        </section>
 
-        <section class="env-section">
-            <div class="container">
-                <h2 class="section-heading">Where Will Your Adventure Begin?</h2>
-                <div class="env-grid" id="env-grid"></div>
-            </div>
-        </section>
+                <div class="filter-group" data-facet="type">
+                    <h3>Product Type</h3>
+                    <label><input type="checkbox" name="type" value="buildings"> Buildings</label>
+                    <label><input type="checkbox" name="type" value="terrain"> Terrain</label>
+                    <label><input type="checkbox" name="type" value="scatter"> Scatter</label>
+                    <label><input type="checkbox" name="type" value="modular-tiles"> Modular Tiles</label>
+                    <label><input type="checkbox" name="type" value="centerpieces"> Centerpieces</label>
+                    <label><input type="checkbox" name="type" value="encounter-sets"> Encounter Sets</label>
+                </div>
 
-        <section class="featured-location" id="featured-location" aria-label="Featured location"></section>
+                <div class="filter-group" data-facet="scale">
+                    <h3>Scale</h3>
+                    <label><input type="checkbox" name="scale" value="small"> Small Terrain</label>
+                    <label><input type="checkbox" name="scale" value="medium"> Medium Terrain</label>
+                    <label><input type="checkbox" name="scale" value="large"> Large Terrain</label>
+                    <label><input type="checkbox" name="scale" value="centerpiece"> Table Centerpieces</label>
+                </div>
 
-        <section class="designers-section">
-            <div class="container">
-                <h2 class="section-heading">Featured Designers</h2>
-                <div class="designers-grid" id="designers-grid"></div>
+                <div class="filter-group" data-facet="designer">
+                    <h3>Designer</h3>
+                    <div id="designer-filter-options"></div>
+                </div>
+
+                <div class="filter-group" data-facet="price">
+                    <h3>Price</h3>
+                    <label><input type="radio" name="price" value="under-25"> Under $25</label>
+                    <label><input type="radio" name="price" value="25-50"> $25 &ndash; $50</label>
+                    <label><input type="radio" name="price" value="over-50"> Over $50</label>
+                </div>
+
+                <button type="button" class="btn btn-secondary filter-clear-all" id="clear-filters">Clear All Filters</button>
+            </aside>
+
+            <div class="shop-results">
+                <p class="shop-result-count" id="result-count"></p>
+                <div class="product-grid" id="product-grid"></div>
+                <p class="shop-empty" id="shop-empty" hidden>No terrain matches these filters yet.</p>
             </div>
         </section>
     </main>
@@ -120,7 +154,7 @@
         </div>
     </footer>
 
-    <script src="app.js?v=2"></script>
-    <script src="home.js?v=2"></script>
+    <script src="../app.js?v=2"></script>
+    <script src="../shop.js?v=1"></script>
 </body>
 </html>

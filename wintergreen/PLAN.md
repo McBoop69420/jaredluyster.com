@@ -9,7 +9,7 @@ when a phase's build work is complete.
 |-------|-------|-------|--------|
 | 1 | [phases/phase-1-foundations.md](phases/phase-1-foundations.md) | Design tokens, fonts, site shell (header/nav/footer, mobile menu), data schema, bare hero | done |
 | 2 | [phases/phase-2-homepage.md](phases/phase-2-homepage.md) | Full homepage: hero, shop-by-environment, featured location, featured designers | done |
-| 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | not started |
+| 3 | [phases/phase-3-shop.md](phases/phase-3-shop.md) | Product listing page: filters (desktop sidebar + mobile drawer), product grid | done |
 | 4 | [phases/phase-4-product-page.md](phases/phase-4-product-page.md) | Product detail page: gallery, scale communication, accordions | not started |
 | 5 | [phases/phase-5-location-page.md](phases/phase-5-location-page.md) | Location detail page: hero, story, included terrain, three purchase tiers | not started |
 | 6 | [phases/phase-6-collections-designers.md](phases/phase-6-collections-designers.md) | Collection pages, designer pages | not started |
@@ -33,10 +33,24 @@ when a phase's build work is complete.
   nav dropdown, DESIGN.md §6), Featured Location, and Featured Designers by fetching the
   JSON data files client-side. No build step, so this is plain `fetch` + template strings,
   same pattern bluegrasscube uses for its data-driven sections.
-- `images/` — still empty. Environment/location/designer cards currently use flat tinted
-  placeholder colors (see `styles.css` `.env-card[data-env=...]`) instead of real
-  photography — DESIGN.md §3 bans AI-generated fantasy backgrounds, so these stay abstract
-  placeholders rather than faked photos until real terrain photography exists.
+- `images/` — still empty. Environment/location/designer/product cards currently use flat
+  tinted placeholder colors (see `styles.css` `.env-card[data-env=...]` and
+  `.product-card-media[data-env=...]`) instead of real photography — DESIGN.md §3 bans
+  AI-generated fantasy backgrounds, so these stay abstract placeholders rather than faked
+  photos until real terrain photography exists.
+- `shop/index.html`, `shop.js` (new, Phase 3) — product listing page. Filters (Environment,
+  Product Type, Scale, Designer, Price) are checkboxes/radios, ANDed across facets and ORed
+  within a facet; Designer options render dynamically from `data/designers.json` so a new
+  designer needs no page edit. Reads `?environment=`/`?type=`/`?scale=` from the URL on
+  load (matching the nav dropdown and homepage links built in Phases 1–2) to pre-check a
+  filter and retitle the page, but doesn't write filter state back to the URL — acceptable
+  for now per the phase brief, revisit if shareable filtered links become a real need.
+  Product URLs are `/wintergreen/products/{id}/` (Phase 4 builds that page). Catalog grew
+  from 1 to 11 placeholder products in this phase specifically to prove filtering and the
+  many-to-many model against real variety (all 6 environments, all 6 product types, all 4
+  scales, all 3 designers each represented).
+- `data/designers.json` — Aether Studios' `categories` extended to include `wilderness`
+  after Phase 3 gave them a wilderness product.
 
 ## Deployment
 
