@@ -58,11 +58,6 @@
             font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em;
         }
         .brand-logo { height: 48px; width: auto; }
-        .brand-tag {
-            font-family: var(--font-mono); font-size: .62rem; letter-spacing: .12em;
-            text-transform: uppercase; color: var(--muted); border-left: 1px dashed var(--border);
-            padding-left: 10px; line-height: 1.4;
-        }
         .nav-links { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; }
         .nav-links a {
             color: var(--muted); transition: color 120ms, border-color 120ms;
@@ -144,7 +139,6 @@
         @media (max-width: 560px) {
             .shell { padding: 0 16px; }
             .page-header { padding: 32px 0 24px; }
-            .brand-tag { display: none; }
         }
         @media (prefers-reduced-motion: reduce) {
             * { transition: none !important; }
@@ -157,7 +151,6 @@
         <div class="shell topbar-inner">
             <a class="brand" href="/">
                 <img class="brand-logo" src="/bmc-logo-header.png" alt="Bluegrass Memorabilia & Collectibles">
-                <span class="brand-tag">Vol. 04<br>Trade &amp; Sell Sheet</span>
             </a>
             <nav class="nav-links" id="nav">
                 <a href="/">Shop</a>
