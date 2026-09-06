@@ -264,16 +264,6 @@
             background: #111;
             overflow: hidden;
             border-radius: 4.5%;
-            transition: transform 120ms;
-        }
-
-        .listing:nth-child(4n+1) .listing-img-wrap { transform: rotate(-1deg); }
-        .listing:nth-child(4n+2) .listing-img-wrap { transform: rotate(0.8deg); }
-        .listing:nth-child(4n+3) .listing-img-wrap { transform: rotate(-0.6deg); }
-        .listing:nth-child(4n+4) .listing-img-wrap { transform: rotate(1.2deg); }
-
-        .listing:hover .listing-img-wrap {
-            transform: rotate(0deg);
         }
 
         .listing-img-wrap::before {
@@ -309,6 +299,17 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            transform: scale(1.08);
+            transition: transform 120ms;
+        }
+
+        .listing:nth-child(4n+1) .listing-img-wrap img { transform: scale(1.08) rotate(-1deg); }
+        .listing:nth-child(4n+2) .listing-img-wrap img { transform: scale(1.08) rotate(0.8deg); }
+        .listing:nth-child(4n+3) .listing-img-wrap img { transform: scale(1.08) rotate(-0.6deg); }
+        .listing:nth-child(4n+4) .listing-img-wrap img { transform: scale(1.08) rotate(1.2deg); }
+
+        .listing:hover .listing-img-wrap img {
+            transform: scale(1.08) rotate(0deg);
         }
 
         /* Missing image placeholder */
