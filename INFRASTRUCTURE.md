@@ -124,43 +124,27 @@ dashboards; nothing depends on it anymore.
   - Routes: `radio.jaredluyster.com` → `localhost:8081` (the `news.jaredluyster.com` route in this file is legacy/unused — see §4, news is Pages-hosted, not tunneled)
 - **Player page:** `radio.html` (static, served via Render from site root)
 
-### 4. McBoop Newspaper + McBoop Sports + Calendar — Cloudflare Pages (single project, three custom domains)
+### 4. McBoop Newspaper + Calendar — Cloudflare Pages (`mcboop-daily` project, Wrangler-CLI deployed)
 
-**Corrected 2026-08-21, superseded 2026-09-06** — this repo's `_worker.js` does contain
-hostname routing for `sports.jaredluyster.com` (special-casing it to serve `/sports/*`),
-which is what led to documenting news+sports as one Pages project. But a live check of
-the Cloudflare account on 2026-09-06 (`pages projects` list + zone DNS records) shows
-`sports.jaredluyster.com` actually CNAMEs to `mcboop-sports.pages.dev` — **a separate
-Pages project**, not `mcboop-daily`. Only `news.jaredluyster.com` (→
-`mcboop-daily.pages.dev`) and now `calendar.jaredluyster.com` (→ `mcboop-daily.pages.dev`,
-added 2026-09-06) are actually on the `mcboop-daily` project. This means the
-sports-hostname branch in `news/_worker.js`, and `deploy-pages.sh`'s copy of `sports/`
-into `mcboop-daily`'s `public/sports/`, are very likely dead code/dead weight — sports
-traffic never reaches that worker or that deployment. **Not yet root-caused or cleaned
-up** — someone should check the `mcboop-sports` Pages project's own deploy mechanism
-(a `sports/wrangler.toml` exists in this repo suggesting a direct `wrangler pages deploy
-sports --project-name mcboop-sports`, but no such step was found in `deploy-pages.sh`)
-before touching either side.
-**2026-09-06** — the Calendar & Day Plan tab was pulled out of the news shell into
-its own standalone site, `calendar.jaredluyster.com`, hosted on the `mcboop-daily`
-project, routed by hostname in `_worker.js` (this part is confirmed live-verified,
-unlike the sports situation above).
+**Reconciled 2026-09-06** — a live check of the Cloudflare account (`pages projects`
+list + zone DNS records) shows `news.jaredluyster.com` and `calendar.jaredluyster.com`
+(added 2026-09-06) are the same Cloudflare Pages project, `mcboop-daily`, deployed by
+`wrangler pages deploy` (not Git-integrated — see below). **`sports.jaredluyster.com`
+is NOT part of this project**, despite `news/_worker.js` containing hostname-routing
+code that looks like it should serve it — that code was dead, and has been removed.
+Sports has its own project and its own deploy mechanism; see §4b.
 
 - **Local project root:** `C:\Users\Jared\McBoop Newspaper\` (NOT in this repo — a
   separate, non-git-tracked directory containing the content-generation pipeline:
   `generate.py`, `archive.py`, `jsonize.py`, `export_betting_tracker.py`, betting
   tracker data, RSS/odds scraping scripts, etc.)
-- **Deployable site shell — moved into this repo 2026-08-21**, matching every other
-  subdomain's pattern (source lives in the git repo, not hand-edited in a deploy
-  scratch directory):
+- **Deployable site shell — moved into this repo 2026-08-21** (news) / **2026-09-06**
+  (calendar), matching every other subdomain's pattern (source lives in the git repo,
+  not hand-edited in a deploy scratch directory):
   - [`news/`](news/index.html) — `index.html`, `app.css`, `app.js`, `robots.txt`,
-    and `_worker.js` (the Pages Worker/router described above — also handles the
-    `/api/feeds` and `/api/odds` proxy endpoints and the sports.jaredluyster.com /
-    calendar.jaredluyster.com hostname routing, so it governs all three domains
-    even though it lives under `news/`)
-  - [`sports/`](sports/index.html) — `index.html`, `sports.css`, `sports.js`,
-    `robots.txt` (self-contained scoreboard page; fetches ESPN's public API
-    client-side — see below)
+    and `_worker.js` (the Pages Worker/router — also handles the `/api/feeds` and
+    `/api/odds` proxy endpoints and the calendar.jaredluyster.com hostname routing,
+    so it governs both domains even though it lives under `news/`)
   - [`calendar/`](calendar/index.html) — `index.html`, `calendar.css`,
     `calendar.js`, `robots.txt` (self-contained month-grid calendar; reads the
     same `/calendar.json` the news shell used to, still served from the deploy
@@ -169,45 +153,75 @@ unlike the sports situation above).
   `McBoop Daily — Evening` 8p, defined inside the Hermes session — only fire if
   Hermes is open) run `cd "C:\Users\Jared\McBoop Newspaper" && python3 generate.py
   edition.md && bash deploy-pages.sh`. `deploy-pages.sh` copies the shell fresh
-  from this repo's `news/`, `sports/`, and `calendar/` into a local `public/`
-  staging dir, layers in generated data (`edition.json`, `calendar.json`,
-  `archive/` gallery, `sports/fake-bets.json`), then runs `wrangler pages deploy
-  public --project-name mcboop-daily` (token in
-  `~/.config/cloudflare_pages_token.txt`). **Editing `news/`, `sports/`, or
-  `calendar/` in this repo does nothing live until the next cron run (or a manual
-  `bash deploy-pages.sh`) actually deploys it** — unlike Render/GitHub Pages,
-  there's no git-push-triggered auto-deploy here.
+  from this repo's `news/` and `calendar/` into a local `public/` staging dir,
+  layers in generated data (`edition.json`, `calendar.json`, `archive/` gallery),
+  then runs `wrangler pages deploy public --project-name mcboop-daily` (token in
+  `~/.config/cloudflare_pages_token.txt`). **Editing `news/` or `calendar/` in this
+  repo does nothing live until the next cron run (or a manual `bash
+  deploy-pages.sh`, or a manual `wrangler pages deploy`) actually deploys it** —
+  there's no git-push-triggered auto-deploy for this project.
 - **Content:** News tab shell auto-refreshes from `edition.json` (regenerated per
   cron run) plus live RSS (`/api/feeds`) and MLB odds (`/api/odds`), both proxied
-  through `_worker.js`. Sports page pulls live scoreboards/standings **client-side
-  from ESPN's public API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier
-  League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira
-  Liga, Scottish Prem, Super Lig, NWSL, USL, NFL, plus a "Paper Bets — Live" panel
-  fed by `sports/fake-bets.json` (regenerated each deploy by
-  `export_betting_tracker.py`). Calendar page reads `/calendar.json` (hand-edited
-  at `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
+  through `_worker.js`. Calendar page reads `/calendar.json` (hand-edited at
+  `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
   commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`.
 - **Access control — news:** Behind **Cloudflare Access** (redirects to
   `quiet-frost-ed57.cloudflareaccess.com` login). `deploy-pages.sh` also does a
   post-deploy live check against news.jaredluyster.com via a Cloudflare Access
   Service Token (`~/.config/cloudflare_news_access.txt`).
-- **Access control — sports:** Behind **Cloudflare Access**, same Zero Trust org
-  as news, but a **separate Access application** with its own policy/allow-list —
-  independently editable from news (distinct app `aud`).
-- **Access control — calendar:** Set up 2026-09-06. Custom domain added to the
-  `mcboop-daily` Pages project (Cloudflare Pages API — domain went through
-  `initializing` → DNS CNAME `calendar.jaredluyster.com` → `mcboop-daily.pages.dev`
-  (proxied) had to be created manually, it did not auto-provision like
-  bluegrasscube's did → `active`), then a Cloudflare Access application
-  (`self_hosted`, name `calendar`) was created via the Access API, reusing the
-  exact same reusable "Only Me" policy (`doctormcboop@gmail.com`, uid
-  `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) that news and sports's Access apps
-  already reference — same allow-list, independently editable per-app like sports.
-- **Verified via HTTP headers (2026-09-06):** all three hosts `302 Found` →
-  `.../cdn-cgi/access/login/<host>`, `Www-Authenticate: Cloudflare-Access`,
-  `Set-Cookie: CF_AppSession=...`. (Allow-list *contents* are managed in the
-  Zero Trust dashboard and not externally verifiable.)
+- **Access control — calendar:** Set up 2026-09-06 via the Cloudflare API. Custom
+  domain added to the `mcboop-daily` Pages project (needed a manual DNS CNAME
+  record — `calendar.jaredluyster.com` → `mcboop-daily.pages.dev`, proxied — it did
+  NOT auto-provision like bluegrasscube's did), then a Cloudflare Access
+  application (`self_hosted`, name `calendar`) was created, reusing the exact same
+  reusable "Only Me" policy (`doctormcboop@gmail.com`, uid
+  `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) that news's and sports's Access apps
+  already reference — same allow-list, independently editable per-app.
+- **Verified via HTTP headers (2026-09-06):** `news.jaredluyster.com` and
+  `calendar.jaredluyster.com` both `302 Found` → `.../cdn-cgi/access/login/<host>`,
+  `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`.
+  (Allow-list *contents* are managed in the Zero Trust dashboard and not
+  externally verifiable.)
+
+### 4b. McBoop Sports — Cloudflare Pages (`mcboop-sports` project, Git-integrated)
+
+**A separate Pages project from §4**, discovered via the same 2026-09-06 reconciliation.
+`sports.jaredluyster.com` CNAMEs to `mcboop-sports.pages.dev`, and that project is
+**connected directly to this repo's GitHub remote** (`McBoop69420/jaredluyster.com`,
+branch `main`, build root directory `sports/`) — same pattern as `bcs-website`'s own
+GitHub Pages setup in §1c, except this one lives in the *same* repo as everything
+else here. It rebuilds and redeploys automatically on every push to `main`
+(`path_includes: ["*"]`, so any push triggers it, not just ones touching `sports/`).
+
+- **Files served from:** [`sports/`](sports/index.html) — `index.html`, `sports.css`,
+  `sports.js` (self-contained scoreboard page; fetches ESPN's public API
+  client-side), `robots.txt`, `fake-bets.json`. No `_worker.js` of its own — it's
+  plain static Pages hosting, root directory = site root, so `sports/sports.css` in
+  the repo is `/sports.css` on the live domain.
+- **Content:** pulls live scoreboards/standings **client-side from ESPN's public
+  API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
+  Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
+  Super Lig, NWSL, USL, NFL, plus a "Paper Bets — Live" panel fed by the committed
+  `sports/fake-bets.json`.
+- **Known gap (found 2026-09-06, not fixed):** `export_betting_tracker.py` (run by
+  `deploy-pages.sh` on every cron cycle) writes to `McBoop Newspaper/public/sports/
+  fake-bets.json`, which only ever reached the *old, dead* `mcboop-daily` sports
+  route — never this project. The repo's committed `sports/fake-bets.json` has been
+  stale since **2026-08-16** (the `generatedAt` inside it says 2026-07-28) as a
+  result, and will stay stale until something writes fresh data into this repo's
+  `sports/fake-bets.json` and pushes it to `main`. Not fixed as part of this
+  reconciliation — needs a decision on the right bridge (write there directly and
+  auto-push, or some other mechanism) before changing it.
+- **Access control:** Behind **Cloudflare Access**, same Zero Trust org as news,
+  but a **separate Access application** with its own policy/allow-list —
+  independently editable from news (distinct app `aud`). Verified via HTTP headers
+  the same way as news/calendar (`302 Found` → Cloudflare Access login).
+- **Housekeeping:** `sports/wrangler.toml` (project name `mcboop-sports`,
+  `pages_build_output_dir = "."`) was removed 2026-09-06 — it implied a
+  `wrangler pages deploy` CLI flow that doesn't actually exist; the live deploy is
+  entirely the Git integration described above, which doesn't consult
+  `wrangler.toml` at all.
 
 ## Cloudflare Tunnel Configuration
 
@@ -297,17 +311,18 @@ jaredluyster.com/
 │       └── reset_password.html
 ├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
 ├── news/                   # News site shell (Cloudflare Pages project "mcboop-daily": news.jaredluyster.com)
-│   ├── index.html          # News UI shell (reads edition.json/calendar.json via app.js)
+│   ├── index.html          # News UI shell (reads edition.json via app.js)
 │   ├── app.css             # News site styles
-│   ├── app.js              # News UI logic (tabs, live weather/feed/calendar rendering)
-│   ├── _worker.js          # Pages Worker: routes sports.jaredluyster.com to /sports/*, proxies /api/feeds + /api/odds
+│   ├── app.js              # News UI logic (tabs, live weather/feed rendering)
+│   ├── _worker.js          # Pages Worker: routes calendar.jaredluyster.com to /calendar/*, proxies /api/feeds + /api/odds
 │   └── robots.txt
-├── sports/                 # Sports scoreboard site (same Pages project, routed via news/_worker.js: sports.jaredluyster.com)
+├── sports/                 # Sports scoreboard site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com
 │   ├── index.html
 │   ├── sports.css
 │   ├── sports.js           # Fetches ESPN's public API client-side
+│   ├── fake-bets.json      # Committed snapshot; stale since 2026-08-16, see INFRASTRUCTURE.md §4b
 │   └── robots.txt
-├── calendar/               # Standalone calendar site (same Pages project, routed via news/_worker.js: calendar.jaredluyster.com)
+├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
 │   ├── index.html
 │   ├── calendar.css
 │   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged)
@@ -356,7 +371,7 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
-| `sports.jaredluyster.com` | McBoop Sports (live scores) | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `sports/` in this repo) + Access |
+| `sports.jaredluyster.com` | McBoop Sports (live scores) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 
@@ -374,7 +389,16 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 ### Deployment triggers
 - **GitHub Pages (Wizard Battle):** Push to `main` branch (`docs/` directory)
 - **Render (Homepage + Marketplace):** Push to `main` branch (auto-deploys from `render.yaml`)
-- **Cloudflare Tunnel (Radio + News):** Runs locally via `cloudflared` (radio is public, news is behind Cloudflare Access)
+- **Cloudflare Tunnel (Radio):** Runs locally via `cloudflared` (public, no Access)
+- **Cloudflare Pages, Git-integrated (Sports, Bluegrass Cube, and a few legacy
+  subdomains — see each project's own section):** Push to `main` branch, same as
+  GitHub Pages/Render above — Cloudflare's own GitHub integration builds directly
+  from this repo using each project's configured root directory.
+- **Cloudflare Pages, Wrangler-CLI deployed (News + Calendar):** NOT triggered by
+  `git push` — only by `deploy-pages.sh` (Hermes cron, twice daily) or a manual
+  `wrangler pages deploy`, run from the separate `McBoop Newspaper` directory.
+  Pushing changes to `news/` or `calendar/` in this repo does nothing live on its
+  own.
 
 ### Git workflow
 - Working copy: `%USERPROFILE%\Documents\jaredluyster.com` (active)

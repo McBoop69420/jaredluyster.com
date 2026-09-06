@@ -387,10 +387,17 @@ function corsOptions() {
   });
 }
 
-// Serves a hostname-routed subdomain (sports/calendar) whose site lives in its
-// own top-level directory, mirroring the news shell's own deploy. Non-index
-// paths are passed straight through (with the directory prefix applied);
-// the index document gets a no-cache header so shell edits show up immediately.
+// Serves a hostname-routed subsite (calendar) whose site lives in its own
+// top-level directory within this same Pages deploy, mirroring the news
+// shell's own deploy. Non-index paths are passed straight through (with the
+// directory prefix applied); the index document gets a no-cache header so
+// shell edits show up immediately.
+//
+// sports.jaredluyster.com is NOT one of these despite looking like it should
+// be — it's actually served by a separate, Git-integrated Pages project
+// (mcboop-sports, root directory sports/) that redeploys on every push to
+// main, entirely independent of this worker and of deploy-pages.sh. See
+// INFRASTRUCTURE.md section 4 (reconciled 2026-09-06) for the full story.
 async function serveSubsite(request, env, url, dir) {
   const p = url.pathname;
   const isIndex = p === "/" || p === "/" + dir || p === "/" + dir + "/";
@@ -430,10 +437,6 @@ export default {
       return new Response(res.body, {
         status: res.status, statusText: res.statusText, headers,
       });
-    }
-
-    if (url.hostname === "sports.jaredluyster.com") {
-      return serveSubsite(request, env, url, "sports");
     }
 
     if (url.hostname === "calendar.jaredluyster.com") {
