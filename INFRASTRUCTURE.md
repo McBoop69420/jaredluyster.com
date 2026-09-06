@@ -204,24 +204,34 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
   Super Lig, NWSL, USL, NFL, plus a "Paper Bets — Live" panel fed by the committed
   `sports/fake-bets.json`.
-- **Known gap (found 2026-09-06, not fixed):** `export_betting_tracker.py` (run by
-  `deploy-pages.sh` on every cron cycle) writes to `McBoop Newspaper/public/sports/
-  fake-bets.json`, which only ever reached the *old, dead* `mcboop-daily` sports
-  route — never this project. The repo's committed `sports/fake-bets.json` has been
-  stale since **2026-08-16** (the `generatedAt` inside it says 2026-07-28) as a
-  result, and will stay stale until something writes fresh data into this repo's
-  `sports/fake-bets.json` and pushes it to `main`. Not fixed as part of this
-  reconciliation — needs a decision on the right bridge (write there directly and
-  auto-push, or some other mechanism) before changing it.
+- **Paper-bet ledger freshness — fixed 2026-09-06:** `export_betting_tracker.py`
+  used to write to `McBoop Newspaper/public/sports/fake-bets.json`, which only
+  ever reached the *old, dead* `mcboop-daily` sports route — never this project.
+  `sports/fake-bets.json` had been stale since 2026-08-16 as a result.
+  `deploy-pages.sh` now calls `export_betting_tracker.py --output
+  "$SPORTS_SRC/fake-bets.json"` (writing straight into this repo's working copy)
+  and then, in a scoped subshell, commits and pushes just that one file to
+  `main` if it changed (`git diff --quiet` check first, so an unchanged ledger
+  produces no commit) — that push is what makes `mcboop-sports` redeploy.
+  Deliberately scoped to exactly that path (`git add sports/fake-bets.json`,
+  never a blanket add) so it can't sweep up unrelated in-progress work sitting
+  in that working copy, and uses `git pull --ff-only` before committing rather
+  than ever force-pushing.
 - **Access control:** Behind **Cloudflare Access**, same Zero Trust org as news,
   but a **separate Access application** with its own policy/allow-list —
   independently editable from news (distinct app `aud`). Verified via HTTP headers
   the same way as news/calendar (`302 Found` → Cloudflare Access login).
-- **Housekeeping:** `sports/wrangler.toml` (project name `mcboop-sports`,
-  `pages_build_output_dir = "."`) was removed 2026-09-06 — it implied a
-  `wrangler pages deploy` CLI flow that doesn't actually exist; the live deploy is
-  entirely the Git integration described above, which doesn't consult
-  `wrangler.toml` at all.
+- **`sports/wrangler.toml` is load-bearing — do not remove.** It was wrongly
+  deleted during the 2026-09-06 reconciliation on the assumption that a
+  Git-integrated project ignores `wrangler.toml` entirely. It doesn't: Cloudflare's
+  build step ("v2 root directory strategy") reads it to get
+  `pages_build_output_dir = "."` scoped correctly under this project's `sports/`
+  root directory. Without it, the build falls back to the *repository's own*
+  top-level `wrangler.toml` (meant for the unrelated `jaredluyster-com` project)
+  and fails with "build output directory is outside of the repository." Confirmed
+  by breaking it, watching the build fail, and fixing it forward the same day —
+  the live site kept serving the last good deployment throughout, so nothing was
+  ever down, but new pushes silently stopped deploying until this was restored.
 
 ## Cloudflare Tunnel Configuration
 
@@ -320,7 +330,8 @@ jaredluyster.com/
 │   ├── index.html
 │   ├── sports.css
 │   ├── sports.js           # Fetches ESPN's public API client-side
-│   ├── fake-bets.json      # Committed snapshot; stale since 2026-08-16, see INFRASTRUCTURE.md §4b
+│   ├── fake-bets.json      # Auto-committed + pushed by deploy-pages.sh each cron run, see INFRASTRUCTURE.md §4b
+│   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
 │   ├── index.html
