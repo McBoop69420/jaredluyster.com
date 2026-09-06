@@ -28,12 +28,19 @@ SITE_ROOT = ROOT.parent
 app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
 
 
+SHOP_HOSTS = {"bluegrasstcg.online", "www.bluegrasstcg.online"}
+
+
+def _is_shop_host(host):
+    return host.split(":")[0] in SHOP_HOSTS
+
+
 class ShopSubdomainRewrite:
-    """On shop.jaredluyster.com, serve marketplace routes at the bare path.
+    """On the shop domain (bluegrasstcg.online), serve marketplace routes at the bare path.
 
     All marketplace routes are still registered under /marketplace/* below (so
     jaredluyster.com/marketplace/* keeps working unchanged), but this rewrites
-    incoming requests on the shop subdomain so visitors and links only ever see
+    incoming requests on the shop domain so visitors and links only ever see
     clean paths like /cart or /login. It runs ahead of Flask's URL matching, so
     the app itself never has to know the difference.
     """
@@ -42,9 +49,9 @@ class ShopSubdomainRewrite:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        host = environ.get("HTTP_HOST", "").split(":")[0]
+        host = environ.get("HTTP_HOST", "")
         path = environ.get("PATH_INFO", "/")
-        if host.startswith("shop.") and not path.startswith("/marketplace"):
+        if _is_shop_host(host) and not path.startswith("/marketplace"):
             # Shared static assets (logos, etc.) live at the site root and are
             # referenced by marketplace templates as absolute paths -- leave
             # those alone so they keep resolving via site_static below rather
@@ -521,7 +528,7 @@ def _send_order_email(account_id, guest_email, order_id, items, notes,
 
 @app.route("/")
 def home_page():
-    # shop.jaredluyster.com never reaches here — ShopSubdomainRewrite sends it
+    # bluegrasstcg.online never reaches here — ShopSubdomainRewrite sends it
     # straight to shop_page() below before Flask's routing even sees "/".
     return send_from_directory(str(SITE_ROOT), "index.html")
 
@@ -558,7 +565,7 @@ def lands_json():
 @app.route("/marketplace/login")
 def login_page():
     if "account_id" in session:
-        shop_root = "/" if request.host.split(":")[0].startswith("shop.") else url_for("shop_page")
+        shop_root = "/" if _is_shop_host(request.host) else url_for("shop_page")
         return redirect(shop_root)
     return render_template("login.html")
 
@@ -658,7 +665,7 @@ def api_forgot_password():
     token = store.create_reset_token(email)
     cfg = _smtp_config()
     if token and cfg["user"] and cfg["password"]:
-        reset_path = "/reset-password/" if request.host.split(":")[0].startswith("shop.") else "/marketplace/reset-password/"
+        reset_path = "/reset-password/" if _is_shop_host(request.host) else "/marketplace/reset-password/"
         reset_url = _external_base_url() + reset_path + token
         try:
             _send_reset_email(email, reset_url)

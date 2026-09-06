@@ -33,7 +33,7 @@ def _quarter(price):
     return round(price * 4) / 4 if price is not None else None
 
 DB_PATH = Path(r"C:\Users\Jared Server\Software\MTG Scanner\data\collection.db")
-DEFAULT_URL = "https://shop.jaredluyster.com"
+DEFAULT_URL = "https://bluegrasstcg.online"
 
 
 def _read_pos_rows(db_path: Path, min_price: float = 0.0):
