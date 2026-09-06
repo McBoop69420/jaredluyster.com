@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="McBoop's personal calendar and day plan — a rolling month grid of upcoming commitments, auto-refreshing.">
+<title>Calendar — McBoop Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/calendar.css?v=1">
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1 class="title" id="title">Calendar &amp; Day Plan</h1>
+    <div class="dateline" id="dateline">loading&hellip;</div>
+    <div class="strip">
+      <span>Lexington, Kentucky</span>
+      <span><a href="https://news.jaredluyster.com/">The McBoop Daily</a> &middot; <span id="updated">updating&hellip;</span></span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="panel-inner panel-inner--cal">
+      <div class="calendar" id="calRoot"></div>
+    </div>
+  </div>
+
+  <div class="board-toolbar">
+    <button class="refresh-btn" id="refreshBtn" type="button">&#8635; Refresh now</button>
+  </div>
+
+  <footer class="colophon">
+    <p>Auto-refreshing &middot; times in Eastern (ET).</p>
+  </footer>
+</article>
+<script src="/calendar.js?v=1"></script>
+</body>
+</html>

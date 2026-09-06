@@ -1,8 +1,9 @@
 /* The McBoop Daily — living news shell
  * No more newspaper runs. Every tab renders live from its own source:
- * Calendar (calendar.json), Local (NWS), news (RSS via /api/feeds) and
- * Sports (BetExplorer odds via /api/odds + an in-browser MLB value model
- * from statsapi.mlb.com + the paper-bet ledger from /sports/fake-bets.json).
+ * Local (NWS), news (RSS via /api/feeds) and Sports (BetExplorer odds via
+ * /api/odds + an in-browser MLB value model from statsapi.mlb.com + the
+ * paper-bet ledger from /sports/fake-bets.json). The Calendar tab moved to
+ * its own domain, calendar.jaredluyster.com (see calendar/ in this repo).
  * The old edition.json is ignored; a synthesized "edition" object keeps the
  * legacy render paths working.
  */
@@ -27,11 +28,10 @@
     { name: "Science & Health", short: "Science", liveFeed: "science" },
   ];
 
-  // The complete tab strip, built once. Calendar = calendar.json, Local =
-  // live NWS, the five news tabs = live RSS feeds, Sports = live odds +
-  // in-browser model + paper-bet ledger. No per-day authored content exists.
+  // The complete tab strip, built once. Local = live NWS, the five news tabs
+  // = live RSS feeds, Sports = live odds + in-browser model + paper-bet
+  // ledger. No per-day authored content exists.
   const SECTIONS = [
-    { name: "Calendar & Day Plan", short: "Calendar", calendar: true, planHtml: "" },
     { name: "Local & Weather", short: "Local", liveWeather: true, liveFeed: "local" },
     ...LIVE_NEWS_SECTIONS.map((s) => Object.assign({}, s)),
     { name: "Sports & Betting", short: "Sports", liveSports: true },
@@ -44,7 +44,6 @@
   let trafficTimer = null;
   let liveFeedTimer = null;
   let sportsTimer = null;
-  let calEvents = null;   // loaded from /calendar.json (null = not yet fetched)
   let liveFeeds = null;   // { national: [...], world: [...], ... } once loaded
   let liveFeedsLoadedAt = 0;
 
@@ -101,28 +100,13 @@
       stage.innerHTML = '<div class="panel-inner"><p>No section loaded.</p></div>';
       return;
     }
-    // The calendar sizes itself to the viewport, so let the stage hug it
-    // instead of holding the default 60vh minimum.
-    const stageWrap = document.querySelector(".stage");
-    if (stageWrap) stageWrap.style.minHeight = sec.calendar ? "0" : "";
-    if (sec.calendar) {
-      stage.innerHTML = '<div class="panel-inner panel-inner--cal">' +
-        '<div class="calendar" id="calRoot"></div>' +
-        (sec.planHtml ? '<div class="cal-plan"><h3 class="sub">Day Plan</h3>' + sec.planHtml + '</div>' : '') +
-        '</div>';
-      renderCalendar();
-      stampUpdated();
-      return;
-    }
     if (sec.liveFeed) {
-      if (stageWrap) stageWrap.style.minHeight = "";
       renderLiveFeed(sec);
       if (sec.liveWeather) { loadWeather(); loadTraffic(); }
       stampUpdated();
       return;
     }
     if (sec.liveSports) {
-      if (stageWrap) stageWrap.style.minHeight = "";
       renderSports();
       stampUpdated();
       return;
@@ -341,37 +325,7 @@
     }
   }
 
-  // ---- Calendar (persistent tab, data from /calendar.json) --------------
-  // The events live in /calendar.json (not in the per-edition payload), so the
-  // Calendar tab survives every edition refresh and redeploy. Times are ET.
-  async function loadCalendar() {
-    try {
-      const res = await fetch("/calendar.json?v=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) throw new Error("calendar.json " + res.status);
-      const j = await res.json();
-      calEvents = Array.isArray(j.events) ? j.events.slice() : [];
-    } catch (e) {
-      calEvents = [];
-    }
-  }
-
-  // Put the Calendar first (top-left), before the edition's news sections (once).
-  // The edition's own "Plan" section (from the "Calendar & Day Plan" markdown
-  // heading) is folded into this same tab instead of appearing as its own tab,
-  // so the grid and the day's written plan live together in one place.
-  function ensureCalendarSection() {
-    if (!data || !Array.isArray(data.sections)) return;
-    if (data.sections.some(s => s && s.calendar)) return;
-    const planIdx = data.sections.findIndex(s => s && s.short === "Plan");
-    let planHtml = "";
-    if (planIdx >= 0) {
-      planHtml = data.sections[planIdx].html || "";
-      data.sections.splice(planIdx, 1);
-    }
-    data.sections.unshift({ name: "Calendar & Day Plan", short: "Calendar", calendar: true, planHtml: planHtml });
-  }
-
-  // Insert the five live-feed news tabs right after Calendar (their old
+  // Insert the five live-feed news tabs right after Local (their old
   // authored position), and drop any stale LLM-authored duplicate of the same
   // name if a leftover cron prompt ever writes one (defense-in-depth, mirrors
   // the generator's own SKIP_SECTIONS).
@@ -380,229 +334,10 @@
     const liveNames = new Set(LIVE_NEWS_SECTIONS.map((s) => s.name));
     data.sections = data.sections.filter((s) => !(s && liveNames.has(s.name) && !s.liveFeed));
     if (data.sections.some((s) => s && s.liveFeed)) return;
-    // Editorial order is Local & Weather -> Calendar & Day Plan -> National...
-    // -> Sports, but Calendar is already pinned to the very front of the tab
-    // strip by ensureCalendarSection(). So slot the live feeds right after
-    // Local (or after Calendar if Local is somehow missing) — ahead of Sports.
+    // Editorial order is Local & Weather -> National... -> Sports.
     const localIdx = data.sections.findIndex((s) => s && s.short === "Local");
-    const calIdx = data.sections.findIndex((s) => s && s.calendar);
-    const insertAt = localIdx >= 0 ? localIdx + 1 : (calIdx >= 0 ? calIdx + 1 : 0);
+    const insertAt = localIdx >= 0 ? localIdx + 1 : 0;
     data.sections.splice(insertAt, 0, ...LIVE_NEWS_SECTIONS.map((s) => Object.assign({}, s)));
-  }
-
-  function pad2(n) { return (n < 10 ? "0" : "") + n; }
-
-  function etTodayStr() {
-    try {
-      return new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit"
-      }).format(new Date());
-    } catch (e) {
-      const d = new Date();
-      return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-    }
-  }
-
-  function fmtTime(hhmm) {
-    if (!hhmm) return "";
-    const p = String(hhmm).split(":");
-    let h = parseInt(p[0], 10);
-    const m = p[1] || "00";
-    if (isNaN(h)) return esc(hhmm);
-    const per = h < 12 ? "a" : "p";
-    let h12 = h % 12; if (h12 === 0) h12 = 12;
-    return h12 + (m === "00" ? "" : ":" + m) + per;
-  }
-
-  function fmtRange(ev) {
-    if (ev.timeLabel) return String(ev.timeLabel);
-    const s = fmtTime(ev.start), e = fmtTime(ev.end);
-    if (s && e) return s + "–" + e;   // en dash
-    return s || e || "";
-  }
-
-  function eventClass(ev) {
-    const kind = String(ev.type || ev.kind || ev.category || "").toLowerCase();
-    if (!kind) return "";
-    const safe = kind.replace(/[^a-z0-9_-]/g, "");
-    return safe ? " cal-ev--" + safe : "";
-  }
-
-  function renderCalendar() {
-    const root = $("calRoot");
-    if (!root) return;
-    if (calEvents === null) {
-      root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
-      loadCalendar().then(() => { if ($("calRoot")) renderCalendar(); });
-      return;
-    }
-
-    const todayStr = etTodayStr();
-    const tp = todayStr.split("-").map(Number);
-    const dow = new Date(tp[0], tp[1] - 1, tp[2], 12).getDay();   // 0 = Sun
-    // Rolling window: start on the Sunday of the current week, then run enough
-    // whole weeks to cover ~a month ahead. Days flow continuously across month
-    // boundaries (bleedthrough); there's no navigation into the past.
-    const start = new Date(tp[0], tp[1] - 1, tp[2] - dow, 12);
-    const totalDays = Math.ceil((dow + 31) / 7) * 7;
-
-    const days = [];
-    for (let i = 0; i < totalDays; i++) {
-      days.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i, 12));
-    }
-    const last = days[days.length - 1];
-
-    const byDate = {};
-    const dowCodes = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-    function addByDate(dateStr, ev) {
-      const copy = Object.assign({}, ev, { date: dateStr });
-      (byDate[dateStr] = byDate[dateStr] || []).push(copy);
-    }
-    calEvents.forEach(ev => {
-      if (!ev || !ev.date) return;
-      const recur = ev.recurrence || {};
-      const freq = String(recur.freq || "").toLowerCase();
-      if (freq === "weekly") {
-        let byDay = recur.byDay || dowCodes[new Date(ev.date + "T12:00:00").getDay()];
-        if (typeof byDay === "string") byDay = byDay.split(",");
-        const wanted = new Set((Array.isArray(byDay) ? byDay : [byDay])
-          .map(s => String(s || "").trim().toUpperCase()).filter(Boolean));
-        const until = recur.until || "";
-        const exclusions = new Set((Array.isArray(recur.exclude) ? recur.exclude : [recur.exclude])
-          .map(s => String(s || "").trim()).filter(Boolean));
-        days.forEach(d => {
-          const ds = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-          if (ds < ev.date) return;
-          if (until && ds > until) return;
-          if (exclusions.has(ds)) return;
-          if (!wanted.has(dowCodes[d.getDay()])) return;
-          addByDate(ds, ev);
-        });
-        return;
-      }
-      addByDate(ev.date, ev);
-    });
-    Object.keys(byDate).forEach(k =>
-      byDate[k].sort((a, b) => String(a.start || "").localeCompare(String(b.start || ""))));
-
-    function isWorkEvent(ev) {
-      return String(ev.type || ev.kind || ev.category || "").toLowerCase() === "work";
-    }
-    const tomorrow = new Date(tp[0], tp[1] - 1, tp[2] + 1, 12);
-    const tomorrowStr = tomorrow.getFullYear() + "-" + pad2(tomorrow.getMonth() + 1) + "-" + pad2(tomorrow.getDate());
-    function featuredLabel(dateStr) {
-      if (dateStr === todayStr) return "Today";
-      if (dateStr === tomorrowStr) return "Tomorrow";
-      const parts = dateStr.split("-").map(Number);
-      return new Date(parts[0], parts[1] - 1, parts[2], 12)
-        .toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
-    }
-    const featuredEvents = [];
-    [todayStr, tomorrowStr].forEach(ds => {
-      (byDate[ds] || []).forEach(ev => {
-        if (!isWorkEvent(ev)) featuredEvents.push(Object.assign({}, ev, { _dateLabel: featuredLabel(ds) }));
-      });
-    });
-
-    const sM = start.toLocaleDateString("en-US", { month: "long" });
-    const lM = last.toLocaleDateString("en-US", { month: "long" });
-    const sy = start.getFullYear(), ly = last.getFullYear();
-    let range;
-    if (sy === ly) range = (sM === lM) ? (sM + " " + sy) : (sM + " – " + lM + " " + sy);
-    else range = sM + " " + sy + " – " + lM + " " + ly;
-
-    let html = '<div class="cal-range">' + esc(range) + '</div>';
-    if (featuredEvents.length) {
-      html += '<div class="cal-today-strip"><span class="cal-today-label">Upcoming</span>' +
-        featuredEvents.map(ev => {
-          const label = ev._dateLabel || "";
-          const rng = fmtRange(ev);
-          const sameAsLabel = rng && label && rng.toLowerCase() === label.toLowerCase();
-          return '<span class="cal-today-item">' +
-            (label ? '<strong>' + esc(label) + '</strong> ' : '') +
-            (rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
-            esc(ev.title || '') + '</span>';
-        }).join('') + '</div>';
-    }
-    html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
-    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
-      html += '<div class="cal-dow">' + d + '</div>');
-
-    days.forEach((d, i) => {
-      const Mo = d.getMonth() + 1, day = d.getDate();
-      const ds = d.getFullYear() + "-" + pad2(Mo) + "-" + pad2(day);
-      const isToday = ds === todayStr;
-      const isPast = ds < todayStr;
-      const evs = byDate[ds] || [];
-      const showMon = day === 1 || i === 0;   // mark each new month for bleedthrough
-      html += '<div class="cal-cell' +
-        (isToday ? " cal-cell--today" : "") +
-        (isPast ? " cal-cell--past" : "") +
-        (evs.length ? " cal-cell--has" : "") + '">';
-      html += '<div class="cal-daynum">' +
-        (showMon ? '<span class="cal-mon">' + esc(d.toLocaleDateString("en-US", { month: "short" })) + '</span> ' : '') +
-        day + '</div>';
-      evs.forEach(ev => {
-        const rng = fmtRange(ev);
-        const clock = fmtTime(ev.start);   // real HH:MM only — never freetext
-        const start = clock || rng;
-        html += '<div class="cal-ev' + eventClass(ev) + '" title="' +
-          esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
-          (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
-          (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
-          '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
-          '<span class="cal-ev-title">' + esc(ev.title || "") + '</span></div>';
-      });
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Readable agenda for the whole displayed range — the mobile companion to
-    // the grid (the grid chips compress to time pills on small screens; this
-    // list is where the full titles live, for every day in view, not just the
-    // next 7). Rendered always, shown via CSS on mobile.
-    const agenda = [];
-    days.forEach(d => {
-      const ds = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-      if (ds < todayStr) return;
-      const evs = byDate[ds] || [];
-      if (!evs.length) return;
-      evs.forEach(ev => {
-        const rng = fmtRange(ev);
-        agenda.push('<li class="cal-agenda-item">' +
-          '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + esc(ev.title || "") + '</span>' +
-          (rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
-          '</li>');
-      });
-    });
-    if (agenda.length) {
-      html += '<div class="cal-agenda-wrap"><h3 class="sub">Full Schedule</h3>' +
-        '<ul class="cal-agenda">' + agenda.join("") + '</ul></div>';
-    }
-
-    root.innerHTML = html;
-    fitCalendarGrid();
-    requestAnimationFrame(fitCalendarGrid);
-  }
-
-  // Size the month grid to fill the remaining viewport height so the whole
-  // calendar sits on one screen — the week rows share the space equally.
-  function fitCalendarGrid() {
-    const grid = document.querySelector(".cal-grid");
-    if (!grid) return;
-    const weeks = Number(grid.getAttribute("data-weeks")) || 5;
-    const gr = grid.getBoundingClientRect();
-    const top = gr.top;
-    // Keep enough vertical room for at least three event chips per day. If the
-    // viewport is shorter, let the calendar scroll instead of compressing rows.
-    const minWeekRow = window.innerWidth <= 680 ? 116 : 150;
-    const minGridHeight = 28 + (weeks * minWeekRow); // weekday header + week rows
-    const belowChrome = document.documentElement.scrollHeight - (gr.bottom + window.scrollY);
-    const viewportFit = Math.round(window.innerHeight - top - belowChrome - 12);
-    const avail = Math.min(1080, Math.max(minGridHeight, viewportFit, 360));
-    grid.style.height = avail + "px";
-    grid.style.gridTemplateRows = "auto repeat(" + weeks + ", minmax(" + minWeekRow + "px, 1fr))";
   }
 
   // ---- Live NWS weather (in-browser fetch, CORS-enabled) ----------------
@@ -720,6 +455,19 @@
   }
 
   function r1(x) { return Math.round(x * 10) / 10; }
+
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function etTodayStr() {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(new Date());
+    } catch (e) {
+      const d = new Date();
+      return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+    }
+  }
 
   function pyth(rs, ra) {
     if (!rs || !ra) return null;
@@ -913,8 +661,6 @@
     try {
       const next = await loadEdition();
       data = next;
-      calEvents = null; // Refresh calendar.json too, so newly added commitments appear without a browser reload.
-      ensureCalendarSection();
       ensureLiveNewsSections();
       render();
     } catch (e) {
@@ -957,25 +703,11 @@
         loadLiveFeeds();
       }
     });
-    // Keep the calendar grid filling the viewport as it changes size.
-    window.addEventListener("resize", () => {
-      const sec = data && data.sections[activeTab];
-      if (sec && sec.calendar) fitCalendarGrid();
-    });
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        const sec = data && data.sections[activeTab];
-        if (sec && sec.calendar) fitCalendarGrid();
-      });
-    }
   }
 
   (function boot() {
       data = buildData();
-      ensureCalendarSection();
       ensureLiveNewsSections();
-      const ci = data.sections.findIndex(s => s && s.calendar);   // open on Calendar
-      if (ci >= 0) activeTab = ci;
       render();
       startLoops();
     })();

@@ -1,0 +1,119 @@
+:root{
+  --ink:#131113;--paper:#f3ede0;--muted:#8f867a;
+  --accent:#f2971d;--accent-ink:#1c1206;--border-w:3px;
+  --tab-bg:#ece0c8;--highlight:#fbe6c8;--live:#ff4422;
+  --font-display:"Space Grotesk","Arial Black",sans-serif;
+  --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--ink);color:var(--ink);
+  font-family:var(--font-body);line-height:1.5;
+  padding:14px 12px 22px;-webkit-font-smoothing:antialiased;
+}
+.paper{
+  max-width:1180px;margin:0 auto;background:var(--paper);
+  padding:16px 30px 22px;box-shadow:10px 10px 0 var(--accent);
+  border:var(--border-w) solid var(--ink);
+}
+.masthead{text-align:center;}
+.toprule{height:4px;background:var(--accent);margin:0 0 8px;}
+h1.title{
+  font-family:var(--font-display);
+  font-weight:700;font-size:44px;letter-spacing:-.02em;
+  margin:6px 0 0;line-height:.95;text-transform:uppercase;
+}
+h1.title::first-letter{color:var(--accent);}
+.dateline{font-size:13px;font-style:italic;color:var(--muted);margin:3px 0 3px;}
+.strip{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);border-top:2px solid var(--ink);
+  border-bottom:var(--border-w) solid var(--ink);padding:6px 2px;margin-top:6px;
+}
+a{color:var(--accent);text-decoration:none;border-bottom:2px solid var(--accent);transition:background-color .12s ease,color .12s ease;}
+a:hover{background:var(--accent);color:var(--accent-ink);}
+
+.stage{border:2px solid var(--ink);border-top:2px solid var(--ink);background:var(--paper);margin-top:10px;padding:6px 4px 10px;}
+h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.04em;font-family:var(--font-display);}
+
+/* Calendar grid — roomy, enough vertical space for 3+ daily chips */
+.panel-inner--cal{max-width:none;padding:18px 26px 20px;}
+.cal-range{font-family:var(--font-display);font-weight:700;font-size:18px;
+  text-transform:uppercase;letter-spacing:-.01em;text-align:center;margin:0 0 8px;}
+.cal-today-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;
+  margin:0 0 10px;padding:8px 10px;background:var(--highlight);border:2px solid var(--ink);
+  font-family:var(--font-body);font-size:12px;line-height:1.35;}
+.cal-today-label{font-family:var(--font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);}
+.cal-today-item{font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--ink);padding:2px 8px;}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;
+  background:var(--ink);overflow:hidden;border:2px solid var(--ink);}
+.cal-dow{background:var(--tab-bg);color:var(--muted);font-family:var(--font-display);
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  text-align:center;padding:6px 0;}
+.cal-cell{background:var(--paper);padding:6px 7px;overflow:hidden;
+  display:flex;flex-direction:column;gap:4px;min-height:0;}
+.cal-cell--empty{background:var(--tab-bg);}
+.cal-cell--today{background:var(--highlight);box-shadow:inset 0 0 0 2px var(--accent);}
+.cal-daynum{font-family:var(--font-body);font-size:11px;font-weight:700;color:var(--muted);
+  line-height:1.2;flex:none;}
+.cal-cell--today .cal-daynum{color:var(--accent);}
+.cal-mon{color:var(--accent);font-weight:700;text-transform:uppercase;}
+.cal-cell--past{background:var(--tab-bg);}
+.cal-cell--past .cal-daynum{opacity:.5;}
+.cal-cell--past .cal-ev{opacity:.55;}
+.cal-ev{flex:none;}
+.cal-ev{background:var(--ink);color:var(--paper);border-radius:0;padding:2px 6px;
+  font-family:var(--font-body);font-size:11px;line-height:1.4;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-ev--work{background:var(--live);color:var(--paper);}
+.cal-ev-t{font-weight:700;opacity:.95;}
+.cal-ev-s{display:none;}
+.cal-ev-mobile{display:none;}
+.cal-ev-title{display:inline;}
+
+.cal-agenda-wrap{display:none;margin-top:14px;padding-top:10px;border-top:var(--border-w) solid var(--ink);}
+.cal-agenda-wrap h3.sub{margin:0 0 2px;}
+
+.cal-agenda{list-style:none;margin:6px 0 4px;padding:0;}
+.cal-agenda-item{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+  padding:8px 2px;border-bottom:1px dotted var(--ink);}
+.cal-agenda-item:last-child{border-bottom:none;}
+.cal-agenda-date{font-family:var(--font-body);font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--accent);min-width:170px;}
+.cal-agenda-title{font-size:15px;font-weight:700;flex:1;}
+.cal-agenda-time{font-family:var(--font-body);font-size:12.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;}
+.cal-loading,.cal-empty{font-size:13px;color:var(--muted);font-style:italic;}
+
+/* Toolbar */
+.board-toolbar{display:flex;align-items:center;justify-content:flex-end;margin:10px 0 0;}
+.refresh-btn{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;padding:8px 16px;border:2px solid var(--ink);border-radius:0;background:var(--ink);color:var(--paper);box-shadow:4px 4px 0 var(--accent);transition:transform .12s ease,box-shadow .12s ease;}
+.refresh-btn:hover{background:var(--ink);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--accent);}
+.refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--accent);}
+.colophon{font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px;text-transform:uppercase;letter-spacing:.04em;line-height:1.4;}
+
+@media (max-width:680px){
+  body{padding:6px 4px 14px;}
+  .paper{padding:12px 10px 18px;box-shadow:none;border:0;border-bottom:var(--border-w) solid var(--ink);}
+  .panel-inner--cal{padding:10px 6px 14px;}
+  .cal-today-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
+  .cal-today-item{padding:1px 6px;}
+  .cal-cell{padding:6px 4px;gap:3px;}
+  /* Grid chips become compact start-time pills; full titles live in the agenda below */
+  .cal-ev{font-size:9px;padding:2px 3px;border-radius:0;text-align:center;
+    display:block;line-height:1.5;}
+  .cal-ev .cal-ev-title{display:none;}
+  .cal-ev .cal-ev-t{display:none;}
+  .cal-ev .cal-ev-s{display:none;}
+  .cal-ev .cal-ev-mobile{display:inline;}
+  .cal-daynum{font-size:10px;}
+  .cal-agenda-wrap{display:block;}
+  .cal-agenda-item{padding:5px 2px;gap:3px 10px;}
+  .cal-agenda-date{min-width:0;flex-basis:100%;margin-bottom:2px;}
+  .cal-agenda-title{font-size:13.5px;min-width:140px;}
+  .cal-agenda-time{font-size:11.5px;margin-left:auto;}
+}

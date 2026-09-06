@@ -387,27 +387,57 @@ function corsOptions() {
   });
 }
 
+// Serves a hostname-routed subdomain (sports/calendar) whose site lives in its
+// own top-level directory, mirroring the news shell's own deploy. Non-index
+// paths are passed straight through (with the directory prefix applied);
+// the index document gets a no-cache header so shell edits show up immediately.
+async function serveSubsite(request, env, url, dir) {
+  const p = url.pathname;
+  const isIndex = p === "/" || p === "/" + dir || p === "/" + dir + "/";
+  const asset = isIndex
+    ? "/" + dir + "/"
+    : (p.startsWith("/" + dir + "/") ? p : "/" + dir + p);
+  const response = await env.ASSETS.fetch(
+    new Request(url.origin + asset + url.search, request),
+  );
+  if (!isIndex) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.hostname === "sports.jaredluyster.com") {
-      const p = url.pathname;
-      const isIndex = p === "/" || p === "/sports" || p === "/sports/";
-      const asset = isIndex
-        ? "/sports/"
-        : (p.startsWith("/sports/") ? p : "/sports" + p);
-      const response = await env.ASSETS.fetch(
-        new Request(url.origin + asset + url.search, request),
-      );
-      if (!isIndex) return response;
 
-      const headers = new Headers(response.headers);
+    // Calendar data is no-cache so newly added commitments show immediately,
+    // regardless of which hostname/subsite is asking for it — the file itself
+    // lives at the deploy root, not under calendar/. edition.json is kept for
+    // backward compatibility with old open tabs but is no longer produced.
+    if (url.pathname === "/edition.json" || url.pathname === "/calendar.json") {
+      const res = await env.ASSETS.fetch(
+        new Request(url.origin + url.pathname + url.search, request),
+      );
+      const headers = new Headers(res.headers);
+      // Always revalidate so the latest calendar is served immediately.
       headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
+      headers.set("Access-Control-Allow-Origin", "*");
+      return new Response(res.body, {
+        status: res.status, statusText: res.statusText, headers,
       });
+    }
+
+    if (url.hostname === "sports.jaredluyster.com") {
+      return serveSubsite(request, env, url, "sports");
+    }
+
+    if (url.hostname === "calendar.jaredluyster.com") {
+      return serveSubsite(request, env, url, "calendar");
     }
 
     // Live in-browser RSS feed for the news sections (National/World/Business/
@@ -426,22 +456,7 @@ export default {
     // news.jaredluyster.com — the living newspaper shell.
     // The shell (index.html/app.js/app.css) is deployed once and refreshed only
     // when it changes; there is no per-day edition anymore — every section is
-    // live from its own source. Calendar data is no-cache so newly added
-    // commitments show immediately; edition.json is kept for backward
-    // compatibility with old open tabs but is no longer produced.
-    if (url.pathname === "/edition.json" || url.pathname === "/calendar.json") {
-      const res = await env.ASSETS.fetch(
-        new Request(url.origin + url.pathname + url.search, request),
-      );
-      const headers = new Headers(res.headers);
-      // Always revalidate so the latest calendar is served immediately.
-      headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
-      headers.set("Access-Control-Allow-Origin", "*");
-      return new Response(res.body, {
-        status: res.status, statusText: res.statusText, headers,
-      });
-    }
-
+    // live from its own source.
     return env.ASSETS.fetch(request);
   }
 };
