@@ -14,7 +14,7 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 
 ### 1. Homepage + Marketplace — Render (Flask, dynamic)
 
-**This is the primary hosting.** The `jaredluyster.com` domain and `shop.jaredluyster.com` subdomain are both served by a single Render Flask service.
+**This is the primary hosting.** The `jaredluyster.com` domain and the `bluegrasstcg.online` shop domain are both served by a single Render Flask service.
 
 - **Host:** Render (Python web service)
 - **Config:** `render.yaml` in repo root
@@ -26,16 +26,21 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 - **Database:** SQLite local (`marketplace.db`) or Turso (via `TURSO_DATABASE_URL` env var)
 - **Templates:** `marketplace/templates/` (admin.html, base.html, cart.html, login.html, orders.html, forgot_password.html, reset_password.html)
 - **Static assets:** `marketplace/index.html` (shop front), `marketplace/inventory.json`, `marketplace/lands.json`
-- **Subdomain:** `shop.jaredluyster.com` (redirects to `/marketplace/`)
+- **Shop domain:** `bluegrasstcg.online` (own domain, added as a custom domain on the same Render service; `SHOP_HOSTS` in `server.py` rewrites its requests to `/marketplace/*` under the hood) — **2026-09-06:** moved off `shop.jaredluyster.com`, which was retired (see below).
 - **Admin email:** `jared.luyster@gmail.com` (auto-admin on signup)
 
 **Verified via HTTP headers:**
 - `jaredluyster.com` → `Server: cloudflare`, `x-render-origin-server: waitress`, `rndr-id: ...` (Render)
-- `shop.jaredluyster.com` → same Render headers, 302 redirect to `/marketplace/`
 - `jaredluyster.com/radio.html` → served by Render (same `x-render-origin-server: waitress`)
 
+**Retired subdomain:** `shop.jaredluyster.com` no longer serves the shop as of 2026-09-06 —
+`server.py`'s host check now only matches `bluegrasstcg.online`/`www.bluegrasstcg.online`, so
+that subdomain (if DNS for it still resolves) just falls through to the homepage. The Cloudflare
+DNS record and any Render custom-domain entry for it can be deleted next time someone's in those
+dashboards; nothing depends on it anymore.
+
 **Flask routes (from server.py):**
-- `GET /` → serves `index.html` (homepage) if host doesn't start with `shop.`, otherwise redirects to `/marketplace/`
+- `GET /` → serves `index.html` (homepage) unless the host is the shop domain, in which case the `ShopSubdomainRewrite` WSGI middleware redirects it to `/marketplace/` before Flask routing even runs
 - `GET /<path:filename>` → serves static files from site root (radio.html, shared-theme.css, etc.)
 - `GET /marketplace/` → serves marketplace index.html
 - `GET /marketplace/inventory.json` → serves inventory
@@ -121,16 +126,25 @@ The site is a **hybrid deployment** — two hosting mechanisms under one domain 
 
 ### 4. McBoop Newspaper + McBoop Sports + Calendar — Cloudflare Pages (single project, three custom domains)
 
-**Corrected 2026-08-21** — `news.jaredluyster.com` and `sports.jaredluyster.com` are the
-**same Cloudflare Pages project** (`mcboop-daily`), not separate hosts, and not the
-Cloudflare Tunnel. Confirmed via `public/_worker.js` (a Pages Functions worker that
-special-cases `url.hostname === "sports.jaredluyster.com"` to serve `/sports/*`, and
-falls through to `env.ASSETS.fetch` — i.e. `public/index.html` — for everything else,
-which is what serves `news.jaredluyster.com`) and via `.claude/launch.json`'s
-`news-preview` config, which points at the real local project root.
+**Corrected 2026-08-21, superseded 2026-09-06** — this repo's `_worker.js` does contain
+hostname routing for `sports.jaredluyster.com` (special-casing it to serve `/sports/*`),
+which is what led to documenting news+sports as one Pages project. But a live check of
+the Cloudflare account on 2026-09-06 (`pages projects` list + zone DNS records) shows
+`sports.jaredluyster.com` actually CNAMEs to `mcboop-sports.pages.dev` — **a separate
+Pages project**, not `mcboop-daily`. Only `news.jaredluyster.com` (→
+`mcboop-daily.pages.dev`) and now `calendar.jaredluyster.com` (→ `mcboop-daily.pages.dev`,
+added 2026-09-06) are actually on the `mcboop-daily` project. This means the
+sports-hostname branch in `news/_worker.js`, and `deploy-pages.sh`'s copy of `sports/`
+into `mcboop-daily`'s `public/sports/`, are very likely dead code/dead weight — sports
+traffic never reaches that worker or that deployment. **Not yet root-caused or cleaned
+up** — someone should check the `mcboop-sports` Pages project's own deploy mechanism
+(a `sports/wrangler.toml` exists in this repo suggesting a direct `wrangler pages deploy
+sports --project-name mcboop-sports`, but no such step was found in `deploy-pages.sh`)
+before touching either side.
 **2026-09-06** — the Calendar & Day Plan tab was pulled out of the news shell into
-its own standalone site, `calendar.jaredluyster.com`, hosted the same way as Sports
-(same Pages project, routed by hostname in `_worker.js`).
+its own standalone site, `calendar.jaredluyster.com`, hosted on the `mcboop-daily`
+project, routed by hostname in `_worker.js` (this part is confirmed live-verified,
+unlike the sports situation above).
 
 - **Local project root:** `C:\Users\Jared\McBoop Newspaper\` (NOT in this repo — a
   separate, non-git-tracked directory containing the content-generation pipeline:
@@ -181,18 +195,19 @@ its own standalone site, `calendar.jaredluyster.com`, hosted the same way as Spo
 - **Access control — sports:** Behind **Cloudflare Access**, same Zero Trust org
   as news, but a **separate Access application** with its own policy/allow-list —
   independently editable from news (distinct app `aud`).
-- **Access control — calendar:** **Not yet set up.** `calendar.jaredluyster.com`
-  needs (1) a custom domain added to the `mcboop-daily` Pages project in the
-  Cloudflare dashboard (Workers & Pages → mcboop-daily → Custom domains → Add,
-  same one-time step used for the other subdomains) and (2) a decision on whether
-  it should sit behind a Cloudflare Access application like news (the calendar
-  shows personal commitments) — `calendar/robots.txt` already disallows all
-  crawlers either way.
-- **Verified via HTTP headers (2026-07-29):** both hosts `302 Found` →
+- **Access control — calendar:** Set up 2026-09-06. Custom domain added to the
+  `mcboop-daily` Pages project (Cloudflare Pages API — domain went through
+  `initializing` → DNS CNAME `calendar.jaredluyster.com` → `mcboop-daily.pages.dev`
+  (proxied) had to be created manually, it did not auto-provision like
+  bluegrasscube's did → `active`), then a Cloudflare Access application
+  (`self_hosted`, name `calendar`) was created via the Access API, reusing the
+  exact same reusable "Only Me" policy (`doctormcboop@gmail.com`, uid
+  `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) that news and sports's Access apps
+  already reference — same allow-list, independently editable per-app like sports.
+- **Verified via HTTP headers (2026-09-06):** all three hosts `302 Found` →
   `.../cdn-cgi/access/login/<host>`, `Www-Authenticate: Cloudflare-Access`,
   `Set-Cookie: CF_AppSession=...`. (Allow-list *contents* are managed in the
-  Zero Trust dashboard and not externally verifiable. Not yet re-verified for
-  calendar.jaredluyster.com since its custom domain hasn't been created.)
+  Zero Trust dashboard and not externally verifiable.)
 
 ## Cloudflare Tunnel Configuration
 
@@ -336,13 +351,13 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `jaredluyster.com/radio.html` | Radio player page | Render (Flask) |
 | `jaredluyster.com/marketplace/` | Marketplace | Render (Flask) |
 | `wizardbattle.jaredluyster.com` | Wizard Battle site | GitHub Pages (docs/) |
-| `shop.jaredluyster.com` | Marketplace (redirect) | Render (Flask) |
+| `bluegrasstcg.online` | Marketplace (redirect) | Render (Flask), same service as jaredluyster.com |
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
 | `sports.jaredluyster.com` | McBoop Sports (live scores) | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `sports/` in this repo) + Access |
-| `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) — custom domain + Access not yet set up |
+| `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 
 ## How to Work With This Repo
