@@ -1,0 +1,6 @@
+# Cloudflare Pages configuration for the sports.jaredluyster.com project.
+# Static, no build step — Pages serves this directory directly.
+
+name = "mcboop-sports"
+compatibility_date = "2026-08-17"
+pages_build_output_dir = "."
