@@ -186,9 +186,40 @@ Sports has its own project and its own deploy mechanism; see §4b.
   commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`.
 - **Access control — news:** Behind **Cloudflare Access** (redirects to
-  `quiet-frost-ed57.cloudflareaccess.com` login). `deploy-pages.sh` also does a
-  post-deploy live check against news.jaredluyster.com via a Cloudflare Access
-  Service Token (`~/.config/cloudflare_news_access.txt`).
+  `quiet-frost-ed57.cloudflareaccess.com` login).
+- **Post-deploy verification — corrected 2026-09-06.** This section used to say
+  `deploy-pages.sh` does a post-deploy live check "via a Cloudflare Access
+  Service Token (`~/.config/cloudflare_news_access.txt`)". **That token has
+  never existed** — the Zero Trust org has zero service tokens (checked against
+  the Access API), and the file is absent. The check was gated behind it, so it
+  skipped with a `WARN` on every run since it was written: `wrangler pages
+  deploy` reporting success was the only thing between a broken publish and
+  never finding out. The block is now credential-free and always runs:
+  1. `mcboop-daily.pages.dev` must serve the `app.js?v=NN` pin from the shell
+     just published (with retries — a deploy is not always live the instant
+     wrangler returns), proving the new bytes are actually live.
+  2. `/api/feeds` must return JSON, proving `_worker.js` compiled and is running.
+  3. `news.jaredluyster.com` must answer `302` + an Access challenge, proving
+     DNS, the custom-domain binding and the Access app are all intact.
+
+  Any failure exits non-zero so the cron run reports it. All three failure modes
+  were tested by forcing them, not just by watching the happy path pass.
+
+  What this still cannot prove is that a real principal gets `200` *through*
+  Access — Access answers before the origin, so that needs a credential. If you
+  want that, create a Service Token in **Zero Trust → Access → Service Auth**,
+  add it to the news app's policy, and write two lines to
+  `~/.config/cloudflare_news_access.txt`:
+
+  ```
+  CF-Access-Client-Id: <id>.access
+  CF-Access-Client-Secret: <secret>
+  ```
+
+  The script already looks for that file and will upgrade itself to the full
+  end-to-end check the moment it appears — no code change needed. (The existing
+  `cloudflare_pages_token.txt` cannot create it: it has no Access scope, so the
+  Access API returns empty lists rather than data.)
 - **Access control — calendar:** Set up 2026-09-06 via the Cloudflare API. Custom
   domain added to the `mcboop-daily` Pages project (needed a manual DNS CNAME
   record — `calendar.jaredluyster.com` → `mcboop-daily.pages.dev`, proxied — it did
