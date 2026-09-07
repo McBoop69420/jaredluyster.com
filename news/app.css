@@ -139,10 +139,6 @@ strong{font-weight:700;}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--accent);}
 .colophon{font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px;text-transform:uppercase;letter-spacing:.04em;line-height:1.4;}
 
-/* Sports betting note block (mirrors paper styling) */
-.mb-sports{margin:6px 0 14px;}
-.sports-note{font-size:14.5px;}
-
 @media (max-width:680px){
   body{padding:6px 4px 14px;}
   .paper{padding:12px 10px 18px;box-shadow:none;border:0;border-bottom:var(--border-w) solid var(--ink);}

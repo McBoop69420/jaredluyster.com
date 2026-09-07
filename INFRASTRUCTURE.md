@@ -142,9 +142,9 @@ Sports has its own project and its own deploy mechanism; see §4b.
   (calendar), matching every other subdomain's pattern (source lives in the git repo,
   not hand-edited in a deploy scratch directory):
   - [`news/`](news/index.html) — `index.html`, `app.css`, `app.js`, `robots.txt`,
-    and `_worker.js` (the Pages Worker/router — also handles the `/api/feeds` and
-    `/api/odds` proxy endpoints and the calendar.jaredluyster.com hostname routing,
-    so it governs both domains even though it lives under `news/`)
+    and `_worker.js` (the Pages Worker/router — also handles the `/api/feeds`
+    proxy endpoint and the calendar.jaredluyster.com hostname routing, so it
+    governs both domains even though it lives under `news/`)
   - [`calendar/`](calendar/index.html) — `index.html`, `calendar.css`,
     `calendar.js`, `robots.txt` (self-contained month-grid calendar; reads the
     same `/calendar.json` the news shell used to, still served from the deploy
@@ -160,9 +160,28 @@ Sports has its own project and its own deploy mechanism; see §4b.
   repo does nothing live until the next cron run (or a manual `bash
   deploy-pages.sh`, or a manual `wrangler pages deploy`) actually deploys it** —
   there's no git-push-triggered auto-deploy for this project.
-- **Content:** News tab shell auto-refreshes from `edition.json` (regenerated per
-  cron run) plus live RSS (`/api/feeds`) and MLB odds (`/api/odds`), both proxied
-  through `_worker.js`. Calendar page reads `/calendar.json` (hand-edited at
+- **Content — rebuilt 2026-09-06:** the shell is now six tabs, all live, with no
+  edition and no authored content anywhere in the pipeline:
+  - **Local & Weather** — NWS forecast + active alerts (`api.weather.gov`) and
+    the three LFUCG traffic CSVs (`lfucg.github.io/traffic-data`), both fetched
+    **client-side** (those endpoints are CORS-open), plus local headlines.
+  - **National / World / Business / Technology / Science & Health** — real RSS,
+    fetched and merged **server-side** by `/api/feeds` in `_worker.js` (most
+    publishers send no CORS header, so the browser can't read those feeds), each
+    headline tagged with a rough editorial lean.
+
+  What was removed in the same rebuild:
+  - The **Sports & Betting tab** and its MLB value screen — duplicated
+    `sports.jaredluyster.com`, so the screen was *moved* there rather than
+    deleted (see §4b), taking the `/api/odds` route with it. `news/_worker.js`
+    no longer scrapes BetExplorer at all.
+  - The **`edition.json` scaffolding** — `generate.py` stopped producing an
+    edition some time ago, but `app.js` still synthesized a fake edition object
+    to keep retired render paths alive, and `_worker.js` still special-cased
+    `/edition.json`. Both are gone; `app.js` went 714 → 400 lines.
+  - The Calendar tab, already retired when it moved to its own domain.
+
+  Calendar page reads `/calendar.json` (hand-edited at
   `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
   commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`.
@@ -340,10 +359,10 @@ jaredluyster.com/
 │       └── reset_password.html
 ├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
 ├── news/                   # News site shell (Cloudflare Pages project "mcboop-daily": news.jaredluyster.com)
-│   ├── index.html          # News UI shell (reads edition.json via app.js)
+│   ├── index.html          # News UI shell (no edition; every tab is live)
 │   ├── app.css             # News site styles
-│   ├── app.js              # News UI logic (tabs, live weather/feed rendering)
-│   ├── _worker.js          # Pages Worker: routes calendar.jaredluyster.com to /calendar/*, proxies /api/feeds + /api/odds
+│   ├── app.js              # News UI logic (tabs, live weather/traffic/feed rendering)
+│   ├── _worker.js          # Pages Worker: routes calendar.jaredluyster.com to /calendar/*, proxies /api/feeds
 │   └── robots.txt
 ├── sports/                 # Sports scoreboard site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com
 │   ├── index.html
@@ -401,7 +420,7 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
-| `news.jaredluyster.com` | McBoop newspaper | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
+| `news.jaredluyster.com` | McBoop newspaper (live weather, traffic & headlines) | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
 | `sports.jaredluyster.com` | McBoop Sports (live scores, paper bets, MLB value screen) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
