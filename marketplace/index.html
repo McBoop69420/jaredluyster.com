@@ -246,7 +246,6 @@
         .listing {
             border: 1.5px dashed var(--border);
             border-radius: 4px;
-            background: var(--surface);
             overflow: hidden;
             transition: border-color 120ms, transform 120ms;
             display: flex;
@@ -260,7 +259,6 @@
         .listing-img-wrap {
             position: relative;
             aspect-ratio: 488 / 680;
-            background: #111;
             overflow: hidden;
             border-radius: 4.5%;
         }
@@ -298,17 +296,17 @@
             height: 100%;
             object-fit: cover;
             display: block;
-            transform: scale(1.08);
+            transform: scale(1.02);
             transition: transform 120ms;
         }
 
-        .listing:nth-child(4n+1) .listing-img-wrap img { transform: scale(1.08) rotate(-1deg); }
-        .listing:nth-child(4n+2) .listing-img-wrap img { transform: scale(1.08) rotate(0.8deg); }
-        .listing:nth-child(4n+3) .listing-img-wrap img { transform: scale(1.08) rotate(-0.6deg); }
-        .listing:nth-child(4n+4) .listing-img-wrap img { transform: scale(1.08) rotate(1.2deg); }
+        .listing:nth-child(4n+1) .listing-img-wrap img { transform: scale(1.02) rotate(-1deg); }
+        .listing:nth-child(4n+2) .listing-img-wrap img { transform: scale(1.02) rotate(0.8deg); }
+        .listing:nth-child(4n+3) .listing-img-wrap img { transform: scale(1.02) rotate(-0.6deg); }
+        .listing:nth-child(4n+4) .listing-img-wrap img { transform: scale(1.02) rotate(1.2deg); }
 
         .listing:hover .listing-img-wrap img {
-            transform: scale(1.08) rotate(0deg);
+            transform: scale(1.02) rotate(0deg);
         }
 
         /* Missing image placeholder */
@@ -374,6 +372,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: var(--surface);
         }
 
         .listing-name {
