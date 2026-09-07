@@ -310,3 +310,28 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   .division-head{font-size:11px}
   .conference-head{font-size:14px}
 }
+
+/* ---- MLB Value Screen (model vs market) --------------------------------
+   Moved over from The McBoop Daily's Sports tab. Market lines come from the
+   /api/odds route in _worker.js; the model is computed in-browser from
+   statsapi.mlb.com. Styled to match .paper-bets above it. */
+.value-screen{margin:0 0 24px;border:2px solid var(--ink);background:var(--paper);box-shadow:6px 6px 0 var(--accent);padding:14px}
+.value-screen-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px}
+.value-screen-kicker{display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.value-screen h2{font-family:var(--font-display);font-size:24px;line-height:1;margin:8px 0 0;text-transform:uppercase;letter-spacing:-.01em}
+.value-screen-meta{font-family:var(--font-display);font-size:11px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.value-slate-wrap{overflow-x:auto;margin-top:10px}
+table.value-slate{width:100%;border-collapse:collapse;font-size:.9rem;font-family:var(--font-body)}
+table.value-slate th{text-align:left;font-size:.68rem;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:2px solid var(--ink);white-space:nowrap}
+table.value-slate td{padding:7px 10px;border-bottom:1px dotted var(--ink);vertical-align:top;white-space:nowrap}
+table.value-slate tr.value-starters td{padding:0 10px 8px;border-bottom:1px dotted var(--ink);white-space:normal}
+.value-note{color:var(--muted);font-size:.82rem;font-weight:400}
+.value-empty{color:var(--muted);font-style:italic;white-space:normal}
+.edge-hot{color:#1b8a3f;font-weight:700}
+.call{display:inline-block;padding:2px 8px;border:1px solid var(--ink);font-family:var(--font-body);font-size:.76rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.call--value{background:#e3f3ea;color:#1b8a3f}
+.call--fade{background:#fdeaea;color:var(--live)}
+.call--check{background:var(--highlight);color:#8a6414}
+.call--none{background:var(--card);color:var(--muted)}
+.value-legend{margin:10px 0 0;font-size:.78rem;color:var(--muted);line-height:1.9}
+.value-legend .call{margin-right:4px}

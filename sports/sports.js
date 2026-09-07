@@ -84,11 +84,14 @@
   let liveTimer = null;
   let discoveryTimer = null;
   let standingsTimer = null;
+  let valueTimer = null;
   let scoresRefreshInFlight = false;
   let paperBetsData = null;
   let paperBetsLoadError = false;
   let paperBetHistoryFilter = "all";
   let paperBetHistorySearch = "";
+  let valueScreen = null;          // { games: [...], fetchedAt } for today (ET)
+  let valueScreenLoading = false;
   const gamesByLeague = new Map();
   const paperBetMarkets = new Map();
   const paperBetMarketRequests = new Map();
@@ -1370,6 +1373,7 @@
     if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
     renderSpotlight();
     renderPaperBets();
+    renderValueScreen();
     refreshPaperBetMarkets(false);
     stamp();
   }
@@ -1399,12 +1403,271 @@
         // the user switches back to "All".
         const bets = $("#paperBets");
         if (bets) bets.style.display = key === "all" ? "" : "none";
+        renderValueScreen();
+        loadValueScreen();
         render();
       });
       return b;
     };
     nav.appendChild(mk("all", "All", true));
     LEAGUES.forEach(l => nav.appendChild(mk(l.key, l.label, false)));
+  }
+
+  // ---- MLB Value Screen (model vs market) -------------------------------
+  // Moved here from The McBoop Daily when its Sports tab was retired — this is
+  // now the only place the screen exists. Market lines come from /api/odds
+  // (the BetExplorer proxy in _worker.js, since the browser can't fetch
+  // betexplorer.com). The model is computed IN THE BROWSER from
+  // statsapi.mlb.com (CORS-open): the same v2 starter-adjusted model the agent
+  // runs at paper time (scripts/daily_mlb_model.py in the live-sports-feeds
+  // skill), so the screen and the paper bets above it agree by construction.
+  const STATS = "https://statsapi.mlb.com/api/v1";
+  const VALUE_REFRESH_MS = 6 * 60 * 1000;
+  const HOME_ADJ = 4.0;   // points added to the home team's model%
+  const EDGE_MIN = 4.0;   // points of edge required to call VALUE/FADE
+  const CHECK_GAP = 10.0; // |edge| above this -> CHECK (model blind spot)
+  const MIN_IP = 20.0;    // starter needs this many IP before RA9 is trusted
+  const pitcherRa9Cache = new Map();
+
+  async function fetchJSON(url) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) {
+      return null;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  function r1(x) { return Math.round(x * 10) / 10; }
+
+  function etTodayStr() {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date());
+    } catch (e) {
+      const d = new Date();
+      const p2 = n => (n < 10 ? "0" : "") + n;
+      return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+    }
+  }
+
+  // Season Pythagorean win expectancy — the v1 fallback used when a probable
+  // starter is unannounced or hasn't thrown MIN_IP yet.
+  function pyth(rs, ra) {
+    if (!rs || !ra) return null;
+    return 1.0 / (1.0 + Math.pow(ra / rs, 1.83));
+  }
+
+  async function pitcherRa9(pid) {
+    if (pitcherRa9Cache.has(pid)) return pitcherRa9Cache.get(pid);
+    let ra9 = null;
+    const d = await fetchJSON(STATS + "/people/" + pid +
+      "/stats?stats=season&group=pitching&season=" + new Date().getFullYear() +
+      "&sportId=1&gameType=R");
+    try {
+      const splits = (d && d.stats && d.stats[0] && d.stats[0].splits) || [];
+      if (splits.length) {
+        const st = splits[0].stat || {};
+        const ip = parseFloat(st.inningsPitched);
+        if (isFinite(ip) && ip >= MIN_IP) {
+          const runs = st.runs != null ? st.runs : st.earnedRuns;
+          if (runs != null) ra9 = runs * 9.0 / ip;
+        }
+      }
+    } catch (e) {
+      ra9 = null;
+    }
+    pitcherRa9Cache.set(pid, ra9);
+    return ra9;
+  }
+
+  // Full v2 screen for today (ET): market from /api/odds, model from statsapi.
+  async function computeValueScreen() {
+    const today = etTodayStr();
+    const year = today.slice(0, 4);
+    const [sched, stand, odds] = await Promise.all([
+      fetchJSON(STATS + "/schedule?sportId=1&date=" + today + "&hydrate=team,probablePitcher"),
+      fetchJSON(STATS + "/standings?leagueId=103,104&season=" + year + "&standingsTypes=regularSeason"),
+      fetchJSON("/api/odds?date=" + today),
+    ]);
+
+    const stMap = {};
+    let rsTot = 0, gTot = 0;
+    ((stand && stand.records) || []).forEach(rec => (rec.teamRecords || []).forEach(tr => {
+      const team = tr.team || {};
+      stMap[team.id] = { rs: tr.runsScored, ra: tr.runsAllowed, g: tr.gamesPlayed };
+      if (tr.runsScored && tr.gamesPlayed) { rsTot += tr.runsScored; gTot += tr.gamesPlayed; }
+    }));
+    const lg9 = gTot ? rsTot / gTot : 4.50;
+
+    const board = {};
+    ((odds && odds.games) || []).forEach(g => {
+      const k = g.away + "|" + g.home;
+      if (!(k in board)) board[k] = g;
+    });
+
+    const games = [];
+    for (const day of (sched && sched.dates) || []) {
+      for (const g of day.games || []) {
+        const a = g.teams.away, h = g.teams.home;
+        const at = a.team || {}, ht = h.team || {};
+        const gd = g.gameDate || "";
+        const row = {
+          away: at.name || "", home: ht.name || "",
+          awayAbbr: at.abbreviation || "", homeAbbr: ht.abbreviation || "",
+          time: gd ? new Date(gd).toLocaleTimeString("en-US",
+            { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "",
+          awaySt: (a.probablePitcher && { id: a.probablePitcher.id, name: a.probablePitcher.fullName }) || null,
+          homeSt: (h.probablePitcher && { id: h.probablePitcher.id, name: h.probablePitcher.fullName }) || null,
+        };
+
+        const mkt = board[row.away + "|" + row.home];
+        if (!mkt) { row.call = "NO MARKET LINE"; games.push(row); continue; }
+        row.away_ml = mkt.away_ml;
+        row.home_ml = mkt.home_ml;
+
+        // De-vig the market into a fair pair that sums to 100%.
+        const aF = mkt.away_implied_pct, hF = mkt.home_implied_pct;
+        const awayFair = aF / (aF + hF) * 100;
+        row.awayFair = r1(awayFair);
+        row.homeFair = r1(100 - awayFair);
+
+        const sa = stMap[at.id] || {}, sh = stMap[ht.id] || {};
+        const ar = row.awaySt ? await pitcherRa9(row.awaySt.id) : null;
+        const hr = row.homeSt ? await pitcherRa9(row.homeSt.id) : null;
+        let awayModel, homeModel;
+        if (ar != null && hr != null && sa.rs && sh.rs && sa.g && sh.g) {
+          // v2: matchup-adjusted expected runs (mirrored pair, sums to 100%)
+          const awayExp = (sa.rs / sa.g) * (hr / lg9);
+          const homeExp = (sh.rs / sh.g) * (ar / lg9);
+          const pA = 1.0 / (1.0 + Math.pow(homeExp / awayExp, 1.83));
+          awayModel = pA * 100 - HOME_ADJ;
+          homeModel = (1 - pA) * 100 + HOME_ADJ;
+          row.adj = {
+            away: row.awaySt.name, awayRa9: r1(ar),
+            home: row.homeSt.name, homeRa9: r1(hr), lg: r1(lg9),
+          };
+        } else {
+          // v1 fallback: independent season Pythagorean per team
+          const ap = pyth(sa.rs, sa.ra), hp = pyth(sh.rs, sh.ra);
+          if (ap == null || hp == null) { row.call = "NO MODEL"; games.push(row); continue; }
+          awayModel = ap * 100 - HOME_ADJ;
+          homeModel = hp * 100 + HOME_ADJ;
+        }
+
+        const awayEdge = r1(awayModel - row.awayFair);
+        const homeEdge = r1(homeModel - row.homeFair);
+        let call;
+        if (Math.max(Math.abs(awayEdge), Math.abs(homeEdge)) >= CHECK_GAP) call = "CHECK";
+        else if (awayEdge >= EDGE_MIN) call = "VALUE " + row.awayAbbr;
+        else if (homeEdge >= EDGE_MIN) call = "VALUE " + row.homeAbbr;
+        else if (awayEdge <= -EDGE_MIN) call = "FADE " + row.awayAbbr;
+        else if (homeEdge <= -EDGE_MIN) call = "FADE " + row.homeAbbr;
+        else call = "NO EDGE";
+
+        row.awayModel = r1(awayModel);
+        row.homeModel = r1(homeModel);
+        row.awayEdge = awayEdge;
+        row.homeEdge = homeEdge;
+        row.call = call;
+        games.push(row);
+      }
+    }
+    return games;
+  }
+
+  function callClass(call) {
+    if (call.indexOf("VALUE") === 0) return "call--value";
+    if (call.indexOf("FADE") === 0) return "call--fade";
+    if (call === "CHECK") return "call--check";
+    return "call--none";
+  }
+
+  function valueSlateRowsHtml() {
+    const games = valueScreen && valueScreen.games;
+    if (!games) {
+      return '<tr><td colspan="6" class="value-empty">' +
+        (valueScreenLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
+        "</td></tr>";
+    }
+    if (!games.length) {
+      return '<tr><td colspan="6" class="value-empty">No MLB games scheduled today.</td></tr>';
+    }
+    // Biggest disagreement with the market first — that is the whole point.
+    const sorted = games.slice().sort((x, y) =>
+      Math.max(Math.abs(y.awayEdge || 0), Math.abs(y.homeEdge || 0)) -
+      Math.max(Math.abs(x.awayEdge || 0), Math.abs(x.homeEdge || 0)));
+
+    return sorted.map(r => {
+      const match = "<strong>" + esc(r.awayAbbr) + " @ " + esc(r.homeAbbr) + "</strong>" +
+        (r.time ? ' <span class="value-note">' + esc(r.time) + "</span>" : "");
+      if (!r.away_ml) {
+        return "<tr><td>" + match + '</td><td colspan="4" class="value-note">no market line yet</td>' +
+          '<td><span class="call call--none">' + esc(r.call) + "</span></td></tr>";
+      }
+      const hot = Math.max(Math.abs(r.awayEdge || 0), Math.abs(r.homeEdge || 0)) >= EDGE_MIN;
+      let html = "<tr>" +
+        "<td>" + match + "</td>" +
+        "<td>" + esc(r.away_ml) + "/" + esc(r.home_ml) + "</td>" +
+        "<td>" + esc(r.awayFair) + "/" + esc(r.homeFair) + "</td>" +
+        "<td>" + esc(r.awayModel) + "/" + esc(r.homeModel) + "</td>" +
+        '<td class="' + (hot ? "edge-hot" : "") + '">' + esc(r.awayEdge) + "/" + esc(r.homeEdge) + "</td>" +
+        '<td><span class="call ' + callClass(r.call) + '">' + esc(r.call) + "</span></td>" +
+        "</tr>";
+      html += '<tr class="value-starters"><td colspan="6"><span class="value-note">' + (r.adj
+        ? "starters: " + esc(r.adj.away) + " RA9 " + esc(r.adj.awayRa9) + " vs " +
+          esc(r.adj.home) + " RA9 " + esc(r.adj.homeRa9) + " (lg " + esc(r.adj.lg) + ")"
+        : "starters: one/both TBA or &lt;" + MIN_IP + " IP &middot; v1 fallback") +
+        "</span></td></tr>";
+      return html;
+    }).join("");
+  }
+
+  // The screen is MLB-only, so it rides along with the "All" and MLB filters
+  // and hides for every other league — the same rule the paper-bets panel uses.
+  function valueScreenVisible() {
+    return activeFilter === "all" || activeFilter === "baseball/mlb";
+  }
+
+  function renderValueScreen() {
+    const panel = $("#valueScreen");
+    if (!panel) return;
+    const visible = valueScreenVisible();
+    panel.style.display = visible ? "" : "none";
+    if (!visible) return;
+
+    $("#valueSlateBody").innerHTML = valueSlateRowsHtml();
+    const meta = $("#valueScreenMeta");
+    const games = valueScreen && valueScreen.games;
+    if (!games) {
+      meta.textContent = valueScreenLoading ? "Loading slate…" : "Slate unavailable";
+      return;
+    }
+    const priced = games.filter(g => g.away_ml).length;
+    const calls = games.filter(g => g.call &&
+      (g.call.indexOf("VALUE") === 0 || g.call.indexOf("FADE") === 0)).length;
+    meta.textContent = games.length + " games · " + priced + " priced · " + calls + " calls";
+  }
+
+  async function loadValueScreen() {
+    if (valueScreenLoading || !valueScreenVisible()) return;
+    valueScreenLoading = true;
+    renderValueScreen();
+    try {
+      const games = await computeValueScreen();
+      valueScreen = { games, fetchedAt: Date.now() };
+    } catch (e) {
+      // Keep showing the last good slate rather than blanking the panel.
+    } finally {
+      valueScreenLoading = false;
+    }
+    renderValueScreen();
   }
 
   // ---- Adaptive score refresh -------------------------------------------
@@ -1445,6 +1708,15 @@
   async function refreshAllScores() {
     await Promise.all([refreshScores(filteredLeagues()), loadPaperBets()]);
     await refreshPaperBetMarkets(true);
+  }
+
+  // Odds and season stats move on the order of minutes, not seconds, so the
+  // value screen gets its own slow timer rather than riding the score loops.
+  function scheduleValueScreenRefresh() {
+    if (valueTimer) clearInterval(valueTimer);
+    valueTimer = setInterval(() => {
+      if (!document.hidden) loadValueScreen();
+    }, VALUE_REFRESH_MS);
   }
 
   // Live games get rapid, scoreboard-only updates. The slower full render
@@ -1492,15 +1764,17 @@
       renderPaperBetHistory();
     });
     $("#refreshBtn").addEventListener("click", async () => {
-      await Promise.all([loadPaperBets(), render()]);
+      await Promise.all([loadPaperBets(), render(), loadValueScreen()]);
       await refreshPaperBetMarkets(true);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
     });
     loadPaperBets();
+    loadValueScreen();
     render();
     scheduleRefresh();
+    scheduleValueScreenRefresh();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

@@ -6,10 +6,11 @@
 <meta name="description" content="McBoop's live scoreboards and standings for the leagues I follow — MLB, MLS, Liga MX, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem, Super Lig, NWSL, USL, NFL.">
 <title>McBoop Sports — Live</title>
 <link rel="preconnect" href="https://site.api.espn.com">
+<link rel="preconnect" href="https://statsapi.mlb.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sports.css?v=44">
+<link rel="stylesheet" href="/sports.css?v=45">
 </head>
 <body>
 <article class="paper">
@@ -90,12 +91,38 @@
     </section>
   </section>
 
+  <section class="value-screen" id="valueScreen" aria-labelledby="valueScreenTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Model vs market</div>
+        <h2 id="valueScreenTitle">MLB Value Screen</h2>
+      </div>
+      <div class="value-screen-meta" id="valueScreenMeta">Loading slate&hellip;</div>
+    </header>
+    <div class="value-slate-wrap">
+      <table class="value-slate">
+        <thead>
+          <tr><th>Match (ET)</th><th>ML</th><th>Fair %</th><th>Model %</th><th>Edge</th><th>Call</th></tr>
+        </thead>
+        <tbody id="valueSlateBody">
+          <tr><td colspan="6" class="value-empty">Loading live slate&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">
+      <span class="call call--value">Value</span> model edge &ge; +4 &middot;
+      <span class="call call--fade">Fade</span> edge &le; &minus;4 &middot;
+      <span class="call call--check">Check</span> |edge| &ge; 10 (model blind spot) &middot;
+      odds BetExplorer &middot; model MLB stats, starter-adjusted &middot; edge = model% &minus; fair%
+    </p>
+  </section>
+
   <main id="board" class="board" aria-live="polite"></main>
 
   <footer class="colophon">
     <p>Live data from ESPN. Scores and standings refresh automatically; times shown in Eastern (ET).</p>
   </footer>
 </article>
-<script src="/sports.js?v=48"></script>
+<script src="/sports.js?v=49"></script>
 </body>
 </html>
