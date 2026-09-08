@@ -149,17 +149,30 @@ Sports has its own project and its own deploy mechanism; see §4b.
     `calendar.js`, `robots.txt` (self-contained month-grid calendar; reads the
     same `/calendar.json` the news shell used to, still served from the deploy
     root — see below)
-- **Deploy pipeline:** two Hermes cron jobs (`McBoop Daily — Morning` 7:30a,
-  `McBoop Daily — Evening` 8p, defined inside the Hermes session — only fire if
-  Hermes is open) run `cd "C:\Users\Jared\McBoop Newspaper" && python3 generate.py
-  edition.md && bash deploy-pages.sh`. `deploy-pages.sh` copies the shell fresh
-  from this repo's `news/` and `calendar/` into a local `public/` staging dir,
-  layers in generated data (`edition.json`, `calendar.json`, `archive/` gallery),
-  then runs `wrangler pages deploy public --project-name mcboop-daily` (token in
-  `~/.config/cloudflare_pages_token.txt`). **Editing `news/` or `calendar/` in this
-  repo does nothing live until the next cron run (or a manual `bash
-  deploy-pages.sh`, or a manual `wrangler pages deploy`) actually deploys it** —
-  there's no git-push-triggered auto-deploy for this project.
+- **Deploy pipeline — moved off Hermes cron to a Windows Scheduled Task,
+  2026-09-08.** Task `McBoop Daily Deploy` runs `McBoop Newspaper/deploy-pages.sh`
+  every 15 minutes (not just twice a day — deliberately short so a `news/` or
+  `calendar/` shell edit goes live within minutes without a manual trigger).
+  `deploy-pages.sh` copies the shell fresh from this repo's `news/` and
+  `calendar/` into a local `public/` staging dir, layers in `calendar.json` and
+  the frozen `archive/` gallery (both private data that must never be committed
+  to this public repo — see below), runs `push-ledger.sh` (see the ledger bullet
+  below), then `wrangler pages deploy public --project-name mcboop-daily` (token
+  in `~/.config/cloudflare_pages_token.txt`) and its own post-deploy verification.
+  Same `LogonType=Interactive` requirement as `McBoop Ledger Push` (git push needs
+  the logged-on user's credential store), so it does not fire while logged out.
+  Most runs ship byte-identical content — the script has no generation step left
+  to skip (see below), so it is cheap and safe to over-run; `wrangler pages
+  deploy` and the ledger push are both idempotent/no-op when nothing changed.
+  This is *why* the interval can be this short without git-integrating the
+  project directly (which was considered and rejected — see below): the private
+  `calendar.json`/`archive/` data has to be layered in locally by this script,
+  something a Cloudflare-side git build could never do since it only sees what's
+  actually committed to the public repo. **Editing `news/` or `calendar/` in this
+  repo goes live on the next scheduled run (within 15 min), or immediately via a
+  manual `bash deploy-pages.sh` / `Start-ScheduledTask -TaskName "McBoop Daily
+  Deploy"`** — there's still no git-push-triggered auto-deploy for this project,
+  and (unlike `mcboop-sports`, §4b) there deliberately can't be one.
 - **Content — rebuilt 2026-09-06:** the shell is now six tabs, all live, with no
   edition and no authored content anywhere in the pipeline:
   - **Local & Weather** — NWS forecast + active alerts (`api.weather.gov`) and
@@ -185,23 +198,23 @@ Sports has its own project and its own deploy mechanism; see §4b.
   `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
   commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`.
-- **The cron schedule is dormant — measured 2026-09-08.** The twice-daily jobs
-  above have not actually fired in about a month, which the "only fire if Hermes
-  is open" caveat explains. Evidence by mtime: `edition.md` last written
-  2026-07-30, `the-mcboop-daily.html` 2026-07-30, newest archive snapshot
-  `2026-08-10-morning`. Treat this pipeline as **effectively manual** — a change
-  to `news/` or `calendar/` in this repo goes live when someone runs
-  `bash deploy-pages.sh`, not on a schedule. (`generate.py` itself still exits
-  0, so the `&&` chain was never the thing that broke.)
+- **The Hermes cron jobs were retired 2026-09-08** in favor of the Scheduled
+  Task above. They had gone dormant anyway — the twice-daily jobs (`McBoop Daily
+  — Morning` 7:30a, `McBoop Daily — Evening` 8p, `cd "C:\Users\Jared\McBoop
+  Newspaper" && python3 generate.py edition.md && bash deploy-pages.sh`) had not
+  actually fired in about a month as of that date, since they only fire while
+  Hermes is open. (`generate.py`'s `edition.md` argument was already dead by
+  then too — see below — so nothing of value was lost by dropping it from the
+  command.) **These two jobs must still be deleted from inside the Hermes
+  session itself** — that config isn't a file this repo or its tooling can
+  reach, so it wasn't possible to remove them as part of this migration.
 
-  Since the 2026-09-06 rebuild this matters much less than it used to: the shell
-  renders every tab live in the browser, so it does not need periodic
-  redeploying — only a redeploy when the UI itself changes. The one job that
-  still genuinely wants a schedule is the paper-bet ledger push
-  (`export_betting_tracker.py` -> `sports/fake-bets.json` -> commit -> push ->
-  mcboop-sports redeploy), which is currently only refreshed by a manual run.
-  A Windows Scheduled Task would be the reliable home for that, since it does
-  not depend on a Hermes session being open.
+  Since the 2026-09-06 rebuild this matters much less than it used to anyway:
+  the shell renders every tab live in the browser, so *content* freshness never
+  depended on redeploy cadence — only a redeploy when the UI itself changes.
+  What actually motivated moving to a 15-minute Scheduled Task instead of a
+  twice-daily one was wanting shell edits to go live quickly without a manual
+  step, not any content-generation need.
 - **Ledger push is now a Windows Scheduled Task — added 2026-09-08.** Task
   `McBoop Ledger Push`, daily 7:30a + 8:00p, runs
   `McBoop Newspaper/push-ledger.sh`: regenerate `sports/fake-bets.json` from the
@@ -514,10 +527,11 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
   GitHub Pages/Render above — Cloudflare's own GitHub integration builds directly
   from this repo using each project's configured root directory.
 - **Cloudflare Pages, Wrangler-CLI deployed (News + Calendar):** NOT triggered by
-  `git push` — only by `deploy-pages.sh` (Hermes cron, twice daily) or a manual
-  `wrangler pages deploy`, run from the separate `McBoop Newspaper` directory.
-  Pushing changes to `news/` or `calendar/` in this repo does nothing live on its
-  own.
+  `git push` — only by `deploy-pages.sh` (Windows Scheduled Task `McBoop Daily
+  Deploy`, every 15 min — see §4) or a manual `wrangler pages deploy`, run from
+  the separate `McBoop Newspaper` directory. Pushing changes to `news/` or
+  `calendar/` in this repo does nothing live on its own until that next
+  scheduled run picks them up.
 
 ### Git workflow
 - Working copy: `%USERPROFILE%\Documents\jaredluyster.com` (active)
