@@ -185,6 +185,32 @@ Sports has its own project and its own deploy mechanism; see §4b.
   `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
   commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`.
+- **The cron schedule is dormant — measured 2026-09-08.** The twice-daily jobs
+  above have not actually fired in about a month, which the "only fire if Hermes
+  is open" caveat explains. Evidence by mtime: `edition.md` last written
+  2026-07-30, `the-mcboop-daily.html` 2026-07-30, newest archive snapshot
+  `2026-08-10-morning`. Treat this pipeline as **effectively manual** — a change
+  to `news/` or `calendar/` in this repo goes live when someone runs
+  `bash deploy-pages.sh`, not on a schedule. (`generate.py` itself still exits
+  0, so the `&&` chain was never the thing that broke.)
+
+  Since the 2026-09-06 rebuild this matters much less than it used to: the shell
+  renders every tab live in the browser, so it does not need periodic
+  redeploying — only a redeploy when the UI itself changes. The one job that
+  still genuinely wants a schedule is the paper-bet ledger push
+  (`export_betting_tracker.py` -> `sports/fake-bets.json` -> commit -> push ->
+  mcboop-sports redeploy), which is currently only refreshed by a manual run.
+  A Windows Scheduled Task would be the reliable home for that, since it does
+  not depend on a Hermes session being open.
+- **The pipeline directory is a git repo as of 2026-09-08.**
+  `C:\Users\Jared\McBoop Newspaper\` held `deploy-pages.sh`,
+  `export_betting_tracker.py`, `generate.py`, `jsonize.py`, `archive.py`,
+  `serve.py`, `verify-live.sh` and 161 archived editions with no version control
+  at all. It is now an initialised repo (673 files tracked, `public/*` and the
+  regenerable caches ignored, `public/calendar.json` tracked as the exception
+  since it is hand-edited and the only copy). **Deliberately local — no remote.**
+  That tree contains a real commitments calendar and personal betting-ledger
+  exports; a public remote would leak both.
 - **Access control — news:** Behind **Cloudflare Access** (redirects to
   `quiet-frost-ed57.cloudflareaccess.com` login).
 - **Post-deploy verification — corrected 2026-09-06.** This section used to say
