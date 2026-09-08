@@ -850,7 +850,14 @@
       return wrap;
     }
 
-    return standingsRowsTable(blocks[0], league);
+    // Single-table leagues (every soccer league, WNBA, NWSL...) still need the
+    // .standings-division wrapper, not just the division path above: that class
+    // is what carries overflow-x:auto, and table.stand has a min-width at the
+    // narrow breakpoints. Returned bare, the table pushed the whole document
+    // wider than the viewport on phones instead of scrolling within itself.
+    const soloBox = el("div", "standings-division");
+    soloBox.appendChild(standingsRowsTable(blocks[0], league));
+    return soloBox;
   }
 
   // ---- Playoff / qualification implications (Spotlight "biggest games") --
