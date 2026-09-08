@@ -202,6 +202,18 @@ Sports has its own project and its own deploy mechanism; see §4b.
   mcboop-sports redeploy), which is currently only refreshed by a manual run.
   A Windows Scheduled Task would be the reliable home for that, since it does
   not depend on a Hermes session being open.
+- **Ledger push is now a Windows Scheduled Task — added 2026-09-08.** Task
+  `McBoop Ledger Push`, daily 7:30a + 8:00p, runs
+  `McBoop Newspaper/push-ledger.sh`: regenerate `sports/fake-bets.json` from the
+  Obsidian tracker, and commit+push it to `main` only if it actually changed
+  (which redeploys `mcboop-sports`). `deploy-pages.sh` calls the same script, so
+  there is one implementation. Logs to `McBoop Newspaper/push-ledger.log`.
+  **It must run as the logged-on user** (`LogonType=Interactive`) because git
+  here uses `credential.helper=manager`, which reads the logged-on user's
+  Windows credential store — a "run whether user is logged on or not" task
+  cannot authenticate the push. It therefore does not fire while logged out.
+  Verified in the Task Scheduler context (not just from a shell) on both the
+  no-op and the push path, each returning result 0.
 - **The pipeline directory is a git repo as of 2026-09-08.**
   `C:\Users\Jared\McBoop Newspaper\` held `deploy-pages.sh`,
   `export_betting_tracker.py`, `generate.py`, `jsonize.py`, `archive.py`,
