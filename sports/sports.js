@@ -40,7 +40,7 @@
       playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }] },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
-    { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool"],                standings: "overall",
+    { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
@@ -76,7 +76,7 @@
   // display-name variants (e.g. "Lexington SC" vs "Lexington Sporting Club").
   const MY_PATTERNS = [
     "cincinnati reds", "fc cincinnati", "racing louisville", "lexington",
-    "liverpool", "cincinnati bengals", "kentucky wildcats", "louisville cardinals",
+    "liverpool", "arsenal", "cincinnati bengals", "kentucky wildcats", "louisville cardinals",
   ].map(s => s.toLowerCase());
 
   const LIVE_SCORE_REFRESH_MS = 5 * 1000;       // current live games: near pitch-by-pitch
