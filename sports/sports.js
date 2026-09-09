@@ -98,15 +98,9 @@
   let standingsTimer = null;
   let valueTimer = null;
   let scoresRefreshInFlight = false;
-  let paperBetsData = null;
-  let paperBetsLoadError = false;
-  let paperBetHistoryFilter = "all";
-  let paperBetHistorySearch = "";
   let valueScreen = null;          // { games: [...], fetchedAt } for today (ET)
   let valueScreenLoading = false;
   const gamesByLeague = new Map();
-  const paperBetMarkets = new Map();
-  const paperBetMarketRequests = new Map();
   const detailedBoxScoreCache = new Map();
   const openDetailedBoxScores = new Set();
 
@@ -126,113 +120,6 @@
     if (!name) return false;
     const n = name.toLowerCase();
     return MY_PATTERNS.some(p => n.indexOf(p) !== -1);
-  }
-
-  // ---- Live paper-bet grading -------------------------------------------
-  function normalizedTeamName(value) {
-    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  }
-  function teamMatchesSelection(team, selection) {
-    const pick = normalizedTeamName(selection);
-    if (!pick || !team) return false;
-    const names = [team.name, team.abbr].map(normalizedTeamName).filter(Boolean);
-    return names.some(name => name === pick || name.includes(pick) || pick.includes(name));
-  }
-  function americanLineWinUnits(line, stake) {
-    const odds = Number(String(line || "").replace(/[^0-9+.-]/g, ""));
-    const units = Number.parseFloat(stake) || 1;
-    if (!Number.isFinite(odds) || odds === 0) return null;
-    const profit = odds > 0 ? units * odds / 100 : units * 100 / Math.abs(odds);
-    return Math.round(profit * 100) / 100;
-  }
-  function formatAmericanOdds(value) {
-    const raw = String(value == null ? "" : value).trim().toUpperCase();
-    if (!raw) return null;
-    if (raw === "OFF" || raw === "SUSPENDED") return "OFF";
-    const odds = Number(raw.replace(/[^0-9+.-]/g, ""));
-    if (!Number.isFinite(odds) || odds === 0) return null;
-    return (odds > 0 ? "+" : "") + String(odds);
-  }
-  function americanImpliedPercent(value) {
-    const odds = Number(String(value == null ? "" : value).replace(/[^0-9+.-]/g, ""));
-    if (!Number.isFinite(odds) || odds === 0) return null;
-    const probability = odds > 0 ? 100 / (odds + 100) : Math.abs(odds) / (Math.abs(odds) + 100);
-    return Math.round(probability * 1000) / 10;
-  }
-  function parsePaperBetMarket(summary, bet, game) {
-    if (!summary || !bet || !game || bet.marketType !== "moneyline") return null;
-    const pickedSide = teamMatchesSelection(game.away, bet.selection) ? "away"
-      : teamMatchesSelection(game.home, bet.selection) ? "home" : null;
-    if (!pickedSide) return null;
-    const market = (summary.pickcenter || []).find(item => item && item.moneyline);
-    if (!market) return null;
-    const sideMarket = (market.moneyline && market.moneyline[pickedSide]) || {};
-    const phase = game.state === "in" ? "live" : game.state === "post" ? "close" : "current";
-    const price = phase === "live" ? sideMarket.live : sideMarket.close;
-    const odds = formatAmericanOdds(price && price.odds);
-
-    let winProbability = null;
-    const probabilities = summary.winprobability || [];
-    const latest = probabilities.length ? probabilities[probabilities.length - 1] : null;
-    if (latest && Number.isFinite(Number(latest.homeWinPercentage))) {
-      const home = Number(latest.homeWinPercentage);
-      const tie = Number(latest.tiePercentage) || 0;
-      const picked = pickedSide === "home" ? home : Math.max(0, 1 - home - tie);
-      winProbability = Math.round(picked * 1000) / 10;
-    } else if (game.state === "pre" && summary.predictor) {
-      const projection = summary.predictor[pickedSide + "Team"]
-        && summary.predictor[pickedSide + "Team"].gameProjection;
-      const parsed = Number(projection);
-      if (Number.isFinite(parsed)) winProbability = Math.round(parsed * 10) / 10;
-    }
-    if (!odds && winProbability == null) return null;
-    return {
-      provider: (market.provider && market.provider.name) || "Sportsbook",
-      phase,
-      odds,
-      impliedPercent: americanImpliedPercent(odds),
-      winProbability,
-    };
-  }
-  function livePaperBetState(bet, game) {
-    const recorded = String(bet.status || "Pending").toLowerCase();
-    if (recorded !== "pending") {
-      const tone = recorded === "win" ? "won" : recorded === "loss" ? "lost" : "push";
-      return { label: bet.status, tone, score: bet.result || "", detail: "Tracker settled", netUnits: Number.parseFloat(bet.netUnits) || 0 };
-    }
-    if (!game) return { label: "Pending", tone: "pending", score: "", detail: "Waiting for game data", netUnits: null };
-    const score = game.away.abbr + " " + game.away.score + "–" + game.home.score + " " + game.home.abbr;
-    if (game.state === "pre") {
-      return { label: "Scheduled", tone: "scheduled", score: "", detail: game.detail || game.statusText || game.startTime || "Scheduled", netUnits: null };
-    }
-    if (bet.marketType !== "moneyline") {
-      return game.state === "post"
-        ? { label: "Awaiting grade", tone: "pending", score, detail: game.detail || game.statusText || "Final", netUnits: null }
-        : { label: "Live", tone: "live", score, detail: game.detail || game.statusText || "In progress", netUnits: null };
-    }
-    const picked = teamMatchesSelection(game.away, bet.selection) ? game.away
-      : teamMatchesSelection(game.home, bet.selection) ? game.home : null;
-    if (!picked) {
-      return { label: game.state === "post" ? "Awaiting grade" : "Live", tone: game.state === "post" ? "pending" : "live", score, detail: game.detail || game.statusText || "", netUnits: null };
-    }
-    const opponent = picked === game.away ? game.home : game.away;
-    const pickedScore = Number(picked.score);
-    const opponentScore = Number(opponent.score);
-    const tied = pickedScore === opponentScore;
-    if (game.state === "post") {
-      if (tied) return { label: "Push", tone: "push", score, detail: game.detail || game.statusText || "Final", netUnits: 0 };
-      const won = pickedScore > opponentScore;
-      return {
-        label: won ? "Won" : "Lost", tone: won ? "won" : "lost", score,
-        detail: game.detail || game.statusText || "Final",
-        netUnits: won ? americanLineWinUnits(bet.line, bet.stake) : -(Number.parseFloat(bet.stake) || 1),
-      };
-    }
-    return {
-      label: tied ? "Tied" : pickedScore > opponentScore ? "Winning" : "Losing",
-      tone: tied ? "tied" : pickedScore > opponentScore ? "winning" : "losing",
-      score, detail: game.detail || game.statusText || "In progress", netUnits: null,
-    };
   }
 
   // ---- Team identification ---------------------------------------------
@@ -1052,297 +939,6 @@
     }
   }
 
-  // ---- Hermes paper-bet tracker -----------------------------------------
-  function sideMatches(full, want) {
-    if (!want || !full) return false;
-    return full.includes(want) || want.includes(full);
-  }
-  function gameForPaperBet(bet) {
-    const allGames = [...gamesByLeague.values()].flat();
-    if (bet.eventId) {
-      const exact = allGames.find(game => String(game.eventId) === String(bet.eventId));
-      if (exact) return exact;
-    }
-    // Fallback: match away + home sides independently so a missing eventId still
-    // resolves. The old path required the whole "Away at Home" string to appear
-    // as a contiguous substring of the full "City Away at City Home" name, which
-    // failed whenever the full name inserts a city between "at" and the team.
-    const parts = String(bet.event || "").split(/\s+at\s+/i);
-    if (parts.length !== 2) return null;
-    const wantAway = normalizedTeamName(parts[0]);
-    const wantHome = normalizedTeamName(parts[1]);
-    return allGames.find(game =>
-      sideMatches(normalizedTeamName(game.away.name), wantAway) &&
-      sideMatches(normalizedTeamName(game.home.name), wantHome)
-    ) || null;
-  }
-
-  function signedUnits(value) {
-    const amount = Math.round((Number(value) || 0) * 100) / 100;
-    return (amount > 0 ? "+" : "") + amount.toFixed(2) + "u";
-  }
-
-  function paperBetMarketText(market) {
-    if (!market) return "Odds unavailable";
-    const provider = market.provider === "DraftKings" ? "DK" : market.provider;
-    const phase = market.phase === "live" ? "LIVE ML" : market.phase === "close" ? "CLOSE ML" : "CURRENT ML";
-    const parts = [provider + " " + phase + " " + (market.odds || "OFF")];
-    if (market.impliedPercent != null) parts.push(market.impliedPercent.toFixed(1) + "% implied");
-    else if (market.winProbability != null) parts.push("ESPN " + market.winProbability.toFixed(1) + "% win");
-    return parts.join(" · ");
-  }
-
-  async function fetchPaperBetMarket(bet, game) {
-    const eventId = String(bet && bet.eventId || "");
-    if (!eventId || !game || bet.marketType !== "moneyline") return null;
-    if (paperBetMarketRequests.has(eventId)) return paperBetMarketRequests.get(eventId);
-    const pending = (async () => {
-      try {
-        const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort(), 8000);
-        const leagueKey = game.leagueKey || "baseball/mlb";
-        const url = ESPN + leagueKey + "/summary?event=" + encodeURIComponent(eventId) + "&_=" + Date.now();
-        const response = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-        clearTimeout(timeout);
-        if (!response.ok) throw new Error("live odds " + response.status);
-        const summary = await response.json();
-        const market = parsePaperBetMarket(summary, bet, game);
-        paperBetMarkets.set(eventId, { market, fetchedAt: Date.now() });
-        return market;
-      } catch (error) {
-        paperBetMarkets.set(eventId, { market: null, fetchedAt: Date.now() });
-        return null;
-      } finally {
-        paperBetMarketRequests.delete(eventId);
-      }
-    })();
-    paperBetMarketRequests.set(eventId, pending);
-    return pending;
-  }
-
-  async function refreshPaperBetMarkets(force) {
-    if (!paperBetsData || document.hidden) return;
-    const jobs = (paperBetsData.openBets || []).map(bet => {
-      const game = gameForPaperBet(bet);
-      const cached = paperBetMarkets.get(String(bet.eventId || ""));
-      if (!game || (cached && game.state === "post") || (cached && !force)) return null;
-      return fetchPaperBetMarket(bet, game);
-    }).filter(Boolean);
-    if (jobs.length) await Promise.allSettled(jobs);
-    renderPaperBets();
-  }
-
-  function settledBetGrade(bet) {
-    const status = String(bet.status || "").trim().toLowerCase();
-    const result = String(bet.result || "").trim().toLowerCase();
-    if (["win", "loss", "push", "void"].includes(status)) return status;
-    if (["win", "loss", "push", "void"].includes(result)) return result;
-    return status || result || "unknown";
-  }
-
-  function settledBetFinal(bet) {
-    const result = String(bet.result || "").trim();
-    if (result && !["win", "loss", "push", "void", "settled"].includes(result.toLowerCase())) return result;
-    const notes = String(bet.sourceNotes || "");
-    const match = notes.match(/ESPN final:\s*(.+?)(?:\s*\(Final\)|\.\s+\d{1,2}\/\d{1,2}|\.$)/i);
-    return match ? match[1].trim() : "See evidence";
-  }
-
-  function renderPaperBetSimulation(bets) {
-    const node = $("#paperBetSimulation");
-    if (!node) return;
-    const stake = 2.5;
-    let profit = 0;
-    let settled = 0;
-    bets.forEach(bet => {
-      const grade = settledBetGrade(bet);
-      const odds = Number.parseFloat(String(bet.line || "").replace(/[^0-9+.-]/g, ""));
-      if (!Number.isFinite(odds) || !["win", "loss", "push", "void"].includes(grade)) return;
-      settled += 1;
-      if (grade === "win") profit += stake * (odds > 0 ? odds / 100 : 100 / Math.abs(odds));
-      if (grade === "loss") profit -= stake;
-    });
-    const funded = settled * stake;
-    const ending = funded + profit;
-    const roi = funded ? profit / funded * 100 : 0;
-    const metrics = [
-      ["Starting deposit", "$" + funded.toFixed(2)],
-      ["Total staked", "$" + funded.toFixed(2)],
-      ["Net profit", (profit >= 0 ? "+" : "−") + "$" + Math.abs(profit).toFixed(2)],
-      ["Ending balance", "$" + ending.toFixed(2) + " (" + (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%)"],
-    ];
-    node.innerHTML = "";
-    metrics.forEach(([label, value], index) => {
-      const wrapper = document.createElement("div");
-      wrapper.appendChild(el("dt", "", label));
-      wrapper.appendChild(el("dd", index > 1 && profit >= 0 ? "positive" : "", value));
-      node.appendChild(wrapper);
-    });
-  }
-
-  function renderPaperBetHistory() {
-    const body = $("#paperBetHistoryBody");
-    const countNode = $("#paperBetHistoryCount");
-    const auditNode = $("#paperBetAudit");
-    if (!body || !countNode || !auditNode || !paperBetsData) return;
-    const bets = paperBetsData.settledBets || [];
-    renderPaperBetSimulation(bets);
-    const audit = paperBetsData.reconciliation || {};
-    auditNode.classList.toggle("paper-bet-audit--warning", !audit.matches);
-    auditNode.textContent = audit.matches
-      ? "Validated: " + audit.rowCount + " unique rows · "
-        + (audit.correctedPayoutRows || 0) + " payouts corrected"
-      : "Publication blocked: ledger validation failed";
-    auditNode.title = paperBetsData.ledgerSha256
-      ? "Ledger SHA-256: " + paperBetsData.ledgerSha256
-      : "";
-
-    const query = paperBetHistorySearch.toLowerCase();
-    const visible = bets.filter(bet => {
-      const grade = settledBetGrade(bet);
-      const gradeMatches = paperBetHistoryFilter === "all"
-        || grade === paperBetHistoryFilter
-        || (paperBetHistoryFilter === "push" && grade === "void");
-      const haystack = [
-        bet.id, bet.dateLogged, bet.sport, bet.event, bet.pick, bet.result, bet.sourceNotes
-      ].join(" ").toLowerCase();
-      return gradeMatches && (!query || haystack.includes(query));
-    });
-    countNode.textContent = "Showing " + visible.length + " of " + bets.length
-      + " settled bets. Every row is exported from the same ledger as the headline.";
-    body.innerHTML = "";
-    visible.forEach(bet => {
-      const grade = settledBetGrade(bet);
-      const row = document.createElement("tr");
-      const date = document.createElement("td");
-      date.appendChild(document.createTextNode(bet.dateLogged || "—"));
-      date.appendChild(el("span", "paper-bet-history-id", esc(bet.id || "")));
-      row.appendChild(date);
-      row.appendChild(el("td", "", esc((bet.pick || "—") + " " + (bet.line || "") + " · " + (bet.stake || ""))));
-      row.appendChild(el("td", "", esc(settledBetFinal(bet))));
-      row.appendChild(el("td", "paper-bet-history-grade paper-bet-history-grade--" + grade, esc(grade)));
-      row.appendChild(el("td", "", esc(bet.netUnits || "—")));
-      const evidence = document.createElement("td");
-      evidence.className = "paper-bet-history-notes";
-      const verification = bet.verification || {};
-      evidence.appendChild(el(
-        "span",
-        verification.status === "score-verified" ? "paper-bet-verified" : "paper-bet-recorded",
-        verification.status === "score-verified" ? "Score verified" : "Evidence recorded"
-      ));
-      if (bet.payoutCorrected) {
-        evidence.appendChild(el("span", "paper-bet-correction", "Payout corrected from recorded odds"));
-      }
-      evidence.appendChild(document.createTextNode(bet.sourceNotes || "No source note recorded"));
-      row.appendChild(evidence);
-      body.appendChild(row);
-    });
-    if (!visible.length) {
-      const row = document.createElement("tr");
-      const cell = el("td", "paper-bet-empty", "No settled bets match these filters.");
-      cell.colSpan = 6;
-      row.appendChild(cell);
-      body.appendChild(row);
-    }
-  }
-
-  function renderPaperBets() {
-    const root = $("#paperBets");
-    const summaryNode = $("#paperBetSummary");
-    const cardNode = $("#paperBetCardSummary");
-    const listNode = $("#paperBetList");
-    if (!root || !summaryNode || !cardNode || !listNode) return;
-    listNode.innerHTML = "";
-    if (!paperBetsData) {
-      root.classList.toggle("paper-bets--error", paperBetsLoadError);
-      summaryNode.textContent = paperBetsLoadError ? "Tracker unavailable" : "Loading tracker…";
-      cardNode.textContent = "";
-      return;
-    }
-    root.classList.remove("paper-bets--error");
-    const summary = paperBetsData.summary || {};
-    const openBets = paperBetsData.openBets || [];
-    renderPaperBetHistory();
-    const states = openBets.map(bet => {
-      const game = gameForPaperBet(bet);
-      const marketRecord = paperBetMarkets.get(String(bet.eventId || ""));
-      return { bet, game, marketRecord, state: livePaperBetState(bet, game) };
-    });
-    const count = label => states.filter(item => item.state.label === label).length;
-    const won = count("Won");
-    const lost = count("Lost");
-    const pushes = count("Push");
-    const live = states.filter(item => ["Winning", "Losing", "Tied", "Live"].includes(item.state.label)).length;
-    const waiting = states.length - won - lost - pushes - live;
-    const gradedNet = states.reduce((total, item) => total + (item.state.netUnits == null ? 0 : item.state.netUnits), 0);
-    const graded = won + lost + pushes;
-
-    // Recalculate the all-time summary by folding live-graded open bets into
-    // the static settled totals from fake-bets.json. This keeps the headline
-    // record current as pending bets resolve (e.g. yesterday's slate settling).
-    const settledWins = Number(summary.wins) || 0;
-    const settledLosses = Number(summary.losses) || 0;
-    const settledPushes = Number(summary.pushesVoids) || 0;
-    const settledNet = parseFloat(summary.netUnits) || 0;
-    const allTimeWins = settledWins + won;
-    const allTimeLosses = settledLosses + lost;
-    const allTimePushes = settledPushes + pushes;
-    const allTimeNet = Math.round((settledNet + gradedNet) * 100) / 100;
-    const allTimeSettled = allTimeWins + allTimeLosses + allTimePushes;
-    // ROI = net units / total stake (1u per pick). All picks are flat 1u, so
-    // total stake equals the number of settled picks.
-    const allTimeRoi = allTimeSettled > 0 ? (allTimeNet / allTimeSettled) * 100 : 0;
-    summaryNode.textContent = allTimeWins + "–" + allTimeLosses
-      + (allTimePushes ? "–" + allTimePushes : "")
-      + " all-time · " + signedUnits(allTimeNet)
-      + " · " + (allTimeRoi >= 0 ? "+" : "") + allTimeRoi.toFixed(1) + "% ROI";
-
-    cardNode.textContent = openBets.length
-      ? "Open card: " + won + "W–" + lost + "L" + (pushes ? "–" + pushes + "P" : "")
-        + (graded ? " · " + signedUnits(gradedNet) : "") + " · " + live + " live · " + waiting + " waiting"
-      : "No open paper bets";
-
-    states.forEach(({ bet, game, marketRecord, state }) => {
-      const row = el("article", "paper-bet paper-bet--" + state.tone);
-      row.setAttribute("aria-label", bet.pick + " at " + bet.line + ": " + state.label);
-      const copy = el("div", "paper-bet-copy");
-      const pick = el("div", "paper-bet-pick");
-      pick.appendChild(el("strong", "", esc(bet.pick)));
-      pick.appendChild(el("span", "paper-bet-price", esc(bet.line + " · " + bet.stake)));
-      copy.appendChild(pick);
-      copy.appendChild(el("div", "paper-bet-event", esc(bet.event)));
-      const marketText = marketRecord
-        ? paperBetMarketText(marketRecord.market)
-        : game ? "Odds updating…" : "Odds unavailable";
-      copy.appendChild(el("div", "paper-bet-market", esc(marketText)));
-      row.appendChild(copy);
-
-      const liveState = el("div", "paper-bet-state");
-      liveState.appendChild(el("strong", "paper-bet-label", esc(state.label)));
-      if (state.score) liveState.appendChild(el("span", "paper-bet-score", esc(state.score)));
-      if (state.detail) liveState.appendChild(el("span", "paper-bet-detail", esc(state.detail)));
-      if (state.netUnits != null && ["Won", "Lost", "Push"].includes(state.label)) {
-        liveState.appendChild(el("span", "paper-bet-units", signedUnits(state.netUnits)));
-      }
-      row.appendChild(liveState);
-      listNode.appendChild(row);
-    });
-    if (!states.length) listNode.appendChild(el("div", "paper-bet-empty", "The next eligible paper bets will appear here."));
-  }
-
-  async function loadPaperBets() {
-    try {
-      const response = await fetch("/fake-bets.json?_=" + Date.now(), { cache: "no-store" });
-      if (!response.ok) throw new Error("paper bet feed " + response.status);
-      paperBetsData = await response.json();
-      paperBetsLoadError = false;
-    } catch (error) {
-      paperBetsLoadError = !paperBetsData;
-    }
-    renderPaperBets();
-    refreshPaperBetMarkets(false);
-  }
-
   // ---- Fetch + render one league ---------------------------------------
   async function loadLeague(league) {
     const section = el("section", "league");
@@ -1398,9 +994,7 @@
     });
     if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
     renderSpotlight();
-    renderPaperBets();
     renderValueScreen();
-    refreshPaperBetMarkets(false);
     stamp();
   }
 
@@ -1424,11 +1018,6 @@
       b.addEventListener("click", () => {
         activeFilter = key;
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
-        // Hide the paper bets panel when drilling into a single league so the
-        // focus stays on that league's games and standings. Restore it when
-        // the user switches back to "All".
-        const bets = $("#paperBets");
-        if (bets) bets.style.display = key === "all" ? "" : "none";
         renderValueScreen();
         loadValueScreen();
         render();
@@ -1444,9 +1033,8 @@
   // now the only place the screen exists. Market lines come from /api/odds
   // (the BetExplorer proxy in _worker.js, since the browser can't fetch
   // betexplorer.com). The model is computed IN THE BROWSER from
-  // statsapi.mlb.com (CORS-open): the same v2 starter-adjusted model the agent
-  // runs at paper time (scripts/daily_mlb_model.py in the live-sports-feeds
-  // skill), so the screen and the paper bets above it agree by construction.
+  // statsapi.mlb.com (CORS-open): the same v2 starter-adjusted model
+  // scripts/daily_mlb_model.py (in the live-sports-feeds skill) runs.
   const STATS = "https://statsapi.mlb.com/api/v1";
   const VALUE_REFRESH_MS = 6 * 60 * 1000;
   const HOME_ADJ = 4.0;   // points added to the home team's model%
@@ -1656,7 +1244,7 @@
   }
 
   // The screen is MLB-only, so it rides along with the "All" and MLB filters
-  // and hides for every other league — the same rule the paper-bets panel uses.
+  // and hides for every other league.
   function valueScreenVisible() {
     return activeFilter === "all" || activeFilter === "baseball/mlb";
   }
@@ -1717,7 +1305,6 @@
       }));
       if (results.some(result => result.status === "fulfilled" && result.value)) {
         renderSpotlight();
-        renderPaperBets();
         stamp();
       }
     } finally {
@@ -1731,9 +1318,8 @@
     return refreshScores(live);
   }
 
-  async function refreshAllScores() {
-    await Promise.all([refreshScores(filteredLeagues()), loadPaperBets()]);
-    await refreshPaperBetMarkets(true);
+  function refreshAllScores() {
+    return refreshScores(filteredLeagues());
   }
 
   // Odds and season stats move on the order of minutes, not seconds, so the
@@ -1756,47 +1342,14 @@
     standingsTimer = setInterval(render, STANDINGS_REFRESH_MS);
   }
 
-  function selectPaperBetTab(selected) {
-    const tabs = [$("#paperBetLiveTab"), $("#paperBetLedgerTab")];
-    tabs.forEach(tabNode => {
-      const isSelected = tabNode === selected;
-      tabNode.setAttribute("aria-selected", isSelected ? "true" : "false");
-      tabNode.tabIndex = isSelected ? 0 : -1;
-      const panel = $("#" + tabNode.getAttribute("aria-controls"));
-      if (panel) panel.hidden = !isSelected;
-    });
-  }
-
   function init() {
     buildFilters();
-    const paperBetTabs = [$("#paperBetLiveTab"), $("#paperBetLedgerTab")];
-    paperBetTabs.forEach((tabNode, index) => {
-      tabNode.addEventListener("click", () => selectPaperBetTab(tabNode));
-      tabNode.addEventListener("keydown", event => {
-        if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-        event.preventDefault();
-        const direction = event.key === "ArrowRight" ? 1 : -1;
-        const next = paperBetTabs[(index + direction + paperBetTabs.length) % paperBetTabs.length];
-        selectPaperBetTab(next);
-        next.focus();
-      });
-    });
-    $("#paperBetHistoryFilter").addEventListener("change", event => {
-      paperBetHistoryFilter = event.target.value;
-      renderPaperBetHistory();
-    });
-    $("#paperBetHistorySearch").addEventListener("input", event => {
-      paperBetHistorySearch = event.target.value.trim();
-      renderPaperBetHistory();
-    });
     $("#refreshBtn").addEventListener("click", async () => {
-      await Promise.all([loadPaperBets(), render(), loadValueScreen()]);
-      await refreshPaperBetMarkets(true);
+      await Promise.all([render(), loadValueScreen()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
     });
-    loadPaperBets();
     loadValueScreen();
     render();
     scheduleRefresh();

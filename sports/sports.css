@@ -54,75 +54,6 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .refresh-btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--accent)}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--accent)}
 
-/* Hermes simulated bet tracker */
-.paper-bets{margin:0 0 24px;border:2px solid var(--ink);background:var(--paper);box-shadow:6px 6px 0 var(--accent);padding:14px}
-.paper-bets-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px}
-.paper-bets-kicker{display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-.paper-bets h2{font-family:var(--font-display);font-size:24px;line-height:1;margin:8px 0 0;text-transform:uppercase;letter-spacing:-.01em}
-.paper-bets-record{font-family:var(--font-display);font-size:11px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.paper-bets-card-summary{font-family:var(--font-body);font-size:12px;font-weight:700;padding:8px 0 6px;text-transform:uppercase;letter-spacing:.02em}
-.paper-bet-tabs{display:flex;gap:0;margin-top:10px;border-bottom:2px solid var(--ink)}
-.paper-bet-tabs button{appearance:none;border:2px solid var(--ink);border-bottom:0;background:var(--card);color:var(--muted);padding:7px 13px;font:700 10px var(--font-display);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
-.paper-bet-tabs button+button{border-left:0}
-.paper-bet-tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink);position:relative;top:2px}
-.paper-bet-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-[role="tabpanel"][hidden]{display:none}
-.paper-bet-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.paper-bet{display:grid;grid-template-columns:minmax(0,1fr) minmax(106px,max-content);align-items:center;gap:9px;min-width:0;padding:8px 9px;background:var(--paper);border:2px solid var(--ink);border-left:4px solid var(--muted)}
-.paper-bet-copy{min-width:0}
-.paper-bet-pick{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;font-size:13px;line-height:1.15}
-.paper-bet-price{font-family:var(--font-body);font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap}
-.paper-bet-event{font-family:var(--font-body);font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.paper-bet-market{font-family:var(--font-body);font-size:10px;font-weight:700;color:var(--accent);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.paper-bet-state{display:grid;justify-items:end;align-content:center;line-height:1.05;text-align:right}
-.paper-bet-label{font-family:var(--font-body);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-.paper-bet-score{font-family:"Courier New",monospace;font-size:12px;font-weight:800;margin-top:3px;white-space:nowrap}
-.paper-bet-detail{font-family:var(--font-body);font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap}
-.paper-bet-units{font-family:var(--font-body);font-size:10px;font-weight:700;margin-top:2px}
-.paper-bet--winning,.paper-bet--won{border-left-color:#1b8a3f}
-.paper-bet--winning .paper-bet-label,.paper-bet--won .paper-bet-label,.paper-bet--won .paper-bet-units{color:#1b8a3f}
-.paper-bet--losing,.paper-bet--lost{border-left-color:var(--live)}
-.paper-bet--losing .paper-bet-label,.paper-bet--lost .paper-bet-label,.paper-bet--lost .paper-bet-units{color:var(--live)}
-.paper-bet--live,.paper-bet--tied{border-left-color:var(--accent)}
-.paper-bet--live .paper-bet-label,.paper-bet--tied .paper-bet-label{color:var(--accent)}
-.paper-bet--scheduled,.paper-bet--pending,.paper-bet--push{border-left-color:var(--muted)}
-.paper-bet-empty{font-family:var(--font-body);font-size:9px;color:var(--muted);margin-top:7px}
-.paper-bets--error{border-color:var(--live)}
-.paper-bet-history{margin-top:10px;border-top:2px solid var(--ink);padding-top:8px}
-.paper-bet-history-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.paper-bet-history h3{margin:0;font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.paper-bet-simulation{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:16px;margin:10px 0;padding:10px;border:2px solid var(--ink);background:var(--card)}
-.paper-bet-simulation h4{margin:0 0 3px;font:700 11px var(--font-display);text-transform:uppercase;letter-spacing:.04em}
-.paper-bet-simulation p{margin:0;color:var(--muted);font:10px/1.35 var(--font-body)}
-.paper-bet-simulation dl{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:8px;margin:0}
-.paper-bet-simulation dl div{padding-left:8px;border-left:2px solid var(--ink)}
-.paper-bet-simulation dt{color:var(--muted);font:700 8px var(--font-body);text-transform:uppercase;letter-spacing:.05em}
-.paper-bet-simulation dd{margin:2px 0 0;font:700 16px var(--font-display)}
-.paper-bet-simulation .positive{color:#1b8a3f}
-@media (max-width:700px){
-  .paper-bet-simulation{grid-template-columns:1fr}
-  .paper-bet-simulation dl{grid-template-columns:repeat(2,minmax(90px,1fr))}
-}
-.paper-bet-audit{color:#1b8a3f;text-align:right}
-.paper-bet-audit--warning{color:var(--live)}
-.paper-bet-history-tools{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 7px;font:700 10px var(--font-body);text-transform:uppercase}
-.paper-bet-history-tools label{display:flex;align-items:center;gap:6px}
-.paper-bet-history-tools select,.paper-bet-history-tools input{border:2px solid var(--ink);border-radius:0;background:var(--paper);padding:5px 7px;font:11px var(--font-body);text-transform:none}
-.paper-bet-history-tools input{width:min(260px,60vw)}
-.paper-bet-history-count{margin-bottom:5px;color:var(--muted);font:10px var(--font-body)}
-.paper-bet-history-scroll{max-height:460px;overflow:auto;border:2px solid var(--ink);background:var(--paper)}
-.paper-bet-history table{width:100%;border-collapse:collapse;font:11px var(--font-body)}
-.paper-bet-history th{position:sticky;top:0;z-index:1;background:var(--card);text-align:left;text-transform:uppercase;font-size:9px;letter-spacing:.05em}
-.paper-bet-history th,.paper-bet-history td{padding:7px 8px;border-bottom:1px solid #ddd3bf;vertical-align:top}
-.paper-bet-history-id{display:block;color:var(--muted);font-size:9px;margin-top:2px}
-.paper-bet-history-grade{font-weight:700;text-transform:uppercase}
-.paper-bet-history-grade--win{color:#1b8a3f}.paper-bet-history-grade--loss{color:var(--live)}
-.paper-bet-history-notes{max-width:360px;color:var(--muted);font-size:10px;line-height:1.3}
-.paper-bet-verified,.paper-bet-recorded,.paper-bet-correction{display:inline-block;margin:0 6px 3px 0;padding:2px 5px;font:700 8px var(--font-body);text-transform:uppercase;letter-spacing:.03em;border:1px solid var(--ink)}
-.paper-bet-verified{background:#dce9dd;color:#1b8a3f}
-.paper-bet-recorded{background:var(--card);color:var(--muted)}
-.paper-bet-correction{background:var(--highlight);color:#7a5413}
-
 /* Spotlight: every live game + any game involving my teams, across all
    leagues, surfaced above the per-league sections so "what's happening
    right now" never requires scrolling through 17 fixed-order leagues. */
@@ -243,11 +174,7 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 .colophon{margin-top:30px;padding-top:12px;border-top:var(--border-w) solid var(--ink);font-size:12px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.04em}
 
 @media(max-width:800px){
-  .standings-conferences,.player-box-grid,.paper-bet-list{grid-template-columns:1fr}
-  /* Paper bets: stack the state column below the bet copy so the 106px
-     min-content width doesn't squeeze the pick text on tablets. */
-  .paper-bet{grid-template-columns:1fr;gap:6px}
-  .paper-bet-state{text-align:right}
+  .standings-conferences,.player-box-grid{grid-template-columns:1fr}
   /* Standings: shrink padding so more columns survive on a 768px tablet */
   table.stand{font-size:12px}
   table.stand th,table.stand td{padding:4px 5px}
@@ -265,10 +192,6 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   .score-num{font-size:20px}
   .score-vs{font-size:10px}
   .status{font-size:10px}
-  /* Paper bets: reduce font size for density */
-  .paper-bet-pick{font-size:12px}
-  .paper-bet-price,.paper-bet-event,.paper-bet-market,.paper-bet-label,.paper-bet-detail,.paper-bet-units{font-size:9px}
-  .paper-bet-score{font-size:11px}
   /* Standings: smaller text, tighter padding */
   table.stand{font-size:11px}
   table.stand th,table.stand td{padding:3px 4px}
@@ -297,12 +220,6 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   .team-name{font-size:12px}
   .team-rec{font-size:10px}
   .score-num{font-size:22px}
-  /* Paper bets: single column, full-width rows */
-  .paper-bet-list{grid-template-columns:1fr}
-  .paper-bet{grid-template-columns:1fr}
-  .paper-bet-pick{font-size:13px}
-  .paper-bet-price,.paper-bet-event,.paper-bet-market,.paper-bet-label,.paper-bet-detail,.paper-bet-units{font-size:10px}
-  .paper-bet-score{font-size:12px}
   /* Standings: still scrollable but slightly smaller */
   table.stand{min-width:380px;font-size:10px}
   table.stand th,table.stand td{padding:2px 3px}
@@ -314,7 +231,7 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 /* ---- MLB Value Screen (model vs market) --------------------------------
    Moved over from The McBoop Daily's Sports tab. Market lines come from the
    /api/odds route in _worker.js; the model is computed in-browser from
-   statsapi.mlb.com. Styled to match .paper-bets above it. */
+   statsapi.mlb.com. */
 .value-screen{margin:0 0 24px;border:2px solid var(--ink);background:var(--paper);box-shadow:6px 6px 0 var(--accent);padding:14px}
 .value-screen-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px}
 .value-screen-kicker{display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}

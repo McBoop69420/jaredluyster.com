@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sports.css?v=45">
+<link rel="stylesheet" href="/sports.css?v=46">
 </head>
 <body>
 <article class="paper">
@@ -38,57 +38,6 @@
       </div>
     </header>
     <div class="games-grid" id="spotlightGrid" aria-live="polite"></div>
-  </section>
-
-  <section class="paper-bets" id="paperBets" aria-labelledby="paperBetsTitle">
-    <header class="paper-bets-head">
-      <div>
-        <div class="paper-bets-kicker">Hermes experiment log</div>
-        <h2 id="paperBetsTitle">Paper Bets — Live</h2>
-      </div>
-      <div class="paper-bets-record" id="paperBetSummary">Loading tracker&hellip;</div>
-    </header>
-    <div class="paper-bet-tabs" role="tablist" aria-label="Paper bet views">
-      <button id="paperBetLiveTab" type="button" role="tab" aria-selected="true" aria-controls="paperBetLivePanel">Live card</button>
-      <button id="paperBetLedgerTab" type="button" role="tab" aria-selected="false" aria-controls="paperBetLedgerPanel" tabindex="-1">Ledger</button>
-    </div>
-    <section id="paperBetLivePanel" role="tabpanel" aria-labelledby="paperBetLiveTab">
-      <div class="paper-bets-card-summary" id="paperBetCardSummary"></div>
-      <div class="paper-bet-list" id="paperBetList" aria-live="polite"></div>
-    </section>
-    <section class="paper-bet-history" id="paperBetLedgerPanel" role="tabpanel" aria-labelledby="paperBetLedgerTab" hidden>
-      <header class="paper-bet-history-head">
-        <h3 id="paperBetHistoryTitle">Bet history &amp; audit</h3>
-        <span class="paper-bet-audit" id="paperBetAudit">Loading ledger&hellip;</span>
-      </header>
-      <section class="paper-bet-simulation" aria-labelledby="paperBetSimulationTitle">
-        <div>
-          <h4 id="paperBetSimulationTitle">$2.50 flat-bet simulation</h4>
-          <p>Recomputed from each settled pick's recorded American odds—not the ledger's stored profit field.</p>
-        </div>
-        <dl id="paperBetSimulation"></dl>
-      </section>
-      <div class="paper-bet-history-tools">
-        <label>Result
-          <select id="paperBetHistoryFilter">
-            <option value="all">All results</option>
-            <option value="win">Wins</option>
-            <option value="loss">Losses</option>
-            <option value="push">Pushes / voids</option>
-          </select>
-        </label>
-        <label>Search
-          <input id="paperBetHistorySearch" type="search" placeholder="Team, pick, date or ID">
-        </label>
-      </div>
-      <div class="paper-bet-history-count" id="paperBetHistoryCount"></div>
-      <div class="paper-bet-history-scroll">
-        <table>
-          <thead><tr><th>Date / ID</th><th>Pick</th><th>Final result</th><th>Grade</th><th>Net</th><th>Evidence</th></tr></thead>
-          <tbody id="paperBetHistoryBody"></tbody>
-        </table>
-      </div>
-    </section>
   </section>
 
   <section class="value-screen" id="valueScreen" aria-labelledby="valueScreenTitle">
@@ -123,6 +72,6 @@
     <p>Live data from ESPN. Scores and standings refresh automatically; times shown in Eastern (ET).</p>
   </footer>
 </article>
-<script src="/sports.js?v=56"></script>
+<script src="/sports.js?v=57"></script>
 </body>
 </html>
