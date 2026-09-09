@@ -83,6 +83,7 @@
   const SCORE_DISCOVERY_REFRESH_MS = 30 * 1000; // discover newly started games
   const STANDINGS_REFRESH_MS = 5 * 60 * 1000;   // standings do not need pitch-level polling
   const STANDINGS_TIMEOUT = 6000;               // give up on a hung standings host
+  const MAX_SPOTLIGHT_GAMES = 9;                // cap Spotlight so a big slate doesn't flood it
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const ESPN_CDN = "https://cdn.site.api.espn.com/apis/site/v2/sports/";
   // Standings live on the /apis/v2/ path (NOT /apis/site/v2/) and need a season.
@@ -694,7 +695,9 @@
       grid.appendChild(el("div", "spotlight-empty", "Nothing live and no games today for the teams you follow."));
       return;
     }
-    entries.forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
+    // gameRank already puts followed-team and live games first, so trimming
+    // to the cap here drops the lowest-priority (upcoming/final) entries.
+    entries.slice(0, MAX_SPOTLIGHT_GAMES).forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
   }
 
   // ---- Standings -------------------------------------------------------
