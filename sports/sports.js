@@ -12,7 +12,7 @@
   // key = ESPN sport/league path. standings = preferred block type
   // (division for baseball/football, overall for soccer). null = skip.
   // playoffPoolMode + implicationZones drive the Spotlight "playoff/qualification
-  // implications" boost (see isPlayoffImplicated below):
+  // implications" boost (see playoffImplicationDistance below):
   //   confFromDiv = MLB/NFL: wild-card races span every division in a
   //     conference, so the pool is AL/NL or AFC/NFC, not each division alone.
   //   confDirect  = MLS/USL: conference is the top level already (no division
@@ -86,6 +86,13 @@
   const STANDINGS_REFRESH_MS = 5 * 60 * 1000;   // standings do not need pitch-level polling
   const STANDINGS_TIMEOUT = 6000;               // give up on a hung standings host
   const MAX_SPOTLIGHT_GAMES = 9;                // cap Spotlight so a big slate doesn't flood it
+  // Standings-implication games (rule 3) are the volatile one — how many
+  // qualify swings with how bunched the standings happen to be that week, not
+  // with how much is actually happening today. Sub-cap them separately so a
+  // tight-race week can't crowd out everything else in the 9-slot budget;
+  // when there's overflow, keep the tightest races (see
+  // playoffImplicationDistance) rather than whichever came first in league order.
+  const MAX_IMPLICATION_SPOTLIGHT_GAMES = 4;
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const ESPN_CDN = "https://cdn.site.api.espn.com/apis/site/v2/sports/";
   // Standings live on the /apis/v2/ path (NOT /apis/site/v2/) and need a season.
@@ -568,8 +575,9 @@
     const todayET = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     // Playoff/qualification pools are rebuilt once per league per render
     // (not per game) — cheap, and standings may not have loaded yet for a
-    // given league, in which case isPlayoffImplicated() just returns false
-    // for it until renderSpotlight() re-runs after that league's standings arrive.
+    // given league, in which case playoffImplicationDistance() just returns
+    // null for it until renderSpotlight() re-runs after that league's
+    // standings arrive.
     const poolsCache = new Map();
     const poolsFor = league => {
       if (!poolsCache.has(league.key)) {
@@ -577,26 +585,56 @@
       }
       return poolsCache.get(league.key);
     };
-    const entries = [];
+    let entries = [];
     gamesByLeague.forEach((games, key) => {
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
         if (g.dateET !== todayET) return;
         const liveCounts = g.state === "in" && (!league || !league.spotlightRankedOnly || g.ranked);
         const stakesCounts = g.stakes && g.state !== "post";
-        const big = liveCounts || g.isMyGame || stakesCounts ||
-          (league && isPlayoffImplicated(league, g, poolsFor(league)));
-        if (big) entries.push({ g, label: league ? league.label : "" });
+        const implicationDistance = league ? playoffImplicationDistance(league, g, poolsFor(league)) : null;
+        const big = liveCounts || g.isMyGame || stakesCounts || implicationDistance != null;
+        if (!big) return;
+        // "Implication-only" = the sole reason this game qualified is rule 3
+        // (standings implications) — not live, not a followed team, not a
+        // championship/bowl game. Those other reasons already guarantee a
+        // slot, so only implication-only entries are subject to the sub-cap.
+        const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && implicationDistance != null;
+        entries.push({ g, label: league ? league.label : "", stakesCounts, implicationDistance, implicationOnly });
       });
     });
-    entries.sort((a, b) => gameRank(a.g) - gameRank(b.g));
+
+    const implicationOnly = entries.filter(e => e.implicationOnly);
+    if (implicationOnly.length > MAX_IMPLICATION_SPOTLIGHT_GAMES) {
+      implicationOnly.sort((a, b) => a.implicationDistance - b.implicationDistance);
+      const keep = new Set(implicationOnly.slice(0, MAX_IMPLICATION_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !e.implicationOnly || keep.has(e));
+    }
+
+    // Followed-team games first, then by state (live < upcoming < final).
+    // Within the same state tier, a stakes game (championship/bowl/tournament
+    // final) outranks a plain implication game, and implication games are
+    // ordered by how tight the race actually is — tightest first — so
+    // whichever ones survive the sub-cap above are also shown in a sensible
+    // order rather than league/game insertion order.
+    const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
+    entries.sort((a, b) => {
+      const myA = a.g.isMyGame ? 0 : 1, myB = b.g.isMyGame ? 0 : 1;
+      if (myA !== myB) return myA - myB;
+      const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
+      if (sa !== sb) return sa - sb;
+      const reasonRank = e => e.stakesCounts ? 0 : e.implicationDistance != null ? 1 : 2;
+      const ra = reasonRank(a), rb = reasonRank(b);
+      if (ra !== rb) return ra - rb;
+      if (ra === 1) return a.implicationDistance - b.implicationDistance;
+      return 0;
+    });
+
     grid.innerHTML = "";
     if (!entries.length) {
       grid.appendChild(el("div", "spotlight-empty", "Nothing live and no games today for the teams you follow."));
       return;
     }
-    // gameRank already puts followed-team and live games first, so trimming
-    // to the cap here drops the lowest-priority (upcoming/final) entries.
     entries.slice(0, MAX_SPOTLIGHT_GAMES).forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
   }
 
@@ -880,21 +918,29 @@
     return null;
   }
 
-  function isPlayoffImplicated(league, game, pools) {
-    if (!pools || !league.implicationZones || !league.implicationZones.length) return false;
+  // Returns the closest rank-distance to a cutoff line across both teams and
+  // every implication zone (0 = sitting exactly on the cutoff), or null if
+  // neither team is implicated at all. The distance lets Spotlight rank
+  // implicated games by how tight the race actually is, rather than treating
+  // every implicated game as equally "big" — see MAX_IMPLICATION_SPOTLIGHT_GAMES.
+  function playoffImplicationDistance(league, game, pools) {
+    if (!pools || !league.implicationZones || !league.implicationZones.length) return null;
     // "Upcoming" implies not-yet-decided; live games are already covered by
     // the state === "in" check in renderSpotlight, so this only needs to add
     // scheduled games — a game that's already final has no more implications
     // left to play out today.
-    if (game.state === "post") return false;
-    return [game.away.name, game.home.name].some(name => {
+    if (game.state === "post") return null;
+    let best = null;
+    [game.away.name, game.home.name].forEach(name => {
       const info = teamRank(pools, name);
-      if (!info || info.gamesPlayed < MIN_GAMES_FOR_IMPLICATIONS) return false;
-      return league.implicationZones.some(z => {
+      if (!info || info.gamesPlayed < MIN_GAMES_FOR_IMPLICATIONS) return;
+      league.implicationZones.forEach(z => {
         const cutoffRank = z.fromTop ? z.count : (info.poolSize - z.count + 1);
-        return Math.abs(info.rank - cutoffRank) <= IMPLICATION_THRESHOLD;
+        const distance = Math.abs(info.rank - cutoffRank);
+        if (distance <= IMPLICATION_THRESHOLD && (best == null || distance < best)) best = distance;
       });
     });
+    return best;
   }
 
   async function loadStandings(league) {
