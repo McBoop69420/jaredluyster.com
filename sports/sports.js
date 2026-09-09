@@ -32,7 +32,9 @@
   // than any pro league (100+ FBS/D-I games some Saturdays), so a live game
   // alone would flood Spotlight. For these leagues a live game only counts as
   // "big" if it's also Top-25 ranked (see `ranked` on the parsed game) —
-  // followed-team games still always show via isMyGame regardless of rank.
+  // followed-team games still always show via isMyGame regardless of rank, and
+  // a `stakes` game (conference championship, bowl, tournament final — see
+  // `stakes` in parseEvent) always shows regardless of rank too, live or not.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }] },
@@ -320,6 +322,12 @@
       const r = c.curatedRank && c.curatedRank.current;
       return typeof r === "number" && r <= 25;
     };
+    // ESPN tags championship/bowl/tournament-final games with a notes headline
+    // (e.g. "MAC Championship", "Big Ten Tournament - Final", "College Football
+    // Playoff Quarterfinal at the Rose Bowl") and leaves it empty for every
+    // ordinary game, even marquee rivalries — a ranking-independent "this game
+    // has real stakes" signal Spotlight can use alongside isMyGame/isRanked.
+    const stakes = (comp.notes && comp.notes[0] && comp.notes[0].headline) || null;
 
     return {
       eventId: ev.id,
@@ -335,6 +343,7 @@
       lineScore: parseBaseballLineScore(comp, state, leagueKey),
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
       ranked: isRanked(away) || isRanked(home),
+      stakes,
     };
   }
 
@@ -519,7 +528,10 @@
 
   function gameCard(g, leagueLabel) {
     const card = el("div", "game" + (g.state === "in" ? " game--live" : g.state === "post" ? " game--final" : "") + (g.isMyGame ? " game--me" : ""));
-    if (leagueLabel) card.appendChild(el("div", "spotlight-league-tag", esc(leagueLabel)));
+    if (leagueLabel) {
+      const tag = g.stakes ? leagueLabel + " · " + g.stakes : leagueLabel;
+      card.appendChild(el("div", "spotlight-league-tag", esc(tag)));
+    }
     const m = el("div", "matchup");
     const aT = el("div", "team team--away"); aT.appendChild(teamCell(g.away));
     const hT = el("div", "team team--home"); hT.appendChild(teamCell(g.home));
@@ -571,7 +583,8 @@
       games.forEach(g => {
         if (g.dateET !== todayET) return;
         const liveCounts = g.state === "in" && (!league || !league.spotlightRankedOnly || g.ranked);
-        const big = liveCounts || g.isMyGame ||
+        const stakesCounts = g.stakes && g.state !== "post";
+        const big = liveCounts || g.isMyGame || stakesCounts ||
           (league && isPlayoffImplicated(league, g, poolsFor(league)));
         if (big) entries.push({ g, label: league ? league.label : "" });
       });
