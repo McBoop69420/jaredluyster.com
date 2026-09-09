@@ -59,6 +59,10 @@
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }] },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats"],        standings: null,
       playoffPoolMode: null, implicationZones: [] },
+    { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats"], standings: null,
+      playoffPoolMode: null, implicationZones: [] },
+    { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats"], standings: null,
+      playoffPoolMode: null, implicationZones: [] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
   ];
