@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Cart{% endblock %}
+{% block extra_css %}
+.cart-layout { display: flex; gap: 24px; padding-bottom: 80px; }
+.cart-main { flex: 1; }
+.cart-summary { width: 300px; flex-shrink: 0; }
+.cart-summary .card { position: sticky; top: 80px; }
+.cart-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item-img {
+    width: 60px; height: 84px; border-radius: 6px; object-fit: cover;
+    background: #111; flex-shrink: 0;
+}
+.cart-item-info { flex: 1; }
+.cart-item-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+.cart-item-set { font-size: 0.75rem; color: var(--muted); }
+.cart-item-foil { color: var(--accent); font-size: 0.72rem; font-weight: 600; font-family: var(--font-mono); text-transform: uppercase; }
+.cart-item-price { font-weight: 700; color: var(--accent); font-size: 1rem; white-space: nowrap; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.cart-item-qty {
+    display: flex; align-items: center; gap: 6px; margin-top: 6px;
+}
+.cart-item-qty button {
+    width: 28px; height: 28px; border-radius: 6px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text); cursor: pointer;
+    font-size: 1rem; display: flex; align-items: center; justify-content: center;
+}
+.cart-item-qty span { font-size: 0.9rem; min-width: 24px; text-align: center; }
+.cart-item-remove {
+    width: auto !important; height: auto !important; padding: 5px 10px;
+    white-space: nowrap;
+}
+.summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; }
+.summary-total { font-size: 1.2rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono);
+    border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 4px; }
+.empty-cart { text-align: center; padding: 64px 0; color: var(--muted); }
+.notes-field { width: 100%; margin: 12px 0; resize: vertical; min-height: 60px; }
+.guest-fields { display: none; margin: 4px 0 12px; }
+.guest-fields.active { display: block; }
+.guest-fields input { width: 100%; margin-bottom: 8px; }
+.guest-note { font-size: 0.78rem; color: var(--muted); margin: 0 0 10px; }
+.payment-heading {
+    margin: 14px 0 10px; font-size: 0.75rem; font-weight: 600;
+    color: var(--muted); text-transform: uppercase;
+}
+.payment-divider {
+    display: flex; align-items: center; gap: 10px; margin: 12px 0;
+    color: var(--muted); font-size: 0.72rem; text-transform: uppercase;
+}
+.payment-divider::before, .payment-divider::after {
+    content: ""; height: 1px; flex: 1; background: var(--border);
+}
+.payment-note { font-size: 0.78rem; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
+.payment-unavailable {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    color: var(--muted); font-size: 0.8rem; line-height: 1.4;
+}
+#paypal-button-container { min-height: 44px; }
+.order-confirm { text-align: center; padding: 48px 0; }
+.order-confirm h2 { margin: 0 0 8px; }
+@media (max-width: 700px) {
+    .cart-layout { flex-direction: column; }
+    .cart-summary { width: 100%; }
+}
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="shell">
+        <div class="page-header"><h1>Your Cart</h1></div>
+
+        <div id="order-confirm" class="order-confirm" style="display:none">
+            <h2>Order placed!</h2>
+            <p id="order-confirm-msg" style="color:var(--muted)"></p>
+            <a href="/" class="btn btn-accent" style="margin-top:16px">Continue shopping</a>
+        </div>
+
+        {% if items %}
+        <div class="cart-layout" id="cart-layout">
+            <div class="cart-main card">
+                {% for item in items %}
+                <div class="cart-item" data-id="{{ item.id }}">
+                    {% if item.image_url %}
+                        <img class="cart-item-img" src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">
+                    {% else %}
+                        <div class="cart-item-img"></div>
+                    {% endif %}
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">{{ item.name }}</div>
+                        <div class="cart-item-set">{{ item.set_code | upper }} #{{ item.collector_number }}</div>
+                        {% if item.foil %}<div class="cart-item-foil">FOIL</div>{% endif %}
+                        <div class="cart-item-qty">
+                            <button onclick="updateQty({{ item.id }}, {{ item.cart_qty - 1 }})">-</button>
+                            <span>{{ item.cart_qty }}</span>
+                            <button onclick="updateQty({{ item.id }}, {{ item.cart_qty + 1 }})">+</button>
+                            <button class="cart-item-remove" onclick="updateQty({{ item.id }}, 0)" style="margin-left:8px; color:var(--red); border-color:var(--red)">Remove</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-price">${{ "%.2f" | format(item.price * item.cart_qty) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="cart-summary">
+                <div class="card">
+                    <div class="summary-row">
+                        <span>Items</span>
+                        <span>{{ items | sum(attribute='cart_qty') }}</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span>${{ "%.2f" | format(total) }}</span>
+                    </div>
+                    <textarea class="notes-field" id="order-notes" placeholder="Pickup notes or special requests"></textarea>
+                    <div class="guest-fields" id="guest-fields">
+                        <p class="guest-note">Checking out as a guest - enter your info so I can reach you about pickup. Have an account? <a href="/login?return_to=/cart" style="color:var(--accent)">Sign in</a>.</p>
+                        <input type="text" id="guest-name" placeholder="Your name" autocomplete="name">
+                        <input type="email" id="guest-email" placeholder="you@email.com" autocomplete="email">
+                        <input type="tel" id="guest-phone" placeholder="Phone (optional)" autocomplete="tel">
+                    </div>
+                    <div class="payment-heading">Pay online</div>
+                    {% if paypal_enabled %}
+                    <div id="paypal-button-container"></div>
+                    {% else %}
+                    <div class="payment-unavailable">
+                        PayPal checkout is temporarily unavailable.
+                    </div>
+                    {% endif %}
+                    <div class="payment-divider"><span>or</span></div>
+                    <button class="btn" id="cash-order-button" style="width:100%; justify-content:center;" onclick="submitCashOrder()">
+                        Reserve for cash pickup
+                    </button>
+                    <div id="order-error" class="error-msg" style="display:none"></div>
+                    <p class="payment-note">
+                        PayPal payments are charged now. Cash reservations are paid at pickup. Pickup is available Thursdays at Tabletop Tavern.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            <p style="font-size:1.2rem; margin-bottom:8px;">Your cart is empty</p>
+            <p>Browse the <a href="/" style="color:var(--accent)">shop</a> to add cards.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+{% if paypal_enabled %}
+<script src="{{ paypal_sdk_url }}"></script>
+{% endif %}
+<script>
+var isLoggedIn = {{ 'true' if account else 'false' }};
+
+fetch('/api/me').then(function(r) { return r.json(); }).then(function(data) {
+    isLoggedIn = !!data.logged_in;
+    var guestFields = document.getElementById('guest-fields');
+    if (guestFields) guestFields.classList.toggle('active', !isLoggedIn);
+});
+
+function updateQty(id, qty) {
+    fetch('/api/cart/update', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id: id, quantity: qty})
+    }).then(function() { location.reload(); });
+}
+
+function showOrderError(message) {
+    var err = document.getElementById('order-error');
+    err.textContent = message || 'Checkout could not be completed. Please try again.';
+    err.style.display = '';
+}
+
+function checkoutPayload() {
+    var err = document.getElementById('order-error');
+    err.style.display = 'none';
+
+    var payload = {notes: document.getElementById('order-notes').value};
+    if (!isLoggedIn) {
+        var name = document.getElementById('guest-name').value.trim();
+        var email = document.getElementById('guest-email').value.trim();
+        if (!name || !email.includes('@')) {
+            throw new Error('Please enter your name and a valid email.');
+        }
+        payload.guest_name = name;
+        payload.guest_email = email;
+        payload.guest_phone = document.getElementById('guest-phone').value.trim();
+    }
+    return payload;
+}
+
+function parseResponse(response) {
+    return response.json().then(function(data) {
+        if (!response.ok) {
+            var error = new Error(data.error || 'Checkout could not be completed.');
+            error.code = data.code || '';
+            throw error;
+        }
+        return data;
+    });
+}
+
+function showOrderComplete(data, paymentMethod) {
+    if (!data.is_guest) {
+        location.href = '/orders';
+        return;
+    }
+    document.getElementById('cart-layout').style.display = 'none';
+    var paymentText = paymentMethod === 'paypal'
+        ? 'Payment received through PayPal.'
+        : 'Payment is due in cash at pickup.';
+    document.getElementById('order-confirm-msg').textContent =
+        'Order #' + data.order_id + ' - ' + paymentText +
+        ' Pickup is available Thursdays at the Bluegrass Cube table at Tabletop Tavern.';
+    document.getElementById('order-confirm').style.display = '';
+}
+
+function submitCashOrder() {
+    var button = document.getElementById('cash-order-button');
+    var payload;
+    try {
+        payload = checkoutPayload();
+    } catch (error) {
+        showOrderError(error.message);
+        return;
+    }
+    button.disabled = true;
+    button.textContent = 'Reserving...';
+    fetch('/api/orders', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    }).then(parseResponse).then(function(data) {
+        showOrderComplete(data, 'cash');
+    }).catch(function(error) {
+        showOrderError(error.message);
+        button.disabled = false;
+        button.textContent = 'Reserve for cash pickup';
+    });
+}
+
+{% if paypal_enabled %}
+paypal.Buttons({
+    style: {
+        layout: 'vertical',
+        shape: 'rect',
+        label: 'paypal'
+    },
+    createOrder: function() {
+        var payload;
+        try {
+            payload = checkoutPayload();
+        } catch (error) {
+            showOrderError(error.message);
+            return Promise.reject(error);
+        }
+        return fetch('/api/paypal/orders', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(parseResponse).then(function(data) {
+            return data.id;
+        }).catch(function(error) {
+            showOrderError(error.message);
+            throw error;
+        });
+    },
+    onApprove: function(data, actions) {
+        return fetch('/api/paypal/orders/' + encodeURIComponent(data.orderID) + '/capture', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(parseResponse).then(function(result) {
+            showOrderComplete(result, 'paypal');
+        }).catch(function(error) {
+            if (error.code === 'INSTRUMENT_DECLINED') {
+                return actions.restart();
+            }
+            showOrderError(error.message);
+            throw error;
+        });
+    },
+    onCancel: function() {
+        showOrderError('PayPal checkout was canceled. Your cart is still here.');
+    },
+    onError: function(error) {
+        console.error(error);
+        if (!document.getElementById('order-error').textContent) {
+            showOrderError('PayPal checkout could not be completed. Please try again.');
+        }
+    }
+}).render('#paypal-button-container');
+{% endif %}
+</script>
+{% endblock %}

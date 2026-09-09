@@ -1,6 +1,5 @@
 flask
 waitress
-gunicorn
 requests
 werkzeug
 libsql
