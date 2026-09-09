@@ -12,43 +12,37 @@
 
 The site is a **hybrid deployment** — two hosting mechanisms under one domain umbrella:
 
-### 1. Homepage + Marketplace — Render (Flask, dynamic)
+### 1. Homepage — Render (Flask, dynamic)
 
-**This is the primary hosting.** The `jaredluyster.com` domain and the `bluegrasstcg.online` shop domain are both served by a single Render Flask service.
+**This is the primary hosting** for the `jaredluyster.com` domain.
 
 - **Host:** Render (Python web service)
 - **Config:** `render.yaml` in repo root
   - Runtime: Python 3.11.11
   - Build: `pip install -r requirements.txt`
-  - Start: `cd marketplace && waitress-serve --host=0.0.0.0 --port=$PORT server:app`
-  - Requirements: `flask`, `waitress`, `gunicorn`, `requests`, `werkzeug`, `libsql`
-- **App:** `marketplace/server.py` (Flask app — ~1430 lines on `main`, including PayPal checkout)
-- **Database:** SQLite local (`marketplace.db`) or Turso (via `TURSO_DATABASE_URL` env var)
-- **Templates:** `marketplace/templates/` (admin.html, base.html, cart.html, login.html, orders.html, forgot_password.html, reset_password.html)
-- **Static assets:** `marketplace/index.html` (shop front), `marketplace/inventory.json`, `marketplace/lands.json`
-- **Shop domain:** `bluegrasstcg.online` (own domain, added as a custom domain on the same Render service; `SHOP_HOSTS` in `server.py` rewrites its requests to `/marketplace/*` under the hood) — **2026-09-06:** moved off `shop.jaredluyster.com`, which was retired (see below).
-- **Admin email:** `jared.luyster@gmail.com` (auto-admin on signup)
+  - Start: `waitress-serve --host=0.0.0.0 --port=$PORT app:app`
+  - Requirements: `flask`, `waitress`, `gunicorn`, `werkzeug`
+- **App:** `app.py` (repo root) — a minimal Flask app, two routes: `GET /` serves `index.html`, `GET /<path:filename>` serves any other static file from the repo root (`radio.html`, `shared-theme.css`, etc.)
 
 **Verified via HTTP headers:**
 - `jaredluyster.com` → `Server: cloudflare`, `x-render-origin-server: waitress`, `rndr-id: ...` (Render)
 - `jaredluyster.com/radio.html` → served by Render (same `x-render-origin-server: waitress`)
 
-**Retired subdomain:** `shop.jaredluyster.com` no longer serves the shop as of 2026-09-06 —
-`server.py`'s host check now only matches `bluegrasstcg.online`/`www.bluegrasstcg.online`, so
-that subdomain (if DNS for it still resolves) just falls through to the homepage. The Cloudflare
-DNS record and any Render custom-domain entry for it can be deleted next time someone's in those
+**Retired subdomain:** `shop.jaredluyster.com` no longer serves anything as of 2026-09-06 — the
+shop moved to `bluegrasstcg.online` (see below), and that subdomain (if DNS for it still
+resolves) just falls through to this app's static-file catch-all, which 404s. The Cloudflare DNS
+record and any Render custom-domain entry for it can be deleted next time someone's in those
 dashboards; nothing depends on it anymore.
 
-**Flask routes (from server.py):**
-- `GET /` → serves `index.html` (homepage) unless the host is the shop domain, in which case the `ShopSubdomainRewrite` WSGI middleware redirects it to `/marketplace/` before Flask routing even runs
-- `GET /<path:filename>` → serves static files from site root (radio.html, shared-theme.css, etc.)
-- `GET /marketplace/` → serves marketplace index.html
-- `GET /marketplace/inventory.json` → serves inventory
-- `GET /marketplace/login` → login page
-- `GET /marketplace/cart` → cart page
-- `GET /marketplace/orders` → order history (login required)
-- `GET /marketplace/admin` → admin dashboard (admin required)
-- Plus API endpoints for auth, cart, orders, admin, and PayPal
+**2026-09-09: the marketplace/shop moved to its own repo and Render service.** It used to live
+at `marketplace/` in this repo, sharing this Flask process with the homepage via host-based
+routing (requests to `bluegrasstcg.online` got rewritten to `/marketplace/*` under the hood).
+It's now a separate private repo, `McBoop69420/bluegrasstcg` (local clone:
+`%USERPROFILE%\Documents\bluegrasstcg`), on its own Render service (`bluegrasstcg`) with its own
+`render.yaml`, database credentials, and PayPal config — `marketplace/` no longer exists in this
+repo, and this app (`app.py`) never served it. `bluegrasstcg.online` and
+`www.bluegrasstcg.online` are custom domains on that separate service now, not this one. See
+that repo for its own infrastructure notes.
 
 ### 1b. Bluegrass Cube Staging — Cloudflare Pages (static, separate project)
 
@@ -380,6 +374,7 @@ ingress:
 
 ```
 jaredluyster.com/
+├── app.py                  # Flask app serving the homepage + static files (Render)
 ├── index.html              # Homepage (served by Render Flask from site root)
 ├── radio.html              # Radio player page (served by Render Flask from site root)
 ├── shared-theme.css        # Shared styles (homepage + radio)
@@ -422,23 +417,6 @@ jaredluyster.com/
 │       ├── ui-and-design.md
 │       ├── world-and-lore.md
 │       └── HTML_STYLING_GUIDE.md
-├── marketplace/            # Flask marketplace app (Render)
-│   ├── server.py           # Main Flask app (~1430 lines, incl. PayPal checkout)
-│   ├── store.py            # Database layer (SQLite/Turso)
-│   ├── inventory.json      # Card inventory
-│   ├── lands.json          # Basic lands inventory
-│   ├── publish.py          # Inventory publish script
-│   ├── batch_add.py        # Batch inventory add
-│   ├── start_server.bat    # Local dev server launcher
-│   ├── requirements.txt    # marketplace-specific deps
-│   └── templates/
-│       ├── admin.html      # Admin dashboard
-│       ├── base.html       # Base template
-│       ├── cart.html       # Shopping cart
-│       ├── login.html      # Login page
-│       ├── orders.html     # Order history
-│       ├── forgot_password.html
-│       └── reset_password.html
 ├── bluegrasscube/          # Bluegrass Cube staging site (Cloudflare Pages: bluegrasscube.jaredluyster.com)
 ├── news/                   # News site shell (Cloudflare Pages project "mcboop-daily": news.jaredluyster.com)
 │   ├── index.html          # News UI shell (no edition; every tab is live)
@@ -470,25 +448,12 @@ jaredluyster.com/
 └── Logo Notes.png          # Logo design notes
 ```
 
-## PayPal Checkout (merged)
+## PayPal Checkout
 
-PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
-
-### `marketplace/server.py`
-- Config comes from **environment variables** — `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENVIRONMENT`, `PAYPAL_CURRENCY` — resolved by `_paypal_config()`. Note these are env vars, *not* admin settings.
-- `_paypal_access_token()` with a thread-locked token cache (`_paypal_token_lock` / `_paypal_token_cache`), and `_paypal_api_request()` as the generic API helper.
-- Helpers: `_valid_paypal_id()`, `_paypal_purchase_unit()`, `_completed_paypal_capture()`, `_paypal_sdk_url()`.
-- `_send_order_confirmation_email()` takes a `payment_method` param (cash vs PayPal).
-
-### `marketplace/store.py`
-- Order columns `payment_method`, `payment_status`, `paypal_order_id`; `create_order()` accepts PayPal params; `get_order_by_paypal_order_id()` lookup.
-
-### Templates
-- `admin.html` — payment method badges on orders, cancel warning for PayPal orders
-- `cart.html` — PayPal button integration, payment method selector
-- `orders.html` — payment method badges
-
-> **Superseded WIP:** an earlier, competing PayPal implementation (982-line `server.py`, configured via *admin settings* rather than env vars — `_paypal_settings()`/`_paypal_api_base()`/`_paypal_create_order()`/`_paypal_capture_order()`) was abandoned in favour of the merged version above. Archived on 2026-08-02 as `%USERPROFILE%\Documents\jaredluyster-paypal-wip-2026-08-02.patch`.
+Moved with the marketplace to `McBoop69420/bluegrasstcg` on 2026-09-09 — see that repo for
+`server.py`'s PayPal integration (`_paypal_config()`, `_paypal_access_token()`, etc.),
+`store.py`'s payment columns, and the checkout templates. Nothing PayPal-related remains in
+this repo.
 
 ## Key URLs
 
@@ -496,9 +461,8 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 |-----|---------|------|
 | `jaredluyster.com` | Homepage + static assets | Render (Flask) |
 | `jaredluyster.com/radio.html` | Radio player page | Render (Flask) |
-| `jaredluyster.com/marketplace/` | Marketplace | Render (Flask) |
 | `wizardbattle.jaredluyster.com` | Wizard Battle site | GitHub Pages (docs/) |
-| `bluegrasstcg.online` | Marketplace (redirect) | Render (Flask), same service as jaredluyster.com |
+| `bluegrasstcg.online` | Marketplace | Separate repo (`McBoop69420/bluegrasstcg`) + Render service |
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
@@ -511,16 +475,14 @@ PayPal checkout is **merged on `main`** (PR #2, `codex/paypal-checkout`).
 
 ### Local development
 1. **Homepage/Wizard Battle (static):**
-   - Homepage: Edit `index.html`, `radio.html`, `shared-theme.css` in repo root — push to `main`, Render auto-deploys
+   - Homepage: Edit `index.html`, `radio.html`, `shared-theme.css` in repo root — push to `main`, Render auto-deploys (`app.py`)
    - Wizard Battle: Edit files in `docs/` — push to `main`, GitHub Pages auto-deploys
-2. **Marketplace (Flask):**
-   - Local: `cd marketplace && python server.py` (port 5000)
-   - Production: Push to `main`, Render auto-deploys from `render.yaml`
+2. **Marketplace (Flask):** Separate repo now — see `McBoop69420/bluegrasstcg`
 3. **Radio service:** Separate private repo (`McBoop69420/radio-service`)
 
 ### Deployment triggers
 - **GitHub Pages (Wizard Battle):** Push to `main` branch (`docs/` directory)
-- **Render (Homepage + Marketplace):** Push to `main` branch (auto-deploys from `render.yaml`)
+- **Render (Homepage):** Push to `main` branch (auto-deploys from `render.yaml`)
 - **Cloudflare Tunnel (Radio):** Runs locally via `cloudflared` (public, no Access)
 - **Cloudflare Pages, Git-integrated (Sports, Bluegrass Cube, and a few legacy
   subdomains — see each project's own section):** Push to `main` branch, same as
