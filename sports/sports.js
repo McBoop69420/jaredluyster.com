@@ -57,6 +57,8 @@
       playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }] },
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }] },
+    { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats"],        standings: null,
+      playoffPoolMode: null, implicationZones: [] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
   ];
@@ -65,7 +67,7 @@
   // display-name variants (e.g. "Lexington SC" vs "Lexington Sporting Club").
   const MY_PATTERNS = [
     "cincinnati reds", "fc cincinnati", "racing louisville", "lexington",
-    "liverpool", "cincinnati bengals",
+    "liverpool", "cincinnati bengals", "kentucky wildcats",
   ].map(s => s.toLowerCase());
 
   const LIVE_SCORE_REFRESH_MS = 5 * 1000;       // current live games: near pitch-by-pitch
