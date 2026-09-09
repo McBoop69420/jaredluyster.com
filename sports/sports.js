@@ -28,6 +28,11 @@
   // count (covers UCL+UEL+UECL together) rather than tracking the exact
   // competition split, which shifts most seasons on UEFA coefficient swing
   // spots.
+  // spotlightRankedOnly: college sports have far more teams playing at once
+  // than any pro league (100+ FBS/D-I games some Saturdays), so a live game
+  // alone would flood Spotlight. For these leagues a live game only counts as
+  // "big" if it's also Top-25 ranked (see `ranked` on the parsed game) —
+  // followed-team games still always show via isMyGame regardless of rank.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }] },
@@ -58,11 +63,11 @@
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }] },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [] },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
     { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [] },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
     { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [] },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
   ];
@@ -423,7 +428,10 @@
       const rec = (c.records && c.records[0] && c.records[0].summary);
       return rec ? "Record " + rec : "";
     };
-
+    const isRanked = c => {
+      const r = c.curatedRank && c.curatedRank.current;
+      return typeof r === "number" && r <= 25;
+    };
 
     return {
       eventId: ev.id,
@@ -438,6 +446,7 @@
       baseballSituation: parseBaseballSituation(comp, state, leagueKey),
       lineScore: parseBaseballLineScore(comp, state, leagueKey),
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
+      ranked: isRanked(away) || isRanked(home),
     };
   }
 
@@ -673,7 +682,8 @@
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
         if (g.dateET !== todayET) return;
-        const big = g.state === "in" || g.isMyGame ||
+        const liveCounts = g.state === "in" && (!league || !league.spotlightRankedOnly || g.ranked);
+        const big = liveCounts || g.isMyGame ||
           (league && isPlayoffImplicated(league, g, poolsFor(league)));
         if (big) entries.push({ g, label: league ? league.label : "" });
       });
