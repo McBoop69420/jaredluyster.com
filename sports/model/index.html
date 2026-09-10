@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How McBoop Sports' MLB Value Screen and NFL Odds panels work: data sources, terminology, and the exact math behind the model.">
+<title>How the Model Works — McBoop Sports</title>
+<link rel="preconnect" href="https://site.api.espn.com">
+<link rel="preconnect" href="https://statsapi.mlb.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sports.css?v=47">
+<style>
+  .model-page{max-width:760px;margin:0 auto}
+  .model-page section{margin:0 0 28px}
+  .model-page h2{
+    font-family:var(--font-display);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;
+    margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid var(--ink);
+  }
+  .model-page h3{
+    font-family:var(--font-display);font-size:14px;text-transform:uppercase;letter-spacing:.03em;
+    margin:18px 0 6px;
+  }
+  .model-page .kicker{
+    display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);
+    box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);
+    font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;
+  }
+  .model-page p{margin:0 0 10px;font-size:.94rem;line-height:1.55}
+  .model-page ul,.model-page ol{margin:0 0 10px;padding-left:22px;font-size:.94rem;line-height:1.55}
+  .model-page li{margin-bottom:5px}
+  .model-page code{
+    font-family:"Courier New",monospace;font-size:.85em;background:var(--card);
+    padding:1px 5px;border:1px solid var(--ink);
+  }
+  .model-page .formula{
+    display:block;margin:10px 0;padding:10px 12px;background:var(--card);border:1px solid var(--ink);
+    font-family:"Courier New",monospace;font-size:.85rem;line-height:1.7;overflow-x:auto;white-space:pre;
+  }
+  .model-page .callout{
+    padding:10px 12px;background:var(--highlight);border:1px solid var(--ink);font-size:.9rem;line-height:1.5;
+  }
+  .model-page .source-list{list-style:none;padding-left:0}
+  .model-page .source-list li{
+    padding:8px 10px;margin-bottom:6px;background:var(--card);border:1px solid var(--ink);font-size:.88rem;
+  }
+  .model-page .source-list strong{display:block;font-family:var(--font-display);font-size:.78rem;
+    text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;}
+  .model-page dl{margin:0 0 10px}
+  .model-page dt{font-weight:700;margin-top:8px}
+  .model-page dd{margin:2px 0 0;font-size:.92rem;color:var(--ink)}
+</style>
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1>McBoop <span class="accent-box">Model</span></h1>
+    <div class="dateline">How the betting panels on McBoop Sports actually work</div>
+    <div class="strip">
+      <span><a href="/">&larr; Back to McBoop Sports</a></span>
+    </div>
+  </header>
+
+  <div class="model-page" style="margin-top:22px">
+
+    <section>
+      <p>McBoop Sports has two betting-adjacent panels: the <strong>MLB Value Screen</strong>, which
+        compares an independently computed win-probability model against the live market to flag
+        disagreements, and <strong>NFL Odds</strong>, which just shows live market odds with no model
+        attached. This page explains exactly how each one works, where the numbers come from, and what
+        the terminology means &mdash; including where the model is weak.</p>
+    </section>
+
+    <section>
+      <div class="kicker">MLB &middot; Model vs Market</div>
+      <h2>MLB Value Screen</h2>
+      <p>The idea: compute a win-probability estimate from MLB stats alone, with no knowledge of what
+        the betting market thinks, then compare the two. When they disagree by enough, that's flagged
+        as worth a second look &mdash; not a pick, just a place where the model and the market don't
+        agree.</p>
+
+      <h3>Data sources</h3>
+      <ul class="source-list">
+        <li><strong>Market odds &mdash; BetExplorer.com</strong>
+          Scraped server-side by a Cloudflare Worker (<code>/api/odds</code>), because the browser can't
+          fetch betexplorer.com directly (it doesn't send a CORS header). The scrape reads the site's
+          MLB fixtures listing and converts its kickoff times from CEST to ET. Results are edge-cached
+          for about 4 minutes. <strong>Known limitation:</strong> BetExplorer frequently hasn't posted
+          lines for most of a day's slate yet, especially hours before first pitch &mdash; the screen can
+          only price what BetExplorer has actually listed, and shows &ldquo;no market line yet&rdquo;
+          for everything else. This is the single biggest reason the screen can look sparse.</li>
+        <li><strong>Model inputs &mdash; statsapi.mlb.com</strong> (MLB's own public Stats API, CORS-open)
+          Team season runs scored, runs allowed, and games played (for the win-expectancy math below),
+          plus today's probable starting pitchers and their season pitching lines (runs allowed and
+          innings pitched, to compute RA9 &mdash; runs allowed per 9 innings).</li>
+      </ul>
+
+      <h3>Terminology</h3>
+      <dl>
+        <dt>Fair %</dt>
+        <dd>The market's implied win probability with the sportsbook's built-in margin (the
+          &ldquo;vig&rdquo;) removed. Raw moneyline odds always imply more than 100% combined across both
+          teams &mdash; that extra is the house's cut. Fair% rescales the pair so they sum to exactly
+          100%, giving the market's actual best guess with the profit margin stripped out.</dd>
+        <dt>Model %</dt>
+        <dd>This site's own from-scratch win-probability estimate (see the formula below). It's computed
+          without looking at the market at all.</dd>
+        <dt>Edge</dt>
+        <dd>Model% &minus; Fair%. Positive means the model likes that team more than the market does;
+          negative means less.</dd>
+        <dt>Call</dt>
+        <dd>
+          <span class="call call--value">Value</span> edge &ge; +4 points &mdash; model favors this side
+          noticeably more than the market.<br>
+          <span class="call call--fade">Fade</span> edge &le; &minus;4 points &mdash; model favors this
+          side noticeably less than the market.<br>
+          <span class="call call--check">Check</span> |edge| &ge; 10 points &mdash; the disagreement is
+          large enough that it's more likely the model is missing something (a stale stat, an unannounced
+          lineup change) than that it's found a genuinely huge edge. Treat as &ldquo;look into this,&rdquo;
+          not &ldquo;bet this.&rdquo;<br>
+          <strong>No tag</strong> (shown as NO EDGE) &mdash; model and market are within 4 points of each
+          other. No disagreement worth flagging.
+        </dd>
+      </dl>
+
+      <h3>How Model % is actually computed</h3>
+      <p>There are two versions, and the screen automatically falls back from the first to the second:</p>
+
+      <p><strong>v2 &mdash; starter-adjusted</strong> (used whenever both probable starters have thrown at
+        least 20 innings this season): each team's expected runs in this specific matchup is that team's
+        season runs-scored-per-game, scaled by how the <em>opposing</em> starter's runs-allowed rate
+        compares to the league average:</p>
+      <span class="formula">awayExpectedRuns = (away team's RS per game) &times; (home starter's RA9 &divide; league RS per game)
+homeExpectedRuns = (home team's RS per game) &times; (away starter's RA9 &divide; league RS per game)
+
+P(away wins) = 1 / (1 + (homeExpectedRuns / awayExpectedRuns) ^ 1.83)</span>
+      <p>That win probability is converted to a percentage, then a flat <strong>4-point home-field
+        adjustment</strong> is applied &mdash; added to the home team's number, subtracted from the away
+        team's &mdash; before the pair is shown as Model%. The 1.83 exponent is the standard baseball
+        Pythagorean-expectation constant (a fixed historical fit between run differential and win rate,
+        not something recalculated per season). &ldquo;League RS per game&rdquo; itself isn't a hardcoded
+        number &mdash; it's computed fresh each time from that day's full MLB standings (total runs
+        scored across the league &divide; total games played).</p>
+
+      <p><strong>v1 &mdash; season Pythagorean fallback</strong> (used when a probable starter is
+        unannounced, or hasn't thrown 20 innings yet): skips the starter-matchup adjustment entirely and
+        just uses each team's own season-long Pythagorean win expectancy, independently:</p>
+      <span class="formula">P(team wins) = 1 / (1 + (runs allowed / runs scored) ^ 1.83)</span>
+      <p>Same home +4 / away &minus;4 adjustment is applied on top. This version knows nothing about
+        who's actually pitching &mdash; it's a coarser, whole-season-average estimate used only when the
+        starter data isn't reliable yet.</p>
+
+      <div class="callout">
+        <strong>What the model doesn't see:</strong> bullpen quality, ballpark factors, weather, lineup
+        changes, or injuries beyond what's baked into season stats. It also doesn't know anything about
+        the market &mdash; Model% and Fair% are computed completely independently and only compared at
+        the very end. A large Edge is exactly as likely to mean &ldquo;the model found something real&rdquo;
+        as &ldquo;the model is working from stale or incomplete data&rdquo; &mdash; that's what the CHECK
+        tag exists to flag.
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">NFL &middot; Market Lines</div>
+      <h2>NFL Odds</h2>
+      <p>There's no NFL version of the MLB model above &mdash; there's no equivalent of a
+        &ldquo;starter&rdquo; to adjust for, and BetExplorer (the MLB market source) has no NFL/American
+        football section at all. So this panel is deliberately simpler: it shows live market odds only,
+        with no independent model and no edge/call system.</p>
+
+      <h3>Data source</h3>
+      <ul class="source-list">
+        <li><strong>ESPN's own summary endpoint</strong> (<code>site.api.espn.com</code>, the same host
+          every other page on this site already uses, CORS-open &mdash; no worker proxy needed). Each
+          game's <code>pickcenter</code> field carries a DraftKings-sourced moneyline. Unlike BetExplorer,
+          ESPN's coverage is essentially complete for the whole week's NFL slate, posted well ahead of
+          kickoff.</li>
+      </ul>
+
+      <h3>Terminology</h3>
+      <dl>
+        <dt>ML</dt>
+        <dd>Moneyline, in standard American odds format: a <code>+</code> number is the profit on a
+          $100 bet if that team wins (the underdog); a <code>&minus;</code> number is how much you'd need
+          to stake to profit $100 (the favorite).</dd>
+        <dt>Win %</dt>
+        <dd>The same de-vig math as MLB's Fair% above, applied to the moneyline pair &mdash; the market's
+          implied win probability with the sportsbook's margin removed. There's no Model% to compare it
+          against here; it's shown purely as a translation of the odds into a probability.</dd>
+      </dl>
+    </section>
+
+  </div>
+
+  <footer class="colophon">
+    <p>Both panels refresh automatically. See
+      <a href="/">the live Sports page</a> for current numbers.</p>
+  </footer>
+</article>
+</body>
+</html>
