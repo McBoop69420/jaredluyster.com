@@ -17,6 +17,7 @@ const HIDDEN_PREFIXES = ["/roto-worker/"];
 const SUBDOMAIN_ROOTS: Record<string, string> = {
   roto: "/roto",
   wintergreen: "/wintergreen",
+  radio: "/radio",
 };
 
 // Assets that live at the repo root and are shared by the tools. A tool page links these
@@ -25,6 +26,13 @@ const SUBDOMAIN_ROOTS: Record<string, string> = {
 // Pages then serves index.html for the miss with a 200 and text/html, so the stylesheet
 // is silently dropped rather than 404ing. These pass through unrewritten instead.
 const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
+
+// The radio player's own script calls these paths on radio.jaredluyster.com expecting
+// the actual streaming backend (AzuraCast/Icecast-style), not this Pages project. If the
+// subdomain rewrite above sent them into /radio/*, they'd 404 into the SPA-style
+// index.html fallback instead of reaching the stream. Left unrewritten so they keep
+// hitting whatever the subdomain's DNS/custom-domain setup actually routes them to.
+const RADIO_BACKEND_PATHS = new Set(["/status.json", "/stream.mp3", "/art/now"]);
 
 // Record-detail pages (e.g. wintergreen product pages) share one template file per entity
 // type instead of one static file per record, since the catalog is JSON-driven
@@ -71,7 +79,13 @@ export const onRequest = async (context: {
   let rewritten: URL | null = null;
 
   const root = SUBDOMAIN_ROOTS[url.hostname.split(".")[0].toLowerCase()];
-  if (root && !SHARED_ROOT_ASSETS.has(path) && !path.startsWith(`${root}/`) && path !== root) {
+  if (
+    root &&
+    !SHARED_ROOT_ASSETS.has(path) &&
+    !RADIO_BACKEND_PATHS.has(path) &&
+    !path.startsWith(`${root}/`) &&
+    path !== root
+  ) {
     rewritten = new URL(url);
     rewritten.pathname = path === "/" ? `${root}/` : root + url.pathname;
   }
