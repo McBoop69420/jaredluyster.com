@@ -109,6 +109,8 @@
   let scoresRefreshInFlight = false;
   let valueScreen = null;          // { games: [...], fetchedAt } for today (ET)
   let valueScreenLoading = false;
+  let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
+  let nflOddsLoading = false;
   const gamesByLeague = new Map();
   const detailedBoxScoreCache = new Map();
   const openDetailedBoxScores = new Set();
@@ -1054,6 +1056,8 @@
     if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
     renderSpotlight();
     renderValueScreen();
+    renderNflOdds();
+    loadNflOdds(); // gamesByLeague("football/nfl") just refreshed above — pick up new/dropped games
     stamp();
   }
 
@@ -1079,6 +1083,8 @@
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
         renderValueScreen();
         loadValueScreen();
+        renderNflOdds();
+        loadNflOdds();
         render();
       });
       return b;
@@ -1343,6 +1349,109 @@
     renderValueScreen();
   }
 
+  // ---- NFL Odds (market only, no model) ----------------------------------
+  // No MLB-style model here: there's no equivalent "starter-adjusted" stat to
+  // build one from, and BetExplorer (the MLB market source) has no NFL/
+  // American football section at all. Odds instead come straight from ESPN's
+  // own summary endpoint (site.api.espn.com, CORS-open, confirmed — the same
+  // host every other fetch on this page already uses), which carries a
+  // DraftKings moneyline via `pickcenter`. Games come from gamesByLeague
+  // (already fetched for the NFL board section) rather than a second
+  // schedule call.
+  function formatAmericanOdds(value) {
+    const odds = Number(value);
+    if (!Number.isFinite(odds) || odds === 0) return null;
+    return (odds > 0 ? "+" : "") + String(odds);
+  }
+  function americanImpliedPercent(oddsText) {
+    const odds = Number(String(oddsText == null ? "" : oddsText).replace(/[^0-9+.-]/g, ""));
+    if (!Number.isFinite(odds) || odds === 0) return null;
+    return odds > 0 ? 100 / (odds + 100) * 100 : Math.abs(odds) / (Math.abs(odds) + 100) * 100;
+  }
+
+  async function computeNflOdds() {
+    // gamesByLeague's order is preserved by Promise.all, so no re-sort needed.
+    const games = (gamesByLeague.get("football/nfl") || []).filter(g => g.state !== "post");
+    return Promise.all(games.map(async g => {
+      const row = {
+        away: g.away.abbr, home: g.home.abbr,
+        time: g.state === "in" ? g.statusText : g.startTime,
+      };
+      const summary = await fetchJSON(ESPN + "football/nfl/summary?event=" + g.eventId);
+      const market = summary && summary.pickcenter && summary.pickcenter[0];
+      if (!market) return row;
+      row.awayMl = formatAmericanOdds(market.awayTeamOdds && market.awayTeamOdds.moneyLine);
+      row.homeMl = formatAmericanOdds(market.homeTeamOdds && market.homeTeamOdds.moneyLine);
+      const aImp = americanImpliedPercent(row.awayMl);
+      const hImp = americanImpliedPercent(row.homeMl);
+      if (aImp != null && hImp != null) {
+        // De-vig into a fair pair that sums to 100%, same as the MLB screen.
+        row.awayPct = r1(aImp / (aImp + hImp) * 100);
+        row.homePct = r1(100 - row.awayPct);
+      }
+      return row;
+    }));
+  }
+
+  function nflOddsRowsHtml() {
+    const games = nflOdds && nflOdds.games;
+    if (!games) {
+      return '<tr><td colspan="3" class="value-empty">' +
+        (nflOddsLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
+        "</td></tr>";
+    }
+    if (!games.length) {
+      return '<tr><td colspan="3" class="value-empty">No NFL games this week.</td></tr>';
+    }
+    return games.map(r => {
+      const match = "<strong>" + esc(r.away) + " @ " + esc(r.home) + "</strong>" +
+        (r.time ? ' <span class="value-note">' + esc(r.time) + "</span>" : "");
+      if (!r.awayMl) {
+        return "<tr><td>" + match + '</td><td colspan="2" class="value-note">no market line yet</td></tr>';
+      }
+      return "<tr><td>" + match + "</td><td>" + esc(r.awayMl) + "/" + esc(r.homeMl) + "</td><td>" +
+        (r.awayPct != null ? esc(r.awayPct) + "/" + esc(r.homePct) : "—") + "</td></tr>";
+    }).join("");
+  }
+
+  // Same "rides along with the matching filter" rule as the MLB screen.
+  function nflOddsVisible() {
+    return activeFilter === "all" || activeFilter === "football/nfl";
+  }
+
+  function renderNflOdds() {
+    const panel = $("#nflOdds");
+    if (!panel) return;
+    const visible = nflOddsVisible();
+    panel.style.display = visible ? "" : "none";
+    if (!visible) return;
+
+    $("#nflOddsBody").innerHTML = nflOddsRowsHtml();
+    const meta = $("#nflOddsMeta");
+    const games = nflOdds && nflOdds.games;
+    if (!games) {
+      meta.textContent = nflOddsLoading ? "Loading slate…" : "Slate unavailable";
+      return;
+    }
+    const priced = games.filter(g => g.awayMl).length;
+    meta.textContent = games.length + " games · " + priced + " priced";
+  }
+
+  async function loadNflOdds() {
+    if (nflOddsLoading || !nflOddsVisible()) return;
+    nflOddsLoading = true;
+    renderNflOdds();
+    try {
+      const games = await computeNflOdds();
+      nflOdds = { games, fetchedAt: Date.now() };
+    } catch (e) {
+      // Keep showing the last good slate rather than blanking the panel.
+    } finally {
+      nflOddsLoading = false;
+    }
+    renderNflOdds();
+  }
+
   // ---- Adaptive score refresh -------------------------------------------
   function filteredLeagues() {
     return activeFilter === "all" ? LEAGUES : LEAGUES.filter(league => league.key === activeFilter);
@@ -1382,11 +1491,12 @@
   }
 
   // Odds and season stats move on the order of minutes, not seconds, so the
-  // value screen gets its own slow timer rather than riding the score loops.
+  // betting panels (MLB Value Screen, NFL Odds) get their own slow timer
+  // rather than riding the score loops.
   function scheduleValueScreenRefresh() {
     if (valueTimer) clearInterval(valueTimer);
     valueTimer = setInterval(() => {
-      if (!document.hidden) loadValueScreen();
+      if (!document.hidden) { loadValueScreen(); loadNflOdds(); }
     }, VALUE_REFRESH_MS);
   }
 
@@ -1404,7 +1514,7 @@
   function init() {
     buildFilters();
     $("#refreshBtn").addEventListener("click", async () => {
-      await Promise.all([render(), loadValueScreen()]);
+      await Promise.all([render(), loadValueScreen(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
