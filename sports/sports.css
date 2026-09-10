@@ -237,6 +237,10 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 .value-screen-kicker{display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .value-screen h2{font-family:var(--font-display);font-size:24px;line-height:1;margin:8px 0 0;text-transform:uppercase;letter-spacing:-.01em}
 .value-screen-meta{font-family:var(--font-display);font-size:11px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.value-explain{margin-top:10px;padding:10px 12px;background:var(--card);border:1px solid var(--ink);font-size:.82rem;line-height:1.5;color:var(--ink)}
+.value-explain p{margin:0}
+.value-explain p+p{margin-top:8px}
+.value-explain .call{margin:0 2px;vertical-align:1px}
 .value-slate-wrap{overflow-x:auto;margin-top:10px}
 table.value-slate{width:100%;border-collapse:collapse;font-size:.9rem;font-family:var(--font-body)}
 table.value-slate th{text-align:left;font-size:.68rem;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:2px solid var(--ink);white-space:nowrap}

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sports.css?v=46">
+<link rel="stylesheet" href="/sports.css?v=47">
 </head>
 <body>
 <article class="paper">
@@ -48,6 +48,21 @@
       </div>
       <div class="value-screen-meta" id="valueScreenMeta">Loading slate&hellip;</div>
     </header>
+    <div class="value-explain">
+      <p><strong>Fair %</strong> is the market's implied win probability with the sportsbook's built-in
+        margin (the &ldquo;vig&rdquo;) removed, so both teams' numbers add up to 100%.
+        <strong>Model %</strong> is this site's own from-scratch estimate, computed from MLB stats (runs
+        scored/allowed, adjusted for that day's probable starting pitchers) &mdash; it has no idea what
+        the market thinks. <strong>Edge</strong> is Model % &minus; Fair %: how much more (or less) the
+        model likes a team than the market does.</p>
+      <p><span class="call call--value">Value</span> = model favors this side by &ge; 4 points more than
+        the market &mdash; worth a second look. <span class="call call--fade">Fade</span> = model favors
+        them &ge; 4 points less. <span class="call call--check">Check</span> = model and market disagree
+        by &ge; 10 points, which usually means the model is missing something (stale or thin pitcher
+        data) rather than a real edge &mdash; a flag to double-check, not a pick. No tag = model and
+        market roughly agree, nothing actionable. Each row's second line explains the specific reasoning
+        behind its call.</p>
+    </div>
     <div class="value-slate-wrap">
       <table class="value-slate">
         <thead>
@@ -58,12 +73,7 @@
         </tbody>
       </table>
     </div>
-    <p class="value-legend">
-      <span class="call call--value">Value</span> model edge &ge; +4 &middot;
-      <span class="call call--fade">Fade</span> edge &le; &minus;4 &middot;
-      <span class="call call--check">Check</span> |edge| &ge; 10 (model blind spot) &middot;
-      odds BetExplorer &middot; model MLB stats, starter-adjusted &middot; edge = model% &minus; fair%
-    </p>
+    <p class="value-legend">odds BetExplorer &middot; model MLB stats, starter-adjusted</p>
   </section>
 
   <section class="value-screen" id="nflOdds" aria-labelledby="nflOddsTitle">
@@ -95,6 +105,6 @@
     <p>Live data from ESPN. Scores and standings refresh automatically; times shown in Eastern (ET).</p>
   </footer>
 </article>
-<script src="/sports.js?v=61"></script>
+<script src="/sports.js?v=62"></script>
 </body>
 </html>

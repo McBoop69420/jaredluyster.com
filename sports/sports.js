@@ -1243,12 +1243,16 @@
 
         const awayEdge = r1(awayModel - row.awayFair);
         const homeEdge = r1(homeModel - row.homeFair);
-        let call;
+        // callSide records which team the call is about ("away"/"home"/null for
+        // CHECK and NO EDGE, which aren't about either side specifically) so
+        // explainCall() can pull that team's own numbers without re-parsing
+        // the "VALUE CIN" string.
+        let call, callSide = null;
         if (Math.max(Math.abs(awayEdge), Math.abs(homeEdge)) >= CHECK_GAP) call = "CHECK";
-        else if (awayEdge >= EDGE_MIN) call = "VALUE " + row.awayAbbr;
-        else if (homeEdge >= EDGE_MIN) call = "VALUE " + row.homeAbbr;
-        else if (awayEdge <= -EDGE_MIN) call = "FADE " + row.awayAbbr;
-        else if (homeEdge <= -EDGE_MIN) call = "FADE " + row.homeAbbr;
+        else if (awayEdge >= EDGE_MIN) { call = "VALUE " + row.awayAbbr; callSide = "away"; }
+        else if (homeEdge >= EDGE_MIN) { call = "VALUE " + row.homeAbbr; callSide = "home"; }
+        else if (awayEdge <= -EDGE_MIN) { call = "FADE " + row.awayAbbr; callSide = "away"; }
+        else if (homeEdge <= -EDGE_MIN) { call = "FADE " + row.homeAbbr; callSide = "home"; }
         else call = "NO EDGE";
 
         row.awayModel = r1(awayModel);
@@ -1256,6 +1260,7 @@
         row.awayEdge = awayEdge;
         row.homeEdge = homeEdge;
         row.call = call;
+        row.callSide = callSide;
         games.push(row);
       }
     }
@@ -1267,6 +1272,35 @@
     if (call.indexOf("FADE") === 0) return "call--fade";
     if (call === "CHECK") return "call--check";
     return "call--none";
+  }
+
+  // Plain-language reason for this row's Call, so "VALUE CIN" or "CHECK"
+  // doesn't require re-deriving the math by eye.
+  function explainCall(row) {
+    const driver = row.adj
+      ? "starters " + row.adj.away + " (RA9 " + row.adj.awayRa9 + ") vs " +
+        row.adj.home + " (RA9 " + row.adj.homeRa9 + ", league avg " + row.adj.lg + ")"
+      : "season-long Pythagorean win expectancy — starter data was thin or unannounced";
+    if (row.callSide) {
+      const away = row.callSide === "away";
+      const abbr = away ? row.awayAbbr : row.homeAbbr;
+      const model = away ? row.awayModel : row.homeModel;
+      const fair = away ? row.awayFair : row.homeFair;
+      const edge = away ? row.awayEdge : row.homeEdge;
+      const isValue = row.call.indexOf("VALUE") === 0;
+      return abbr + "'s model% (" + model + ") " + (isValue ? "beats" : "trails") +
+        " the market's fair% (" + fair + ") by " + Math.abs(edge).toFixed(1) + " points, past the " +
+        (isValue ? "+" : "−") + EDGE_MIN + " threshold, based on " + driver + ".";
+    }
+    if (row.call === "CHECK") {
+      const gap = Math.max(Math.abs(row.awayEdge), Math.abs(row.homeEdge)).toFixed(1);
+      return "Model and market disagree by " + gap + " points — beyond the ±" + CHECK_GAP +
+        " sanity limit, which usually means the model is off (based on " + driver +
+        ") rather than a real edge. Worth a second look before trusting either number.";
+    }
+    return "Model (" + row.awayModel + "/" + row.homeModel + ") and market (" + row.awayFair + "/" +
+      row.homeFair + ") are within " + EDGE_MIN + " points of each other, based on " + driver +
+      " — no disagreement worth flagging.";
   }
 
   function valueSlateRowsHtml() {
@@ -1300,11 +1334,8 @@
         '<td class="' + (hot ? "edge-hot" : "") + '">' + esc(r.awayEdge) + "/" + esc(r.homeEdge) + "</td>" +
         '<td><span class="call ' + callClass(r.call) + '">' + esc(r.call) + "</span></td>" +
         "</tr>";
-      html += '<tr class="value-starters"><td colspan="6"><span class="value-note">' + (r.adj
-        ? "starters: " + esc(r.adj.away) + " RA9 " + esc(r.adj.awayRa9) + " vs " +
-          esc(r.adj.home) + " RA9 " + esc(r.adj.homeRa9) + " (lg " + esc(r.adj.lg) + ")"
-        : "starters: one/both TBA or &lt;" + MIN_IP + " IP &middot; v1 fallback") +
-        "</span></td></tr>";
+      html += '<tr class="value-starters"><td colspan="6"><span class="value-note">' +
+        esc(explainCall(r)) + "</span></td></tr>";
       return html;
     }).join("");
   }
