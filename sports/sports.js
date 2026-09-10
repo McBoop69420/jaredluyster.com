@@ -346,6 +346,7 @@
       away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner },
       home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner },
       dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
+      kickoffMs: dt ? dt.getTime() : null,
       startTime,
       statusText: formatGameStatus(status, state, startTime, leagueKey),
       baseballSituation: parseBaseballSituation(comp, state, leagueKey),
@@ -1370,11 +1371,10 @@
   }
 
   async function computeNflOdds() {
-    // gamesByLeague's order is preserved by Promise.all, so no re-sort needed.
     const games = (gamesByLeague.get("football/nfl") || []).filter(g => g.state !== "post");
-    return Promise.all(games.map(async g => {
+    const rows = await Promise.all(games.map(async g => {
       const row = {
-        away: g.away.abbr, home: g.home.abbr,
+        away: g.away.abbr, home: g.home.abbr, kickoffMs: g.kickoffMs,
         time: g.state === "in" ? g.statusText : g.startTime,
       };
       const summary = await fetchJSON(ESPN + "football/nfl/summary?event=" + g.eventId);
@@ -1391,6 +1391,11 @@
       }
       return row;
     }));
+    // Chronological, not ESPN's default order (which groups by something else
+    // entirely — a live game and a day-old Thursday game both ended up ahead
+    // of Sunday's early slate). Any market-only odds panel added for another
+    // sport later should sort the same way.
+    return rows.sort((a, b) => (a.kickoffMs || 0) - (b.kickoffMs || 0));
   }
 
   function nflOddsRowsHtml() {
