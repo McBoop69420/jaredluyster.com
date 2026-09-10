@@ -72,13 +72,13 @@ export class DraftRoom {
     let cards;
     try {
       // The room fetches the cube itself. A client-supplied card list would let one
-      // player choose everyone's packs.
+      // player choose everyone's cards.
       cards = await fetchCubeCards(config.cubeId);
     } catch (error) {
       return json({ error: "cube-fetch-failed", message: String(error.message || error) }, 502);
     }
 
-    if (cards.length < config.packSize) {
+    if (cards.length < config.players) {
       return json({ error: "cube-too-small", have: cards.length }, 400);
     }
 
@@ -92,7 +92,7 @@ export class DraftRoom {
       protocol: PROTOCOL_VERSION,
       cards: cards.length,
       // Not an error: the draft simply reuses cards. Worth surfacing in the lobby.
-      undersized: cards.length < config.players * config.packs * config.packSize,
+      undersized: cards.length < config.players * config.cardsPerPlayer,
     }, 201);
   }
 
@@ -280,12 +280,13 @@ function seatTag(seat) {
 }
 
 function readConfig(body) {
+  const cardsPerPlayer = clamp(body.cardsPerPlayer, 4, 120);
+
   return {
     cubeId: String(body.cubeId || "").trim(),
     players: clamp(body.players, 2, 8),
-    packs: clamp(body.packs, 1, 6),
-    packSize: clamp(body.packSize, 4, 24),
-    doublePickAfter: clamp(body.doublePickAfter ?? 0, 0, 23),
+    cardsPerPlayer,
+    doublePickAfter: clamp(body.doublePickAfter ?? 0, 0, cardsPerPlayer - 1),
     seed: String(body.seed || "").trim() || crypto.randomUUID(),
   };
 }

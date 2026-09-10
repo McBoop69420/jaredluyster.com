@@ -13,7 +13,6 @@ import {
   ENGINE_VERSION,
   pendingSeats,
   picksRemaining,
-  picksThisStep,
   submitPick,
 } from "../roto/draft.js";
 
@@ -81,30 +80,24 @@ export function roomFrame(state) {
   };
 }
 
-export function handFrame(state, seat) {
-  const { draft } = state;
-
+// Broadcast, not unicast: in a snake draft the pool is public — every seat sees the
+// same cards. Only what each seat has already drafted (the `pool` frame) stays private.
+export function boardFrame(state) {
   return {
-    t: "hand",
-    step: draft.step,
-    round: draft.round,
-    pickNumber: draft.pickNumber,
-    pack: draft.currentPacks[seat].slice(),
-    remaining: picksRemaining(draft, seat),
-    seq: draft.pools[seat].length,
+    t: "board",
+    refs: state.draft.pool.slice(),
   };
 }
 
-export function stepFrame(state) {
+export function turnFrame(state) {
   const { draft } = state;
 
   return {
-    t: "step",
+    t: "turn",
     step: draft.step,
-    round: draft.round,
-    pickNumber: draft.pickNumber,
-    picksThisStep: picksThisStep(draft),
-    pending: pendingSeats(draft),
+    currentSeat: draft.currentSeat,
+    picksOwed: picksRemaining(draft, draft.currentSeat),
+    seq: draft.pools[draft.currentSeat].length,
     poolSizes: draft.pools.map((pool) => pool.length),
   };
 }
@@ -254,8 +247,8 @@ function handleJoin(state, actor, msg, now, deps, effects) {
 function pushSeatView(state, seat, effects, target = seat) {
   if (state.phase === "drafting") {
     effects.push({ to: target, msg: { t: "pool", refs: state.draft.pools[seat].slice() } });
-    effects.push({ to: target, msg: handFrame(state, seat) });
-    effects.push({ to: target, msg: stepFrame(state) });
+    effects.push({ to: target, msg: boardFrame(state) });
+    effects.push({ to: target, msg: turnFrame(state) });
   } else if (state.phase === "complete") {
     effects.push({ to: target, msg: doneFrame(state) });
   }
@@ -335,7 +328,7 @@ function handlePick(state, actor, msg, now, effects) {
   }
 
   // A retry after a dropped ack: replay the original result instead of taking a second
-  // card. Fencing on pickNumber alone would silently let this through.
+  // card. Fencing on the pick's own step alone would silently let this through.
   if (msg.seq < pool.length) {
     const previous = state.pickLog.find(
       (entry) => entry.seat === index && entry.seq === msg.seq
@@ -367,7 +360,8 @@ function handlePick(state, actor, msg, now, effects) {
 
   if (!result.ok) {
     effects.push({ to: index, msg: error(result.error, pickErrorMessage(result.error)) });
-    effects.push({ to: index, msg: handFrame(state, index) });
+    effects.push({ to: index, msg: boardFrame(state) });
+    effects.push({ to: index, msg: turnFrame(state) });
     return { state, effects };
   }
 
@@ -405,11 +399,11 @@ function handlePick(state, actor, msg, now, effects) {
 function pickErrorMessage(code) {
   switch (code) {
     case "not-owed":
-      return "You have already picked this round.";
-    case "stale-pack":
-      return "That pack changed — here it is again.";
+      return "It's not your turn.";
+    case "stale-pool":
+      return "The pool changed — here it is again.";
     case "bad-index":
-      return "That card is not in your pack.";
+      return "That card is not in the pool.";
     default:
       return "That pick could not be applied.";
   }
@@ -571,19 +565,15 @@ function applyAdvance(state, now, effects) {
 }
 
 // Sends everyone the post-resolve view. Built after advancing, never from a snapshot
-// taken before — a pre-resolve snapshot ships empty packs for a whole round.
+// taken before — a pre-resolve snapshot ships a stale pool/turn. The pool is public in
+// a snake draft, so one broadcast covers the whole table; no more per-seat hand frames.
 function broadcastRound(state, effects) {
   if (state.phase !== "drafting") {
     return;
   }
 
-  effects.push({ to: "all", msg: stepFrame(state) });
-
-  for (let seat = 0; seat < state.config.players; seat += 1) {
-    if (state.seats[seat].kind === "human") {
-      effects.push({ to: seat, msg: handFrame(state, seat) });
-    }
-  }
+  effects.push({ to: "all", msg: boardFrame(state) });
+  effects.push({ to: "all", msg: turnFrame(state) });
 }
 
 function nextAlarm(state, now) {

@@ -23,8 +23,7 @@ export function config(overrides = {}) {
   return {
     cubeId: "test-cube",
     players: 8,
-    packs: 3,
-    packSize: 15,
+    cardsPerPlayer: 45,
     doublePickAfter: 0,
     seed: "fixture-seed",
     ...overrides,
@@ -47,24 +46,19 @@ export function rng(seed) {
   };
 }
 
-// A pick script is a pure function (packLength) -> index. Both engines get the same
-// one, so if they ever present differently-sized packs the parity test diverges loudly
-// instead of silently comparing two different drafts.
+// A pick script is a pure function (poolLength) -> index.
 export function scriptedPicker(seed) {
   const next = rng(seed);
-  return (packLength) => Math.floor(next() * packLength);
+  return (poolLength) => Math.floor(next() * poolLength);
 }
 
-// Reads a seat's pool as card names from either engine generation: the legacy engine
-// stores card objects, the current one stores integer refs into draft.catalog.
+// Reads a seat's pool as card names (pools store integer refs into draft.catalog).
 export function poolNames(draft, seat) {
-  return draft.pools[seat].map((entry) =>
-    typeof entry === "number" ? draft.catalog[entry].name : entry.name
-  );
+  return draft.pools[seat].map((ref) => draft.catalog[ref].name);
 }
 
-export function packLength(draft, seat) {
-  return draft.currentPacks[seat].length;
+export function poolLength(draft) {
+  return draft.pool.length;
 }
 
 export function countByName(names) {

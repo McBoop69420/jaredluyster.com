@@ -246,28 +246,40 @@ test("the room frame keeps host status in step with the roster", () => {
   client.close();
 });
 
-test("a hand frame is authoritative over any local guess", () => {
+test("a board frame is authoritative over any local guess", () => {
   const { client, socket } = connectedClient();
 
-  client.pack = [99];
+  client.board = [99];
   client.pendingPick = 0;
-  socket.deliver({ t: "hand", pack: [1, 2, 3], remaining: 2, seq: 5, step: 4 });
+  socket.deliver({ t: "board", refs: [1, 2, 3] });
 
-  assert.deepEqual(client.pack, [1, 2, 3]);
-  assert.equal(client.remaining, 2);
-  assert.equal(client.seq, 5);
+  assert.deepEqual(client.board, [1, 2, 3]);
   assert.equal(client.pendingPick, null, "an in-flight pick is cleared by the server's view");
   client.close();
 });
 
-test("done stores the reveal and empties the pack", () => {
+test("a turn frame sets remaining/seq only for the seat that's actually up", () => {
   const { client, socket } = connectedClient();
 
-  socket.deliver({ t: "hand", pack: [1, 2], remaining: 1, seq: 0 });
+  socket.deliver({ t: "turn", step: 4, currentSeat: 0, picksOwed: 2, seq: 3, poolSizes: [1, 0] });
+  assert.equal(client.remaining, 2, "seat 0 is us, so picksOwed applies");
+  assert.equal(client.seq, 3);
+  assert.deepEqual(client.turn, { t: "turn", step: 4, currentSeat: 0, picksOwed: 2, seq: 3, poolSizes: [1, 0] });
+
+  socket.deliver({ t: "turn", step: 5, currentSeat: 1, picksOwed: 1, seq: 7, poolSizes: [2, 0] });
+  assert.equal(client.remaining, 0, "it's the other seat's turn, so we owe nothing");
+  assert.equal(client.seq, 3, "not our turn, so their seq must not overwrite ours");
+  client.close();
+});
+
+test("done stores the reveal and empties the board", () => {
+  const { client, socket } = connectedClient();
+
+  socket.deliver({ t: "board", refs: [1, 2], remaining: 1, seq: 0 });
   socket.deliver({ t: "done", pools: [[1], [2]], seats: [] });
 
   assert.deepEqual(client.done.pools, [[1], [2]]);
-  assert.deepEqual(client.pack, [], "no pack is left to click on the results screen");
+  assert.deepEqual(client.board, [], "no board is left to click on the results screen");
   client.close();
 });
 
@@ -328,15 +340,16 @@ test("roomClosed is surfaced as fatal and stops the client reconnecting", () => 
 
 /* ---------- the optimistic pick splice ---------- */
 
-test("an ack appends to the pool and removes just that card from the pack", () => {
+test("an ack appends to the pool and removes just that card from the board", () => {
   const { client, socket } = connectedClient();
   socket.deliver({ t: "pool", refs: [7] });
-  socket.deliver({ t: "hand", pack: [10, 11, 12], remaining: 2, seq: 1 });
+  socket.deliver({ t: "board", refs: [10, 11, 12] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 2, seq: 1 });
 
   socket.deliver({ t: "picked", seq: 1, ref: 11, remaining: 1 });
 
   assert.deepEqual(client.pool, [7, 11]);
-  assert.deepEqual(client.pack, [10, 12], "the taken card leaves the pack immediately");
+  assert.deepEqual(client.board, [10, 12], "the taken card leaves the board immediately");
   assert.equal(client.seq, 2, "seq advances per card so the next pick fences correctly");
   assert.equal(client.remaining, 1);
   assert.equal(client.pendingPick, null);
@@ -346,35 +359,38 @@ test("an ack appends to the pool and removes just that card from the pack", () =
 test("a replayed ack changes nothing", () => {
   const { client, socket } = connectedClient();
   socket.deliver({ t: "pool", refs: [7] });
-  socket.deliver({ t: "hand", pack: [10, 11], remaining: 1, seq: 1 });
+  socket.deliver({ t: "board", refs: [10, 11] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 1 });
 
   socket.deliver({ t: "picked", seq: 1, ref: 10, remaining: 0, replay: true });
 
   assert.deepEqual(client.pool, [7], "a replay must not double-count the card");
-  assert.deepEqual(client.pack, [10, 11]);
+  assert.deepEqual(client.board, [10, 11]);
   assert.equal(client.seq, 1);
   client.close();
 });
 
-test("a pack holding the same card twice loses only one copy", () => {
-  // An undersized cube can legitimately deal the same ref into one pack, so the splice
-  // has to be positional-safe rather than removing every match.
+test("a board holding the same card twice loses only one copy", () => {
+  // An undersized cube can legitimately deal the same ref twice, so the splice has to
+  // be positional-safe rather than removing every match.
   const { client, socket } = connectedClient();
-  socket.deliver({ t: "hand", pack: [10, 11, 10], remaining: 1, seq: 0 });
+  socket.deliver({ t: "board", refs: [10, 11, 10] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 0 });
 
   socket.deliver({ t: "picked", seq: 0, ref: 10, remaining: 0 });
 
-  assert.deepEqual(client.pack, [11, 10], "the second copy is still draftable");
+  assert.deepEqual(client.board, [11, 10], "the second copy is still draftable");
   client.close();
 });
 
-test("an ack for a card that is not in the pack leaves the pack alone", () => {
+test("an ack for a card that is not on the board leaves the board alone", () => {
   const { client, socket } = connectedClient();
-  socket.deliver({ t: "hand", pack: [10, 11], remaining: 1, seq: 0 });
+  socket.deliver({ t: "board", refs: [10, 11] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 0 });
 
   socket.deliver({ t: "picked", seq: 0, ref: 99, remaining: 0 });
 
-  assert.deepEqual(client.pack, [10, 11]);
+  assert.deepEqual(client.board, [10, 11]);
   assert.deepEqual(client.pool, [99], "the server is still believed about what was taken");
   client.close();
 });
@@ -383,7 +399,8 @@ test("an ack for a card that is not in the pack leaves the pack alone", () => {
 
 test("pick sends the fence fields the server checks", () => {
   const { client, socket } = connectedClient();
-  socket.deliver({ t: "hand", pack: [10, 11, 12], remaining: 1, seq: 3 });
+  socket.deliver({ t: "board", refs: [10, 11, 12] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 3 });
 
   client.pick(1);
 
@@ -392,14 +409,19 @@ test("pick sends the fence fields the server checks", () => {
   client.close();
 });
 
-test("pick is ignored when nothing is owed, when one is in flight, or out of range", () => {
+test("pick is ignored when nothing is owed, when one is in flight, when it's not our turn, or out of range", () => {
   const { client, socket } = connectedClient();
 
-  socket.deliver({ t: "hand", pack: [10, 11], remaining: 0, seq: 0 });
+  socket.deliver({ t: "board", refs: [10, 11] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 0, seq: 0 });
   client.pick(0);
   assert.equal(socket.sent.filter((m) => m.t === "pick").length, 0, "nothing owed");
 
-  socket.deliver({ t: "hand", pack: [10, 11], remaining: 1, seq: 0 });
+  socket.deliver({ t: "turn", currentSeat: 1, picksOwed: 1, seq: 0 });
+  client.pick(0);
+  assert.equal(socket.sent.filter((m) => m.t === "pick").length, 0, "not our turn");
+
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 0 });
   client.pick(0);
   client.pick(1);
   assert.equal(
@@ -408,7 +430,7 @@ test("pick is ignored when nothing is owed, when one is in flight, or out of ran
     "a second click while a pick is in flight is dropped"
   );
 
-  socket.deliver({ t: "hand", pack: [10, 11], remaining: 1, seq: 1 });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 1, seq: 1 });
   client.pick(9);
   assert.equal(socket.sent.filter((m) => m.t === "pick").length, 1, "out of range is ignored");
   client.close();
@@ -416,12 +438,13 @@ test("pick is ignored when nothing is owed, when one is in flight, or out of ran
 
 test("the second card of a double pick can be taken as soon as the first is acked", () => {
   const { client, socket } = connectedClient();
-  socket.deliver({ t: "hand", pack: [10, 11, 12], remaining: 2, seq: 0 });
+  socket.deliver({ t: "board", refs: [10, 11, 12] });
+  socket.deliver({ t: "turn", currentSeat: 0, picksOwed: 2, seq: 0 });
 
   client.pick(0);
   socket.deliver({ t: "picked", seq: 0, ref: 10, remaining: 1 });
 
-  // No new hand frame yet — the local splice is what makes this feel instant.
+  // No new board frame yet — the local splice is what makes this feel instant.
   client.pick(0);
 
   const picks = socket.sent.filter((m) => m.t === "pick");

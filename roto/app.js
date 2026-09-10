@@ -35,15 +35,14 @@ const els = {
   startButton: document.querySelector("#start-draft"),
   cubeUrl: document.querySelector("#cube-url"),
   players: document.querySelector("#players"),
-  packs: document.querySelector("#packs"),
-  packSize: document.querySelector("#pack-size"),
+  cardsPerPlayer: document.querySelector("#cards-per-player"),
   seedInput: document.querySelector("#seed"),
   doublePicks: document.querySelector("#double-picks"),
   doublePicksConfig: document.querySelector("#double-picks-config"),
   doublePickAfter: document.querySelector("#double-pick-after"),
-  packHeading: document.querySelector("#pack-heading"),
+  boardHeading: document.querySelector("#board-heading"),
   pickInstruction: document.querySelector("#pick-instruction"),
-  packGrid: document.querySelector("#pack-grid"),
+  boardGrid: document.querySelector("#board-grid"),
   poolList: document.querySelector("#pool-list"),
   poolCount: document.querySelector("#pool-count"),
   progress: document.querySelector("#draft-progress"),
@@ -63,7 +62,7 @@ init();
 
 function init() {
   els.doublePicks.addEventListener("change", syncDoublePicksVisibility);
-  els.packSize.addEventListener("input", clampDoublePickAfter);
+  els.cardsPerPlayer.addEventListener("input", clampDoublePickAfter);
   els.setupForm.addEventListener("submit", onSetupSubmit);
   els.joinForm.addEventListener("submit", onJoinSubmit);
   els.restart.addEventListener("click", onRestart);
@@ -110,7 +109,7 @@ function setMode(next) {
     ? "Create a table, share the code, and draft together. Any seat still empty when you start is filled by a bot."
     : "Paste a CubeCobra cube link, pick your table size, and draft against bots. Everything runs in your browser — share the seed to replay the exact same draft.";
 
-  // The seed only reproduces a solo draft; multiplayer packs are dealt by the server.
+  // The seed only reproduces a solo draft; multiplayer pools are dealt by the server.
   els.seedInput.closest(".field").hidden = friends;
 }
 
@@ -122,8 +121,7 @@ function applyUrlParams() {
     cube: els.cubeUrl,
     seed: els.seedInput,
     players: els.players,
-    packs: els.packs,
-    packSize: els.packSize,
+    cardsPerPlayer: els.cardsPerPlayer,
   };
 
   for (const [param, element] of Object.entries(fields)) {
@@ -146,7 +144,7 @@ function syncDoublePicksVisibility() {
 }
 
 function clampDoublePickAfter() {
-  const max = Math.max(1, Number(els.packSize.value) - 1);
+  const max = Math.max(1, Number(els.cardsPerPlayer.value) - 1);
   els.doublePickAfter.max = String(max);
   if (Number(els.doublePickAfter.value) > max) {
     els.doublePickAfter.value = String(max);
@@ -173,9 +171,9 @@ async function onSetupSubmit(event) {
   try {
     const cards = await fetchCubeCards(config.cubeId);
 
-    if (cards.length < config.packSize) {
+    if (cards.length < config.players) {
       throw new Error(
-        `This cube has ${cards.length} usable cards — not enough to fill a ${config.packSize}-card pack.`
+        `This cube has ${cards.length} usable cards — not enough for a ${config.players}-player table.`
       );
     }
 
@@ -198,8 +196,7 @@ function readConfig() {
   return {
     cubeId: parseCubeId(els.cubeUrl.value),
     players: clamp(els.players.value, 2, 8),
-    packs: clamp(els.packs.value, 1, 6),
-    packSize: clamp(els.packSize.value, 4, 24),
+    cardsPerPlayer: clamp(els.cardsPerPlayer.value, 4, 120),
     doublePickAfter: els.doublePicks.checked ? Number(els.doublePickAfter.value) : 0,
     seed: els.seedInput.value.trim() || makeSeed(),
   };
@@ -221,8 +218,7 @@ async function createRoomFlow(config) {
     const created = await createRoom({
       cubeId: config.cubeId,
       players: config.players,
-      packs: config.packs,
-      packSize: config.packSize,
+      cardsPerPlayer: config.cardsPerPlayer,
       doublePickAfter: config.doublePickAfter,
       hostName: playerName(),
     });
@@ -352,30 +348,32 @@ function seatTagText(seat, client) {
 }
 
 function renderRoomDraft(client) {
-  const step = client.step;
-  const pack = client.cards(client.pack);
+  const turn = client.turn;
+  const board = client.cards(client.board);
+  const turnSeat = turn ? client.room?.seats?.[turn.currentSeat] : null;
+  const myTurn = Boolean(turn) && turn.currentSeat === client.seat;
 
-  els.packHeading.textContent = step
-    ? `Pack ${step.round + 1}, Pick ${step.pickNumber}`
+  els.boardHeading.textContent = turn
+    ? `${turnSeat ? turnSeat.name : `Seat ${turn.currentSeat + 1}`}'s pick`
     : "Waiting for the table";
 
-  if (client.remaining > 1) {
+  if (!turn) {
+    els.pickInstruction.textContent = "";
+  } else if (myTurn && client.remaining > 1) {
     els.pickInstruction.textContent = `Choose ${client.remaining} cards — click them one at a time.`;
-  } else if (client.remaining === 1) {
+  } else if (myTurn && client.remaining === 1) {
     els.pickInstruction.textContent = "Choose a card.";
   } else {
-    els.pickInstruction.textContent = "Waiting for the rest of the table…";
+    els.pickInstruction.textContent = `Waiting for ${turnSeat ? turnSeat.name : "them"}…`;
   }
 
-  els.progress.textContent = step
-    ? `Pack ${step.round + 1}/${client.room.config.packs} · ${pack.length} cards left`
-    : "";
+  els.progress.textContent = turn ? `${board.length} cards left in the pool` : "";
 
-  const canPick = client.remaining > 0 && client.pendingPick === null;
+  const canPick = myTurn && client.remaining > 0 && client.pendingPick === null;
   renderCardGrid(
-    els.packGrid,
+    els.boardGrid,
     els.cardTemplate,
-    pack,
+    board,
     canPick ? (index) => client.pick(index) : null
   );
   renderPool(els.poolList, els.poolCount, client.cards(client.pool));
@@ -384,8 +382,8 @@ function renderRoomDraft(client) {
 
 function renderTableStatus(client) {
   const seats = client.room?.seats || [];
-  const pending = new Set(client.step?.pending || []);
-  const sizes = client.step?.poolSizes || [];
+  const turn = client.turn;
+  const sizes = turn?.poolSizes || [];
 
   els.tableStatus.hidden = false;
   els.tableStatus.textContent = "";
@@ -394,13 +392,13 @@ function renderTableStatus(client) {
     const chip = document.createElement("span");
     chip.className = "seat-chip";
 
-    const waiting = pending.has(seat.seat);
-    if (waiting) chip.classList.add("is-waiting");
+    const isTurn = Boolean(turn) && turn.currentSeat === seat.seat;
+    if (isTurn) chip.classList.add("is-waiting");
     if (seat.seat === client.seat) chip.classList.add("is-you");
     if (!seat.connected && seat.kind === "human") chip.classList.add("is-away");
 
     chip.textContent = `${seat.name} · ${sizes[seat.seat] ?? 0}`;
-    chip.title = waiting ? `${seat.name} is still picking` : `${seat.name} has picked`;
+    chip.title = isTurn ? `${seat.name} is picking` : `${seat.name} has picked`;
 
     // The host can hand an abandoned seat to a bot rather than let it stall the table.
     if (client.isHost && seat.kind === "human" && !seat.connected) {
@@ -417,7 +415,7 @@ function renderTableStatus(client) {
 }
 
 function renderRoomResults(client) {
-  els.packGrid.textContent = "";
+  els.boardGrid.textContent = "";
   els.tableStatus.hidden = true;
 
   const mine = client.cards(client.done.pools[client.seat] || []);
@@ -425,8 +423,8 @@ function renderRoomResults(client) {
   const seats = client.done.seats;
 
   els.resultsSummary.textContent =
-    `${plural(mine.length, "card")} over ${plural(client.room.config.packs, "pack")} ` +
-    `with ${plural(seats.filter((seat) => seat.kind === "human").length, "drafter")} — ` +
+    `${plural(mine.length, "card")} drafted with ` +
+    `${plural(seats.filter((seat) => seat.kind === "human").length, "drafter")} — ` +
     `${plural(creatures, "creature")}.`;
 
   renderCardGrid(els.resultsGrid, els.cardTemplate, sortForResults(mine), null);
@@ -528,31 +526,29 @@ function showView(name) {
 }
 
 function renderDraft() {
-  const pack = draft.currentPacks[0];
+  const board = draft.pool;
   const remaining = picksRemaining(draft);
 
-  els.packHeading.textContent = `Pack ${draft.round + 1}, Pick ${draft.pickNumber}`;
+  els.boardHeading.textContent = `Pick ${draft.pools[0].length + 1} of ${draft.config.cardsPerPlayer}`;
   els.pickInstruction.textContent =
     remaining > 1 ? `Choose ${remaining} cards — click them one at a time.` : "Choose a card.";
-  els.progress.textContent =
-    `Pack ${draft.round + 1}/${draft.config.packs} · ${pack.length} cards left`;
+  els.progress.textContent = `${board.length} cards left in the pool`;
 
-  renderCardGrid(els.packGrid, els.cardTemplate, cardsOf(draft.catalog, pack), onCardPicked);
+  renderCardGrid(els.boardGrid, els.cardTemplate, cardsOf(draft.catalog, board), onCardPicked);
   renderPool(els.poolList, els.poolCount, cardsOf(draft.catalog, draft.pools[0]));
 }
 
 function renderResults() {
-  // Drop the spent pack so its tiles stop carrying live pick handlers.
-  els.packGrid.textContent = "";
+  // Drop the spent board so its tiles stop carrying live pick handlers.
+  els.boardGrid.textContent = "";
 
   const pool = cardsOf(draft.catalog, draft.pools[0]);
   const creatures = pool.filter((card) => card.isCreature).length;
   const article = draft.config.players === 8 ? "an" : "a";
 
   els.resultsSummary.textContent =
-    `${plural(pool.length, "card")} over ${plural(draft.config.packs, "pack")} ` +
-    `at ${article} ${draft.config.players}-player table — ${plural(creatures, "creature")}. ` +
-    `Seed: ${draft.config.seed}`;
+    `${plural(pool.length, "card")} at ${article} ${draft.config.players}-player table — ` +
+    `${plural(creatures, "creature")}. Seed: ${draft.config.seed}`;
 
   renderCardGrid(els.resultsGrid, els.cardTemplate, sortForResults(pool), null);
 }
@@ -594,8 +590,7 @@ async function onCopySeedLink() {
   url.searchParams.set("cube", draft.config.cubeId);
   url.searchParams.set("seed", draft.config.seed);
   url.searchParams.set("players", String(draft.config.players));
-  url.searchParams.set("packs", String(draft.config.packs));
-  url.searchParams.set("packSize", String(draft.config.packSize));
+  url.searchParams.set("cardsPerPlayer", String(draft.config.cardsPerPlayer));
 
   if (draft.config.doublePickAfter > 0) {
     url.searchParams.set("doublePickAfter", String(draft.config.doublePickAfter));

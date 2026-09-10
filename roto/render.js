@@ -1,5 +1,5 @@
-// DOM rendering for packs, pools and results. Takes resolved card objects, so it works
-// the same for a local draft and for a pack handed down by the server.
+// DOM rendering for the shared board, pools and results. Takes resolved card objects,
+// so it works the same for a local draft and for a board handed down by the server.
 
 import { COLOR_ORDER, groupKey } from "./draft.js";
 
@@ -27,7 +27,7 @@ export function costLabel(card) {
 }
 
 // `onPick` receives the array position, never the card id: an undersized cube can deal
-// the same card twice into one pack, so position is the only unambiguous handle.
+// the same card twice into the pool, so position is the only unambiguous handle.
 export function renderCardGrid(container, template, cards, onPick) {
   container.textContent = "";
 

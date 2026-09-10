@@ -2,7 +2,9 @@
 // reconnects on its own; the caller just renders whatever `onChange` hands it.
 //
 // This module never runs the draft engine. Everything it knows arrives from the server,
-// which is why a bug here cannot leak another player's pack or corrupt a draft.
+// which is why a bug here cannot corrupt a draft. The draft is snake-style, so the
+// shared `board` (the pool of pickable cards) is public — every seat sees the same one —
+// while each seat's own drafted `pool` stays private until the reveal.
 
 const API = "/roto/api/rooms";
 const PROTOCOL = 1;
@@ -34,7 +36,7 @@ export async function roomInfo(code) {
 function describeCreateError(body) {
   switch (body.error) {
     case "cube-too-small":
-      return `That cube only has ${body.have} usable cards — not enough for one pack.`;
+      return `That cube only has ${body.have} usable cards — not enough for the table.`;
     case "cube-fetch-failed":
       return body.message || "Could not load that cube from CubeCobra.";
     case "bad-cube":
@@ -57,8 +59,8 @@ export class RoomClient {
     this.seat = null;
     this.isHost = false;
     this.room = null;
-    this.step = null;
-    this.pack = [];
+    this.turn = null;
+    this.board = [];
     this.pool = [];
     this.remaining = 0;
     this.seq = 0;
@@ -206,11 +208,11 @@ export class RoomClient {
         this.isHost = msg.hostSeat === this.seat;
         break;
 
-      case "hand":
+      case "board":
         // Authoritative: replaces any local guess made while a pick was in flight.
-        this.pack = msg.pack;
-        this.remaining = msg.remaining;
-        this.seq = msg.seq;
+        // Whose turn it is and how many cards they owe come from "turn", not here —
+        // the board is just the shared pool of what's pickable.
+        this.board = msg.refs;
         this.pendingPick = null;
         break;
 
@@ -222,13 +224,21 @@ export class RoomClient {
         this.applyPicked(msg);
         break;
 
-      case "step":
-        this.step = msg;
+      case "turn":
+        this.turn = msg;
+        // picksOwed/seq are only meaningful for whoever is actually up — everyone else
+        // has nothing owed, and must not fence pick attempts against another seat's seq.
+        if (msg.currentSeat === this.seat) {
+          this.remaining = msg.picksOwed;
+          this.seq = msg.seq;
+        } else {
+          this.remaining = 0;
+        }
         break;
 
       case "done":
         this.done = msg;
-        this.pack = [];
+        this.board = [];
         break;
 
       case "err":
@@ -261,11 +271,11 @@ export class RoomClient {
     this.remaining = msg.remaining;
     this.seq += 1;
 
-    // Drop the card locally rather than waiting for the next hand frame, so the second
+    // Drop the card locally rather than waiting for the next board frame, so the second
     // card of a double pick is immediate. The server echoed the ref, so this is safe.
-    const index = this.pack.indexOf(msg.ref);
+    const index = this.board.indexOf(msg.ref);
     if (index !== -1) {
-      this.pack = [...this.pack.slice(0, index), ...this.pack.slice(index + 1)];
+      this.board = [...this.board.slice(0, index), ...this.board.slice(index + 1)];
     }
   }
 
@@ -276,7 +286,7 @@ export class RoomClient {
       return;
     }
 
-    const ref = this.pack[index];
+    const ref = this.board[index];
     if (ref === undefined) {
       return;
     }

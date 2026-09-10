@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 
 import { makeStore, nodeSqliteExec } from "../store.js";
-import { createRoomState, handleMessage, stepFrame } from "../room-core.js";
+import { createRoomState, handleMessage, turnFrame } from "../room-core.js";
 import { config, makeCube } from "../../roto/tests/fixtures.js";
 
 function freshStore() {
@@ -14,7 +14,7 @@ function freshStore() {
 }
 
 function newRoom(overrides = {}) {
-  const cfg = config({ players: 4, packs: 2, packSize: 4, ...overrides });
+  const cfg = config({ players: 4, cardsPerPlayer: 8, ...overrides });
   return createRoomState("ROOM-TEST", cfg, makeCube(200), 1000);
 }
 
@@ -31,7 +31,7 @@ function pick(state, seat) {
     t: "pick",
     seq: state.draft.pools[seat].length,
     index: 0,
-    ref: state.draft.currentPacks[seat][0],
+    ref: state.draft.pool[0],
   };
   return handleMessage(state, { seat }, message, 1000, deps);
 }
@@ -54,8 +54,7 @@ test("a created room round-trips through SQLite intact", () => {
   assert.deepEqual(loaded.config, state.config);
   assert.equal(loaded.phase, "lobby");
   assert.deepEqual(loaded.draft.catalog, state.draft.catalog, "the full catalog survives");
-  assert.deepEqual(loaded.draft.rounds, state.draft.rounds, "the deal survives");
-  assert.deepEqual(loaded.draft.currentPacks, state.draft.currentPacks);
+  assert.deepEqual(loaded.draft.pool, state.draft.pool, "the shared pool survives");
 });
 
 test("an evicted room resumes mid-draft and finishes identically", () => {
@@ -109,7 +108,7 @@ test("the pick log survives reload and still fences a duplicate submission", () 
     t: "pick",
     seq: 0,
     index: 0,
-    ref: state.draft.currentPacks[0][0],
+    ref: state.draft.pool[0],
   };
   const first = handleMessage(state, { seat: 0 }, message, 1000, deps);
   store.writeLive(first.state);
@@ -151,7 +150,7 @@ test("seat tokens and host survive eviction so players can reclaim their seats",
   assert.equal(reclaim.effects.find((e) => e.msg.t === "welcome").msg.seat, 1);
 });
 
-test("a reloaded room reports the same step frame", () => {
+test("a reloaded room reports the same turn frame", () => {
   const store = freshStore();
   let state = newRoom();
   join(state, "Ann");
@@ -160,10 +159,10 @@ test("a reloaded room reports the same step frame", () => {
   pick(state, 0);
   store.writeCreation(state);
 
-  const before = stepFrame(state);
+  const before = turnFrame(state);
   state = store.load();
 
-  assert.deepEqual(stepFrame(state), before, "clock and pending seats survive the round trip");
+  assert.deepEqual(turnFrame(state), before, "clock and whose turn it is survive the round trip");
 });
 
 test("destroy clears the room", () => {

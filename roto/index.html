@@ -6,7 +6,7 @@
     <title>Roto — Cube Draft</title>
     <meta
       name="description"
-      content="Draft any CubeCobra cube against bots. Configure players, packs, and pick pace, then draft in the browser."
+      content="Draft any CubeCobra cube against bots. Configure players and pick pace, then snake-draft the shared pool in your browser."
     >
     <link rel="preconnect" href="https://cubecobra.com">
     <link rel="preconnect" href="https://cards.scryfall.io">
@@ -108,13 +108,8 @@
           </div>
 
           <div class="field">
-            <label for="packs">Packs per player</label>
-            <input id="packs" name="packs" type="number" min="1" max="6" value="3" required>
-          </div>
-
-          <div class="field">
-            <label for="pack-size">Cards per pack</label>
-            <input id="pack-size" name="packSize" type="number" min="4" max="24" value="15" required>
+            <label for="cards-per-player">Cards per player</label>
+            <input id="cards-per-player" name="cardsPerPlayer" type="number" min="4" max="120" value="45" required>
           </div>
 
           <div class="field">
@@ -126,12 +121,12 @@
           <div class="field field-wide">
             <label class="checkbox">
               <input id="double-picks" name="doublePicks" type="checkbox">
-              <span>Enable double picks partway through each pack</span>
+              <span>Enable double picks partway through the draft</span>
             </label>
             <div id="double-picks-config" class="subfield" hidden>
-              <label for="double-pick-after">Start taking two cards per pick after pick</label>
-              <input id="double-pick-after" name="doublePickAfter" type="number" min="1" max="23" value="8">
-              <p class="hint">Speeds up the back half of every pack.</p>
+              <label for="double-pick-after">Start taking two cards per turn after pick</label>
+              <input id="double-pick-after" name="doublePickAfter" type="number" min="1" max="119" value="8">
+              <p class="hint">Speeds up the back half of the draft.</p>
             </div>
           </div>
 
@@ -164,12 +159,12 @@
       <section id="draft-view" class="view" hidden>
         <div id="table-status" class="table-status" hidden></div>
         <div class="draft-layout">
-          <div class="pack-column">
+          <div class="board-column">
             <div class="section-head">
-              <h2 id="pack-heading">Pack 1, Pick 1</h2>
+              <h2 id="board-heading">Pick 1</h2>
               <p id="pick-instruction" class="muted-line">Choose a card.</p>
             </div>
-            <div id="pack-grid" class="card-grid"></div>
+            <div id="board-grid" class="card-grid"></div>
           </div>
 
           <aside class="pool-column">

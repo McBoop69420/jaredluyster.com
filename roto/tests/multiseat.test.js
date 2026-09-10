@@ -3,12 +3,9 @@ import assert from "node:assert/strict";
 
 import {
   advance,
-  allSeatsReady,
-  autoPickBots,
   autoPickSeat,
   convertSeatToBot,
   createDraft,
-  pendingSeats,
   picksRemaining,
   resolveStep,
   submitPick,
@@ -17,192 +14,97 @@ import { config, makeCube, poolNames, sameMultiset } from "./fixtures.js";
 
 const allHuman = (players) => new Array(players).fill("human");
 
-function hash(text) {
-  let value = 2166136261;
-  for (const char of String(text)) {
-    value ^= char.charCodeAt(0);
-    value = Math.imul(value, 16777619);
-  }
-  return value >>> 0;
-}
+/* ---------- turn ownership ---------- */
 
-// Deterministic per-seat choice that depends only on that seat's own progress, never on
-// what other seats have done. That is what makes it a valid probe for order-independence.
-function seatChoice(draft, seat) {
-  const length = draft.currentPacks[seat].length;
-  return hash(`${seat}:${draft.pools[seat].length}`) % length;
-}
+test("only the seat currently up may submit a pick", () => {
+  const cfg = config({ players: 4, cardsPerPlayer: 5 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(4));
 
-// Plays a whole draft with every seat human, submitting one card at a time and choosing
-// which pending seat moves next via `nextSeat`.
-function playInterleaved(draft, nextSeat) {
-  let guard = 0;
-
-  while (!draft.finished) {
-    if (guard++ > 100000) throw new Error("playInterleaved did not terminate");
-
-    const pending = pendingSeats(draft);
-    if (pending.length === 0) {
-      const result = resolveStep(draft);
-      assert.equal(result.ok, true, "resolveStep should succeed once nobody is pending");
-      continue;
-    }
-
-    const seat = nextSeat(pending, draft);
-    const result = submitPick(draft, seat, seatChoice(draft, seat));
-    assert.equal(result.ok, true, `submitPick failed for seat ${seat}: ${result.error}`);
+  assert.equal(draft.currentSeat, 0);
+  for (const seat of [1, 2, 3]) {
+    assert.deepEqual(submitPick(draft, seat, 0), { ok: false, error: "not-owed" });
   }
 
-  return draft;
-}
-
-/* ---------- the property that makes async picks safe ---------- */
-
-test("submission order within a step cannot change the outcome", () => {
-  const cfg = config({ players: 6, packs: 2, packSize: 9, doublePickAfter: 5 });
-  const cards = makeCube(500);
-
-  const baseline = playInterleaved(
-    createDraft(cfg, cards, allHuman(cfg.players)),
-    (pending) => pending[0]
-  );
-  const expected = Array.from({ length: cfg.players }, (_, seat) => poolNames(baseline, seat));
-
-  for (let trial = 0; trial < 20; trial += 1) {
-    const draft = playInterleaved(
-      createDraft(cfg, cards, allHuman(cfg.players)),
-      (pending, state) =>
-        pending[hash(`${trial}:${pending.length}:${state.step}`) % pending.length]
-    );
-
-    for (let seat = 0; seat < cfg.players; seat += 1) {
-      assert.deepEqual(
-        poolNames(draft, seat),
-        expected[seat],
-        `trial ${trial}: seat ${seat} diverged under a different submission order`
-      );
-    }
-  }
+  assert.equal(submitPick(draft, 0, 0).ok, true);
 });
 
-test("reverse and last-seat-first orders match the baseline too", () => {
-  const cfg = config({ players: 4, packs: 2, packSize: 8, doublePickAfter: 3 });
-  const cards = makeCube(400);
+test("resolveStep passes the turn to the next seat in snake order", () => {
+  const cfg = config({ players: 4, cardsPerPlayer: 5 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(4));
 
-  const forward = playInterleaved(
-    createDraft(cfg, cards, allHuman(cfg.players)),
-    (pending) => pending[0]
-  );
-  const reverse = playInterleaved(
-    createDraft(cfg, cards, allHuman(cfg.players)),
-    (pending) => pending[pending.length - 1]
-  );
+  submitPick(draft, 0, 0);
+  const result = resolveStep(draft);
 
-  for (let seat = 0; seat < cfg.players; seat += 1) {
-    assert.deepEqual(poolNames(reverse, seat), poolNames(forward, seat), `seat ${seat}`);
-  }
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "next-pick");
+  assert.equal(draft.currentSeat, 1);
+});
+
+test("a lap boundary hands the turn to the same seat twice in a row", () => {
+  const cfg = config({ players: 3, cardsPerPlayer: 4 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(3));
+
+  // Round 0 forward: 0, 1, 2.
+  submitPick(draft, 0, 0);
+  resolveStep(draft);
+  submitPick(draft, 1, 0);
+  resolveStep(draft);
+  assert.equal(draft.currentSeat, 2);
+
+  submitPick(draft, 2, 0);
+  const result = resolveStep(draft);
+
+  // Seat 2 was last of round 0 (forward) and leads round 1 (backward) too — the
+  // back-to-back turn that defines a snake draft.
+  assert.equal(result.status, "next-round");
+  assert.equal(draft.round, 1);
+  assert.equal(draft.currentSeat, 2);
 });
 
 /* ---------- invariants across the whole draft ---------- */
 
-test("packs stay equal length and cards are conserved after every resolve", () => {
-  const cfg = config({ players: 6, packs: 2, packSize: 9, doublePickAfter: 5 });
+test("the pool and every seat's pool conserve every card after each resolve", () => {
+  const cfg = config({ players: 6, cardsPerPlayer: 9, doublePickAfter: 5 });
   const draft = createDraft(cfg, makeCube(500), allHuman(cfg.players));
+  const total = cfg.players * cfg.cardsPerPlayer;
 
   let guard = 0;
   while (!draft.finished) {
     if (guard++ > 100000) throw new Error("did not terminate");
 
-    const pending = pendingSeats(draft);
-    if (pending.length === 0) {
+    const seat = draft.currentSeat;
+    const result = submitPick(draft, seat, 0);
+    assert.equal(result.ok, true, `submitPick failed for seat ${seat}: ${result.error}`);
+
+    if (picksRemaining(draft, seat) === 0) {
       resolveStep(draft);
-
-      if (!draft.finished) {
-        const lengths = draft.currentPacks.map((pack) => pack.length);
-        assert.equal(new Set(lengths).size, 1, `packs diverged in length: ${lengths}`);
-      }
-
-      const held = draft.currentPacks.reduce((sum, pack) => sum + pack.length, 0);
-      const taken = draft.pools.reduce((sum, pool) => sum + pool.length, 0);
-      const dealtSoFar = cfg.players * cfg.packSize * Math.min(draft.round + 1, cfg.packs);
-      assert.equal(held + taken, dealtSoFar, "cards in packs plus pools must equal cards dealt");
-      continue;
     }
 
-    const seat = pending[0];
-    submitPick(draft, seat, seatChoice(draft, seat));
+    const held = draft.pool.length;
+    const taken = draft.pools.reduce((sum, pool) => sum + pool.length, 0);
+    assert.equal(held + taken, total, "cards in the pool plus every seat's pool must equal the total");
   }
 
   const drafted = [];
   for (let seat = 0; seat < cfg.players; seat += 1) {
     drafted.push(...poolNames(draft, seat));
-    assert.equal(draft.pools[seat].length, cfg.packs * cfg.packSize, `seat ${seat} pool size`);
+    assert.equal(draft.pools[seat].length, cfg.cardsPerPlayer, `seat ${seat} pool size`);
   }
-
-  const dealt = draft.rounds.flat(2).map((ref) => draft.catalog[ref].name);
-  assert.ok(sameMultiset(drafted, dealt), "every dealt card ended up in exactly one pool");
-});
-
-test("packs alternate direction each round", () => {
-  const cfg = config({ players: 4, packs: 2, packSize: 3 });
-  const draft = createDraft(cfg, makeCube(200), allHuman(cfg.players));
-
-  const directionOf = (round) => {
-    const before = draft.currentPacks.slice();
-    for (const seat of pendingSeats(draft)) {
-      submitPick(draft, seat, 0);
-    }
-    resolveStep(draft);
-
-    const moves = before.map((pack) => draft.currentPacks.indexOf(pack));
-    assert.ok(
-      moves.every((to, from) => to === (from + (round % 2 === 0 ? 1 : 3)) % 4),
-      `round ${round} passed the wrong way: ${moves}`
-    );
-  };
-
-  directionOf(0); // round 0 passes left: seat n -> seat n+1
-  while (draft.round === 0) {
-    for (const seat of pendingSeats(draft)) submitPick(draft, seat, 0);
-    resolveStep(draft);
-  }
-  directionOf(1); // round 1 passes right
-});
-
-test("a round rollover advances exactly one step and refills every pack", () => {
-  const cfg = config({ players: 4, packs: 2, packSize: 3 });
-  const draft = createDraft(cfg, makeCube(200), allHuman(cfg.players));
-
-  let last = null;
-  while (draft.round === 0 && !draft.finished) {
-    for (const seat of pendingSeats(draft)) submitPick(draft, seat, 0);
-    const stepBefore = draft.step;
-    last = resolveStep(draft);
-    assert.equal(draft.step, stepBefore + 1, "step must advance exactly once");
-  }
-
-  assert.equal(last.status, "next-round");
-  assert.equal(draft.round, 1);
-  assert.equal(draft.pickNumber, 1);
-  assert.deepEqual(draft.takenThisStep, [0, 0, 0, 0]);
-  assert.ok(
-    draft.currentPacks.every((pack) => pack.length === cfg.packSize),
-    "every pack refills at a new round"
-  );
+  assert.equal(drafted.length, total);
 });
 
 test("finishing locks the draft", () => {
-  const cfg = config({ players: 4, packs: 1, packSize: 3 });
-  const draft = createDraft(cfg, makeCube(200), allHuman(cfg.players));
+  const cfg = config({ players: 4, cardsPerPlayer: 3 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(4));
 
   let last = null;
   while (!draft.finished) {
-    for (const seat of pendingSeats(draft)) submitPick(draft, seat, 0);
+    submitPick(draft, draft.currentSeat, 0);
     last = resolveStep(draft);
   }
 
   assert.equal(last.status, "finished");
-  assert.equal(draft.round, cfg.packs, "round lands at config.packs, which indexes past rounds");
+  assert.equal(draft.pool.length, 0);
   assert.deepEqual(submitPick(draft, 0, 0), { ok: false, error: "draft-finished" });
   assert.deepEqual(resolveStep(draft), { ok: false, error: "draft-finished" });
   assert.equal(picksRemaining(draft, 0), 0);
@@ -211,91 +113,121 @@ test("finishing locks the draft", () => {
 /* ---------- validation ---------- */
 
 test("rejected picks are tagged and leave the draft untouched", () => {
-  const cfg = config({ players: 4, packs: 1, packSize: 5 });
-  const draft = createDraft(cfg, makeCube(200), allHuman(cfg.players));
+  const cfg = config({ players: 4, cardsPerPlayer: 5 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(4));
 
   const cases = [
     ["bad-seat", () => submitPick(draft, -1, 0)],
     ["bad-seat", () => submitPick(draft, 4, 0)],
     ["bad-seat", () => submitPick(draft, 1.5, 0)],
+    ["not-owed", () => submitPick(draft, 1, 0)],
     ["bad-index", () => submitPick(draft, 0, -1)],
-    ["bad-index", () => submitPick(draft, 0, 5)],
+    ["bad-index", () => submitPick(draft, 0, draft.pool.length)],
     ["bad-index", () => submitPick(draft, 0, 1.5)],
-    ["stale-pack", () => submitPick(draft, 0, 0, draft.currentPacks[0][1])],
+    ["stale-pool", () => submitPick(draft, 0, 0, draft.pool[1])],
   ];
 
   for (const [expected, run] of cases) {
-    const before = structuredClone({ packs: draft.currentPacks, pools: draft.pools });
+    const before = structuredClone({ pool: draft.pool, pools: draft.pools });
     const result = run();
 
     assert.equal(result.ok, false);
     assert.equal(result.error, expected);
     assert.deepEqual(
-      { packs: draft.currentPacks, pools: draft.pools },
+      { pool: draft.pool, pools: draft.pools },
       before,
       `${expected} must not mutate the draft`
     );
   }
 
   // A correct expectedRef is accepted.
-  const ref = draft.currentPacks[0][2];
+  const ref = draft.pool[2];
   const ok = submitPick(draft, 0, 2, ref);
   assert.equal(ok.ok, true);
   assert.equal(ok.ref, ref);
 
-  // Seat 0 now owes nothing this step.
+  // Seat 0 now owes nothing this turn (doublePickAfter is off, so quota is 1).
   assert.deepEqual(submitPick(draft, 0, 0), { ok: false, error: "not-owed" });
 });
 
-test("a pack that runs out mid-double-pick still marks the seat ready", () => {
-  // packSize 3, doubles after pick 1: the last step offers 1 card while the quota is 2.
-  const cfg = config({ players: 2, packs: 1, packSize: 3, doublePickAfter: 1 });
-  const draft = createDraft(cfg, makeCube(100), allHuman(cfg.players));
+test("a seat's own allotment running low still marks it ready, never deadlocked", () => {
+  // cardsPerPlayer 3, doubles after 1: a seat's second turn nominally wants 2 cards but
+  // only has 2 left of its 3-card allotment — exactly enough. Verifies the cap tracks
+  // the seat's own allotment, not just what's left in the shared pool.
+  const cfg = config({ players: 2, cardsPerPlayer: 3, doublePickAfter: 1 });
+  const draft = createDraft(cfg, makeCube(100), allHuman(2));
 
-  for (const seat of pendingSeats(draft)) submitPick(draft, seat, 0);
+  submitPick(draft, 0, 0);
+  resolveStep(draft);
+  submitPick(draft, 1, 0);
   resolveStep(draft);
 
-  // Now in the double-pick phase with 2 cards left.
+  assert.equal(draft.currentSeat, 1);
+  assert.equal(picksRemaining(draft, 1), 2);
+  submitPick(draft, 1, 0);
+  submitPick(draft, 1, 0);
+  assert.equal(picksRemaining(draft, 1), 0, "seat is ready, not deadlocked");
+  assert.equal(draft.pools[1].length, 3);
+
+  const result = resolveStep(draft);
+  assert.equal(result.status, "next-pick");
+  assert.equal(draft.currentSeat, 0);
   assert.equal(picksRemaining(draft, 0), 2);
   submitPick(draft, 0, 0);
-  assert.equal(picksRemaining(draft, 0), 1);
   submitPick(draft, 0, 0);
-  assert.equal(picksRemaining(draft, 0), 0, "seat is ready with an empty pack, not deadlocked");
-
-  submitPick(draft, 1, 0);
-  submitPick(draft, 1, 0);
-  assert.equal(allSeatsReady(draft), true);
+  assert.equal(draft.pools[0].length, 3);
   assert.equal(resolveStep(draft).status, "finished");
 });
 
 /* ---------- bots and advancement ---------- */
 
-test("advance does nothing while a human still owes a card", () => {
-  const cfg = config({ players: 4, packs: 1, packSize: 5 });
+test("advance stops as soon as a human seat is up, but keeps resolving until then", () => {
+  const cfg = config({ players: 4, cardsPerPlayer: 5 });
   const draft = createDraft(cfg, makeCube(200), ["human", "human", "bot", "bot"]);
 
   submitPick(draft, 0, 0);
-  const first = advance(draft);
-  assert.deepEqual(first, [], "seat 1 has not picked yet");
-
-  const snapshot = structuredClone({ pools: draft.pools, step: draft.step });
-  assert.deepEqual(advance(draft), [], "advance is idempotent while pending");
-  assert.deepEqual({ pools: draft.pools, step: draft.step }, snapshot);
-
-  submitPick(draft, 1, 0);
   const resolved = advance(draft);
+
+  // Seat 0 had nothing further owed, so its turn resolves and hands off to seat 1 —
+  // also human, so advance stops there rather than picking on their behalf.
   assert.equal(resolved.length, 1);
   assert.equal(resolved[0].status, "next-pick");
+  assert.equal(draft.currentSeat, 1);
+  assert.equal(picksRemaining(draft, 1), 1);
+
+  const snapshot = structuredClone({
+    pools: draft.pools,
+    step: draft.step,
+    currentSeat: draft.currentSeat,
+  });
+  assert.deepEqual(advance(draft), [], "advance is idempotent while seat 1 is pending");
+  assert.deepEqual(
+    { pools: draft.pools, step: draft.step, currentSeat: draft.currentSeat },
+    snapshot
+  );
+
+  submitPick(draft, 1, 0);
+  const next = advance(draft);
+  assert.ok(next.length >= 1, "seat 1's turn resolves and the bots behind it keep going");
+  // Landing back on seat 1 itself is legitimate here — it isn't a lap-boundary seat, so
+  // it gets no back-to-back turn, but the bots on either side of it can, which can
+  // cycle control back to seat 1 well within one advance() sweep. The real invariant is
+  // just that advance() never stops on anything but a human seat.
+  assert.equal(draft.seatKinds[draft.currentSeat], "human", "advance always stops on a human seat");
 });
 
-test("converting a seat to a bot finishes its outstanding picks", () => {
-  const cfg = config({ players: 4, packs: 1, packSize: 6, doublePickAfter: 1 });
-  const draft = createDraft(cfg, makeCube(200), ["human", "human", "bot", "bot"]);
+test("converting a seat to a bot finishes only its outstanding turn, not a fresh one", () => {
+  const cfg = config({ players: 2, cardsPerPlayer: 6, doublePickAfter: 1 });
+  const draft = createDraft(cfg, makeCube(200), ["human", "human"]);
 
-  for (const seat of [0, 1]) submitPick(draft, seat, 0);
-  advance(draft);
+  submitPick(draft, 0, 0);
+  resolveStep(draft);
+  submitPick(draft, 1, 0);
+  resolveStep(draft);
 
-  // Seat 1 takes one of the two it owes, then abandons the draft.
+  // Seat 1's second turn is a double pick. Take one of the two, then abandon mid-turn.
+  assert.equal(draft.currentSeat, 1);
+  assert.equal(picksRemaining(draft, 1), 2);
   submitPick(draft, 1, 0);
   assert.equal(picksRemaining(draft, 1), 1);
   const poolBefore = draft.pools[1].length;
@@ -303,22 +235,14 @@ test("converting a seat to a bot finishes its outstanding picks", () => {
   assert.equal(convertSeatToBot(draft, 1), true);
   assert.equal(convertSeatToBot(draft, 1), false, "converting twice is a no-op");
 
-  // One bot sweep settles exactly the card that was still owed for this step.
-  autoPickBots(draft);
-  assert.equal(draft.pools[1].length, poolBefore + 1, "the bot completed only what was owed");
-  assert.equal(picksRemaining(draft, 1), 0);
-
-  // From here the seat is indistinguishable from any other bot.
-  submitPick(draft, 0, 0);
-  submitPick(draft, 0, 0);
   advance(draft);
-
+  assert.equal(draft.pools[1].length, poolBefore + 1, "the bot completed only what was owed");
   assert.equal(draft.seatKinds[1], "bot");
-  assert.equal(draft.pools[1].length, draft.pools[2].length, "keeps pace with the other bots");
+  assert.equal(draft.currentSeat, 0, "turn moved on to seat 0");
 });
 
 test("an all-bot table runs itself to completion in one advance", () => {
-  const cfg = config({ players: 4, packs: 2, packSize: 5 });
+  const cfg = config({ players: 4, cardsPerPlayer: 10 });
   const draft = createDraft(cfg, makeCube(200), new Array(4).fill("bot"));
 
   const resolved = advance(draft);
@@ -326,34 +250,36 @@ test("an all-bot table runs itself to completion in one advance", () => {
   assert.equal(draft.finished, true);
   assert.equal(resolved[resolved.length - 1].status, "finished");
   for (let seat = 0; seat < cfg.players; seat += 1) {
-    assert.equal(draft.pools[seat].length, cfg.packs * cfg.packSize, `seat ${seat}`);
+    assert.equal(draft.pools[seat].length, cfg.cardsPerPlayer, `seat ${seat}`);
   }
 });
 
-test("autoPickSeat respects the outstanding quota only", () => {
-  const cfg = config({ players: 4, packs: 1, packSize: 6, doublePickAfter: 1 });
-  const draft = createDraft(cfg, makeCube(200), allHuman(cfg.players));
+test("autoPickSeat takes exactly the current turn's quota", () => {
+  const cfg = config({ players: 4, cardsPerPlayer: 6, doublePickAfter: 1 });
+  const draft = createDraft(cfg, makeCube(200), allHuman(4));
 
-  assert.equal(autoPickSeat(draft, 0), 1, "single-pick step takes one");
-  for (const seat of [1, 2, 3]) submitPick(draft, seat, 0);
+  assert.equal(autoPickSeat(draft, 0), 1, "seat 0's first turn is a single");
   resolveStep(draft);
 
-  assert.equal(autoPickSeat(draft, 0), 2, "double-pick step takes two");
+  while (draft.currentSeat !== 0) {
+    submitPick(draft, draft.currentSeat, 0);
+    resolveStep(draft);
+  }
+
+  assert.equal(autoPickSeat(draft, 0), 2, "seat 0's second turn is a double");
 });
 
 /* ---------- guards ---------- */
 
-test("a cube smaller than one pack is rejected at construction", () => {
-  assert.throws(
-    () => createDraft(config({ packSize: 15 }), makeCube(14)),
-    /cube-too-small/
-  );
+test("a cube smaller than the table is rejected at construction", () => {
+  assert.throws(() => createDraft(config({ players: 8 }), makeCube(6)), /cube-too-small/);
   assert.throws(() => createDraft(config(), null), /cube-too-small/);
 });
 
 test("an undersized cube repeats cards without losing any", () => {
-  const cfg = config({ players: 4, packs: 2, packSize: 8 });
+  const cfg = config({ players: 4, cardsPerPlayer: 16 });
   const draft = createDraft(cfg, makeCube(20), new Array(4).fill("bot"));
+  const dealt = draft.pool.map((ref) => draft.catalog[ref].name);
 
   advance(draft);
 
@@ -362,7 +288,6 @@ test("an undersized cube repeats cards without losing any", () => {
   for (let seat = 0; seat < cfg.players; seat += 1) {
     drafted.push(...poolNames(draft, seat));
   }
-  const dealt = draft.rounds.flat(2).map((ref) => draft.catalog[ref].name);
 
   assert.equal(drafted.length, 64);
   assert.ok(sameMultiset(drafted, dealt));

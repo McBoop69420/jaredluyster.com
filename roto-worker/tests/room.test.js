@@ -19,7 +19,7 @@ class Harness {
   constructor(overrides = {}, cubeSize = 300) {
     let counter = 0;
     this.deps = { token: () => `tok-${counter++}` };
-    this.config = config({ players: 4, packs: 1, packSize: 4, ...overrides });
+    this.config = config({ players: 4, cardsPerPlayer: 4, ...overrides });
     this.state = createRoomState("TEST-ROOM", this.config, makeCube(cubeSize), 1000);
     this.now = 1000;
     this.log = [];
@@ -82,32 +82,26 @@ class Harness {
     }
   }
 
-  // The card a seat would pick: always the first in its own pack.
+  // The card the current seat would pick: always the first on the shared board.
   pickFor(seat) {
     const draft = this.state.draft;
     return {
       t: "pick",
       seq: draft.pools[seat].length,
       index: 0,
-      ref: draft.currentPacks[seat][0],
+      ref: draft.pool[0],
     };
   }
 
+  // Only the seat whose turn it is can ever be acted on — every bot turn in between
+  // already resolved inside handleMessage's applyAdvance, so this just keeps handing
+  // the current human seat its pick until a non-human seat or the reveal is up.
   playToCompletion(humans) {
     let guard = 0;
-    while (this.state.phase === "drafting" && guard++ < 500) {
-      const pending = this.state.draft.pools.map((_, seat) => seat).filter((seat) => {
-        const owed = this.state.draft.currentPacks[seat];
-        return humans.includes(seat) && owed.length > 0;
-      });
-      let acted = false;
-      for (const seat of pending) {
-        if (this.state.phase !== "drafting") break;
-        const before = this.state.draft.pools[seat].length;
-        this.send(seat, this.pickFor(seat));
-        if (this.state.draft.pools[seat].length > before) acted = true;
-      }
-      if (!acted) break;
+    while (this.state.phase === "drafting" && guard++ < 1000) {
+      const seat = this.state.draft.currentSeat;
+      if (!humans.includes(seat)) break;
+      this.send(seat, this.pickFor(seat));
     }
   }
 }
@@ -150,8 +144,8 @@ test("a token reclaims the same seat after a refresh", () => {
 
   const order = effects.map((e) => e.msg.t);
   assert.deepEqual(
-    order.filter((t) => ["welcome", "pool", "hand", "step", "room"].includes(t)),
-    ["welcome", "pool", "hand", "step", "room"],
+    order.filter((t) => ["welcome", "pool", "board", "turn", "room"].includes(t)),
+    ["welcome", "pool", "board", "turn", "room"],
     "a reclaim replays the full seat view in render order"
   );
   assert.equal(room.state.seats[0].connected, true);
@@ -228,7 +222,7 @@ test("a pick acks the sender and tells the table only that a seat moved", () => 
   room.join("Ben");
   room.send(0, { t: "start" });
 
-  const before = room.state.draft.currentPacks[0][0];
+  const before = room.state.draft.pool[0];
   const effects = room.send(0, room.pickFor(0));
 
   // Addressed by seat, not to the originating socket, so a second tab on the same seat
@@ -273,26 +267,26 @@ test("a seq ahead of the server triggers a resync, not a pick", () => {
   room.send(0, { t: "start" });
 
   const poolBefore = room.state.draft.pools[0].slice();
-  const effects = room.send(0, { t: "pick", seq: 99, index: 0, ref: room.state.draft.currentPacks[0][0] });
+  const effects = room.send(0, { t: "pick", seq: 99, index: 0, ref: room.state.draft.pool[0] });
 
   assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "out-of-sync");
-  assert.ok(effects.some((e) => e.msg.t === "hand"), "the seat is resynced");
+  assert.ok(effects.some((e) => e.msg.t === "board"), "the seat is resynced");
   assert.deepEqual(room.state.draft.pools[0], poolBefore);
 });
 
-test("a stale ref is refused and the pack is resent", () => {
+test("a stale ref is refused and the board is resent", () => {
   const room = new Harness();
   room.join("Ann");
   room.join("Ben");
   room.send(0, { t: "start" });
 
   const poolBefore = room.state.draft.pools[0].slice();
-  const wrongRef = room.state.draft.currentPacks[0][1];
+  const wrongRef = room.state.draft.pool[1];
   const effects = room.send(0, { t: "pick", seq: 0, index: 0, ref: wrongRef });
 
-  assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "stale-pack");
+  assert.equal(effects.find((e) => e.msg.t === "err").msg.code, "stale-pool");
   assert.deepEqual(room.state.draft.pools[0], poolBefore, "no card was taken");
-  assert.ok(effects.some((e) => e.msg.t === "hand"), "the seat gets a fresh pack");
+  assert.ok(effects.some((e) => e.msg.t === "board"), "the seat gets a fresh board");
 });
 
 test("a pick cannot be made on another seat's behalf", () => {
@@ -318,8 +312,11 @@ test("picks are refused before the draft starts", () => {
 
 /* ---------- privacy ---------- */
 
-test("no frame ever shows a seat another seat's cards before the draft ends", () => {
-  const room = new Harness({ players: 4, packs: 2, packSize: 4 });
+// A snake draft's board is public by design — every seat sees the same pool, so
+// broadcasting `refs` on a "board" frame is correct, not a leak. What must still stay
+// private until the reveal is each seat's own drafted `pool`.
+test("a seat's own drafted pool is never shown to anyone else before the reveal", () => {
+  const room = new Harness({ players: 4, cardsPerPlayer: 8 });
   for (const name of ["Ann", "Ben", "Cy", "Dee"]) room.join(name);
   room.send(0, { t: "start" });
   room.playToCompletion([0, 1, 2, 3]);
@@ -329,40 +326,37 @@ test("no frame ever shows a seat another seat's cards before the draft ends", ()
   const revealAt = room.log.findIndex((entry) => entry.msg.t === "done");
   assert.ok(revealAt > 0, "a done frame was broadcast");
 
-  // Every card-bearing field, checked against the seat it was addressed to.
   for (let i = 0; i < revealAt; i += 1) {
     const { to, msg } = room.log[i];
-    const refs = [
-      ...(msg.pack || []),
-      ...(msg.refs || []),
-      ...(msg.ref === undefined ? [] : [msg.ref]),
-      ...(msg.pools || []).flat(),
-    ];
+    if (msg.t !== "pool") continue;
 
-    if (refs.length === 0) continue;
-
-    assert.notEqual(
-      to,
-      "all",
-      `frame "${msg.t}" carrying ${refs.length} card refs was broadcast to the whole table`
-    );
-    assert.ok(Number.isInteger(to), `frame "${msg.t}" carrying cards had no seat audience`);
+    assert.notEqual(to, "all", `a "pool" frame (a seat's own drafted cards) was broadcast`);
+    assert.ok(Number.isInteger(to), `a "pool" frame had no seat audience`);
   }
 });
 
-test("broadcast frames carry only counts and status", () => {
+test("the shared board is broadcast identically to every seat", () => {
+  const room = new Harness();
+  for (const name of ["Ann", "Ben", "Cy", "Dee"]) room.join(name);
+  room.send(0, { t: "start" });
+  room.send(0, room.pickFor(0));
+
+  const boards = room.log.filter((entry) => entry.msg.t === "board");
+  assert.ok(boards.length > 0);
+  for (const { to } of boards) {
+    assert.equal(to, "all", "the board is public — no reason to unicast it");
+  }
+});
+
+test("broadcast frames never carry every seat's pool before the reveal", () => {
   const room = new Harness();
   for (const name of ["Ann", "Ben", "Cy", "Dee"]) room.join(name);
   room.send(0, { t: "start" });
   room.send(0, room.pickFor(0));
 
   for (const { to, msg } of room.log) {
-    if (to !== "all") continue;
-    assert.equal("pack" in msg, false, `${msg.t} broadcast a pack`);
-    assert.equal("refs" in msg, false, `${msg.t} broadcast a pool`);
-    if (msg.t !== "done") {
-      assert.equal("pools" in msg, false, `${msg.t} broadcast every pool`);
-    }
+    if (to !== "all" || msg.t === "done") continue;
+    assert.equal("pools" in msg, false, `${msg.t} broadcast every seat's pool`);
   }
 });
 
@@ -460,7 +454,7 @@ test("botifying the last pending seat advances the draft immediately", () => {
 /* ---------- completion ---------- */
 
 test("a solo human against bots runs to a completed draft", () => {
-  const room = new Harness({ players: 4, packs: 2, packSize: 4 });
+  const room = new Harness({ players: 4, cardsPerPlayer: 8 });
   room.join("Ann");
   room.send(0, { t: "start" });
 
@@ -477,7 +471,7 @@ test("a solo human against bots runs to a completed draft", () => {
 });
 
 test("picks after completion are refused", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.send(0, { t: "start" });
   room.playToCompletion([0]);
@@ -489,55 +483,56 @@ test("picks after completion are refused", () => {
 
 /* ---------- double picks over the wire ---------- */
 
-// packSize 4 with doublePickAfter 1 gives quotas [1, 2, 1]: one single pick, then a
-// two-card step, then a final single because the pack runs dry. Everything below runs
-// inside that middle step, where a seat owes two cards and `seq` moves twice.
+// cardsPerPlayer 4 with doublePickAfter 1 gives quotas [1, 2, 1] per seat: one single
+// pick, then a two-card turn, then a final single because the seat's own allotment
+// runs dry. After the opening single pick for each seat, seat 1 lands on its
+// double-pick turn (round 0 forward ends there, so it leads round 1 too) — everything
+// below runs inside that turn, where seat 1 owes two cards and `seq` moves twice.
 function doublePickRoom() {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4, doublePickAfter: 1 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4, doublePickAfter: 1 });
   room.join("Ann");
   room.join("Ben");
   room.send(0, { t: "start" });
 
-  // Clear the opening single-pick step so both seats land on the two-card step.
   room.send(0, room.pickFor(0));
   room.send(1, room.pickFor(1));
 
   return room;
 }
 
-test("a two-card step advances seq once per card, not once per step", () => {
+test("a two-card turn advances seq once per card, not once per turn", () => {
   const room = doublePickRoom();
 
-  assert.equal(room.state.draft.pickNumber, 2, "reached the double-pick step");
-  assert.equal(room.state.draft.pools[0].length, 1, "one card from the opening step");
+  assert.equal(room.state.draft.currentSeat, 1, "seat 1 is on its double-pick turn");
+  assert.equal(room.state.draft.pools[1].length, 1, "one card from the opening turn");
 
-  const first = room.send(0, room.pickFor(0));
+  const first = room.send(1, room.pickFor(1));
   const firstAck = first.find((e) => e.msg.t === "picked").msg;
   assert.equal(firstAck.seq, 1, "seq is the seat's pool length before the pick");
   assert.equal(firstAck.remaining, 1, "one card still owed");
 
-  const second = room.send(0, room.pickFor(0));
+  const second = room.send(1, room.pickFor(1));
   const secondAck = second.find((e) => e.msg.t === "picked").msg;
-  assert.equal(secondAck.seq, 2, "seq moved again inside the same step");
+  assert.equal(secondAck.seq, 2, "seq moved again inside the same turn");
   assert.equal(secondAck.remaining, 0, "the seat is now settled");
 
-  assert.equal(room.state.draft.pools[0].length, 3);
+  assert.equal(room.state.draft.pools[1].length, 3);
 });
 
-test("a retry inside a two-card step replays rather than taking a third card", () => {
+test("a retry inside a two-card turn replays rather than taking a third card", () => {
   const room = doublePickRoom();
 
-  const pick = room.pickFor(0);
-  room.send(0, pick);
-  assert.equal(room.state.draft.pools[0].length, 2);
+  const pick = room.pickFor(1);
+  room.send(1, pick);
+  assert.equal(room.state.draft.pools[1].length, 2);
 
   // The ack for the first card never arrived, so the client sends the same seq again.
-  const retry = room.send(0, pick);
+  const retry = room.send(1, pick);
   const ack = retry.find((e) => e.msg.t === "picked").msg;
 
   assert.equal(ack.replay, true);
   assert.equal(ack.ref, pick.ref);
-  assert.equal(room.state.draft.pools[0].length, 2, "no third card was taken");
+  assert.equal(room.state.draft.pools[1].length, 2, "no third card was taken");
   assert.equal(
     retry.some((e) => e.msg.t === "seatPicked"),
     false,
@@ -545,29 +540,26 @@ test("a retry inside a two-card step replays rather than taking a third card", (
   );
 });
 
-test("the table waits for both cards before the packs pass", () => {
+test("the turn frame reflects an unfinished turn until both cards are taken", () => {
   const room = doublePickRoom();
   const stepBefore = room.state.draft.step;
 
-  // Ben settles his whole quota; Ann takes only the first of her two.
   room.send(1, room.pickFor(1));
+  assert.equal(room.state.draft.step, stepBefore, "the turn has not resolved");
+
+  const turn = room.log.filter((e) => e.msg.t === "turn").at(-1).msg;
+  assert.equal(turn.currentSeat, 1, "seat 1 is still up");
+  assert.equal(turn.picksOwed, 1, "one card still owed");
+
   room.send(1, room.pickFor(1));
-  room.send(0, room.pickFor(0));
-
-  assert.equal(room.state.draft.step, stepBefore, "the step has not resolved");
-
-  const pending = room.log.filter((e) => e.msg.t === "step").at(-1).msg.pending;
-  assert.deepEqual(pending, [0], "only Ann is still owed a card");
-
-  room.send(0, room.pickFor(0));
-  assert.ok(room.state.draft.step > stepBefore, "the last card releases the pass");
+  assert.ok(room.state.draft.step > stepBefore, "the second card releases the turn");
+  assert.equal(room.state.draft.currentSeat, 0, "the turn passed to seat 0");
 });
 
-test("botifying a seat mid-two-card-step settles only what it owed", () => {
+test("botifying a seat mid-turn settles only what it owed", () => {
   const room = doublePickRoom();
 
-  // Ben takes one of two, then vanishes. Ann has not picked at all, so the step cannot
-  // resolve and the bot sweep stops after Ben's outstanding card.
+  // Ben takes one of his two owed cards, then vanishes.
   room.send(1, room.pickFor(1));
   assert.equal(room.state.draft.pools[1].length, 2);
 
@@ -591,16 +583,16 @@ test("the afk alarm fills a whole two-card quota for an absent seat", () => {
   assert.equal(room.state.seats[1].afk, true);
 });
 
-test("a reconnect mid-two-card-step reports the remaining card, not the full quota", () => {
+test("a reconnect mid-turn reports the remaining card, not the full quota", () => {
   const room = doublePickRoom();
-  room.send(0, room.pickFor(0));
+  room.send(1, room.pickFor(1));
 
-  room.disconnect(0);
-  const effects = room.rejoin(0);
-  const hand = effects.find((e) => e.msg.t === "hand").msg;
+  room.disconnect(1);
+  const effects = room.rejoin(1);
+  const turn = effects.find((e) => e.msg.t === "turn").msg;
 
-  assert.equal(hand.remaining, 1, "one card still owed, not two");
-  assert.equal(hand.seq, 2, "seq matches the pool length so the fence lines up");
+  assert.equal(turn.picksOwed, 1, "one card still owed, not two");
+  assert.equal(turn.seq, 2, "seq matches the pool length so the fence lines up");
 });
 
 /* ---------- rename, resync, leave ---------- */
@@ -635,7 +627,7 @@ test("resync replays the seat's whole view without touching the draft", () => {
 
   assert.deepEqual(
     effects.map((e) => e.msg.t),
-    ["room", "pool", "hand", "step"],
+    ["room", "pool", "board", "turn"],
     "the full seat view, in render order"
   );
   assert.equal(JSON.stringify(room.state.draft), before, "resync is read-only");
@@ -676,7 +668,7 @@ test("an unseated socket cannot rename, resync or leave", () => {
 /* ---------- idle rooms ---------- */
 
 test("an abandoned room stops scheduling alarms", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.join("Ben");
   room.send(0, { t: "start" });
@@ -693,7 +685,7 @@ test("an abandoned room stops scheduling alarms", () => {
 });
 
 test("a rejoin revives an idled room's alarm scheduling", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.join("Ben");
   room.send(0, { t: "start" });
@@ -712,7 +704,7 @@ test("a rejoin revives an idled room's alarm scheduling", () => {
 /* ---------- cleanup ---------- */
 
 test("a finished draft schedules its own cleanup alarm", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.send(0, { t: "start" });
   room.playToCompletion([0]);
@@ -723,7 +715,7 @@ test("a finished draft schedules its own cleanup alarm", () => {
 });
 
 test("the cleanup alarm does nothing before the threshold", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.send(0, { t: "start" });
   room.playToCompletion([0]);
@@ -737,7 +729,7 @@ test("the cleanup alarm does nothing before the threshold", () => {
 });
 
 test("the cleanup alarm signals destroy once the threshold passes", () => {
-  const room = new Harness({ players: 2, packs: 1, packSize: 4 });
+  const room = new Harness({ players: 2, cardsPerPlayer: 4 });
   room.join("Ann");
   room.send(0, { t: "start" });
   room.playToCompletion([0]);
@@ -755,7 +747,7 @@ test("a room still in the lobby or mid-draft never schedules a cleanup alarm", (
   assert.equal(lobby.state.phase, "lobby");
   assert.equal(lobby.alarm, null, "a lobby has nothing to schedule");
 
-  const drafting = new Harness({ players: 2, packs: 2, packSize: 4 });
+  const drafting = new Harness({ players: 2, cardsPerPlayer: 8 });
   drafting.join("Ann");
   drafting.send(0, { t: "start" });
   drafting.now += CLEANUP_MS * 2;

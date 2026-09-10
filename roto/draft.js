@@ -1,9 +1,12 @@
 // Pure draft engine — no DOM, no network. Shared verbatim by the browser (solo mode)
 // and by the DraftRoom Durable Object (multiplayer), so draft rules can never fork.
 //
-// Cards are held as integer refs into `draft.catalog`. Every pack, pool and deal is an
-// array of refs; call `cardAt` to resolve one. This keeps the mutable slice of a draft
-// small enough to persist on every pick and to send over a socket.
+// This is a snake draft: every card is shuffled once into a single shared `pool`,
+// visible to the whole table, and seats pick from it one at a time in order
+// 0..N-1, then N-1..0, repeating ("round" below means one such lap). Cards are held
+// as integer refs into `draft.catalog`; call `cardAt` to resolve one. This keeps the
+// mutable slice of a draft small enough to persist on every pick and to send over a
+// socket.
 
 const RARITY_WEIGHT = { common: 1, uncommon: 1.35, rare: 1.8, mythic: 2.1 };
 
@@ -11,10 +14,10 @@ export const COLOR_ORDER = ["W", "U", "B", "R", "G"];
 
 // Bumped whenever the wire-visible shape or the pick rules change. The DO echoes this
 // in its welcome frame so a stale cached client can warn instead of desyncing.
-export const ENGINE_VERSION = 2;
+export const ENGINE_VERSION = 3;
 
 export function createDraft(config, cards, seatKinds) {
-  if (!Array.isArray(cards) || cards.length < config.packSize) {
+  if (!Array.isArray(cards) || cards.length < config.players) {
     throw new Error("cube-too-small");
   }
 
@@ -22,31 +25,19 @@ export function createDraft(config, cards, seatKinds) {
     ? seatKinds.slice()
     : Array.from({ length: config.players }, (_, seat) => (seat === 0 ? "human" : "bot"));
 
-  const needed = config.players * config.packs * config.packSize;
+  const needed = config.players * config.cardsPerPlayer;
   const random = mulberry32(hashSeed(config.seed));
-  const supply = drawSupply(cards.length, needed, random);
-  const rounds = [];
-
-  let cursor = 0;
-  for (let round = 0; round < config.packs; round += 1) {
-    const seats = [];
-    for (let seat = 0; seat < config.players; seat += 1) {
-      seats.push(supply.slice(cursor, cursor + config.packSize));
-      cursor += config.packSize;
-    }
-    rounds.push(seats);
-  }
+  const pool = drawSupply(cards.length, needed, random);
 
   return {
     config,
     catalog: cards,
     seatKinds: kinds,
-    rounds,
+    pool,
     round: 0,
-    pickNumber: 1,
+    currentSeat: 0,
+    takenThisStep: 0,
     step: 0,
-    takenThisStep: new Array(config.players).fill(0),
-    currentPacks: rounds[0].map((pack) => pack.slice()),
     pools: Array.from({ length: config.players }, () => []),
     colorCounts: Array.from({ length: config.players }, () => ({})),
     finished: false,
@@ -63,36 +54,41 @@ export function cardsOf(catalog, refs) {
 
 /* ---------- queries ---------- */
 
-// How many cards each seat owes this step. Table-wide by design: a per-seat quota would
-// leave the pass boundary undefined.
+// How many cards the active seat owes this turn. Keyed off how many cards that seat
+// had already taken as of the *start* of this turn — the snake-draft analogue of "pack
+// position". Load-bearing to subtract takenThisStep back out: `pools[seat].length`
+// updates as each card of this very turn is taken, so without it a turn that starts as
+// a single can flip into a double partway through itself, once its own first card
+// happens to cross the threshold.
 export function picksThisStep(draft) {
   const { doublePickAfter } = draft.config;
-  return doublePickAfter > 0 && draft.pickNumber > doublePickAfter ? 2 : 1;
+  if (doublePickAfter <= 0) {
+    return 1;
+  }
+  const takenBeforeThisTurn = draft.pools[draft.currentSeat].length - draft.takenThisStep;
+  return takenBeforeThisTurn >= doublePickAfter ? 2 : 1;
 }
 
-// Cards this seat still owes, capped by what is actually left in its pack. The cap is
-// load-bearing: without it a seat owing 2 from a 1-card pack never becomes ready and the
-// whole table deadlocks.
-export function picksRemaining(draft, seat = 0) {
-  if (draft.finished) {
+// Cards the given seat still owes this turn — always 0 for any seat but the one
+// currently up, and capped by whichever of two things runs out first: the shared pool,
+// or (load-bearing, this one especially: without it double-picks can overdraw a seat
+// past its own allotment even while the shared pool — everyone else's cards too —
+// still has plenty left) this seat's own remaining `cardsPerPlayer` allotment. Both
+// `pools[seat].length` and `draft.pool.length` already reflect whatever this turn has
+// taken so far, so neither needs takenThisStep added back in — only this turn's own
+// quota does.
+export function picksRemaining(draft, seat = draft.currentSeat) {
+  if (draft.finished || seat !== draft.currentSeat) {
     return 0;
   }
 
-  const taken = draft.takenThisStep[seat];
-  const available = taken + draft.currentPacks[seat].length;
-  return Math.min(picksThisStep(draft), available) - taken;
+  const quotaLeft = picksThisStep(draft) - draft.takenThisStep;
+  const ownAllotmentLeft = draft.config.cardsPerPlayer - draft.pools[seat].length;
+  return Math.min(quotaLeft, ownAllotmentLeft, draft.pool.length);
 }
 
 export function pendingSeats(draft) {
-  const pending = [];
-
-  for (let seat = 0; seat < draft.config.players; seat += 1) {
-    if (picksRemaining(draft, seat) > 0) {
-      pending.push(seat);
-    }
-  }
-
-  return pending;
+  return picksRemaining(draft, draft.currentSeat) > 0 ? [draft.currentSeat] : [];
 }
 
 export function allSeatsReady(draft) {
@@ -113,19 +109,19 @@ export function submitPick(draft, seat, index, expectedRef) {
     return { ok: false, error: "bad-seat" };
   }
 
-  if (picksRemaining(draft, seat) === 0) {
+  if (seat !== draft.currentSeat || picksRemaining(draft, seat) === 0) {
     return { ok: false, error: "not-owed" };
   }
 
-  const pack = draft.currentPacks[seat];
-  if (!Number.isInteger(index) || index < 0 || index >= pack.length) {
+  const pool = draft.pool;
+  if (!Number.isInteger(index) || index < 0 || index >= pool.length) {
     return { ok: false, error: "bad-index" };
   }
 
-  // Position-anchored, never indexOf: a pack may legitimately hold the same ref twice
-  // when an undersized cube repeats, and indexOf would resolve to the wrong copy.
-  if (expectedRef !== undefined && pack[index] !== expectedRef) {
-    return { ok: false, error: "stale-pack" };
+  // Position-anchored, never indexOf: the pool may legitimately hold the same ref
+  // twice when an undersized cube repeats, and indexOf would resolve to the wrong copy.
+  if (expectedRef !== undefined && pool[index] !== expectedRef) {
+    return { ok: false, error: "stale-pool" };
   }
 
   const ref = applyPick(draft, seat, index);
@@ -141,9 +137,9 @@ export function submitPick(draft, seat, index, expectedRef) {
 }
 
 function applyPick(draft, seat, index) {
-  const [ref] = draft.currentPacks[seat].splice(index, 1);
+  const [ref] = draft.pool.splice(index, 1);
   draft.pools[seat].push(ref);
-  draft.takenThisStep[seat] += 1;
+  draft.takenThisStep += 1;
 
   const counts = draft.colorCounts[seat];
   for (const color of draft.catalog[ref].colors) {
@@ -153,29 +149,25 @@ function applyPick(draft, seat, index) {
   return ref;
 }
 
-// Fills a seat's outstanding picks with the bot heuristic. Used for bot seats, for AFK
-// auto-picks, and for seats the host converts mid-draft.
+// Fills the active seat's outstanding picks with the bot heuristic. Used for bot
+// seats, for AFK auto-picks, and for seats the host converts mid-draft. A no-op for
+// any seat that isn't currently up.
 export function autoPickSeat(draft, seat) {
   let taken = 0;
 
-  while (picksRemaining(draft, seat) > 0) {
-    applyPick(draft, seat, chooseBotCard(draft, draft.currentPacks[seat], draft.colorCounts[seat]));
+  while (seat === draft.currentSeat && picksRemaining(draft, seat) > 0) {
+    applyPick(draft, seat, chooseBotCard(draft, draft.pool, draft.colorCounts[seat]));
     taken += 1;
   }
 
   return taken;
 }
 
+// Auto-plays every bot turn until a human owes a pick or the draft finishes. Only the
+// active seat can ever be mid-turn, so this is just `advance` — kept as a named
+// export since "run the bots" is a distinct intent from "resume the draft".
 export function autoPickBots(draft) {
-  let taken = 0;
-
-  for (let seat = 0; seat < draft.config.players; seat += 1) {
-    if (draft.seatKinds[seat] === "bot") {
-      taken += autoPickSeat(draft, seat);
-    }
-  }
-
-  return taken;
+  return advance(draft);
 }
 
 export function convertSeatToBot(draft, seat) {
@@ -192,8 +184,9 @@ export function convertSeatToBot(draft, seat) {
   return true;
 }
 
-// Closes the step once every seat has picked: passes the packs, and rolls into the next
-// round when they run dry.
+// Closes the active seat's turn once its quota is fully taken and hands the turn to
+// the next seat in snake order, rolling into the next round (and flipping direction)
+// when a seat finishes a lap.
 export function resolveStep(draft) {
   if (draft.finished) {
     return { ok: false, error: "draft-finished" };
@@ -204,26 +197,65 @@ export function resolveStep(draft) {
     return { ok: false, error: "waiting", pending };
   }
 
-  draft.takenThisStep.fill(0);
-  draft.pickNumber += 1;
-  passPacks(draft);
+  draft.takenThisStep = 0;
   draft.step += 1;
 
-  if (draft.currentPacks.every((pack) => pack.length === 0)) {
-    return startNextRound(draft);
+  // Finishing on pool exhaustion, not a fixed round count, is load-bearing: double
+  // picks make some turns consume 2 cards instead of 1, so the number of laps it takes
+  // to hand out `cardsPerPlayer` cards isn't fixed up front. picksRemaining already
+  // caps every seat at its own allotment, so every seat's remaining allotment is
+  // guaranteed to hit 0 at the same moment the shared pool does.
+  if (draft.pool.length === 0) {
+    draft.finished = true;
+    return {
+      ok: true,
+      status: "finished",
+      round: draft.round,
+      currentSeat: draft.currentSeat,
+      step: draft.step,
+    };
   }
+
+  return advanceTurn(draft);
+}
+
+// The boundary seat of a lap (last seat going forward, first seat going backward)
+// leads both the outgoing and the incoming round — that back-to-back turn is the
+// defining feature of a snake draft, compensating for picking last in the other
+// direction. Reads draft.round before any mutation, so direction must be resolved
+// first. Purely a turn-order bookkeeping step — finishing is decided by resolveStep
+// before this ever runs.
+function advanceTurn(draft) {
+  const { players } = draft.config;
+  const forward = draft.round % 2 === 0;
+  const atBoundary = forward ? draft.currentSeat === players - 1 : draft.currentSeat === 0;
+
+  if (atBoundary) {
+    draft.round += 1;
+    return {
+      ok: true,
+      status: "next-round",
+      round: draft.round,
+      currentSeat: draft.currentSeat,
+      step: draft.step,
+    };
+  }
+
+  draft.currentSeat = forward ? draft.currentSeat + 1 : draft.currentSeat - 1;
 
   return {
     ok: true,
     status: "next-pick",
     round: draft.round,
-    pickNumber: draft.pickNumber,
+    currentSeat: draft.currentSeat,
     step: draft.step,
   };
 }
 
-// Runs the table as far forward as it can go: bots pick, the step resolves, repeat.
-// Stops as soon as a human still owes a card. The loop matters for an all-bot table.
+// Runs the table as far forward as it can go: the active seat picks (if it's a bot)
+// and its turn resolves, repeat. Stops as soon as a human still owes a card. Also the
+// right thing to call right after a human's own pick, since it needs to resolve their
+// turn and keep going through however many bot turns follow.
 export function advance(draft, maxSteps = 512) {
   const resolved = [];
 
@@ -232,18 +264,17 @@ export function advance(draft, maxSteps = 512) {
       break;
     }
 
-    autoPickBots(draft);
-    if (!allSeatsReady(draft)) {
+    if (draft.seatKinds[draft.currentSeat] === "bot") {
+      autoPickSeat(draft, draft.currentSeat);
+    }
+
+    if (picksRemaining(draft, draft.currentSeat) > 0) {
       break;
     }
 
     const result = resolveStep(draft);
-    if (!result.ok) {
-      break;
-    }
-
     resolved.push(result);
-    if (result.status === "finished") {
+    if (!result.ok || result.status === "finished") {
       break;
     }
   }
@@ -260,7 +291,7 @@ export function pickCard(draft, index) {
   }
 
   if (result.remaining > 0) {
-    return "same-pack";
+    return "same-turn";
   }
 
   const resolved = advance(draft);
@@ -268,35 +299,14 @@ export function pickCard(draft, index) {
   return last && last.status === "finished" ? "finished" : "next-pick";
 }
 
-function startNextRound(draft) {
-  draft.round += 1;
-  draft.pickNumber = 1;
-  draft.takenThisStep.fill(0);
-
-  if (draft.round >= draft.config.packs) {
-    draft.finished = true;
-    return { ok: true, status: "finished", round: draft.round, pickNumber: 1, step: draft.step };
-  }
-
-  draft.currentPacks = draft.rounds[draft.round].map((pack) => pack.slice());
-
-  return {
-    ok: true,
-    status: "next-round",
-    round: draft.round,
-    pickNumber: draft.pickNumber,
-    step: draft.step,
-  };
-}
-
 /* ---------- bot heuristic ---------- */
 
-function chooseBotCard(draft, pack, colorCounts) {
+function chooseBotCard(draft, pool, colorCounts) {
   let bestIndex = 0;
   let bestScore = -Infinity;
 
-  for (let index = 0; index < pack.length; index += 1) {
-    const score = scoreCardForBot(draft.catalog[pack[index]], colorCounts);
+  for (let index = 0; index < pool.length; index += 1) {
+    const score = scoreCardForBot(draft.catalog[pool[index]], colorCounts);
     if (score > bestScore) {
       bestScore = score;
       bestIndex = index;
@@ -325,21 +335,6 @@ function scoreCardForBot(card, colorCounts) {
 }
 
 /* ---------- dealing ---------- */
-
-// Direction alternates per round. This reads draft.round, so it must run before
-// startNextRound increments it — otherwise the pass silently flips at every rollover.
-function passPacks(draft) {
-  const { players } = draft.config;
-  const passLeft = draft.round % 2 === 0;
-  const next = new Array(players);
-
-  for (let seat = 0; seat < players; seat += 1) {
-    const target = passLeft ? (seat + 1) % players : (seat - 1 + players) % players;
-    next[target] = draft.currentPacks[seat];
-  }
-
-  draft.currentPacks = next;
-}
 
 // Deals refs, not cards. Shuffling an index array consumes the RNG identically to
 // shuffling the card array, so the deal matches the pre-refactor engine exactly.
