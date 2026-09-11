@@ -128,10 +128,12 @@ function generateAndRender(seed = makeSeed()) {
   const pack = [];
 
   for (const [poolName, count] of PACK_PATTERN) {
-    const pool = state.pools[poolName];
+    const pool = state.pools[poolName].slice();
 
-    for (let pick = 0; pick < count; pick += 1) {
-      pack.push(pool[Math.floor(random() * pool.length)]);
+    for (let pick = 0; pick < count && pool.length > 0; pick += 1) {
+      const index = Math.floor(random() * pool.length);
+      pack.push(pool[index]);
+      pool.splice(index, 1);
     }
   }
 
