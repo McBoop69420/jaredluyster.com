@@ -101,12 +101,18 @@
   // Plain live games (in progress, no other qualifying reason — not a
   // followed team, not stakes, not a ranked/implication matchup) rank ahead
   // of followed teams' non-live games, but a busy live slate — several
-  // soccer leagues plus ranked college football all kicking off around the
-  // same time — can otherwise fill the entire 9-slot budget with games from
-  // leagues nobody follows and push every followed team off Spotlight
-  // outright. Sub-cap them the same way, keeping the closest scores (most
-  // competitive right now) when there's overflow.
+  // soccer leagues all kicking off around the same time — can otherwise fill
+  // the entire 9-slot budget with games from leagues nobody follows and push
+  // every followed team off Spotlight outright. Sub-cap them the same way,
+  // keeping the closest scores (most competitive right now) when there's
+  // overflow. NCAAF has its own separate budget below.
   const MAX_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
+  // Live college football gets its own budget instead of sharing the one
+  // above: Saturdays run a full slate of simultaneous ranked matchups (the
+  // only kind that count as "live" for NCAAF — see spotlightRankedOnly), and
+  // a shared cap with soccer's own Saturday slate meant close soccer
+  // scorelines could crowd every CFB game out of Spotlight entirely.
+  const MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
   // How far ahead of kickoff a not-yet-started game starts counting as
   // Spotlight-worthy at all — regardless of which reason (followed team,
   // stakes, ranked, implication) it would otherwise qualify under. A game
@@ -684,7 +690,7 @@
         const rankedOnly = rankedCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
         const liveOnly = liveCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
         const scoreMargin = Math.abs((Number(g.away.score) || 0) - (Number(g.home.score) || 0));
-        entries.push({ g, label: league ? league.label : "", stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly });
+        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly });
       });
     });
 
@@ -700,11 +706,23 @@
       const keep = new Set(rankedOnly.slice(0, MAX_RANKED_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !e.rankedOnly || keep.has(e));
     }
+    // NCAAF gets its own live-only budget, separate from every other live
+    // sport's shared one — Saturday college football runs a full slate of
+    // simultaneous games, and sharing one small cap with soccer (also often
+    // live in bulk on Saturdays) meant a close soccer scoreline could crowd
+    // every CFB game out of Spotlight entirely.
     const liveOnly = entries.filter(e => e.liveOnly);
-    if (liveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
-      liveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
-      const keep = new Set(liveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
-      entries = entries.filter(e => !e.liveOnly || keep.has(e));
+    const ncaafLiveOnly = liveOnly.filter(e => e.leagueKey === "football/college-football");
+    const otherLiveOnly = liveOnly.filter(e => e.leagueKey !== "football/college-football");
+    if (ncaafLiveOnly.length > MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES) {
+      ncaafLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
+      const keep = new Set(ncaafLiveOnly.slice(0, MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !(e.liveOnly && e.leagueKey === "football/college-football") || keep.has(e));
+    }
+    if (otherLiveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
+      otherLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
+      const keep = new Set(otherLiveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !(e.liveOnly && e.leagueKey !== "football/college-football") || keep.has(e));
     }
 
     // Live games first — regardless of followed-team status — then followed
