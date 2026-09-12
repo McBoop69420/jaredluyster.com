@@ -97,6 +97,15 @@
   // implication) can also flood a busy Saturday — sub-cap and keep the
   // marquee-est matchups by combined rank (see rankScore).
   const MAX_RANKED_SPOTLIGHT_GAMES = 4;
+  // Plain live games (in progress, no other qualifying reason — not a
+  // followed team, not stakes, not a ranked/implication matchup) rank ahead
+  // of followed teams' non-live games, but a busy live slate — several
+  // soccer leagues plus ranked college football all kicking off around the
+  // same time — can otherwise fill the entire 9-slot budget with games from
+  // leagues nobody follows and push every followed team off Spotlight
+  // outright. Sub-cap them the same way, keeping the closest scores (most
+  // competitive right now) when there's overflow.
+  const MAX_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const ESPN_CDN = "https://cdn.site.api.espn.com/apis/site/v2/sports/";
   // Standings live on the /apis/v2/ path (NOT /apis/site/v2/) and need a season.
@@ -612,14 +621,18 @@
         const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
         const big = liveCounts || g.isMyGame || stakesCounts || rankedCounts || implicationDistance != null;
         if (!big) return;
-        // "Implication-only" / "ranked-only" = the sole reason this game
-        // qualified is standings implications / a ranked team — not live, not
-        // a followed team, not a championship/bowl game. Those other reasons
-        // already guarantee a slot, so only these entries are subject to a
-        // sub-cap (a ranked Saturday can otherwise flood Spotlight).
+        // "Implication-only" / "ranked-only" / "live-only" = the sole reason
+        // this game qualified is standings implications / a ranked team /
+        // just being in progress — not a followed team, not a championship/
+        // bowl game. Those other reasons already guarantee a slot, so only
+        // these entries are subject to a sub-cap (a ranked Saturday, or a
+        // Saturday with a lot of live games nobody follows, can otherwise
+        // flood Spotlight).
         const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && !rankedCounts && implicationDistance != null;
         const rankedOnly = rankedCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
-        entries.push({ g, label: league ? league.label : "", stakesCounts, rankedCounts, rankedOnly, rankScore, implicationDistance, implicationOnly });
+        const liveOnly = liveCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
+        const scoreMargin = Math.abs((Number(g.away.score) || 0) - (Number(g.home.score) || 0));
+        entries.push({ g, label: league ? league.label : "", stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly });
       });
     });
 
@@ -634,6 +647,12 @@
       rankedOnly.sort((a, b) => a.rankScore - b.rankScore);
       const keep = new Set(rankedOnly.slice(0, MAX_RANKED_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !e.rankedOnly || keep.has(e));
+    }
+    const liveOnly = entries.filter(e => e.liveOnly);
+    if (liveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
+      liveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
+      const keep = new Set(liveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !e.liveOnly || keep.has(e));
     }
 
     // Live games first — regardless of followed-team status — then followed
@@ -666,7 +685,14 @@
       grid.appendChild(el("div", "spotlight-empty", "Nothing live and no games today for the teams you follow."));
       return;
     }
-    entries.slice(0, MAX_SPOTLIGHT_GAMES).forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
+    // Followed-team games are exempt from MAX_SPOTLIGHT_GAMES: it exists to
+    // stop a busy slate of *other* games from flooding the section, not to
+    // bump a followed team off its own Spotlight once enough live games
+    // elsewhere fill the budget. Everything else fills whatever room is left.
+    const mine = entries.filter(e => e.g.isMyGame);
+    const others = entries.filter(e => !e.g.isMyGame).slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length));
+    mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
+      .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
   }
 
   // ---- Standings -------------------------------------------------------
