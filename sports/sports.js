@@ -382,12 +382,18 @@
     const broadcastEntry = broadcastList.find(b => b.market === "national") || broadcastList[0];
     const broadcast = (broadcastEntry && Array.isArray(broadcastEntry.names) && broadcastEntry.names.length)
       ? broadcastEntry.names.join("/") : null;
+    // ESPN marks postseason events with season.type 3 ("post-season") at the
+    // event level, regardless of sport — the one reliable signal that a game
+    // is an actual playoff game, as opposed to a regular-season game that
+    // merely has playoff *implications* (see playoffImplicationDistance).
+    const isPlayoff = !!(ev.season && ev.season.type === 3);
 
     return {
       eventId: ev.id,
       leagueKey,
       boxScoreEventId: leagueKey === "baseball/mlb" && state === "post" ? ev.id : null,
       state,
+      isPlayoff,
       away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner, rank: rankOf(away) },
       home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner, rank: rankOf(home) },
       dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
@@ -726,7 +732,10 @@
     }
 
     // Live games first — regardless of followed-team status — then followed
-    // teams, then by state (upcoming < final). Within the same tier: a stakes
+    // teams, then by state (upcoming < final). Within the same tier, football
+    // (NFL/NCAAF) outranks a non-playoff MLB game — an ordinary regular-season
+    // baseball game just isn't as big a deal as a football game, but a real
+    // MLB playoff game is exempt from the demotion. Beyond that: a stakes
     // game (championship/bowl/tournament final) outranks a ranked-team
     // matchup, which outranks a plain implication game. Ranked matchups are
     // ordered by combined rank (lowest = most marquee, e.g. a Top-5 game
@@ -735,6 +744,8 @@
     // sub-caps above are also shown in a sensible order rather than
     // league/game insertion order.
     const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
+    const isFootball = g => g.leagueKey === "football/nfl" || g.leagueKey === "football/college-football";
+    const isNonPlayoffBaseball = g => g.leagueKey === "baseball/mlb" && !g.isPlayoff;
     entries.sort((a, b) => {
       const liveA = a.g.state === "in" ? 0 : 1, liveB = b.g.state === "in" ? 0 : 1;
       if (liveA !== liveB) return liveA - liveB;
@@ -742,6 +753,8 @@
       if (myA !== myB) return myA - myB;
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
+      if (isFootball(a.g) && isNonPlayoffBaseball(b.g)) return -1;
+      if (isNonPlayoffBaseball(a.g) && isFootball(b.g)) return 1;
       const reasonRank = e => e.stakesCounts ? 0 : e.rankedOnly ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
