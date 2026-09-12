@@ -358,9 +358,23 @@
       weekday: "short", timeZoneName: "short"
     }) : "Time TBA";
 
+    // Soccer standings run on points (3 per win, 1 per draw), not win-loss
+    // record, and ESPN's own competitor record doesn't include the total —
+    // only the W-D-L summary points are derived from. Other sports here
+    // (MLB, NFL, NCAAF, ...) don't use points at all, so this only fires for
+    // a 3-part record on a soccer league.
+    const isSoccer = leagueKey.indexOf("soccer/") === 0;
     const recOf = c => {
       const rec = (c.records && c.records[0] && c.records[0].summary);
-      return rec ? "Record " + rec : "";
+      if (!rec) return "";
+      if (isSoccer) {
+        const parts = rec.split("-").map(Number);
+        if (parts.length === 3 && parts.every(Number.isFinite)) {
+          const points = parts[0] * 3 + parts[1];
+          return "Record " + rec + " (" + points + " pts)";
+        }
+      }
+      return "Record " + rec;
     };
     const rankOf = c => {
       const r = c.curatedRank && c.curatedRank.current;
@@ -746,6 +760,14 @@
     const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
     const isFootball = g => g.leagueKey === "football/nfl" || g.leagueKey === "football/college-football";
     const isNonPlayoffBaseball = g => g.leagueKey === "baseball/mlb" && !g.isPlayoff;
+    // A numeric tier, not pairwise -1/1 checks: sort comparators have to be
+    // transitive for Array.sort to produce a correct total order, and
+    // "football beats non-playoff baseball, both tie with soccer" is NOT
+    // transitive — with soccer entries interspersed, that pairwise version
+    // silently failed to keep every football entry ahead of every baseball
+    // one. Tiering everything (football lowest, ordinary baseball highest,
+    // everything else in between) fixes that by construction.
+    const sportTier = g => isFootball(g) ? 0 : isNonPlayoffBaseball(g) ? 2 : 1;
     entries.sort((a, b) => {
       const liveA = a.g.state === "in" ? 0 : 1, liveB = b.g.state === "in" ? 0 : 1;
       if (liveA !== liveB) return liveA - liveB;
@@ -753,8 +775,8 @@
       if (myA !== myB) return myA - myB;
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
-      if (isFootball(a.g) && isNonPlayoffBaseball(b.g)) return -1;
-      if (isNonPlayoffBaseball(a.g) && isFootball(b.g)) return 1;
+      const sta = sportTier(a.g), stb = sportTier(b.g);
+      if (sta !== stb) return sta - stb;
       const reasonRank = e => e.stakesCounts ? 0 : e.rankedOnly ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
