@@ -101,6 +101,7 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .team-name-row{display:flex;align-items:center;gap:3px;min-width:0}
 .team-rec{font-size:10.5px;color:var(--muted);font-weight:400;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .team-star{color:var(--accent);font-size:13px;margin-left:2px;flex:0 0 auto}
+.team-rank{font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:1px solid var(--ink);padding:0 4px;flex:0 0 auto}
 .score{display:flex;justify-content:center;align-items:center;gap:9px}
 .score-num{font-family:var(--font-display);font-size:22px;font-weight:700}
 .score-num.win{color:var(--ink)}

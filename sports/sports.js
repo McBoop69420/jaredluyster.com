@@ -93,6 +93,10 @@
   // when there's overflow, keep the tightest races (see
   // playoffImplicationDistance) rather than whichever came first in league order.
   const MAX_IMPLICATION_SPOTLIGHT_GAMES = 4;
+  // Ranked-team-only games (a Top-25 college team playing, not live/stakes/
+  // implication) can also flood a busy Saturday — sub-cap and keep the
+  // marquee-est matchups by combined rank (see rankScore).
+  const MAX_RANKED_SPOTLIGHT_GAMES = 4;
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const ESPN_CDN = "https://cdn.site.api.espn.com/apis/site/v2/sports/";
   // Standings live on the /apis/v2/ path (NOT /apis/site/v2/) and need a season.
@@ -327,10 +331,11 @@
       const rec = (c.records && c.records[0] && c.records[0].summary);
       return rec ? "Record " + rec : "";
     };
-    const isRanked = c => {
+    const rankOf = c => {
       const r = c.curatedRank && c.curatedRank.current;
-      return typeof r === "number" && r <= 25;
+      return (typeof r === "number" && r <= 25) ? r : null;
     };
+    const isRanked = c => rankOf(c) != null;
     // ESPN tags championship/bowl/tournament-final games with a notes headline
     // (e.g. "MAC Championship", "Big Ten Tournament - Final", "College Football
     // Playoff Quarterfinal at the Rose Bowl") and leaves it empty for every
@@ -343,8 +348,8 @@
       leagueKey,
       boxScoreEventId: leagueKey === "baseball/mlb" && state === "post" ? ev.id : null,
       state,
-      away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner },
-      home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner },
+      away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner, rank: rankOf(away) },
+      home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner, rank: rankOf(home) },
       dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
       kickoffMs: dt ? dt.getTime() : null,
       startTime,
@@ -369,6 +374,7 @@
     }
     const txt = el("div", "team-text");
     const nameRow = el("div", "team-name-row");
+    if (t.rank) nameRow.appendChild(el("span", "team-rank", "#" + t.rank));
     nameRow.appendChild(el("span", "team-name", esc(t.name)));
     if (isMyTeam(t.name)) nameRow.appendChild(el("span", "team-star", "★"));
     txt.appendChild(nameRow);
@@ -598,14 +604,22 @@
         const liveCounts = g.state === "in" && (!league || !league.spotlightRankedOnly || g.ranked);
         const stakesCounts = g.stakes && g.state !== "post";
         const implicationDistance = league ? playoffImplicationDistance(league, g, poolsFor(league)) : null;
-        const big = liveCounts || g.isMyGame || stakesCounts || implicationDistance != null;
+        // A ranked team playing is its own reason to be "big," separate from
+        // liveCounts (which only uses rank to gate whether a *live* college
+        // game counts at all). This surfaces marquee pre-game and final
+        // matchups too, not just live ones.
+        const rankedCounts = !liveCounts && g.ranked && league && league.spotlightRankedOnly;
+        const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
+        const big = liveCounts || g.isMyGame || stakesCounts || rankedCounts || implicationDistance != null;
         if (!big) return;
-        // "Implication-only" = the sole reason this game qualified is rule 3
-        // (standings implications) — not live, not a followed team, not a
-        // championship/bowl game. Those other reasons already guarantee a
-        // slot, so only implication-only entries are subject to the sub-cap.
-        const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && implicationDistance != null;
-        entries.push({ g, label: league ? league.label : "", stakesCounts, implicationDistance, implicationOnly });
+        // "Implication-only" / "ranked-only" = the sole reason this game
+        // qualified is standings implications / a ranked team — not live, not
+        // a followed team, not a championship/bowl game. Those other reasons
+        // already guarantee a slot, so only these entries are subject to a
+        // sub-cap (a ranked Saturday can otherwise flood Spotlight).
+        const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && !rankedCounts && implicationDistance != null;
+        const rankedOnly = rankedCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
+        entries.push({ g, label: league ? league.label : "", stakesCounts, rankedCounts, rankedOnly, rankScore, implicationDistance, implicationOnly });
       });
     });
 
@@ -615,23 +629,32 @@
       const keep = new Set(implicationOnly.slice(0, MAX_IMPLICATION_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !e.implicationOnly || keep.has(e));
     }
+    const rankedOnly = entries.filter(e => e.rankedOnly);
+    if (rankedOnly.length > MAX_RANKED_SPOTLIGHT_GAMES) {
+      rankedOnly.sort((a, b) => a.rankScore - b.rankScore);
+      const keep = new Set(rankedOnly.slice(0, MAX_RANKED_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !e.rankedOnly || keep.has(e));
+    }
 
     // Followed-team games first, then by state (live < upcoming < final).
-    // Within the same state tier, a stakes game (championship/bowl/tournament
-    // final) outranks a plain implication game, and implication games are
-    // ordered by how tight the race actually is — tightest first — so
-    // whichever ones survive the sub-cap above are also shown in a sensible
-    // order rather than league/game insertion order.
+    // Within the same state tier: a stakes game (championship/bowl/tournament
+    // final) outranks a ranked-team matchup, which outranks a plain
+    // implication game. Ranked matchups are ordered by combined rank (lowest
+    // = most marquee, e.g. a Top-5 game beats an unranked-vs-#24 game), and
+    // implication games by how tight the race actually is — tightest first —
+    // so whichever entries survive the sub-caps above are also shown in a
+    // sensible order rather than league/game insertion order.
     const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
     entries.sort((a, b) => {
       const myA = a.g.isMyGame ? 0 : 1, myB = b.g.isMyGame ? 0 : 1;
       if (myA !== myB) return myA - myB;
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
-      const reasonRank = e => e.stakesCounts ? 0 : e.implicationDistance != null ? 1 : 2;
+      const reasonRank = e => e.stakesCounts ? 0 : e.rankedOnly ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
-      if (ra === 1) return a.implicationDistance - b.implicationDistance;
+      if (ra === 1) return a.rankScore - b.rankScore;
+      if (ra === 2) return a.implicationDistance - b.implicationDistance;
       return 0;
     });
 
