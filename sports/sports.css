@@ -16,7 +16,7 @@ body{
   padding:20px 28px 38px;box-shadow:10px 10px 0 var(--accent);border:var(--border-w) solid var(--ink);
 }
 .toprule{height:4px;background:var(--accent);margin-bottom:8px}
-.masthead{text-align:center;border-bottom:var(--border-w) solid var(--ink);padding-bottom:9px}
+.masthead{position:relative;text-align:center;border-bottom:var(--border-w) solid var(--ink);padding-bottom:9px}
 h1{
   font-family:var(--font-display);font-weight:700;
   font-size:clamp(42px,8vw,78px);letter-spacing:-.02em;line-height:.95;
@@ -54,12 +54,16 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .refresh-btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--accent)}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--accent)}
 .model-btn{
+  position:absolute;top:12px;right:0;
   font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
   padding:8px 16px;border:2px solid var(--ink);border-radius:0;text-decoration:none;
   background:var(--paper);color:var(--ink);box-shadow:4px 4px 0 var(--ink);
   transition:transform .12s ease,box-shadow .12s ease;
 }
 .model-btn:hover{background:var(--highlight);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+@media (max-width:640px){
+  .model-btn{position:static;display:inline-block;margin-top:10px}
+}
 
 /* Spotlight: every live game + any game involving my teams, across all
    leagues, surfaced above the per-league sections so "what's happening

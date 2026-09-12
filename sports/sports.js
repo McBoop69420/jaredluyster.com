@@ -1,4 +1,4 @@
-/* McBoop Sports — live scoreboards + standings
+/* Sports — live scoreboards + standings
  * Fetches ESPN's public JSON (CORS-enabled) directly from the browser.
  * No backend; no redeploy needed to update data. Scoreboard comes from
  * site.api.espn.com; standings are loaded separately (non-blocking) with a

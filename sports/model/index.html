@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="How McBoop Sports' MLB Value Screen and NFL Odds panels work: data sources, terminology, and the exact math behind the model.">
-<title>How the Model Works — McBoop Sports</title>
+<meta name="description" content="How the MLB Value Screen and NFL Odds panels work: data sources, terminology, and the exact math behind the model.">
+<title>How the Model Works — Sports</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sports.css?v=47">
+<link rel="stylesheet" href="/sports.css?v=49">
 <style>
   .model-page{max-width:760px;margin:0 auto}
   .model-page section{margin:0 0 28px}
@@ -56,17 +56,17 @@
 <article class="paper">
   <header class="masthead">
     <div class="toprule"></div>
-    <h1>McBoop <span class="accent-box">Model</span></h1>
-    <div class="dateline">How the betting panels on McBoop Sports actually work</div>
+    <h1><span class="accent-box">Model</span></h1>
+    <div class="dateline">How the betting panels actually work</div>
     <div class="strip">
-      <span><a href="/">&larr; Back to McBoop Sports</a></span>
+      <span><a href="/">&larr; Back to Sports</a></span>
     </div>
   </header>
 
   <div class="model-page" style="margin-top:22px">
 
     <section>
-      <p>McBoop Sports has two betting-adjacent panels: the <strong>MLB Value Screen</strong>, which
+      <p>This site has two betting-adjacent panels: the <strong>MLB Value Screen</strong>, which
         compares an independently computed win-probability model against the live market to flag
         disagreements, and <strong>NFL Odds</strong>, which just shows live market odds with no model
         attached. This page explains exactly how each one works, where the numbers come from, and what

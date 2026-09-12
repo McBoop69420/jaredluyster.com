@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// McBoop Sports — Pages Worker (advanced mode)
+// Sports — Pages Worker (advanced mode)
 //
 // sports.jaredluyster.com is otherwise a plain static Pages project; this file
 // exists for exactly one reason: the value screen needs BetExplorer moneylines,

@@ -3,27 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="McBoop's live scoreboards and standings for the leagues I follow — MLB, MLS, Liga MX, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem, Super Lig, NWSL, USL, NFL, NCAAF, NCAA men's and women's basketball.">
-<title>McBoop Sports — Live</title>
+<meta name="description" content="Live scoreboards and standings for the leagues I follow — MLB, MLS, Liga MX, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem, Super Lig, NWSL, USL, NFL, NCAAF, NCAA men's and women's basketball.">
+<title>Sports — Live</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sports.css?v=48">
+<link rel="stylesheet" href="/sports.css?v=49">
 </head>
 <body>
 <article class="paper">
   <header class="masthead">
     <div class="toprule"></div>
+    <a class="model-btn" href="/model/">How the model works</a>
     <h1><span class="accent-box">Sports</span></h1>
-    <div class="dateline">Lexington, Kentucky &middot; Live scores &amp; standings</div>
   </header>
 
   <nav class="filters" id="filters" aria-label="League filter"></nav>
 
   <div class="board-toolbar">
-    <a class="model-btn" href="/model/">How the model works</a>
     <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
   </div>
 
