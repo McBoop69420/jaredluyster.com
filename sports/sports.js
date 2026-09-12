@@ -367,6 +367,15 @@
     // ordinary game, even marquee rivalries — a ranking-independent "this game
     // has real stakes" signal Spotlight can use alongside isMyGame/isRanked.
     const stakes = (comp.notes && comp.notes[0] && comp.notes[0].headline) || null;
+    // ESPN lists one broadcasts[] entry per market (national/home/away), each
+    // with a names[] (TV network or streaming service, indistinguishable in
+    // this field — e.g. "FOX" vs "Peacock" vs "MLB.TV"). National is what's
+    // actually watchable by anyone, so prefer it; local-only entries (a
+    // regional RSN) are the fallback when there's no national broadcast.
+    const broadcastList = Array.isArray(comp.broadcasts) ? comp.broadcasts : [];
+    const broadcastEntry = broadcastList.find(b => b.market === "national") || broadcastList[0];
+    const broadcast = (broadcastEntry && Array.isArray(broadcastEntry.names) && broadcastEntry.names.length)
+      ? broadcastEntry.names.join("/") : null;
 
     return {
       eventId: ev.id,
@@ -384,6 +393,7 @@
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
       ranked: isRanked(away) || isRanked(home),
       stakes,
+      broadcast,
     };
   }
 
@@ -590,6 +600,11 @@
     if (g.state === "in") st.innerHTML = '<span class="live-dot"></span>' + esc(g.statusText);
     else st.textContent = g.statusText;
     card.appendChild(st);
+    // Where to watch only matters before/during a game — once it's final,
+    // nobody's tuning in.
+    if (g.broadcast && g.state !== "post") {
+      card.appendChild(el("div", "broadcast", esc(g.broadcast)));
+    }
     if (g.baseballSituation) card.appendChild(baseballSituationPanel(g.baseballSituation));
     if (g.lineScore) card.appendChild(finalLineScoreTable(g.lineScore));
     if (g.boxScoreEventId) card.appendChild(detailedBoxScoreDetails(g.boxScoreEventId));
@@ -724,13 +739,17 @@
       if (spotlightCycleTimer) { clearInterval(spotlightCycleTimer); spotlightCycleTimer = null; }
       return;
     }
+    // The cycling card counts against MAX_SPOTLIGHT_GAMES too — it's still
+    // one grid slot, so showing it shouldn't push the total to 10.
+    const cycleCardSlot = spotlightCycleGames.length ? 1 : 0;
     if (entries.length) {
       // Followed-team games are exempt from MAX_SPOTLIGHT_GAMES: it exists to
       // stop a busy slate of *other* games from flooding the section, not to
       // bump a followed team off its own Spotlight once enough live games
       // elsewhere fill the budget. Everything else fills whatever room is left.
       const mine = entries.filter(e => e.g.isMyGame);
-      const others = entries.filter(e => !e.g.isMyGame).slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length));
+      const others = entries.filter(e => !e.g.isMyGame)
+        .slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length - cycleCardSlot));
       mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
         .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
     }

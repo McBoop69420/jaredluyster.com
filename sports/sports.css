@@ -117,6 +117,7 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .status{text-align:center;font-size:11px;color:var(--muted)}
 .status--live{color:var(--live);font-weight:700}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:4px;vertical-align:middle}
+.broadcast{text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:2px}
 .baseball-situation{border-top:1px dotted #b3a98e;padding-top:6px;display:grid;gap:4px;font-family:var(--font-body)}
 .baseball-players{text-align:center;font-size:10.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .baseball-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
