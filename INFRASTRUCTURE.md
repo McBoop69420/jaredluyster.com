@@ -335,6 +335,12 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   but a **separate Access application** with its own policy/allow-list —
   independently editable from news (distinct app `aud`). Verified via HTTP headers
   the same way as news/calendar (`302 Found` → Cloudflare Access login).
+- **Guest policy — added 2026-09-12:** The `sports` app carries a second Allow
+  policy, `Sports guest access` (policy id `8f76fd1b-23c9-4acc-a26d-960b6b3eb94f`),
+  Include rule Emails = `lebronwall6@gmail.com`. It sits alongside the shared
+  "Only Me" policy (order 2) rather than replacing it — Access allows on any
+  matching policy, so this grants that one address `sports.jaredluyster.com`
+  only, with no change to `news`/`calendar`, which still use "Only Me" alone.
 - **`sports/wrangler.toml` is load-bearing — do not remove.** It was wrongly
   deleted during the 2026-09-06 reconciliation on the assumption that a
   Git-integrated project ignores `wrangler.toml` entirely. It doesn't: Cloudflare's

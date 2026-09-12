@@ -636,16 +636,19 @@
       entries = entries.filter(e => !e.rankedOnly || keep.has(e));
     }
 
-    // Followed-team games first, then by state (live < upcoming < final).
-    // Within the same state tier: a stakes game (championship/bowl/tournament
-    // final) outranks a ranked-team matchup, which outranks a plain
-    // implication game. Ranked matchups are ordered by combined rank (lowest
-    // = most marquee, e.g. a Top-5 game beats an unranked-vs-#24 game), and
-    // implication games by how tight the race actually is — tightest first —
-    // so whichever entries survive the sub-caps above are also shown in a
-    // sensible order rather than league/game insertion order.
+    // Live games first — regardless of followed-team status — then followed
+    // teams, then by state (upcoming < final). Within the same tier: a stakes
+    // game (championship/bowl/tournament final) outranks a ranked-team
+    // matchup, which outranks a plain implication game. Ranked matchups are
+    // ordered by combined rank (lowest = most marquee, e.g. a Top-5 game
+    // beats an unranked-vs-#24 game), and implication games by how tight the
+    // race actually is — tightest first — so whichever entries survive the
+    // sub-caps above are also shown in a sensible order rather than
+    // league/game insertion order.
     const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
     entries.sort((a, b) => {
+      const liveA = a.g.state === "in" ? 0 : 1, liveB = b.g.state === "in" ? 0 : 1;
+      if (liveA !== liveB) return liveA - liveB;
       const myA = a.g.isMyGame ? 0 : 1, myB = b.g.isMyGame ? 0 : 1;
       if (myA !== myB) return myA - myB;
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
