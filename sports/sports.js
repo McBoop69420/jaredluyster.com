@@ -571,6 +571,8 @@
     const section = $("#spotlight");
     const grid = $("#spotlightGrid");
     if (!section || !grid) return;
+    if (activeFilter !== "all") { section.hidden = true; return; }
+    section.hidden = false;
     // Some leagues' scoreboard endpoints return more than just today's slate
     // (e.g. NFL returns the full week) — Spotlight is "what's happening
     // today," so scope every entry to today's date in Eastern regardless of
@@ -1063,12 +1065,14 @@
   }
 
   function stamp() {
+    const updated = $("#updated");
+    if (!updated) return;
     const now = new Date();
     const txt = now.toLocaleString("en-US", {
       timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit",
       weekday: "short", month: "short", day: "numeric", timeZoneName: "short"
     });
-    $("#updated").textContent = "Updated " + txt;
+    updated.textContent = "Updated " + txt;
   }
 
   // ---- Filters ----------------------------------------------------------

@@ -53,6 +53,13 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 }
 .refresh-btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--accent)}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--accent)}
+.model-btn{
+  font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+  padding:8px 16px;border:2px solid var(--ink);border-radius:0;text-decoration:none;
+  background:var(--paper);color:var(--ink);box-shadow:4px 4px 0 var(--ink);
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.model-btn:hover{background:var(--highlight);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
 
 /* Spotlight: every live game + any game involving my teams, across all
    leagues, surfaced above the per-league sections so "what's happening
