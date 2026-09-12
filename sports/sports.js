@@ -130,6 +130,16 @@
   let valueScreenLoading = false;
   let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
   let nflOddsLoading = false;
+  // The Spotlight "more from your teams" cycling card: followed-team games
+  // that don't hold their own Spotlight slot (finished today, or still more
+  // than an hour from kickoff) rotate through this one slot instead of
+  // disappearing entirely. Index/timer live at module scope because
+  // renderSpotlight() rebuilds the whole grid on every data refresh — the
+  // rotation has to survive that, not reset to the first game each time.
+  let spotlightCycleGames = [];
+  let spotlightCycleIndex = 0;
+  let spotlightCycleTimer = null;
+  const SPOTLIGHT_CYCLE_INTERVAL_MS = 5000;
   const gamesByLeague = new Map();
   const detailedBoxScoreCache = new Map();
   const openDetailedBoxScores = new Set();
@@ -592,7 +602,11 @@
     const section = $("#spotlight");
     const grid = $("#spotlightGrid");
     if (!section || !grid) return;
-    if (activeFilter !== "all") { section.hidden = true; return; }
+    if (activeFilter !== "all") {
+      section.hidden = true;
+      if (spotlightCycleTimer) { clearInterval(spotlightCycleTimer); spotlightCycleTimer = null; }
+      return;
+    }
     section.hidden = false;
     // Some leagues' scoreboard endpoints return more than just today's slate
     // (e.g. NFL returns the full week) — Spotlight is "what's happening
@@ -612,6 +626,7 @@
       return poolsCache.get(league.key);
     };
     let entries = [];
+    const cycleGames = [];
     gamesByLeague.forEach((games, key) => {
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
@@ -625,12 +640,22 @@
         // matchups too, not just live ones.
         const rankedCounts = !liveCounts && g.ranked && league && league.spotlightRankedOnly;
         const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
+        const kickoffSoon = g.kickoffMs != null && g.kickoffMs - Date.now() <= PREGAME_SPOTLIGHT_WINDOW_MS;
+        // A followed team's game that's already over, or still more than an
+        // hour from kickoff, doesn't hold its own Spotlight slot — it rotates
+        // through the cycling card at the end instead. Live and imminent
+        // (within the hour) followed-team games are unaffected and fall
+        // through to the normal handling below.
+        if (g.isMyGame && g.state !== "in" && !(g.state === "pre" && kickoffSoon)) {
+          cycleGames.push({ g, label: league ? league.label : "" });
+          return;
+        }
         // None of the non-live reasons (followed team, stakes, ranked team,
         // playoff implications) justify a slot before the game is imminent —
         // a game hours from kickoff is just noise on a busy slate, whichever
         // reason it qualifies under. Once it's live, or already over, or
         // within the window, it counts normally.
-        const pregameImminent = g.state !== "pre" || (g.kickoffMs != null && g.kickoffMs - Date.now() <= PREGAME_SPOTLIGHT_WINDOW_MS);
+        const pregameImminent = g.state !== "pre" || kickoffSoon;
         const big = liveCounts || (pregameImminent && (g.isMyGame || stakesCounts || rankedCounts || implicationDistance != null));
         if (!big) return;
         // "Implication-only" / "ranked-only" / "live-only" = the sole reason
@@ -693,18 +718,55 @@
     });
 
     grid.innerHTML = "";
-    if (!entries.length) {
+    spotlightCycleGames = cycleGames;
+    if (!entries.length && !spotlightCycleGames.length) {
       grid.appendChild(el("div", "spotlight-empty", "Nothing live and no games today for the teams you follow."));
+      if (spotlightCycleTimer) { clearInterval(spotlightCycleTimer); spotlightCycleTimer = null; }
       return;
     }
-    // Followed-team games are exempt from MAX_SPOTLIGHT_GAMES: it exists to
-    // stop a busy slate of *other* games from flooding the section, not to
-    // bump a followed team off its own Spotlight once enough live games
-    // elsewhere fill the budget. Everything else fills whatever room is left.
-    const mine = entries.filter(e => e.g.isMyGame);
-    const others = entries.filter(e => !e.g.isMyGame).slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length));
-    mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
-      .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
+    if (entries.length) {
+      // Followed-team games are exempt from MAX_SPOTLIGHT_GAMES: it exists to
+      // stop a busy slate of *other* games from flooding the section, not to
+      // bump a followed team off its own Spotlight once enough live games
+      // elsewhere fill the budget. Everything else fills whatever room is left.
+      const mine = entries.filter(e => e.g.isMyGame);
+      const others = entries.filter(e => !e.g.isMyGame).slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length));
+      mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
+        .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
+    }
+    // The cycling card always renders last, so it lands in the final grid
+    // slot (bottom-right in the normal 2-column layout).
+    if (!spotlightCycleGames.length) {
+      if (spotlightCycleTimer) { clearInterval(spotlightCycleTimer); spotlightCycleTimer = null; }
+      return;
+    }
+    grid.appendChild(spotlightCycleCard());
+    if (!spotlightCycleTimer) {
+      spotlightCycleTimer = setInterval(() => {
+        if (!spotlightCycleGames.length) return;
+        spotlightCycleIndex = (spotlightCycleIndex + 1) % spotlightCycleGames.length;
+        const existing = document.getElementById("spotlightCycleCard");
+        if (existing) existing.replaceWith(spotlightCycleCard());
+      }, SPOTLIGHT_CYCLE_INTERVAL_MS);
+    }
+  }
+
+  // Builds the one card shown for the current position in spotlightCycleGames
+  // — a normal game card with a small kicker/counter header spliced in front,
+  // reusing gameCard() so a cycled game looks like any other Spotlight entry.
+  function spotlightCycleCard() {
+    spotlightCycleIndex = spotlightCycleIndex % spotlightCycleGames.length;
+    const { g, label } = spotlightCycleGames[spotlightCycleIndex];
+    const card = gameCard(g, label);
+    card.id = "spotlightCycleCard";
+    card.classList.add("spotlight-cycle");
+    const head = el("div", "spotlight-cycle-head");
+    head.appendChild(el("span", "spotlight-cycle-kicker", "MORE FROM YOUR TEAMS"));
+    if (spotlightCycleGames.length > 1) {
+      head.appendChild(el("span", "spotlight-cycle-counter", (spotlightCycleIndex + 1) + " / " + spotlightCycleGames.length));
+    }
+    card.insertBefore(head, card.firstChild);
+    return card;
   }
 
   // ---- Standings -------------------------------------------------------

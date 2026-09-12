@@ -74,6 +74,13 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .spotlight-head h2{font-family:var(--font-display);font-size:22px;line-height:1;margin:8px 0 0;text-transform:uppercase;letter-spacing:-.01em}
 .spotlight-league-tag{font-family:var(--font-body);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:2px}
 .spotlight-empty{padding:4px 2px;font-style:italic;color:var(--muted);font-size:13px}
+/* Cycling card: followed-team games that don't hold their own Spotlight slot
+   (finished, or still more than an hour out) rotate through the last grid
+   slot instead of disappearing — see SPOTLIGHT_CYCLE_INTERVAL_MS. */
+.spotlight-cycle{border-style:dashed}
+.spotlight-cycle-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.spotlight-cycle-kicker{font-family:var(--font-body);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.spotlight-cycle-counter{font-family:var(--font-body);font-size:9px;font-weight:700;color:var(--muted)}
 
 /* League block */
 .league{margin:26px 0 8px}
