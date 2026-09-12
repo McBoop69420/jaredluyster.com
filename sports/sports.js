@@ -79,6 +79,7 @@
   const MY_PATTERNS = [
     "cincinnati reds", "fc cincinnati", "racing louisville", "lexington",
     "liverpool", "arsenal", "cincinnati bengals", "kentucky wildcats", "louisville cardinals",
+    "athletic club", // Athletic Bilbao — ESPN's displayName is "Athletic Club", not "Bilbao"
   ].map(s => s.toLowerCase());
 
   const LIVE_SCORE_REFRESH_MS = 5 * 1000;       // current live games: near pitch-by-pitch
@@ -106,6 +107,10 @@
   // outright. Sub-cap them the same way, keeping the closest scores (most
   // competitive right now) when there's overflow.
   const MAX_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
+  // How far ahead of kickoff a followed team's not-yet-started game starts
+  // counting as Spotlight-worthy on its own. Before this window it's still
+  // shown if some other reason (stakes, ranked, implication) applies.
+  const MY_GAME_PREGAME_WINDOW_MS = 60 * 60 * 1000;
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const ESPN_CDN = "https://cdn.site.api.espn.com/apis/site/v2/sports/";
   // Standings live on the /apis/v2/ path (NOT /apis/site/v2/) and need a season.
@@ -619,7 +624,12 @@
         // matchups too, not just live ones.
         const rankedCounts = !liveCounts && g.ranked && league && league.spotlightRankedOnly;
         const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
-        const big = liveCounts || g.isMyGame || stakesCounts || rankedCounts || implicationDistance != null;
+        // A followed team's game is only "big" before it starts once it's
+        // imminent (kicking off within the hour) — a pre-game entry hours out
+        // is just noise on a busy slate. Live and final games for a followed
+        // team always count, no matter how the day's schedule looks.
+        const myGameCounts = g.isMyGame && (g.state !== "pre" || (g.kickoffMs != null && g.kickoffMs - Date.now() <= MY_GAME_PREGAME_WINDOW_MS));
+        const big = liveCounts || myGameCounts || stakesCounts || rankedCounts || implicationDistance != null;
         if (!big) return;
         // "Implication-only" / "ranked-only" / "live-only" = the sole reason
         // this game qualified is standings implications / a ranked team /
