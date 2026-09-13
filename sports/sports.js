@@ -371,7 +371,7 @@
         const parts = rec.split("-").map(Number);
         if (parts.length === 3 && parts.every(Number.isFinite)) {
           const points = parts[0] * 3 + parts[1];
-          return "Record " + rec + " (" + points + " pts)";
+          return "Record " + rec + " (" + points + (points === 1 ? " pt)" : " pts)");
         }
       }
       return "Record " + rec;

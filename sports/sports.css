@@ -220,12 +220,15 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   /* No 2-up override here: forcing two columns at this width produced ~295px
      cards, under the 360px the team names need. The base auto-fill drops to
      one column on its own. */
-  .game{padding:8px}.team-logo,.team-badge{width:22px;height:22px}
+  .game{padding:8px}
   .league-name{font-size:19px}
   /* Game cards: at phone widths the matchup score column can shrink */
   .matchup{grid-template-columns:minmax(0,1fr) minmax(44px,max-content) minmax(0,1fr)}
-  .team-name{font-size:11.5px}
-  .team-rec{font-size:9.5px}
+  /* No .team-name / .team-rec / .team-logo sizing here: every team cell is
+     rendered inside .team-cell (teamCell() in sports.js, shared by cards and
+     standings), so the .team-cell-qualified rules further down win on
+     specificity and bare .team-* rules in this block never applied. Change
+     sizes on the .team-cell selectors instead. */
   .score-num{font-size:20px}
   .score-vs{font-size:10px}
   .status{font-size:10px}
@@ -252,10 +255,11 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 }
 @media(max-width:430px){
   .games-grid{grid-template-columns:1fr}
-  /* Single-column game cards: full-width matchup, larger text */
+  /* Single-column game cards: full-width matchup */
   .matchup{grid-template-columns:minmax(0,1fr) minmax(48px,max-content) minmax(0,1fr)}
-  .team-name{font-size:12px}
-  .team-rec{font-size:10px}
+  /* The bare .team-name/.team-rec sizes that used to live here never applied
+     (see the note in the 620px block) — and they asked for *larger* text than
+     the 520px block above, which was never the intent on the smallest screen. */
   .score-num{font-size:22px}
   /* Standings: still scrollable but slightly smaller */
   table.stand{min-width:380px;font-size:10px}
