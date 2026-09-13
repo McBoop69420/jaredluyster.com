@@ -86,11 +86,11 @@
   const SCORE_DISCOVERY_REFRESH_MS = 30 * 1000; // discover newly started games
   const STANDINGS_REFRESH_MS = 5 * 60 * 1000;   // standings do not need pitch-level polling
   const STANDINGS_TIMEOUT = 6000;               // give up on a hung standings host
-  const MAX_SPOTLIGHT_GAMES = 9;                // cap Spotlight so a big slate doesn't flood it
+  const MAX_SPOTLIGHT_GAMES = 10;               // cap Spotlight so a big slate doesn't flood it
   // Standings-implication games (rule 3) are the volatile one — how many
   // qualify swings with how bunched the standings happen to be that week, not
   // with how much is actually happening today. Sub-cap them separately so a
-  // tight-race week can't crowd out everything else in the 9-slot budget;
+  // tight-race week can't crowd out everything else in the overall budget;
   // when there's overflow, keep the tightest races (see
   // playoffImplicationDistance) rather than whichever came first in league order.
   const MAX_IMPLICATION_SPOTLIGHT_GAMES = 4;
@@ -102,7 +102,7 @@
   // followed team, not stakes, not a ranked/implication matchup) rank ahead
   // of followed teams' non-live games, but a busy live slate — several
   // soccer leagues all kicking off around the same time — can otherwise fill
-  // the entire 9-slot budget with games from leagues nobody follows and push
+  // the entire overall budget with games from leagues nobody follows and push
   // every followed team off Spotlight outright. Sub-cap them the same way,
   // keeping the closest scores (most competitive right now) when there's
   // overflow. NFL and NCAAF each have their own separate budget below.
@@ -116,7 +116,7 @@
   // NFL games are exempt from every sub-cap and from MAX_SPOTLIGHT_GAMES
   // itself (see the isMyGame-style exemption below) — the NFL is the one
   // league that should never lose a Spotlight slot to a soccer scoreline or
-  // a crowded 9-slot budget, so a full Sunday slate always shows in full.
+  // a crowded budget, so a full Sunday slate always shows in full.
   // How far ahead of kickoff a not-yet-started game starts counting as
   // Spotlight-worthy at all — regardless of which reason (followed team,
   // stakes, ranked, implication) it would otherwise qualify under. A game
