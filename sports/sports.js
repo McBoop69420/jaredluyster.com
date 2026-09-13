@@ -35,43 +35,53 @@
   // followed-team games still always show via isMyGame regardless of rank, and
   // a `stakes` game (conference championship, bowl, tournament final — see
   // `stakes` in parseEvent) always shows regardless of rank too, live or not.
+  // spotlightRank: how a league is ordered against every other league in
+  // Spotlight when more than one qualifies at the same tier (live, or
+  // followed-team, etc. — see SPOTLIGHT_RANK and the entries.sort() call in
+  // renderSpotlight). Lower sorts first. Left off a league (undefined) falls
+  // back to SPOTLIGHT_RANK.SOCCER.
+  // spotlightExempt: this league's games are never cut by a Spotlight sub-cap
+  // or by MAX_SPOTLIGHT_GAMES — see the `mine` exemption in renderSpotlight.
+  // Only NFL has this today: a full Sunday slate should always show in full,
+  // never lose a slot to a tighter soccer scoreline or a crowded budget.
+  const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, WNBA: 40, MLB: 50 };
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }] },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB },
     { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }] },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/fra.1",    label: "Ligue 1",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 5, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 5, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/uefa.champions", label: "UCL",         myTeams: [],                           standings: null,
-      playoffPoolMode: null, implicationZones: [] },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/uefa.europa",    label: "UEL",         myTeams: [],                           standings: null,
-      playoffPoolMode: null, implicationZones: [] },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }] },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }] },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
     { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
     { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true },
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }] },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA },
   ];
 
   // Substring patterns (lowercased) marking "my" teams, so we catch
@@ -150,6 +160,7 @@
   let spotlightCycleIndex = 0;
   let spotlightCycleTimer = null;
   const SPOTLIGHT_CYCLE_INTERVAL_MS = 5000;
+  const SPOTLIGHT_CYCLE_FADE_MS = 220; // must match .spotlight-cycle's transition-duration in sports.css
   const gamesByLeague = new Map();
   const detailedBoxScoreCache = new Map();
   const openDetailedBoxScores = new Set();
@@ -714,20 +725,26 @@
         const rankedOnly = rankedCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
         const liveOnly = liveCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
         const scoreMargin = Math.abs((Number(g.away.score) || 0) - (Number(g.home.score) || 0));
-        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly });
+        // A real MLB playoff game is exempt from MLB's normal (lowest)
+        // ranking — it ties with soccer instead of sitting below it, the
+        // same exception the old hardcoded isNonPlayoffBaseball check made.
+        const spotlightRank = key === "baseball/mlb" && g.isPlayoff
+          ? SPOTLIGHT_RANK.SOCCER
+          : (league && league.spotlightRank != null ? league.spotlightRank : SPOTLIGHT_RANK.SOCCER);
+        const spotlightExempt = !!(league && league.spotlightExempt);
+        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
       });
     });
 
-    // NFL is exempt from every sub-cap below (and from MAX_SPOTLIGHT_GAMES
-    // itself, see the isMyGame-style exemption further down) — it's the one
-    // league that should never lose a Spotlight slot to a tighter soccer
-    // scoreline or a crowded budget.
-    const isNfl = e => e.leagueKey === "football/nfl";
-    const implicationOnly = entries.filter(e => e.implicationOnly && !isNfl(e));
+    // A league flagged spotlightExempt (NFL today) is exempt from every
+    // sub-cap below and from MAX_SPOTLIGHT_GAMES itself (see the
+    // isMyGame-style exemption further down) — it should never lose a
+    // Spotlight slot to a tighter soccer scoreline or a crowded budget.
+    const implicationOnly = entries.filter(e => e.implicationOnly && !e.spotlightExempt);
     if (implicationOnly.length > MAX_IMPLICATION_SPOTLIGHT_GAMES) {
       implicationOnly.sort((a, b) => a.implicationDistance - b.implicationDistance);
       const keep = new Set(implicationOnly.slice(0, MAX_IMPLICATION_SPOTLIGHT_GAMES));
-      entries = entries.filter(e => !e.implicationOnly || isNfl(e) || keep.has(e));
+      entries = entries.filter(e => !e.implicationOnly || e.spotlightExempt || keep.has(e));
     }
     const rankedOnly = entries.filter(e => e.rankedOnly);
     if (rankedOnly.length > MAX_RANKED_SPOTLIGHT_GAMES) {
@@ -740,8 +757,9 @@
     // simultaneous ranked matchups, and sharing one small closest-score cap
     // with soccer (also often live in bulk on Saturdays, and decided by much
     // narrower margins) meant close soccer scorelines could crowd every CFB
-    // game out of Spotlight. NFL live games skip this sub-cap step entirely.
-    const liveOnly = entries.filter(e => e.liveOnly && !isNfl(e));
+    // game out of Spotlight. Exempt leagues (NFL) skip this sub-cap step
+    // entirely.
+    const liveOnly = entries.filter(e => e.liveOnly && !e.spotlightExempt);
     const ncaafLiveOnly = liveOnly.filter(e => e.leagueKey === "football/college-football");
     const otherLiveOnly = liveOnly.filter(e => e.leagueKey !== "football/college-football");
     if (ncaafLiveOnly.length > MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES) {
@@ -752,46 +770,37 @@
     if (otherLiveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
       otherLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
       const keep = new Set(otherLiveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
-      entries = entries.filter(e => !(e.liveOnly && !isNfl(e) && e.leagueKey !== "football/college-football") || keep.has(e));
+      entries = entries.filter(e => !(e.liveOnly && !e.spotlightExempt && e.leagueKey !== "football/college-football") || keep.has(e));
     }
 
     // Live games first — regardless of followed-team status — then followed
-    // teams, then by state (upcoming < final). Within the same tier, football
-    // (NFL/NCAAF) outranks a non-playoff MLB game — an ordinary regular-season
-    // baseball game just isn't as big a deal as a football game, but a real
-    // MLB playoff game is exempt from the demotion. Beyond that: a stakes
-    // game (championship/bowl/tournament final) outranks a ranked-team
-    // matchup, which outranks a plain implication game. Ranked matchups are
-    // ordered by combined rank (lowest = most marquee, e.g. a Top-5 game
-    // beats an unranked-vs-#24 game), and implication games by how tight the
-    // race actually is — tightest first — so whichever entries survive the
-    // sub-caps above are also shown in a sensible order rather than
-    // league/game insertion order.
+    // teams, then by state (upcoming < final). Within the same tier, leagues
+    // are ordered by spotlightRank (see SPOTLIGHT_RANK / the LEAGUES config
+    // above) — lower ranks first, so e.g. NFL/college beat soccer, which
+    // beats an ordinary regular-season MLB game (a real MLB playoff game is
+    // exempt from that last demotion — see the spotlightRank computed above).
+    // Beyond that: a stakes game (championship/bowl/tournament final)
+    // outranks a ranked-team matchup, which outranks a plain implication
+    // game. Ranked matchups are ordered by combined rank (lowest = most
+    // marquee, e.g. a Top-5 game beats an unranked-vs-#24 game), and
+    // implication games by how tight the race actually is — tightest first —
+    // so whichever entries survive the sub-caps above are also shown in a
+    // sensible order rather than league/game insertion order.
     const stateOrder = s => s === "in" ? 0 : s === "pre" ? 1 : 2;
-    const isFootball = g => g.leagueKey === "football/nfl" || g.leagueKey === "football/college-football";
-    const isNonPlayoffBaseball = g => g.leagueKey === "baseball/mlb" && !g.isPlayoff;
-    // A numeric tier, not pairwise -1/1 checks: sort comparators have to be
-    // transitive for Array.sort to produce a correct total order, and
-    // "football beats non-playoff baseball, both tie with soccer" is NOT
-    // transitive — with soccer entries interspersed, that pairwise version
-    // silently failed to keep every football entry ahead of every baseball
-    // one. Tiering everything (football lowest, ordinary baseball highest,
-    // everything else in between) fixes that by construction.
-    const sportTier = g => isFootball(g) ? 0 : isNonPlayoffBaseball(g) ? 2 : 1;
     entries.sort((a, b) => {
-      // NFL supersedes literally everything else — checked before live
-      // state, followed-team status, or anything below, so any NFL game
-      // (live, upcoming, or final) sorts ahead of every non-NFL game.
-      const nflA = a.leagueKey === "football/nfl" ? 0 : 1, nflB = b.leagueKey === "football/nfl" ? 0 : 1;
-      if (nflA !== nflB) return nflA - nflB;
+      // A spotlightExempt league (NFL) supersedes literally everything
+      // else — checked before live state, followed-team status, or anything
+      // below, so any of its games (live, upcoming, or final) sort ahead of
+      // every non-exempt game.
+      const exA = a.spotlightExempt ? 0 : 1, exB = b.spotlightExempt ? 0 : 1;
+      if (exA !== exB) return exA - exB;
       const liveA = a.g.state === "in" ? 0 : 1, liveB = b.g.state === "in" ? 0 : 1;
       if (liveA !== liveB) return liveA - liveB;
       const myA = a.g.isMyGame ? 0 : 1, myB = b.g.isMyGame ? 0 : 1;
       if (myA !== myB) return myA - myB;
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
-      const sta = sportTier(a.g), stb = sportTier(b.g);
-      if (sta !== stb) return sta - stb;
+      if (a.spotlightRank !== b.spotlightRank) return a.spotlightRank - b.spotlightRank;
       const reasonRank = e => e.stakesCounts ? 0 : e.rankedOnly ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
@@ -811,13 +820,13 @@
     // one grid slot, so showing it shouldn't push the total to 10.
     const cycleCardSlot = spotlightCycleGames.length ? 1 : 0;
     if (entries.length) {
-      // Followed-team games and NFL games are both exempt from
-      // MAX_SPOTLIGHT_GAMES: it exists to stop a busy slate of *other* games
-      // from flooding the section, not to bump a followed team — or a full
-      // Sunday NFL slate — off Spotlight once enough games elsewhere fill
-      // the budget. Everything else fills whatever room is left.
-      const mine = entries.filter(e => e.g.isMyGame || e.leagueKey === "football/nfl");
-      const others = entries.filter(e => !e.g.isMyGame && e.leagueKey !== "football/nfl")
+      // Followed-team games and spotlightExempt leagues (NFL) are both
+      // exempt from MAX_SPOTLIGHT_GAMES: it exists to stop a busy slate of
+      // *other* games from flooding the section, not to bump a followed
+      // team — or a full Sunday NFL slate — off Spotlight once enough games
+      // elsewhere fill the budget. Everything else fills whatever room is left.
+      const mine = entries.filter(e => e.g.isMyGame || e.spotlightExempt);
+      const others = entries.filter(e => !e.g.isMyGame && !e.spotlightExempt)
         .slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length - cycleCardSlot));
       mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
         .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
@@ -832,9 +841,28 @@
     if (!spotlightCycleTimer) {
       spotlightCycleTimer = setInterval(() => {
         if (!spotlightCycleGames.length) return;
-        spotlightCycleIndex = (spotlightCycleIndex + 1) % spotlightCycleGames.length;
         const existing = document.getElementById("spotlightCycleCard");
-        if (existing) existing.replaceWith(spotlightCycleCard());
+        if (!existing) return;
+        // Fade the current card out, then swap content and fade the next one
+        // in — a hard replaceWith() was an instant cut between two unrelated
+        // games, which read as a glitch rather than a deliberate rotation.
+        existing.style.opacity = "0";
+        setTimeout(() => {
+          if (!spotlightCycleGames.length) return;
+          // The 5s live-score refresh can rebuild the whole grid while this
+          // fade is in flight; re-check rather than trust the closed-over node.
+          const stillThere = document.getElementById("spotlightCycleCard");
+          if (!stillThere) return;
+          spotlightCycleIndex = (spotlightCycleIndex + 1) % spotlightCycleGames.length;
+          const next = spotlightCycleCard();
+          next.style.opacity = "0";
+          stillThere.replaceWith(next);
+          // Setting opacity 0 then 1 back-to-back gets batched into one style
+          // recalc with no paint in between, so the transition has nothing to
+          // animate from — force layout to commit the 0 state first.
+          void next.offsetWidth;
+          next.style.opacity = "1";
+        }, SPOTLIGHT_CYCLE_FADE_MS);
       }, SPOTLIGHT_CYCLE_INTERVAL_MS);
     }
   }
