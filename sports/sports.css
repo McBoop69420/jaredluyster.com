@@ -104,9 +104,13 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .team-badge{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:0;border:2px solid var(--ink);background:var(--ink);color:var(--paper);font-family:var(--font-display);font-weight:700;font-size:10px;flex:0 0 auto}
 .team-cell{display:flex;align-items:center;gap:7px;min-width:0}
 .team-text{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.12}
-.team-name{font-size:12.5px;font-weight:700;overflow-wrap:anywhere;word-break:break-word}
+.team-name{font-size:12.5px;font-weight:700;overflow-wrap:break-word}
 .team-name-row{display:flex;align-items:center;gap:3px;min-width:0}
-.team-rec{font-size:10.5px;color:var(--muted);font-weight:400;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Wraps rather than truncating: the team column is only ~67px wide in the
+   3-across grid, and soccer's "Record 10-4-8 (34 pts)" needs ~109px, so
+   nowrap+ellipsis silently ate the points on every soccer card. Short
+   records (every other sport) still sit on one line. */
+.team-rec{font-size:10.5px;color:var(--muted);font-weight:400;line-height:1.05}
 .team-star{color:var(--accent);font-size:13px;margin-left:2px;flex:0 0 auto}
 .team-rank{font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:1px solid var(--ink);padding:0 4px;flex:0 0 auto}
 .score{display:flex;justify-content:center;align-items:center;gap:9px}
@@ -183,7 +187,7 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 .team-cell .team-logo{width:20px;height:20px}
 .team-cell .team-badge{width:20px;height:20px;font-size:8px}
 .team-cell .team-text{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.12}
-.team-cell .team-name{font-size:12px;font-weight:700;overflow-wrap:anywhere;word-break:break-word}
+.team-cell .team-name{font-size:12px;font-weight:700;overflow-wrap:break-word}
 .team-cell .team-rec{display:block;font-size:10px;color:var(--muted);font-weight:400;line-height:1.05}
 
 /* States */
