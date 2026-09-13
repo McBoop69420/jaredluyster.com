@@ -249,8 +249,16 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   .standings-division{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table.stand{min-width:420px}
   table.stand th,table.stand td{padding:3px 4px;font-size:10px}
-  .team-cell .team-logo,.team-cell .team-badge{width:18px;height:18px}
-  .team-cell .team-name{font-size:11px}
+  /* Phones can't reach the 360px a game card wants (see .games-grid above),
+     so team names here need every pixel they can get. Measured against a
+     fixed set of the longest real team names (Diamondbacks, Bournemouth,
+     Mönchengladbach, Massachusetts, ...) at 375px: logo 18->16 + gap 7->4 +
+     name 11px->10px took mid-word breaks from 3 to 1 — the survivor being
+     Mönchengladbach, 15 characters with no space to break on, which no
+     phone-width column fits at a legible size. */
+  .team-cell{gap:4px}
+  .team-cell .team-logo,.team-cell .team-badge{width:16px;height:16px}
+  .team-cell .team-name{font-size:10px}
   .team-cell .team-rec{font-size:9px}
 }
 @media(max-width:430px){
