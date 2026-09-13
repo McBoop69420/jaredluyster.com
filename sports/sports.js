@@ -105,7 +105,7 @@
   // the entire 9-slot budget with games from leagues nobody follows and push
   // every followed team off Spotlight outright. Sub-cap them the same way,
   // keeping the closest scores (most competitive right now) when there's
-  // overflow. NCAAF has its own separate budget below.
+  // overflow. NFL and NCAAF each have their own separate budget below.
   const MAX_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
   // Live college football gets its own budget instead of sharing the one
   // above: Saturdays run a full slate of simultaneous ranked matchups (the
@@ -113,6 +113,10 @@
   // a shared cap with soccer's own Saturday slate meant close soccer
   // scorelines could crowd every CFB game out of Spotlight entirely.
   const MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
+  // NFL games are exempt from every sub-cap and from MAX_SPOTLIGHT_GAMES
+  // itself (see the isMyGame-style exemption below) — the NFL is the one
+  // league that should never lose a Spotlight slot to a soccer scoreline or
+  // a crowded 9-slot budget, so a full Sunday slate always shows in full.
   // How far ahead of kickoff a not-yet-started game starts counting as
   // Spotlight-worthy at all — regardless of which reason (followed team,
   // stakes, ranked, implication) it would otherwise qualify under. A game
@@ -714,11 +718,16 @@
       });
     });
 
-    const implicationOnly = entries.filter(e => e.implicationOnly);
+    // NFL is exempt from every sub-cap below (and from MAX_SPOTLIGHT_GAMES
+    // itself, see the isMyGame-style exemption further down) — it's the one
+    // league that should never lose a Spotlight slot to a tighter soccer
+    // scoreline or a crowded budget.
+    const isNfl = e => e.leagueKey === "football/nfl";
+    const implicationOnly = entries.filter(e => e.implicationOnly && !isNfl(e));
     if (implicationOnly.length > MAX_IMPLICATION_SPOTLIGHT_GAMES) {
       implicationOnly.sort((a, b) => a.implicationDistance - b.implicationDistance);
       const keep = new Set(implicationOnly.slice(0, MAX_IMPLICATION_SPOTLIGHT_GAMES));
-      entries = entries.filter(e => !e.implicationOnly || keep.has(e));
+      entries = entries.filter(e => !e.implicationOnly || isNfl(e) || keep.has(e));
     }
     const rankedOnly = entries.filter(e => e.rankedOnly);
     if (rankedOnly.length > MAX_RANKED_SPOTLIGHT_GAMES) {
@@ -728,10 +737,11 @@
     }
     // NCAAF gets its own live-only budget, separate from every other live
     // sport's shared one — Saturday college football runs a full slate of
-    // simultaneous games, and sharing one small cap with soccer (also often
-    // live in bulk on Saturdays) meant a close soccer scoreline could crowd
-    // every CFB game out of Spotlight entirely.
-    const liveOnly = entries.filter(e => e.liveOnly);
+    // simultaneous ranked matchups, and sharing one small closest-score cap
+    // with soccer (also often live in bulk on Saturdays, and decided by much
+    // narrower margins) meant close soccer scorelines could crowd every CFB
+    // game out of Spotlight. NFL live games skip this sub-cap step entirely.
+    const liveOnly = entries.filter(e => e.liveOnly && !isNfl(e));
     const ncaafLiveOnly = liveOnly.filter(e => e.leagueKey === "football/college-football");
     const otherLiveOnly = liveOnly.filter(e => e.leagueKey !== "football/college-football");
     if (ncaafLiveOnly.length > MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES) {
@@ -742,7 +752,7 @@
     if (otherLiveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
       otherLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
       const keep = new Set(otherLiveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
-      entries = entries.filter(e => !(e.liveOnly && e.leagueKey !== "football/college-football") || keep.has(e));
+      entries = entries.filter(e => !(e.liveOnly && !isNfl(e) && e.leagueKey !== "football/college-football") || keep.has(e));
     }
 
     // Live games first — regardless of followed-team status — then followed
@@ -769,6 +779,11 @@
     // everything else in between) fixes that by construction.
     const sportTier = g => isFootball(g) ? 0 : isNonPlayoffBaseball(g) ? 2 : 1;
     entries.sort((a, b) => {
+      // NFL supersedes literally everything else — checked before live
+      // state, followed-team status, or anything below, so any NFL game
+      // (live, upcoming, or final) sorts ahead of every non-NFL game.
+      const nflA = a.leagueKey === "football/nfl" ? 0 : 1, nflB = b.leagueKey === "football/nfl" ? 0 : 1;
+      if (nflA !== nflB) return nflA - nflB;
       const liveA = a.g.state === "in" ? 0 : 1, liveB = b.g.state === "in" ? 0 : 1;
       if (liveA !== liveB) return liveA - liveB;
       const myA = a.g.isMyGame ? 0 : 1, myB = b.g.isMyGame ? 0 : 1;
@@ -796,12 +811,13 @@
     // one grid slot, so showing it shouldn't push the total to 10.
     const cycleCardSlot = spotlightCycleGames.length ? 1 : 0;
     if (entries.length) {
-      // Followed-team games are exempt from MAX_SPOTLIGHT_GAMES: it exists to
-      // stop a busy slate of *other* games from flooding the section, not to
-      // bump a followed team off its own Spotlight once enough live games
-      // elsewhere fill the budget. Everything else fills whatever room is left.
-      const mine = entries.filter(e => e.g.isMyGame);
-      const others = entries.filter(e => !e.g.isMyGame)
+      // Followed-team games and NFL games are both exempt from
+      // MAX_SPOTLIGHT_GAMES: it exists to stop a busy slate of *other* games
+      // from flooding the section, not to bump a followed team — or a full
+      // Sunday NFL slate — off Spotlight once enough games elsewhere fill
+      // the budget. Everything else fills whatever room is left.
+      const mine = entries.filter(e => e.g.isMyGame || e.leagueKey === "football/nfl");
+      const others = entries.filter(e => !e.g.isMyGame && e.leagueKey !== "football/nfl")
         .slice(0, Math.max(0, MAX_SPOTLIGHT_GAMES - mine.length - cycleCardSlot));
       mine.concat(others).sort((a, b) => entries.indexOf(a) - entries.indexOf(b))
         .forEach(({ g, label }) => grid.appendChild(gameCard(g, label)));
