@@ -108,6 +108,10 @@
   // implication) can also flood a busy Saturday — sub-cap and keep the
   // marquee-est matchups by combined rank (see rankScore).
   const MAX_RANKED_SPOTLIGHT_GAMES = 4;
+  // Marquee-club-only soccer games (see MARQUEE_CLUBS) — sub-cap the same
+  // way; when there's overflow, keep the games with the most marquee clubs
+  // involved (two > one), then the closest scores among equal marquee counts.
+  const MAX_MARQUEE_SPOTLIGHT_GAMES = 4;
   // Plain live games (in progress, no other qualifying reason — not a
   // followed team, not stakes, not a ranked/implication matchup) rank ahead
   // of followed teams' non-live games, but a busy live slate — several
@@ -181,6 +185,28 @@
     if (!name) return false;
     const n = name.toLowerCase();
     return MY_PATTERNS.some(p => n.indexOf(p) !== -1);
+  }
+  // Traditional big clubs across the soccer leagues above — ESPN has no
+  // rivalry/marquee signal to draw on (no curatedRank for soccer, and
+  // broadcast/notes data is too inconsistent — e.g. a real Manchester derby
+  // and an ordinary midtable fixture can carry the same or even opposite
+  // broadcast prominence). This is a hand-curated stand-in for "this game
+  // draws a crowd regardless of the table," the soccer equivalent of
+  // spotlightRankedOnly's Top-25 check for college sports. Exact ESPN
+  // displayName spellings verified against each league's /teams endpoint
+  // (e.g. Internazionale, not "Inter Milan"; Ajax Amsterdam, not "Ajax").
+  const MARQUEE_CLUBS = [
+    "manchester united", "manchester city", "liverpool", "arsenal", "chelsea", "tottenham hotspur",
+    "real madrid", "barcelona", "atlético madrid",
+    "bayern munich", "borussia dortmund",
+    "juventus", "internazionale", "ac milan", "napoli",
+    "paris saint-germain", "marseille",
+    "ajax amsterdam", "psv eindhoven", "feyenoord rotterdam",
+  ].map(s => s.toLowerCase());
+  function isMarqueeClub(name) {
+    if (!name) return false;
+    const n = name.toLowerCase();
+    return MARQUEE_CLUBS.some(p => n.indexOf(p) !== -1);
   }
 
   // ---- Team identification ---------------------------------------------
@@ -433,6 +459,7 @@
       lineScore: parseBaseballLineScore(comp, state, leagueKey),
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
       ranked: isRanked(away) || isRanked(home),
+      marqueeCount: (isMarqueeClub(away.team.displayName) ? 1 : 0) + (isMarqueeClub(home.team.displayName) ? 1 : 0),
       stakes,
       broadcast,
     };
@@ -696,6 +723,11 @@
         // matchups too, not just live ones.
         const rankedCounts = !liveCounts && g.ranked && league && league.spotlightRankedOnly;
         const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
+        // A marquee club playing is soccer's equivalent of rankedCounts for
+        // college — a reason to show the game whether or not it's live, since
+        // a traditional big club drawing a crowd isn't conditional on being
+        // in progress the way a plain live game is.
+        const marqueeCounts = g.marqueeCount > 0;
         const kickoffSoon = g.kickoffMs != null && g.kickoffMs - Date.now() <= PREGAME_SPOTLIGHT_WINDOW_MS;
         // A followed team's game that's already over, or still more than an
         // hour from kickoff, doesn't hold its own Spotlight slot — it rotates
@@ -712,18 +744,22 @@
         // reason it qualifies under. Once it's live, or already over, or
         // within the window, it counts normally.
         const pregameImminent = g.state !== "pre" || kickoffSoon;
-        const big = liveCounts || (pregameImminent && (g.isMyGame || stakesCounts || rankedCounts || implicationDistance != null));
+        const big = liveCounts || (pregameImminent && (g.isMyGame || stakesCounts || rankedCounts || marqueeCounts || implicationDistance != null));
         if (!big) return;
-        // "Implication-only" / "ranked-only" / "live-only" = the sole reason
-        // this game qualified is standings implications / a ranked team /
-        // just being in progress — not a followed team, not a championship/
-        // bowl game. Those other reasons already guarantee a slot, so only
-        // these entries are subject to a sub-cap (a ranked Saturday, or a
+        // "Implication-only" / "ranked-only" / "marquee-only" / "live-only" =
+        // the sole reason this game qualified is standings implications / a
+        // ranked team / a big club / just being in progress — not a followed
+        // team, not a championship/bowl game. Those other reasons already
+        // guarantee a slot, so only these entries are subject to a sub-cap (a
+        // ranked Saturday, a Saturday stacked with marquee kickoffs, or a
         // Saturday with a lot of live games nobody follows, can otherwise
-        // flood Spotlight).
-        const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && !rankedCounts && implicationDistance != null;
+        // flood Spotlight). A live marquee game routes into marqueeOnly, not
+        // liveOnly, so it isn't bumped by the closest-score tiebreak the way
+        // an ordinary live game is — a marquee blowout still holds its slot.
+        const implicationOnly = !liveCounts && !g.isMyGame && !stakesCounts && !rankedCounts && !marqueeCounts && implicationDistance != null;
         const rankedOnly = rankedCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
-        const liveOnly = liveCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
+        const marqueeOnly = marqueeCounts && !g.isMyGame && !stakesCounts && implicationDistance == null;
+        const liveOnly = liveCounts && !g.isMyGame && !stakesCounts && !marqueeCounts && implicationDistance == null;
         const scoreMargin = Math.abs((Number(g.away.score) || 0) - (Number(g.home.score) || 0));
         // A real MLB playoff game is exempt from MLB's normal (lowest)
         // ranking — it ties with soccer instead of sitting below it, the
@@ -732,7 +768,7 @@
           ? SPOTLIGHT_RANK.SOCCER
           : (league && league.spotlightRank != null ? league.spotlightRank : SPOTLIGHT_RANK.SOCCER);
         const spotlightExempt = !!(league && league.spotlightExempt);
-        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
+        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, marqueeOnly, marqueeCount: g.marqueeCount, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
       });
     });
 
@@ -751,6 +787,12 @@
       rankedOnly.sort((a, b) => a.rankScore - b.rankScore);
       const keep = new Set(rankedOnly.slice(0, MAX_RANKED_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !e.rankedOnly || keep.has(e));
+    }
+    const marqueeOnly = entries.filter(e => e.marqueeOnly);
+    if (marqueeOnly.length > MAX_MARQUEE_SPOTLIGHT_GAMES) {
+      marqueeOnly.sort((a, b) => b.marqueeCount - a.marqueeCount || a.scoreMargin - b.scoreMargin);
+      const keep = new Set(marqueeOnly.slice(0, MAX_MARQUEE_SPOTLIGHT_GAMES));
+      entries = entries.filter(e => !e.marqueeOnly || keep.has(e));
     }
     // NCAAF gets its own live-only budget, separate from every other live
     // sport's shared one — Saturday college football runs a full slate of
@@ -801,10 +843,14 @@
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
       if (a.spotlightRank !== b.spotlightRank) return a.spotlightRank - b.spotlightRank;
-      const reasonRank = e => e.stakesCounts ? 0 : e.rankedOnly ? 1 : e.implicationDistance != null ? 2 : 3;
+      // rankedOnly (college) and marqueeOnly (soccer) never compete directly
+      // here — they only ever tie at this step against another entry with the
+      // same spotlightRank, and the two belong to different tiers (20 vs 30)
+      // — so tier 1 can safely pick whichever comparator applies.
+      const reasonRank = e => e.stakesCounts ? 0 : (e.rankedOnly || e.marqueeOnly) ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
-      if (ra === 1) return a.rankScore - b.rankScore;
+      if (ra === 1) return a.rankedOnly ? a.rankScore - b.rankScore : b.marqueeCount - a.marqueeCount;
       if (ra === 2) return a.implicationDistance - b.implicationDistance;
       return 0;
     });
