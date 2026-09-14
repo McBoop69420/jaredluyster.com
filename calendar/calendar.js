@@ -13,6 +13,41 @@
   let generatedAt = null;
   let refreshTimer = null;
 
+  // ---- Sports: games for the teams I follow ------------------------------
+  // Pulled live from ESPN's public JSON (CORS-enabled), same source and same
+  // "my teams" as sports.jaredluyster.com (sports/sports.js LEAGUES) — keep
+  // this list in sync with that file by hand if a followed team changes.
+  // Two fetch strategies, picked per-sport by what ESPN actually returns:
+  //   - Team schedule endpoint (small payload, whole season) works for the
+  //     US pro/college leagues below and reliably includes future games.
+  //   - It does NOT include future fixtures for soccer (verified against
+  //     MLS/NWSL/USL/EPL), so those leagues instead scan the league
+  //     scoreboard over a date range and filter to my team by name.
+  const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
+  const TEAM_SCHEDULE_TEAMS = [
+    { key: "baseball/mlb", id: "17", label: "MLB" },                                   // Cincinnati Reds
+    { key: "football/nfl", id: "4", label: "NFL" },                                    // Cincinnati Bengals
+    { key: "football/college-football", id: "96", label: "NCAAF" },                    // Kentucky Wildcats
+    { key: "football/college-football", id: "97", label: "NCAAF" },                    // Louisville Cardinals
+    { key: "basketball/mens-college-basketball", id: "96", label: "NCAAM" },           // Kentucky Wildcats
+    { key: "basketball/mens-college-basketball", id: "97", label: "NCAAM" },           // Louisville Cardinals
+    { key: "basketball/womens-college-basketball", id: "96", label: "NCAAW" },         // Kentucky Wildcats
+    { key: "basketball/womens-college-basketball", id: "97", label: "NCAAW" },         // Louisville Cardinals
+  ];
+  const SOCCER_LEAGUES = [
+    { key: "soccer/usa.1", label: "MLS", patterns: ["fc cincinnati"] },
+    { key: "soccer/usa.nwsl", label: "NWSL", patterns: ["racing louisville"] },
+    { key: "soccer/usa.usl.1", label: "USL Championship", patterns: ["lexington"] },
+    { key: "soccer/eng.1", label: "Premier League", patterns: ["liverpool", "arsenal"] },
+  ];
+  const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
+  const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling ~5-6 week display
+  const SPORTS_REFRESH_MS = 60 * 60 * 1000;      // schedules rarely change; poll hourly
+  const SPORTS_MIN_REFETCH_MS = 10 * 60 * 1000;  // floor so manual refresh can't hammer ESPN
+
+  let sportsEvents = [];
+  let sportsLastFetch = 0;
+
   const $ = (id) => document.getElementById(id);
 
   function esc(s) {
@@ -57,6 +92,99 @@
       const d = new Date();
       return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
     }
+  }
+
+  function addDaysToDateStr(dateStr, days) {
+    const p = dateStr.split("-").map(Number);
+    const d = new Date(p[0], p[1] - 1, p[2] + days, 12);
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  // ISO instant -> ET calendar date + 24h clock time, matching the shape
+  // etTodayStr()/renderCalendar() already key everything else off of.
+  function toET(isoStr) {
+    const d = new Date(isoStr);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(d);
+    const map = {};
+    parts.forEach(p => { map[p.type] = p.value; });
+    const hh = map.hour === "24" ? "00" : map.hour; // Intl quirk at midnight
+    return { date: map.year + "-" + map.month + "-" + map.day, time: hh + ":" + map.minute };
+  }
+
+  function parseGameEvent(ev, leagueLabel) {
+    const comp = ev && ev.competitions && ev.competitions[0];
+    if (!comp) return null;
+    const competitors = comp.competitors || [];
+    const away = competitors.find(c => c.homeAway === "away");
+    const home = competitors.find(c => c.homeAway === "home");
+    if (!away || !home) return null;
+    const et = toET(ev.date || comp.date);
+    const state = comp.status && comp.status.type && comp.status.type.state;
+    const awayName = (away.team && (away.team.shortDisplayName || away.team.displayName)) || "?";
+    const homeName = (home.team && (home.team.shortDisplayName || home.team.displayName)) || "?";
+    const scoreOf = c => c.score && (c.score.displayValue || c.score.value);
+    let title;
+    if (state === "post" || state === "in") {
+      const as = scoreOf(away), hs = scoreOf(home);
+      title = leagueLabel + " · " + awayName + " " + (as != null ? as : "0") +
+        ", " + homeName + " " + (hs != null ? hs : "0") + (state === "post" ? " (Final)" : " (Live)");
+    } else {
+      title = leagueLabel + " · " + awayName + " @ " + homeName;
+    }
+    return { date: et.date, start: et.time, title: title, type: "sports" };
+  }
+
+  async function fetchTeamScheduleEvents(entry, minDate, maxDate) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const url = ESPN + entry.key + "/teams/" + entry.id + "/schedule";
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return [];
+      const data = await res.json();
+      const events = Array.isArray(data.events) ? data.events : [];
+      return events.map(ev => parseGameEvent(ev, entry.label)).filter(Boolean)
+        .filter(g => g.date >= minDate && g.date <= maxDate);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function fetchSoccerLeagueEvents(entry, minDate, maxDate) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const range = minDate.replace(/-/g, "") + "-" + maxDate.replace(/-/g, "");
+      const url = ESPN + entry.key + "/scoreboard?dates=" + range + "&limit=1000";
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return [];
+      const data = await res.json();
+      const events = Array.isArray(data.events) ? data.events : [];
+      return events.filter(ev => {
+        const comp = ev.competitions && ev.competitions[0];
+        const names = ((comp && comp.competitors) || []).map(c =>
+          ((c.team && c.team.displayName) || "").toLowerCase());
+        return entry.patterns.some(p => names.some(n => n.includes(p)));
+      }).map(ev => parseGameEvent(ev, entry.label)).filter(Boolean);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function loadSportsEvents() {
+    const todayStr = etTodayStr();
+    const minDate = addDaysToDateStr(todayStr, -SPORTS_WINDOW_DAYS_BEHIND);
+    const maxDate = addDaysToDateStr(todayStr, SPORTS_WINDOW_DAYS_AHEAD);
+    const jobs = TEAM_SCHEDULE_TEAMS.map(t => fetchTeamScheduleEvents(t, minDate, maxDate))
+      .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)));
+    const results = await Promise.all(jobs);
+    sportsEvents = results.flat();
+    sportsLastFetch = Date.now();
   }
 
   function fmtTime(hhmm) {
@@ -114,7 +242,7 @@
       const copy = Object.assign({}, ev, { date: dateStr });
       (byDate[dateStr] = byDate[dateStr] || []).push(copy);
     }
-    calEvents.forEach(ev => {
+    calEvents.concat(sportsEvents).forEach(ev => {
       if (!ev || !ev.date) return;
       const recur = ev.recurrence || {};
       const freq = String(recur.freq || "").toLowerCase();
@@ -265,6 +393,9 @@
     const btn = $("refreshBtn");
     if (btn) btn.disabled = true;
     calEvents = null; // force a fresh /calendar.json fetch so new commitments appear
+    if (Date.now() - sportsLastFetch > SPORTS_MIN_REFETCH_MS) {
+      loadSportsEvents().then(renderCalendar);
+    }
     renderCalendar();
     stampUpdated();
     if (btn) btn.disabled = false;
@@ -273,6 +404,7 @@
   function startLoops() {
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(refresh, REFRESH_MS);
+    setInterval(() => { loadSportsEvents().then(renderCalendar); }, SPORTS_REFRESH_MS);
     const btn = $("refreshBtn");
     if (btn) btn.addEventListener("click", refresh);
     document.addEventListener("visibilitychange", () => {
@@ -289,5 +421,6 @@
     renderCalendar();
     stampUpdated();
     startLoops();
+    loadSportsEvents().then(renderCalendar);
   })();
 })();

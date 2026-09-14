@@ -70,6 +70,7 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
   font-family:var(--font-body);font-size:11px;line-height:1.4;font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-ev--work{background:var(--live);color:var(--paper);}
+.cal-ev--sports{background:var(--accent);color:var(--accent-ink);}
 .cal-ev-t{font-weight:700;opacity:.95;}
 .cal-ev-s{display:none;}
 .cal-ev-mobile{display:none;}
