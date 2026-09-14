@@ -45,17 +45,35 @@
   // Only NFL has this today: a full Sunday slate should always show in full,
   // never lose a slot to a tighter soccer scoreline or a crowded budget.
   const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, WNBA: 40, MLB: 50 };
+  // Order below is deliberate, not declaration-convenience: leagues with a
+  // followed team come first (roughly by prominence — MLB/NFL, then
+  // international/domestic pro, then college, then the smaller domestic
+  // leagues), then every other league grouped by sport. This same array
+  // order drives both the filter button row and the per-league section
+  // order on the "All" view, so reordering here reorders both.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB },
-    { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
-    { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true },
     { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
-    { key: "soccer/esp.1",    label: "La Liga",          myTeams: [],                           standings: "overall",
+    { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+    { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+    { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
+      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+    { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    { key: "soccer/esp.1",    label: "La Liga",          myTeams: ["Athletic Club"],            standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall",
@@ -68,18 +86,6 @@
       playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
-    { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
-    { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
-    { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true },
-    { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
-    { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
-    { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA },
   ];
