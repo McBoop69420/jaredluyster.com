@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Betting markets and model estimates: MLB Value Screen (model vs market) and live NFL Odds, for the leagues I follow.">
+<title>Sports — Betting</title>
+<link rel="preconnect" href="https://site.api.espn.com">
+<link rel="preconnect" href="https://statsapi.mlb.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/sports.css?v=51">
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <a class="model-btn" href="/model/">How the model works</a>
+    <h1><span class="accent-box">Sports</span></h1>
+    <nav class="section-tabs" aria-label="Section">
+      <a class="section-tab" href="/">Games</a>
+      <a class="section-tab section-tab--active" href="/betting/" aria-current="page">Betting</a>
+    </nav>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="League filter"></nav>
+
+  <div class="board-toolbar">
+    <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
+  </div>
+
+  <section class="value-screen" id="valueScreen" aria-labelledby="valueScreenTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Model vs market</div>
+        <h2 id="valueScreenTitle">MLB Value Screen</h2>
+      </div>
+      <div class="value-screen-meta" id="valueScreenMeta">Loading slate&hellip;</div>
+    </header>
+    <div class="value-explain">
+      <p><strong>Fair %</strong> is the market's implied win probability with the sportsbook's built-in
+        margin (the &ldquo;vig&rdquo;) removed, so both teams' numbers add up to 100%.
+        <strong>Model %</strong> is this site's own from-scratch estimate, computed from MLB stats (runs
+        scored/allowed, adjusted for that day's probable starting pitchers) &mdash; it has no idea what
+        the market thinks. <strong>Edge</strong> is Model % &minus; Fair %: how much more (or less) the
+        model likes a team than the market does.</p>
+      <p><span class="call call--value">Value</span> = model favors this side by &ge; 4 points more than
+        the market &mdash; worth a second look. <span class="call call--fade">Fade</span> = model favors
+        them &ge; 4 points less. <span class="call call--check">Check</span> = model and market disagree
+        by &ge; 10 points, which usually means the model is missing something (stale or thin pitcher
+        data) rather than a real edge &mdash; a flag to double-check, not a pick. No tag = model and
+        market roughly agree, nothing actionable. Each row's second line explains the specific reasoning
+        behind its call. Full breakdown of the sources and math: <a href="/model">how the model works</a>.</p>
+    </div>
+    <div class="value-slate-wrap">
+      <table class="value-slate">
+        <thead>
+          <tr><th>Match (ET)</th><th>ML</th><th>Fair %</th><th>Model %</th><th>Edge</th><th>Call</th></tr>
+        </thead>
+        <tbody id="valueSlateBody">
+          <tr><td colspan="6" class="value-empty">Loading live slate&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">odds BetExplorer &middot; model MLB stats, starter-adjusted</p>
+  </section>
+
+  <section class="value-screen" id="nflOdds" aria-labelledby="nflOddsTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Market lines</div>
+        <h2 id="nflOddsTitle">NFL Odds</h2>
+      </div>
+      <div class="value-screen-meta" id="nflOddsMeta">Loading slate&hellip;</div>
+    </header>
+    <div class="value-slate-wrap">
+      <table class="value-slate">
+        <thead>
+          <tr><th>Match (ET)</th><th>ML</th><th>Win %</th></tr>
+        </thead>
+        <tbody id="nflOddsBody">
+          <tr><td colspan="3" class="value-empty">Loading live slate&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">
+      Market only, no model &middot; odds ESPN/DraftKings &middot; win % de-vigged from the moneyline
+      &middot; <a href="/model">how this works</a>
+    </p>
+  </section>
+
+  <footer class="colophon">
+    <p>Live odds and model estimates refresh automatically; times shown in Eastern (ET).
+      Looking for scores and standings? See <a href="/">Games</a>.</p>
+  </footer>
+</article>
+<script src="/sports.js?v=64"></script>
+</body>
+</html>

@@ -149,6 +149,11 @@
   // `standings.entries` list. Verified working against baseball/mlb + soccer.
   const ESPN_STAND = "https://site.api.espn.com/apis/v2/sports/";
   const SEASON = new Date().getFullYear();
+  // The league filter is shared across the separate Games (/) and Betting
+  // (/betting/) pages via localStorage, so picking MLB on one carries over
+  // to the other on the next page load — each is its own static page/full
+  // navigation, so there's no in-memory state to share directly.
+  const FILTER_STORAGE_KEY = "sportsActiveFilter";
 
   let activeFilter = "all";
   let liveTimer = null;
@@ -1334,24 +1339,37 @@
     return section;
   }
 
+  // On pages with no #board (the Betting page), NFL Odds still needs
+  // gamesByLeague("football/nfl") populated, without fetching or building
+  // every other league's board section.
+  async function refreshNflGamesForOdds() {
+    const nfl = LEAGUES.find(l => l.key === "football/nfl");
+    const games = await fetchGames(nfl);
+    if (games != null) gamesByLeague.set(nfl.key, games);
+  }
+
   // ---- Master render ----------------------------------------------------
   async function render() {
     const board = $("#board");
-    const list = activeFilter === "all"
-      ? LEAGUES
-      : LEAGUES.filter(l => l.key === activeFilter);
+    if (board) {
+      const list = activeFilter === "all"
+        ? LEAGUES
+        : LEAGUES.filter(l => l.key === activeFilter);
 
-    board.innerHTML = "";
-    list.forEach(() => board.appendChild(el("div", "skeleton")));
+      board.innerHTML = "";
+      list.forEach(() => board.appendChild(el("div", "skeleton")));
 
-    const results = await Promise.allSettled(list.map(loadLeague));
-    board.innerHTML = "";
-    let any = false;
-    results.forEach(r => {
-      if (r.status === "fulfilled" && r.value) { board.appendChild(r.value); any = true; }
-    });
-    if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
-    renderSpotlight();
+      const results = await Promise.allSettled(list.map(loadLeague));
+      board.innerHTML = "";
+      let any = false;
+      results.forEach(r => {
+        if (r.status === "fulfilled" && r.value) { board.appendChild(r.value); any = true; }
+      });
+      if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
+      renderSpotlight();
+    } else if ($("#nflOdds")) {
+      await refreshNflGamesForOdds();
+    }
     renderValueScreen();
     renderNflOdds();
     loadNflOdds(); // gamesByLeague("football/nfl") just refreshed above — pick up new/dropped games
@@ -1373,12 +1391,13 @@
   function buildFilters() {
     const nav = $("#filters");
     nav.innerHTML = "";
-    const mk = (key, label, pressed) => {
+    const mk = (key, label) => {
       const b = el("button", "chip", label);
       b.type = "button";
-      b.setAttribute("aria-pressed", pressed ? "true" : "false");
+      b.setAttribute("aria-pressed", key === activeFilter ? "true" : "false");
       b.addEventListener("click", () => {
         activeFilter = key;
+        try { localStorage.setItem(FILTER_STORAGE_KEY, key); } catch (e) { /* private mode, etc. */ }
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
         renderValueScreen();
         loadValueScreen();
@@ -1388,8 +1407,8 @@
       });
       return b;
     };
-    nav.appendChild(mk("all", "All", true));
-    LEAGUES.forEach(l => nav.appendChild(mk(l.key, l.label, false)));
+    nav.appendChild(mk("all", "All"));
+    LEAGUES.forEach(l => nav.appendChild(mk(l.key, l.label)));
   }
 
   // ---- MLB Value Screen (model vs market) -------------------------------
@@ -1665,6 +1684,7 @@
   }
 
   async function loadValueScreen() {
+    if (!$("#valueScreen")) return; // panel doesn't exist on this page (e.g. Games)
     if (valueScreenLoading || !valueScreenVisible()) return;
     valueScreenLoading = true;
     renderValueScreen();
@@ -1772,6 +1792,7 @@
   }
 
   async function loadNflOdds() {
+    if (!$("#nflOdds")) return; // panel doesn't exist on this page (e.g. Games)
     if (nflOddsLoading || !nflOddsVisible()) return;
     nflOddsLoading = true;
     renderNflOdds();
@@ -1846,8 +1867,13 @@
   }
 
   function init() {
+    try {
+      const saved = localStorage.getItem(FILTER_STORAGE_KEY);
+      if (saved && (saved === "all" || LEAGUES.some(l => l.key === saved))) activeFilter = saved;
+    } catch (e) { /* private mode, etc. */ }
     buildFilters();
-    $("#refreshBtn").addEventListener("click", async () => {
+    const refreshBtn = $("#refreshBtn");
+    if (refreshBtn) refreshBtn.addEventListener("click", async () => {
       await Promise.all([render(), loadValueScreen(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {

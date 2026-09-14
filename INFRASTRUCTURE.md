@@ -289,11 +289,23 @@ GitHub Pages setup in §1c, except this one lives in the *same* repo as everythi
 else here. It rebuilds and redeploys automatically on every push to `main`
 (`path_includes: ["*"]`, so any push triggers it, not just ones touching `sports/`).
 
-- **Files served from:** [`sports/`](sports/index.html) — `index.html`, `sports.css`,
-  `sports.js` (self-contained scoreboard page; fetches ESPN's public API
-  client-side), `robots.txt`, `fake-bets.json`, and — **as of 2026-09-06** —
-  `_worker.js`. Root directory = site root, so `sports/sports.css` in the repo is
-  `/sports.css` on the live domain.
+- **Files served from:** [`sports/`](sports/index.html) — `index.html` (Games,
+  at `/`), `betting/index.html` (Betting, at `/betting/`), `model/index.html`
+  (betting-panel explainer, at `/model/`), `sports.css`, `sports.js`
+  (self-contained; fetches ESPN's public API client-side — shared by all three
+  pages), `robots.txt`, and `_worker.js`. Root directory = site root, so
+  `sports/sports.css` in the repo is `/sports.css` on the live domain.
+- **Games/Betting split — 2026-09-14.** Originally one page with every section
+  stacked (Spotlight, scoreboards, MLB Value Screen, NFL Odds). Now two pages
+  sharing `sports.css`/`sports.js`: Games (`/`, Spotlight + scoreboards +
+  standings) and Betting (`/betting/`, MLB Value Screen + NFL Odds + the
+  model-explainer link). `sports.js`'s `render()`, `loadValueScreen()`, and
+  `loadNflOdds()` each check for that page's DOM elements (`#board`,
+  `#valueScreen`, `#nflOdds`) before fetching or rendering, so the same script
+  runs correctly — and doesn't fetch data the page doesn't show — on either
+  page. The league filter chips are shared across both pages via
+  `localStorage` (`sportsActiveFilter`), since each page is a separate full
+  navigation with no in-memory state to share directly.
 - **`sports/_worker.js` — added 2026-09-06, advanced mode.** This project used to
   be plain static hosting with no worker. It has one now for exactly one reason:
   the MLB value screen (below) needs BetExplorer moneylines, and the browser
@@ -307,8 +319,12 @@ else here. It rebuilds and redeploys automatically on every push to `main`
 - **Content:** pulls live scoreboards/standings **client-side from ESPN's public
   API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
   Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
-  Super Lig, NWSL, USL, NFL, plus a "Paper Bets — Live" panel fed by the committed
-  `sports/fake-bets.json`.
+  Super Lig, NWSL, USL, NFL (Games page), plus the MLB Value Screen and NFL Odds
+  betting panels below (Betting page). The "Paper Bets — Live" panel fed by
+  `sports/fake-bets.json` described in this section below was removed
+  (`6bffb99`, `2c06570`) — the paper-bet freshness bullet and
+  `export_betting_tracker.py` wiring below are stale and describe a feature
+  that no longer exists on this site.
 - **MLB Value Screen — moved here from news 2026-09-06.** The model-vs-market
   table (VALUE / FADE / CHECK calls) that used to be The McBoop Daily's Sports
   tab. This is now its only home. Market lines come from `/api/odds` above; the
@@ -430,12 +446,13 @@ jaredluyster.com/
 │   ├── app.js              # News UI logic (tabs, live weather/traffic/feed rendering)
 │   ├── _worker.js          # Pages Worker: routes calendar.jaredluyster.com to /calendar/*, proxies /api/feeds
 │   └── robots.txt
-├── sports/                 # Sports scoreboard site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com
-│   ├── index.html
+├── sports/                 # Sports site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com — split 2026-09-14 into Games (root) and Betting (/betting/) pages, sharing sports.css/sports.js
+│   ├── index.html          # Games: Spotlight + per-league scoreboards/standings
+│   ├── betting/index.html  # Betting: MLB Value Screen (model vs market) + NFL Odds
+│   ├── model/index.html    # Static explainer for the betting panels' math/sources
 │   ├── sports.css
-│   ├── sports.js           # ESPN API + the MLB value screen, both client-side
+│   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadValueScreen()/loadNflOdds() each gate on which page's DOM elements are present
 │   ├── _worker.js          # Pages Worker (advanced mode): proxies /api/odds, else falls through to assets — see §4b
-│   ├── fake-bets.json      # Auto-committed + pushed by deploy-pages.sh each cron run, see INFRASTRUCTURE.md §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
@@ -473,7 +490,7 @@ this repo.
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper (live weather, traffic & headlines) | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
-| `sports.jaredluyster.com` | McBoop Sports (live scores, paper bets, MLB value screen) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
+| `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: MLB value screen, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 

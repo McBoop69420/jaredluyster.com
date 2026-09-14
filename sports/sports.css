@@ -65,6 +65,18 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
   .model-btn{position:static;display:inline-block;margin-top:10px}
 }
 
+/* Games / Betting section tabs */
+.section-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.section-tab{
+  font-family:var(--font-display);font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.03em;
+  padding:6px 16px;border:2px solid var(--ink);border-radius:0;text-decoration:none;
+  background:var(--paper);color:var(--ink);box-shadow:3px 3px 0 var(--ink);
+  transition:transform .12s ease,box-shadow .12s ease,background-color .12s ease;
+}
+.section-tab:hover{background:var(--highlight);transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
+.section-tab--active{background:var(--accent);color:var(--accent-ink);border-color:var(--ink)}
+
 /* Spotlight: every live game + any game involving my teams, across all
    leagues, surfaced above the per-league sections so "what's happening
    right now" never requires scrolling through 17 fixed-order leagues. */
