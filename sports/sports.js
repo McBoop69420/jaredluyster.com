@@ -1416,8 +1416,8 @@
   // now the only place the screen exists. Market lines come from /api/odds
   // (the BetExplorer proxy in _worker.js, since the browser can't fetch
   // betexplorer.com). The model is computed IN THE BROWSER from
-  // statsapi.mlb.com (CORS-open): the same v2 starter-adjusted model
-  // scripts/daily_mlb_model.py (in the live-sports-feeds skill) runs.
+  // statsapi.mlb.com (CORS-open): the same v2 starter- and park-adjusted
+  // model scripts/daily_mlb_model.py (in the live-sports-feeds skill) runs.
   const STATS = "https://statsapi.mlb.com/api/v1";
   const VALUE_REFRESH_MS = 6 * 60 * 1000;
   const HOME_ADJ = 4.0;   // points added to the home team's model%
@@ -1425,6 +1425,33 @@
   const CHECK_GAP = 10.0; // |edge| above this -> CHECK (model blind spot)
   const MIN_IP = 20.0;    // starter needs this many IP before RA9 is trusted
   const pitcherRa9Cache = new Map();
+
+  // Park factors (runs, 100 = neutral), keyed by the HOME team's statsapi
+  // abbreviation — a multi-year composite from public park-factor aggregators
+  // (FanGraphs Guts / RotoWire), fixed like the Pythagenpat constant below
+  // rather than fetched live (no free CORS-open park-factor API exists).
+  // Refresh occasionally; not season-recalculated automatically.
+  const PARK_FACTOR = {
+    ATH: 108, ATL: 98, AZ: 102, BAL: 96, BOS: 105, CHC: 91, CIN: 104, CLE: 102, COL: 133, CWS: 96,
+    DET: 105, HOU: 99, KC: 105, LAA: 100, LAD: 98, MIA: 106, MIL: 97, MIN: 106, NYM: 95, NYY: 98,
+    PHI: 106, PIT: 101, SD: 95, SEA: 81, SF: 90, STL: 97, TB: 100, TEX: 95, TOR: 99, WSH: 102,
+  };
+
+  // Pythagenpat exponent (the Smyth/Patriot refinement over a fixed
+  // Pythagorean exponent): exponent = (total expected runs in the game,
+  // both teams combined) ^ 0.287, instead of staying fixed at 1.83 — at a
+  // neutral park (factor 100) this lands almost exactly back on 1.83, so it
+  // only pulls away from that baseline when the park does. A pitcher's park
+  // lowers the exponent, compressing win probabilities toward 50/50 (fewer
+  // expected runs means more of the outcome is noise); a hitter's park
+  // raises it, spreading them apart (more runs to work with means the
+  // better team's edge shows up more reliably). This is also the ONLY place
+  // park factor can matter here — applying it as a flat multiplier to both
+  // teams' expected runs would cancel out in the homeExp/awayExp ratio
+  // below, so it has to act on the exponent instead.
+  function pythagenpatExp(rpg) {
+    return Math.pow(rpg, 0.287);
+  }
 
   async function fetchJSON(url) {
     const ctrl = new AbortController();
@@ -1455,10 +1482,11 @@
   }
 
   // Season Pythagorean win expectancy — the v1 fallback used when a probable
-  // starter is unannounced or hasn't thrown MIN_IP yet.
-  function pyth(rs, ra) {
+  // starter is unannounced or hasn't thrown MIN_IP yet. Exponent is passed in
+  // (see pythagenpatExp) rather than a fixed constant.
+  function pyth(rs, ra, exp) {
     if (!rs || !ra) return null;
-    return 1.0 / (1.0 + Math.pow(ra / rs, 1.83));
+    return 1.0 / (1.0 + Math.pow(ra / rs, exp));
   }
 
   async function pitcherRa9(pid) {
@@ -1538,12 +1566,15 @@
         const sa = stMap[at.id] || {}, sh = stMap[ht.id] || {};
         const ar = row.awaySt ? await pitcherRa9(row.awaySt.id) : null;
         const hr = row.homeSt ? await pitcherRa9(row.homeSt.id) : null;
-        let awayModel, homeModel;
+        const pf = (PARK_FACTOR[row.homeAbbr] || 100) / 100;
+        let awayModel, homeModel, exp;
         if (ar != null && hr != null && sa.rs && sh.rs && sa.g && sh.g) {
-          // v2: matchup-adjusted expected runs (mirrored pair, sums to 100%)
-          const awayExp = (sa.rs / sa.g) * (hr / lg9);
-          const homeExp = (sh.rs / sh.g) * (ar / lg9);
-          const pA = 1.0 / (1.0 + Math.pow(homeExp / awayExp, 1.83));
+          // v2: matchup-adjusted expected runs (mirrored pair, sums to 100%),
+          // scaled by the home park's run-scoring factor
+          const awayExp = (sa.rs / sa.g) * (hr / lg9) * pf;
+          const homeExp = (sh.rs / sh.g) * (ar / lg9) * pf;
+          exp = pythagenpatExp(awayExp + homeExp);
+          const pA = 1.0 / (1.0 + Math.pow(homeExp / awayExp, exp));
           awayModel = pA * 100 - HOME_ADJ;
           homeModel = (1 - pA) * 100 + HOME_ADJ;
           row.adj = {
@@ -1551,12 +1582,15 @@
             home: row.homeSt.name, homeRa9: r1(hr), lg: r1(lg9),
           };
         } else {
-          // v1 fallback: independent season Pythagorean per team
-          const ap = pyth(sa.rs, sa.ra), hp = pyth(sh.rs, sh.ra);
+          // v1 fallback: independent season Pythagorean per team, using the
+          // park factor (via league-average RPG) as the exponent's only input
+          exp = pythagenpatExp(2 * lg9 * pf);
+          const ap = pyth(sa.rs, sa.ra, exp), hp = pyth(sh.rs, sh.ra, exp);
           if (ap == null || hp == null) { row.call = "NO MODEL"; games.push(row); continue; }
           awayModel = ap * 100 - HOME_ADJ;
           homeModel = hp * 100 + HOME_ADJ;
         }
+        row.park = { abbr: row.homeAbbr, factor: Math.round(pf * 100), exp: r1(exp) };
 
         const awayEdge = r1(awayModel - row.awayFair);
         const homeEdge = r1(homeModel - row.homeFair);
@@ -1598,6 +1632,9 @@
       ? "starters " + row.adj.away + " (RA9 " + row.adj.awayRa9 + ") vs " +
         row.adj.home + " (RA9 " + row.adj.homeRa9 + ", league avg " + row.adj.lg + ")"
       : "season-long Pythagorean win expectancy — starter data was thin or unannounced";
+    const parkNote = row.park
+      ? " and " + row.park.abbr + "'s park factor (" + row.park.factor + ", exponent " + row.park.exp + ")"
+      : "";
     if (row.callSide) {
       const away = row.callSide === "away";
       const abbr = away ? row.awayAbbr : row.homeAbbr;
@@ -1607,16 +1644,16 @@
       const isValue = row.call.indexOf("VALUE") === 0;
       return abbr + "'s model% (" + model + ") " + (isValue ? "beats" : "trails") +
         " the market's fair% (" + fair + ") by " + Math.abs(edge).toFixed(1) + " points, past the " +
-        (isValue ? "+" : "−") + EDGE_MIN + " threshold, based on " + driver + ".";
+        (isValue ? "+" : "−") + EDGE_MIN + " threshold, based on " + driver + parkNote + ".";
     }
     if (row.call === "CHECK") {
       const gap = Math.max(Math.abs(row.awayEdge), Math.abs(row.homeEdge)).toFixed(1);
       return "Model and market disagree by " + gap + " points — beyond the ±" + CHECK_GAP +
-        " sanity limit, which usually means the model is off (based on " + driver +
+        " sanity limit, which usually means the model is off (based on " + driver + parkNote +
         ") rather than a real edge. Worth a second look before trusting either number.";
     }
     return "Model (" + row.awayModel + "/" + row.homeModel + ") and market (" + row.awayFair + "/" +
-      row.homeFair + ") are within " + EDGE_MIN + " points of each other, based on " + driver +
+      row.homeFair + ") are within " + EDGE_MIN + " points of each other, based on " + driver + parkNote +
       " — no disagreement worth flagging.";
   }
 
