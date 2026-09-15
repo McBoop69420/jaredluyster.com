@@ -7,36 +7,83 @@
     <title>Jared Luyster</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="shared-theme.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* Page-specific only. shared-theme.css supplies the zine palette, reset,
-           topbar, footer, buttons and base typography. */
+        /* Homepage keeps its own self-contained (cooler, indigo) look rather than
+           pulling in shared-theme.css, which the rest of the site's zine style uses. */
 
-        .topbar-inner { height: 56px; }
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #131316;
+            --surface-hover: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --text: #f0f0f0;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --accent-dim: rgba(129, 140, 248, 0.12);
+        }
+
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        img { display: block; max-width: 100%; }
+
+        .shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
         .brand {
-            font-family: var(--font-display);
-            font-size: 0.9rem;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            text-transform: uppercase;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text);
         }
 
         .topbar-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
             font-family: "JetBrains Mono", monospace;
             font-size: 0.7rem;
             color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent);
-            border: 2px solid var(--paper);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
         }
 
         .topbar-radio {
@@ -48,20 +95,48 @@
         }
 
         /* Hero */
-        .hero { padding: 100px 0 80px; }
+        .hero {
+            padding: 100px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(129, 140, 248, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content { position: relative; }
 
         h1 {
             margin: 0 0 20px;
             font-size: clamp(2.6rem, 6vw, 4.2rem);
+            font-weight: 700;
             letter-spacing: -0.04em;
             line-height: 1.08;
         }
 
-        /* Was a gradient-filled headline; the zine style has no gradients, so the
-           second line simply takes the accent flat. */
-        .text-gradient { color: var(--accent); }
+        .text-gradient {
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-        .lead { margin: 0; max-width: 34rem; font-size: 1.05rem; }
+        .lead {
+            margin: 0;
+            max-width: 34rem;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
 
         /* Section */
         .section { padding-bottom: 96px; }
@@ -84,39 +159,56 @@
 
         .section-line {
             flex: 1;
-            height: var(--border-w);
-            background: var(--paper);
+            height: 1px;
+            background: var(--border);
         }
 
         /* Project grid */
         .project-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 20px;
+            gap: 16px;
         }
 
         .project-card {
+            position: relative;
             display: flex;
             flex-direction: column;
+            border: 1px solid var(--border);
+            border-radius: 16px;
             padding: 28px;
             background: var(--surface);
-            border: var(--border-w) solid var(--paper);
-            box-shadow: 6px 6px 0 var(--accent);
-            transition: transform 120ms, box-shadow 120ms;
+            transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
         }
 
-        /* Presses into its own shadow rather than lifting off the page. */
-        .project-card:hover {
-            transform: translate(3px, 3px);
-            box-shadow: 3px 3px 0 var(--accent);
+        .project-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(129, 140, 248, 0.06), transparent 40%);
+            transition: opacity 280ms;
+            pointer-events: none;
         }
+
+        .project-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(129, 140, 248, 0.06);
+        }
+
+        .project-card:hover::before { opacity: 1; }
 
         .project-icon {
             width: 44px;
             height: 44px;
+            border-radius: 10px;
             margin-bottom: 20px;
             object-fit: cover;
-            border: 2px solid var(--paper);
+            border: 1px solid var(--border);
         }
 
         .project-logo {
@@ -128,32 +220,33 @@
         }
 
         .project-tag {
-            width: fit-content;
-            margin-bottom: 10px;
-            padding: 3px 8px;
-            background: var(--accent);
-            color: var(--accent-ink);
-            border: 2px solid var(--ink);
+            display: inline-block;
             font-family: "JetBrains Mono", monospace;
             font-size: 0.62rem;
             font-weight: 500;
             letter-spacing: 0.1em;
             text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: fit-content;
         }
 
         .project-name {
-            margin: 0 0 8px;
-            font-family: var(--font-display);
             font-size: 1.05rem;
-            font-weight: 700;
+            font-weight: 600;
+            margin: 0 0 8px;
+            letter-spacing: -0.01em;
         }
 
         .project-desc {
-            flex: 1;
-            margin: 0;
             font-size: 0.875rem;
             color: var(--muted);
             line-height: 1.65;
+            margin: 0;
+            flex: 1;
         }
 
         .project-arrow {
@@ -161,17 +254,34 @@
             align-items: center;
             gap: 6px;
             margin-top: 24px;
-            font-family: var(--font-display);
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--muted);
+            transition: all 200ms;
         }
 
         .project-arrow svg { transition: transform 200ms; }
+
+        .project-card:hover .project-arrow { color: var(--accent); }
         .project-card:hover .project-arrow svg { transform: translateX(3px); }
 
         /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
         .footer-links { display: flex; gap: 20px; }
 
         .footer-links a {
@@ -182,6 +292,28 @@
 
         .footer-links a:hover { color: var(--text); }
 
+        /* Entrance animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(16px);
+            animation: fadeUp 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .fade-up:nth-child(1) { animation-delay: 0ms; }
+        .fade-up:nth-child(2) { animation-delay: 80ms; }
+        .fade-up:nth-child(3) { animation-delay: 160ms; }
+        .fade-up:nth-child(4) { animation-delay: 240ms; }
+        .fade-up:nth-child(5) { animation-delay: 320ms; }
+        .fade-up:nth-child(6) { animation-delay: 400ms; }
+
+        h1 { animation: fadeUp 500ms 180ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+        .lead { animation: fadeUp 500ms 260ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 860px) {
             .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
@@ -189,6 +321,7 @@
         @media (max-width: 560px) {
             .project-grid { grid-template-columns: 1fr; }
             .hero { padding: 64px 0 56px; }
+            .shell { padding: 0 16px; }
             .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
         }
     </style>
@@ -221,40 +354,40 @@
                     <div class="section-line"></div>
                 </div>
                 <div class="project-grid">
-                    <a class="project-card" href="https://www.bluegrasscybersecurity.com/">
+                    <a class="project-card fade-up" href="https://www.bluegrasscybersecurity.com/">
                         <img class="project-logo" src="bcs-logo-t.png" alt="Bluegrass Cybersecurity Solutions">
                         <div class="project-tag">Cybersecurity</div>
                         <p class="project-name">Bluegrass Cybersecurity Solutions</p>
                         <p class="project-desc">Cybersecurity services for businesses in the Bluegrass region.</p>
                         <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://bluegrasstcg.online/">
+                    <a class="project-card fade-up" href="https://bluegrasstcg.online/">
                         <img class="project-logo" src="bmc-logo-t.png" alt="Bluegrass Memorabilia & Collectibles">
                         <div class="project-tag">Collectibles</div>
                         <p class="project-name">Bluegrass Memorabilia & Collectibles</p>
                         <p class="project-desc">Buy and sell trading cards, memorabilia, and collectibles.</p>
                         <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://wizardbattle.jaredluyster.com/">
+                    <a class="project-card fade-up" href="https://wizardbattle.jaredluyster.com/">
                         <img class="project-logo" src="wordmark-horizontal.svg" alt="Wizard Battle">
                         <div class="project-tag">Game</div>
                         <p class="project-name">Wizard Battle</p>
                         <p class="project-desc">A roguelike deckbuilder. Choose one of eight elemental classes to master in a world where magic replaced technology.</p>
                         <span class="project-arrow">Explore <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://roto.jaredluyster.com/">
+                    <a class="project-card fade-up" href="https://roto.jaredluyster.com/">
                         <div class="project-tag">Cube Draft</div>
                         <p class="project-name">Roto</p>
                         <p class="project-desc">A cube draft tool for Magic: The Gathering, with live multiplayer draft rooms.</p>
                         <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://news.jaredluyster.com/">
+                    <a class="project-card fade-up" href="https://news.jaredluyster.com/">
                         <div class="project-tag">News</div>
                         <p class="project-name">News</p>
                         <p class="project-desc">A personal news aggregator.</p>
                         <span class="project-arrow">Visit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
-                    <a class="project-card" href="https://radio.jaredluyster.com/">
+                    <a class="project-card fade-up" href="https://radio.jaredluyster.com/">
                         <div class="project-tag">Radio</div>
                         <p class="project-name">Jared Luyster Radio</p>
                         <p class="project-desc">A self-hosted station streaming local music files — tune in and hear the same point in the loop as everyone else.</p>
@@ -270,5 +403,15 @@
             <span class="footer-copy">&copy; 2026 Jared Luyster</span>
         </div>
     </footer>
+
+    <script>
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+            });
+        });
+    </script>
 </body>
 </html>
