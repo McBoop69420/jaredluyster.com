@@ -39,6 +39,7 @@
     { key: "soccer/usa.nwsl", label: "NWSL", patterns: ["racing louisville"] },
     { key: "soccer/usa.usl.1", label: "USL Championship", patterns: ["lexington"] },
     { key: "soccer/eng.1", label: "Premier League", patterns: ["liverpool", "arsenal"] },
+    { key: "soccer/esp.1", label: "La Liga", patterns: ["athletic club"] },  // Athletic Bilbao
   ];
   const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
   const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling ~5-6 week display
