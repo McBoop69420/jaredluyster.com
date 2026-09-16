@@ -394,8 +394,19 @@
       }
       addByDate(ev.date, ev);
     });
+    // Events with no confirmed start time (TBD kickoffs, timeLabel-only
+    // entries) sort after every timed event in the day — an empty start
+    // would otherwise sort first, but a TBD college football game is far
+    // more likely to kick off in the afternoon/evening than a soccer match
+    // that already has a confirmed 7:30a start.
     Object.keys(byDate).forEach(k =>
-      byDate[k].sort((a, b) => String(a.start || "").localeCompare(String(b.start || ""))));
+      byDate[k].sort((a, b) => {
+        const as = a.start || "", bs = b.start || "";
+        if (!as && !bs) return 0;
+        if (!as) return 1;
+        if (!bs) return -1;
+        return as.localeCompare(bs);
+      }));
 
     function isWorkEvent(ev) {
       return String(ev.type || ev.kind || ev.category || "").toLowerCase() === "work";
