@@ -394,10 +394,13 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   `wrangler.toml` (the dashboard says so outright — "Bindings for this project are being
   managed through wrangler.toml"), so pushing the `[[r2_buckets]]` block was enough. That
   almost certainly means `DRAFT_ROOM` above was provisioned the same way, not by hand.
-- **Still open:** Cloudflare Access in front of it — recommended since
-  `functions/social/api/[[path]].ts` has no auth of its own, so anyone reaching the
-  subdomain can list/upload/delete library assets. See DEPLOY.md's "Social Asset Studio"
-  section for the policy to reuse.
+- **Access control:** Behind **Cloudflare Access** since 2026-09-16 — a separate `social`
+  Access application, reusing the same "Only Me" policy (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`)
+  as `news`/`sports`/`calendar`, independently editable from them. Verified via `curl`:
+  `302` → `.../cdn-cgi/access/login/social.jaredluyster.com`,
+  `Www-Authenticate: Cloudflare-Access` — same signature as the other gated subdomains.
+  `functions/social/api/[[path]].ts` still has no auth of its own; Access is what gates it
+  at the edge.
 
 ## Cloudflare Tunnel Configuration
 
@@ -531,7 +534,7 @@ this repo.
 | `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: MLB value screen, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
-| `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed — live, Access still recommended |
+| `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |
 
 ## How to Work With This Repo
 

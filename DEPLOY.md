@@ -54,7 +54,7 @@ following the tool-subdomain pattern above (`social` is in `SUBDOMAIN_ROOTS`), p
 piece of real backend: an R2 bucket for the library, reached through
 `functions/social/api/[[path]].ts`.
 
-**One-time setup — done 2026-09-16, except Access:**
+**One-time setup — all done 2026-09-16:**
 
 1. ~~Create the bucket~~ — done: `jaredluyster-social-assets` exists (R2 free-tier
    subscription added to the account first, since this account had never used R2 before).
@@ -70,16 +70,18 @@ piece of real backend: an R2 bucket for the library, reached through
 3. ~~Add the custom domain~~ — done: `social.jaredluyster.com` is a custom domain on the
    `jaredluyster-com` Pages project, same CNAME-to-`.pages.dev` pattern as
    `roto`/`wintergreen`.
-4. **Still not done — recommended:** put it behind **Cloudflare Access** with the same
-   "Only Me" policy reused by `news`/`sports`/`calendar` (Zero Trust -> Access ->
-   Applications -> Add). The API in `functions/social/api/[[path]].ts` has no auth of its
-   own — anyone who can reach `social.jaredluyster.com` can list/upload/delete library
-   assets. Access gates that at the edge before a request ever reaches the Function, exactly
-   like it does for the other personal-use subdomains.
+4. ~~Put it behind Cloudflare Access~~ — done: a `social` self-hosted Access application
+   (destination `social.jaredluyster.com`) reuses the same "Only Me" policy
+   (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) as `news`/`sports`/`calendar` — same Zero Trust
+   org, independently editable per-app like the others. The API in
+   `functions/social/api/[[path]].ts` still has no auth of its own; Access is what gates it,
+   at the edge, before a request ever reaches the Function.
 
 Verified live end-to-end 2026-09-16: saved a design from the editor, watched it land in the
 library grid backed by the real R2 bucket, deleted it, confirmed the grid went back to
-"Nothing saved yet."
+"Nothing saved yet." Verified Access separately via `curl`: an unauthenticated request gets
+`302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/social.jaredluyster.com`
+with `Www-Authenticate: Cloudflare-Access` — same signature as the other gated subdomains.
 
 ## Roto multiplayer (the DraftRoom Durable Object)
 
