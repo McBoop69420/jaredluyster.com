@@ -95,6 +95,12 @@
           Team season runs scored, runs allowed, and games played (for the win-expectancy math below),
           plus today's probable starting pitchers and their season pitching lines (runs allowed and
           innings pitched, to compute RA9 &mdash; runs allowed per 9 innings).</li>
+        <li><strong>Park factors &mdash; fixed table, not fetched</strong> Each park's run-scoring factor
+          (100 = neutral) is a multi-year composite pulled from public park-factor aggregators (FanGraphs
+          Guts, RotoWire) and hardcoded into the model &mdash; there's no free, CORS-open park-factor API
+          to pull it from live. Refreshed occasionally, not recalculated every season. Coors Field
+          (Rockies) sits at the extreme hitter-friendly end; T&#8209;Mobile Park (Mariners) at the extreme
+          pitcher-friendly end.</li>
       </ul>
 
       <h3>Terminology</h3>
@@ -145,43 +151,29 @@ P(away wins) = 1 / (1 + (homeExpectedRuns / awayExpectedRuns) ^ exponent)</span>
         hardcoded number &mdash; it's computed fresh each time from that day's full MLB standings (total
         runs scored across the league &divide; total games played).</p>
 
-      <p>The exponent used to be a fixed 1.83 (the standard historical fit between run differential and
-        win rate). It's now <strong>Pythagenpat</strong> &mdash; a well-established refinement where the
-        exponent scales with how many runs the specific game is expected to produce, instead of staying
-        constant. At a neutral park (factor 100) this formula lands almost exactly back on 1.83, so a
-        park-neutral game is barely affected. Away from neutral, it's the <em>only</em> place park factor
-        can act: scaling both teams' expected runs by the same amount cancels out in the
-        homeExpectedRuns/awayExpectedRuns ratio above, so a flat multiplier alone would do nothing. Instead
-        park factor pushes the exponent around &mdash; a pitcher's park (fewer expected runs) lowers it,
-        compressing win probabilities toward 50/50, since a low-scoring game leaves more room for a single
-        bloop hit or bad-luck sequence to decide it regardless of which team is actually better. A
-        hitter's park (more expected runs) raises the exponent, spreading win probabilities apart, since a
-        high-scoring game gives the better team more at-bats and innings to make its real talent gap show
-        up in the score.</p>
-
-      <p><strong>Park factor</strong> itself (100 = a perfectly neutral park; above 100 inflates scoring,
-        below 100 suppresses it) is a fixed table keyed to the home team, not something fetched live &mdash;
-        there's no free, CORS-open park-factor API. It's a multi-year composite sourced from public
-        park-factor aggregators, refreshed occasionally rather than recalculated every season, the same
-        way the Pythagenpat constant (0.287) is fixed rather than re-derived. Coors Field (Rockies) sits at
-        the extreme hitter-friendly end; T&#8209;Mobile Park (Mariners) sits at the extreme pitcher-friendly
-        end.</p>
+      <p>The exponent isn't fixed at 1.83 anymore &mdash; it moves with how many runs the game is expected
+        to produce, using a refinement called <strong>Pythagenpat</strong>: exponent = (both teams'
+        combined expected runs) ^ 0.287. At a neutral park that comes out to about 1.83 anyway, so an
+        average game barely changes. Away from neutral, it's the only lever park factor has &mdash;
+        scaling both teams' expected runs by the same amount cancels out in the ratio above, so park
+        factor has to work through the exponent instead. A pitcher's park lowers the exponent and pulls
+        win probabilities toward 50/50; a hitter's park raises it and pushes them apart.</p>
 
       <p><strong>v1 &mdash; season Pythagorean fallback</strong> (used when a probable starter is
-        unannounced, or hasn't thrown 20 innings yet): skips the starter-matchup adjustment entirely and
-        just uses each team's own season-long Pythagorean win expectancy, independently &mdash; but still
-        with the park-adjusted Pythagenpat exponent in place of the old fixed 1.83:</p>
+        unannounced, or hasn't thrown 20 innings yet): skips the starter-matchup adjustment and just uses
+        each team's own season-long win expectancy, independently &mdash; still using the same
+        park-adjusted exponent from above:</p>
       <span class="formula">P(team wins) = 1 / (1 + (runs allowed / runs scored) ^ exponent)</span>
       <p>Same home +4 / away &minus;4 adjustment is applied on top. This version knows nothing about
         who's actually pitching &mdash; it's a coarser, whole-season-average estimate used only when the
         starter data isn't reliable yet.</p>
 
       <div class="callout">
-        <strong>What the model doesn't see:</strong> bullpen quality, weather, lineup changes, or injuries
-        beyond what's baked into season stats. Park factor is now in the model, but only as a fixed,
-        occasionally-refreshed table &mdash; it doesn't know about a specific day's wind, temperature, or
-        any other day-of conditions. It also doesn't know anything about the market &mdash; Model% and
-        Fair% are computed completely independently and only compared at the very end. A large Edge is
+        <strong>What the model doesn't see:</strong> bullpen quality, lineup changes, or injuries beyond
+        what's baked into season stats. Park factor captures a park's typical run environment, not a
+        specific day's wind, temperature, or weather. It also doesn't know anything about the market
+        &mdash; Model% and Fair% are computed completely independently and only compared at the very end.
+        A large Edge is
         exactly as likely to mean &ldquo;the model found something real&rdquo; as &ldquo;the model is
         working from stale or incomplete data&rdquo; &mdash; that's what the CHECK tag exists to flag.
       </div>
