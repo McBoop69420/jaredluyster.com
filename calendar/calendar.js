@@ -186,7 +186,13 @@
     const state = comp.status && comp.status.type && comp.status.type.state;
     const awayName = (away.team && (away.team.shortDisplayName || away.team.displayName)) || "?";
     const homeName = (home.team && (home.team.shortDisplayName || home.team.displayName)) || "?";
-    const scoreOf = c => c.score && (c.score.displayValue || c.score.value);
+    // US pro/college sports nest the score in an object ({displayValue|value});
+    // soccer competitors carry it as a bare string/number instead.
+    const scoreOf = c => {
+      const s = c.score;
+      if (s == null) return null;
+      return typeof s === "object" ? (s.displayValue || s.value) : s;
+    };
     const live = state === "post" || state === "in";
     const awayScore = live ? (scoreOf(away) != null ? scoreOf(away) : "0") : null;
     const homeScore = live ? (scoreOf(home) != null ? scoreOf(home) : "0") : null;
