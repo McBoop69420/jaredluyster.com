@@ -99,12 +99,14 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
 .cal-ev-match--lg .cal-ev-match-time{font-size:12.5px;}
 .cal-ev-match--lg .cal-ev-score{font-size:14px;}
 
-/* Sports chips get their own 2-column grid instead of stacking full-width —
+/* Sports chips get their own 2-column layout instead of stacking full-width —
    a day with four games reads as 2x2 (square-ish cards), not a 4-row list.
    Each card stacks its logo row above the score, trading the list's spare
-   width for headroom the grid's auto row-sizing happily grants. */
-.cal-ev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}
-.cal-ev-grid .cal-ev{white-space:normal;text-align:center;padding:5px 3px;}
+   width for headroom the grid's auto row-sizing happily grants. Flex (not
+   grid) so a lone odd-one-out on the last row centers itself instead of
+   hugging the left column with a blank cell beside it. */
+.cal-ev-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;}
+.cal-ev-grid .cal-ev{white-space:normal;text-align:center;padding:5px 3px;flex:1 1 calc(50% - 2px);min-width:0;}
 .cal-ev-grid .cal-ev-match{display:flex;flex-direction:column;gap:3px;}
 .cal-ev-grid .cal-ev-logo--team{width:17px;height:17px;}
 
@@ -136,9 +138,14 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
   .cal-today-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
   .cal-today-item{padding:1px 6px;}
   .cal-cell{padding:6px 4px;gap:3px;}
-  /* Grid chips become compact start-time pills; full titles live in the agenda below */
-  .cal-ev{font-size:9px;padding:2px 3px;border-radius:0;text-align:center;
-    display:block;line-height:1.5;}
+  /* Grid chips become compact start-time pills; full titles live in the
+     agenda below. Only that short clock string is ever visible here (the
+     full title is display:none below), so it must never wrap — the desktop
+     fix that lets full titles wrap would otherwise break "1:40p" into a
+     letter-per-line stack at pill width. */
+  .cal-ev,.cal-ev-grid .cal-ev{font-size:9px;padding:2px 3px;border-radius:0;text-align:center;
+    display:block;line-height:1.5;white-space:nowrap;overflow-wrap:normal;
+    overflow:hidden;text-overflow:ellipsis;}
   .cal-ev .cal-ev-title{display:none;}
   .cal-ev .cal-ev-t{display:none;}
   .cal-ev .cal-ev-s{display:none;}
