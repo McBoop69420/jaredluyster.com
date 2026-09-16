@@ -46,6 +46,36 @@ subdomain:
 The path form (`jaredluyster.com/roto/`) keeps working, so the subdomain is additive
 and safe to roll back by removing the custom domain.
 
+## Social Asset Studio (social.jaredluyster.com)
+
+A personal tool for crafting and storing social graphics (per-project templates, a canvas
+editor, an asset library) for every project in this ecosystem. Static frontend in `social/`
+following the tool-subdomain pattern above (`social` is in `SUBDOMAIN_ROOTS`), plus one
+piece of real backend: an R2 bucket for the library, reached through
+`functions/social/api/[[path]].ts`.
+
+**One-time setup, not yet done as of this writing:**
+
+1. Create the bucket: `wrangler r2 bucket create jaredluyster-social-assets` (or via the
+   dashboard, Workers & Pages -> R2).
+2. `wrangler.toml`'s `[[r2_buckets]]` block already covers `wrangler pages dev`/`deploy`.
+   For the dashboard-managed production project, also add the binding under **Settings ->
+   Bindings -> R2 Bucket**: variable name `SOCIAL_ASSETS`, bucket
+   `jaredluyster-social-assets` — same one-time step the `DRAFT_ROOM` Durable Object
+   needed above.
+3. Add `social.jaredluyster.com` as a **custom domain** on the Pages project (same as any
+   other tool subdomain — Cloudflare creates the CNAME automatically).
+4. **Recommended:** put it behind **Cloudflare Access** with the same "Only Me" policy
+   reused by `news`/`sports`/`calendar` (Zero Trust -> Access -> Applications -> Add). The
+   API in `functions/social/api/[[path]].ts` has no auth of its own — anyone who can reach
+   `social.jaredluyster.com` can list/upload/delete library assets. Access gates that at
+   the edge before a request ever reaches the Function, exactly like it does for the other
+   personal-use subdomains.
+
+Until the R2 binding exists, the editor still works (crafting, export-to-PNG, the
+in-browser draft) — only "Save to Library" and the library grid will fail, with the fetch
+error visible in the library panel rather than failing silently.
+
 ## Roto multiplayer (the DraftRoom Durable Object)
 
 Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is

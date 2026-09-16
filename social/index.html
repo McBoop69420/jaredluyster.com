@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Social Asset Studio — Jared Luyster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" href="../shared-theme.css" />
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<header class="studio-header">
+  <div>
+    <h1>Social Asset Studio</h1>
+    <p class="tagline">Craft and store social graphics for every project, in one place.</p>
+  </div>
+</header>
+
+<main class="studio">
+  <section class="panel panel-left">
+    <div class="field-group">
+      <label class="field-label" for="projectSelect">Project</label>
+      <select id="projectSelect"></select>
+      <input id="newProjectInput" type="text" placeholder="New project name…" class="field-sub" />
+      <button id="addProjectBtn" class="button button-secondary button-sm">Add project</button>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="platformSelect">Format</label>
+      <select id="platformSelect"></select>
+      <div id="customSizeRow" class="size-row hidden">
+        <input id="customW" type="number" min="100" max="4096" value="1080" />
+        <span>×</span>
+        <input id="customH" type="number" min="100" max="4096" value="1080" />
+      </div>
+      <span id="canvasSizeReadout" class="field-hint"></span>
+    </div>
+
+    <div class="field-group">
+      <span class="field-label">Background</span>
+      <div class="seg-control" id="bgTypeControl">
+        <button data-bg="color" class="seg-btn active">Color</button>
+        <button data-bg="gradient" class="seg-btn">Gradient</button>
+        <button data-bg="image" class="seg-btn">Image</button>
+      </div>
+      <div id="bgColorRow" class="bg-row">
+        <input id="bgColor" type="color" value="#131113" />
+      </div>
+      <div id="bgGradientRow" class="bg-row hidden">
+        <input id="bgFrom" type="color" value="#131113" />
+        <input id="bgTo" type="color" value="#f2971d" />
+        <input id="bgAngle" type="range" min="0" max="360" value="45" />
+      </div>
+      <div id="bgImageRow" class="bg-row hidden">
+        <input id="bgImageFile" type="file" accept="image/*" />
+      </div>
+    </div>
+
+    <div class="field-group">
+      <span class="field-label">Add layer</span>
+      <div class="layer-add-grid">
+        <button id="addTextBtn" class="button button-secondary button-sm">+ Text</button>
+        <button id="addImageBtn" class="button button-secondary button-sm">+ Image</button>
+        <button id="addRectBtn" class="button button-secondary button-sm">+ Rect</button>
+        <button id="addCircleBtn" class="button button-secondary button-sm">+ Circle</button>
+      </div>
+      <button id="addLogoBtn" class="button button-secondary button-sm full-width">+ Project logo…</button>
+      <input id="imageFileInput" type="file" accept="image/*" class="hidden" />
+      <input id="logoFileInput" type="file" accept="image/*" class="hidden" />
+    </div>
+
+    <div class="field-group">
+      <span class="field-label">Layers</span>
+      <ul id="layerList" class="layer-list"></ul>
+    </div>
+
+    <div class="field-group">
+      <button id="clearDesignBtn" class="button button-secondary button-sm full-width">New / Clear design</button>
+    </div>
+  </section>
+
+  <section class="canvas-wrap">
+    <div class="canvas-scroll">
+      <canvas id="stage"></canvas>
+    </div>
+    <div class="canvas-toolbar">
+      <input id="assetTitle" type="text" placeholder="Untitled design" class="title-input" />
+      <button id="exportBtn" class="button button-secondary">Export PNG</button>
+      <button id="saveBtn" class="button button-primary">Save to Library</button>
+    </div>
+  </section>
+
+  <section class="panel panel-right" id="propsPanel">
+    <p class="props-empty">Select a layer to edit its properties.</p>
+  </section>
+</main>
+
+<section class="library shell">
+  <div class="library-header">
+    <h2>Library</h2>
+    <div class="library-filters">
+      <select id="libProjectFilter">
+        <option value="all">All projects</option>
+      </select>
+      <button id="refreshLibraryBtn" class="button button-secondary button-sm">Refresh</button>
+    </div>
+  </div>
+  <div class="library-grid" id="libraryGrid"></div>
+</section>
+
+<script src="projects.js"></script>
+<script src="canvas.js"></script>
+<script src="library.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

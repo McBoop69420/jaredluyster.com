@@ -25,3 +25,12 @@ MARKETPLACE_ORIGIN = "https://jaredluyster-com.onrender.com"
 name = "DRAFT_ROOM"
 class_name = "DraftRoom"
 script_name = "roto-draft-room"
+
+# social.jaredluyster.com's asset library. The bucket itself is created once via
+# `wrangler r2 bucket create jaredluyster-social-assets` (or the dashboard) — this binding
+# covers `wrangler pages dev`/`deploy`; the dashboard-managed production project also needs
+# the same binding added under Settings -> Bindings -> R2 Bucket (variable name
+# SOCIAL_ASSETS), same one-time step as the DRAFT_ROOM binding above.
+[[r2_buckets]]
+binding = "SOCIAL_ASSETS"
+bucket_name = "jaredluyster-social-assets"

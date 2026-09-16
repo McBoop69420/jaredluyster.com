@@ -369,6 +369,32 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   the live site kept serving the last good deployment throughout, so nothing was
   ever down, but new pushes silently stopped deploying until this was restored.
 
+### 5. Social Asset Studio — Cloudflare Pages (folder + R2, this repo)
+
+- **Purpose:** personal tool to craft social graphics (canvas editor with per-project/
+  per-platform templates) and store the results in one library, for every project in this
+  ecosystem instead of scattered local exports.
+- **Subdomain:** `social.jaredluyster.com` — added to `SUBDOMAIN_ROOTS` in
+  `functions/_middleware.ts`, same tool-subdomain pattern as `roto`/`wintergreen` (see
+  DEPLOY.md's "Tool subdomains" section).
+- **Files served from:** [`social/`](social/index.html) — static frontend, no build step
+  (`index.html`, `app.css`, `app.js`, `canvas.js`, `library.js`, `projects.js`,
+  `robots.txt`).
+- **Backend:** [`functions/social/api/[[path]].ts`](functions/social/api/[[path]].ts), an
+  R2-backed API (`SOCIAL_ASSETS` binding, bucket `jaredluyster-social-assets`) —
+  list/upload/fetch/delete under `/social/api/assets/*`. One R2 object per exported PNG,
+  plus an optional sibling `<name>.png.json` holding the editor's layer state so a saved
+  design can be reloaded and edited again (the PNG alone can't be un-flattened). Same
+  binding style as the `DRAFT_ROOM` Durable Object for roto (§ above), except R2 buckets
+  bind directly to Pages — no separate Worker needed.
+- **Setup required (not yet done as of this writing):** create the R2 bucket, add the
+  `SOCIAL_ASSETS` binding on the dashboard-managed Pages project, add the custom domain,
+  and — recommended, since the API has no auth of its own — put it behind Cloudflare
+  Access like `news`/`sports`/`calendar`. Full steps in DEPLOY.md's "Social Asset Studio"
+  section.
+- **Until the R2 binding exists:** the editor (templates, canvas, export-to-PNG) still
+  works standalone; only the library (save/list/delete) needs the bucket.
+
 ## Cloudflare Tunnel Configuration
 
 File: `%USERPROFILE%\.cloudflared\config.yml`
@@ -460,6 +486,14 @@ jaredluyster.com/
 │   ├── calendar.css
 │   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged)
 │   └── robots.txt
+├── social/                 # Social Asset Studio (social.jaredluyster.com) — canvas editor + R2-backed library
+│   ├── index.html
+│   ├── app.css
+│   ├── app.js              # State, canvas pointer interactions, panels, library wiring
+│   ├── canvas.js           # Layer model + rendering/hit-testing (no DOM)
+│   ├── library.js          # /social/api/* client + library grid rendering
+│   ├── projects.js         # Project/platform presets
+│   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -493,6 +527,7 @@ this repo.
 | `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: MLB value screen, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
+| `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed — setup pending, see DEPLOY.md |
 
 ## How to Work With This Repo
 
