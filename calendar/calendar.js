@@ -158,6 +158,59 @@
     return l ? l.href : null;
   }
 
+  // ESPN reports a game's broadcast network two different ways depending on
+  // the endpoint: `broadcasts[].names` (scoreboard, e.g. NFL) or
+  // `broadcasts[].media.shortName` (team-schedule, e.g. college football).
+  function broadcastNetworks(comp) {
+    const bc = Array.isArray(comp.broadcasts) ? comp.broadcasts : [];
+    const names = [];
+    bc.forEach(b => {
+      if (Array.isArray(b.names)) names.push(...b.names);
+      else if (b.media && b.media.shortName) names.push(b.media.shortName);
+    });
+    return names.map(n => String(n || "").trim().toUpperCase()).filter(Boolean);
+  }
+
+  // Where a given broadcast network's own live stream actually lives —
+  // verified directly (not guessed) against each site: FOX/FS1/FS2/BTN are
+  // all bundled into the FOX One app, CBS/CBSSN into Paramount+, the ESPN
+  // family (incl. conference networks ESPN produces) into ESPN's watch hub.
+  const WATCH_LINK_BY_NETWORK = {
+    FOX: "https://www.foxone.com/", FS1: "https://www.foxone.com/",
+    FS2: "https://www.foxone.com/", BTN: "https://www.foxone.com/",
+    CBS: "https://www.paramountplus.com/live-tv/", CBSSN: "https://www.paramountplus.com/live-tv/",
+    ABC: "https://abc.com/watch-live",
+    ESPN: "https://www.espn.com/watch/", ESPN2: "https://www.espn.com/watch/",
+    ESPNU: "https://www.espn.com/watch/", ESPNEWS: "https://www.espn.com/watch/",
+    "ESPN+": "https://www.espn.com/watch/",
+    SECN: "https://www.espn.com/watch/", "SECN+": "https://www.espn.com/watch/",
+    "SEC NETWORK": "https://www.espn.com/watch/",
+    ACCN: "https://www.espn.com/watch/", ACCNX: "https://www.espn.com/watch/",
+    "ACC NETWORK": "https://www.espn.com/watch/",
+    "LONGHORN NETWORK": "https://www.espn.com/watch/",
+    NBC: "https://www.peacocktv.com/channels/nbc-local",
+    PEACOCK: "https://www.peacocktv.com/channels/nbc-local",
+  };
+
+  // Only for the leagues asked for so far: NFL sticks to exactly the two
+  // services actually named (FOX One / Paramount+) rather than assuming
+  // every NFL broadcaster should get mapped; NCAAF is fully general since
+  // it airs across far more networks. Everything else keeps falling back
+  // to gameLinkUrl()'s ESPN Gamecast page.
+  function watchLinkFor(entry, comp) {
+    const networks = broadcastNetworks(comp);
+    if (entry.label === "NFL") {
+      if (networks.includes("FOX")) return WATCH_LINK_BY_NETWORK.FOX;
+      if (networks.includes("CBS")) return WATCH_LINK_BY_NETWORK.CBS;
+      return null;
+    }
+    if (entry.label === "NCAAF") {
+      const hit = networks.find(n => WATCH_LINK_BY_NETWORK[n]);
+      return hit ? WATCH_LINK_BY_NETWORK[hit] : null;
+    }
+    return null;
+  }
+
   // Picks a display logo URL off an ESPN competitor's team object. Soccer
   // competitors carry a single `team.logo` string; US pro/college sports
   // carry a `team.logos` array of variants (light/dark/scoreboard) instead.
@@ -210,7 +263,7 @@
       date: et.date, start: timeValid ? et.time : null,
       timeLabel: timeValid ? null : "TBD", title: title, type: "sports",
       league: entry.label, leagueLogo: entry.logo, state: state || "pre",
-      gameLink: gameLinkUrl(ev),
+      gameLink: watchLinkFor(entry, comp) || gameLinkUrl(ev),
       leftName: homeFirst ? homeName : awayName,
       rightName: homeFirst ? awayName : homeName,
       leftLogo: teamLogoUrl((homeFirst ? home : away).team),
@@ -280,14 +333,47 @@
       .filter(g => g.date >= minDate && g.date <= maxDate);
   }
 
+  const MLB_STATS_TEAM_ID = 113; // Cincinnati Reds — MLB Stats API's own id, distinct from ESPN's "17"
+
+  // MLB.tv is the actual place to watch regardless of the (often regional/
+  // blacked-out) network ESPN reports, but linking straight to a specific
+  // game's web player needs MLB's own gamePk, which ESPN doesn't carry —
+  // hence this separate lookup against MLB's public Stats API.
+  async function fetchMlbGamePks(minDate, maxDate) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=" + MLB_STATS_TEAM_ID +
+        "&startDate=" + minDate + "&endDate=" + maxDate;
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return {};
+      const data = await res.json();
+      const byDate = {};
+      (data.dates || []).forEach(d => {
+        (d.games || []).forEach(g => { if (g.gamePk) byDate[d.date] = g.gamePk; });
+      });
+      return byDate;
+    } catch (e) {
+      return {};
+    }
+  }
+
   async function loadSportsEvents() {
     const todayStr = etTodayStr();
     const minDate = addDaysToDateStr(todayStr, -SPORTS_WINDOW_DAYS_BEHIND);
     const maxDate = addDaysToDateStr(todayStr, SPORTS_WINDOW_DAYS_AHEAD);
     const jobs = TEAM_SCHEDULE_TEAMS.map(t => fetchTeamScheduleEvents(t, minDate, maxDate))
       .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)));
-    const results = await Promise.all(jobs);
+    const [results, mlbGamePks] = await Promise.all([
+      Promise.all(jobs), fetchMlbGamePks(minDate, maxDate),
+    ]);
     sportsEvents = results.flat();
+    sportsEvents.forEach(ev => {
+      if (ev.league === "MLB" && mlbGamePks[ev.date]) {
+        ev.gameLink = "https://www.mlb.com/tv/g" + mlbGamePks[ev.date] + "/";
+      }
+    });
     sportsLastFetch = Date.now();
   }
 
