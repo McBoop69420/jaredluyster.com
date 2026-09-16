@@ -621,23 +621,23 @@
     requestAnimationFrame(fitCalendarGrid);
   }
 
-  // Size the month grid to fill the remaining viewport height so the whole
-  // calendar sits on one screen — the week rows share the space equally.
+  // Give the month grid's week rows a floor tall enough to fill the
+  // remaining viewport on a light week — never a ceiling. A row's own
+  // content (a wrapped event title, a stacked sports grid) can always push
+  // it taller than that; the page scrolls instead of anything getting
+  // clipped, which is why .cal-cell has no overflow:hidden either.
   function fitCalendarGrid() {
     const grid = document.querySelector(".cal-grid");
     if (!grid) return;
     const weeks = Number(grid.getAttribute("data-weeks")) || 5;
     const gr = grid.getBoundingClientRect();
     const top = gr.top;
-    // Keep enough vertical room for at least three event chips per day. If the
-    // viewport is shorter, let the calendar scroll instead of compressing rows.
     const minWeekRow = window.innerWidth <= 680 ? 116 : 150;
-    const minGridHeight = 28 + (weeks * minWeekRow); // weekday header + week rows
     const belowChrome = document.documentElement.scrollHeight - (gr.bottom + window.scrollY);
     const viewportFit = Math.round(window.innerHeight - top - belowChrome - 12);
-    const avail = Math.min(1080, Math.max(minGridHeight, viewportFit, 360));
-    grid.style.height = avail + "px";
-    grid.style.gridTemplateRows = "auto repeat(" + weeks + ", minmax(" + minWeekRow + "px, 1fr))";
+    const rowFloor = Math.max(minWeekRow, Math.floor((viewportFit - 28) / weeks));
+    grid.style.removeProperty("height");
+    grid.style.gridTemplateRows = "auto repeat(" + weeks + ", minmax(" + rowFloor + "px, auto))";
   }
 
   async function refresh() {
