@@ -75,6 +75,10 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 .cal-ev-s{display:none;}
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
+/* A non-sports event's own link (registry, tickets, etc.) — same "still
+   reads as a chip" treatment as the sports Gamecast links below. */
+a.cal-ev-link{border-bottom:0;cursor:pointer;color:inherit;}
+a.cal-ev-link:hover{background:none;color:inherit;opacity:.7;}
 
 /* Sports fixtures: TEAMLOGO TIME TEAMLOGO (score once the game starts).
    When it's a link (ESPN's Gamecast — where/how to watch legally), undo the

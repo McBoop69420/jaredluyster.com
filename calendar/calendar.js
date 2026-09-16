@@ -304,6 +304,15 @@
     return s || e || "";
   }
 
+  // Generic event link (e.g. a registry, a ticket page) — same idea as the
+  // sports Gamecast link below, just for arbitrary non-sports events that
+  // carry their own `url`.
+  function eventTitleHtml(ev) {
+    const t = esc(ev.title || "");
+    if (!ev.url) return t;
+    return '<a class="cal-ev-link" href="' + esc(ev.url) + '" target="_blank" rel="noopener">' + t + '</a>';
+  }
+
   function eventClass(ev) {
     const kind = String(ev.type || ev.kind || ev.category || "").toLowerCase();
     if (!kind) return "";
@@ -445,7 +454,7 @@
           return '<span class="cal-today-item">' +
             (label ? '<strong>' + esc(label) + '</strong> ' : '') +
             (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
-            (matchHtml || esc(ev.title || '')) + '</span>';
+            (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') + '</div>';
     }
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
@@ -475,7 +484,7 @@
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
           (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
           '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
-          '<span class="cal-ev-title">' + (sportsMatchHtml(ev) || esc(ev.title || "")) + '</span></div>';
+          '<span class="cal-ev-title">' + (sportsMatchHtml(ev) || eventTitleHtml(ev)) + '</span></div>';
       }
       // Sports fixtures get their own 2-column grid (square-ish cards, more
       // vertical room per card) instead of stacking full-width like other
@@ -505,7 +514,7 @@
         const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
         agenda.push('<li class="cal-agenda-item">' +
           '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + (matchHtml || esc(ev.title || "")) + '</span>' +
+          '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + '</span>' +
           (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
           '</li>');
       });
