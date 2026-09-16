@@ -24,22 +24,43 @@
   //     MLS/NWSL/USL/EPL), so those leagues instead scan the league
   //     scoreboard over a date range and filter to my team by name.
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
+  // order: "away-home" follows the American broadcast convention (visitor
+  // listed first, e.g. "away @ home"); "home-away" follows the international
+  // football/soccer convention (host club listed first, e.g. "home vs away").
+  // League logos are ESPN CDN assets, hand-resolved once from each league's
+  // /scoreboard response (its top-level `leagues[0].logos`) since the team
+  // schedule endpoint used below doesn't include one. NCAAM/NCAAW share ESPN's
+  // one generic basketball icon — ESPN doesn't publish separate league marks
+  // for the men's/women's tournaments.
   const TEAM_SCHEDULE_TEAMS = [
-    { key: "baseball/mlb", id: "17", label: "MLB" },                                   // Cincinnati Reds
-    { key: "football/nfl", id: "4", label: "NFL" },                                    // Cincinnati Bengals
-    { key: "football/college-football", id: "96", label: "NCAAF" },                    // Kentucky Wildcats
-    { key: "football/college-football", id: "97", label: "NCAAF" },                    // Louisville Cardinals
-    { key: "basketball/mens-college-basketball", id: "96", label: "NCAAM" },           // Kentucky Wildcats
-    { key: "basketball/mens-college-basketball", id: "97", label: "NCAAM" },           // Louisville Cardinals
-    { key: "basketball/womens-college-basketball", id: "96", label: "NCAAW" },         // Kentucky Wildcats
-    { key: "basketball/womens-college-basketball", id: "97", label: "NCAAW" },         // Louisville Cardinals
+    { key: "baseball/mlb", id: "17", label: "MLB", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },                 // Cincinnati Reds
+    { key: "football/nfl", id: "4", label: "NFL", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },                 // Cincinnati Bengals
+    { key: "football/college-football", id: "96", label: "NCAAF", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },  // Kentucky Wildcats
+    { key: "football/college-football", id: "97", label: "NCAAF", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },  // Louisville Cardinals
+    { key: "basketball/mens-college-basketball", id: "96", label: "NCAAM", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Kentucky Wildcats
+    { key: "basketball/mens-college-basketball", id: "97", label: "NCAAM", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Louisville Cardinals
+    { key: "basketball/womens-college-basketball", id: "96", label: "NCAAW", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Kentucky Wildcats
+    { key: "basketball/womens-college-basketball", id: "97", label: "NCAAW", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Louisville Cardinals
   ];
   const SOCCER_LEAGUES = [
-    { key: "soccer/usa.1", label: "MLS", patterns: ["fc cincinnati"] },
-    { key: "soccer/usa.nwsl", label: "NWSL", patterns: ["racing louisville"] },
-    { key: "soccer/usa.usl.1", label: "USL Championship", patterns: ["lexington"] },
-    { key: "soccer/eng.1", label: "Premier League", patterns: ["liverpool", "arsenal"] },
-    { key: "soccer/esp.1", label: "La Liga", patterns: ["athletic club"] },  // Athletic Bilbao
+    { key: "soccer/usa.1", label: "MLS", order: "home-away", patterns: ["fc cincinnati"],
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/19.png" },
+    { key: "soccer/usa.nwsl", label: "NWSL", order: "home-away", patterns: ["racing louisville"],
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2323.png" },
+    { key: "soccer/usa.usl.1", label: "USL Championship", order: "home-away", patterns: ["lexington"],
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2292.png" },
+    { key: "soccer/eng.1", label: "Premier League", order: "home-away", patterns: ["liverpool", "arsenal"],
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
+    { key: "soccer/esp.1", label: "La Liga", order: "home-away", patterns: ["athletic club"],  // Athletic Bilbao
+      logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/15.png" },
   ];
   const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
   const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling ~5-6 week display
@@ -115,7 +136,20 @@
     return { date: map.year + "-" + map.month + "-" + map.day, time: hh + ":" + map.minute };
   }
 
-  function parseGameEvent(ev, leagueLabel) {
+  // Picks a display logo URL off an ESPN competitor's team object. Soccer
+  // competitors carry a single `team.logo` string; US pro/college sports
+  // carry a `team.logos` array of variants (light/dark/scoreboard) instead.
+  function teamLogoUrl(team) {
+    if (!team) return null;
+    if (team.logo) return team.logo;
+    if (Array.isArray(team.logos) && team.logos.length) {
+      const def = team.logos.find(l => Array.isArray(l.rel) && l.rel.includes("default") && !l.rel.includes("dark"));
+      return (def || team.logos[0]).href;
+    }
+    return null;
+  }
+
+  function parseGameEvent(ev, entry) {
     const comp = ev && ev.competitions && ev.competitions[0];
     if (!comp) return null;
     const competitors = comp.competitors || [];
@@ -127,15 +161,29 @@
     const awayName = (away.team && (away.team.shortDisplayName || away.team.displayName)) || "?";
     const homeName = (home.team && (home.team.shortDisplayName || home.team.displayName)) || "?";
     const scoreOf = c => c.score && (c.score.displayValue || c.score.value);
+    const live = state === "post" || state === "in";
+    const awayScore = live ? (scoreOf(away) != null ? scoreOf(away) : "0") : null;
+    const homeScore = live ? (scoreOf(home) != null ? scoreOf(home) : "0") : null;
     let title;
-    if (state === "post" || state === "in") {
-      const as = scoreOf(away), hs = scoreOf(home);
-      title = leagueLabel + " · " + awayName + " " + (as != null ? as : "0") +
-        ", " + homeName + " " + (hs != null ? hs : "0") + (state === "post" ? " (Final)" : " (Live)");
+    if (live) {
+      title = entry.label + " · " + awayName + " " + awayScore +
+        ", " + homeName + " " + homeScore + (state === "post" ? " (Final)" : " (Live)");
     } else {
-      title = leagueLabel + " · " + awayName + " @ " + homeName;
+      title = entry.label + " · " + awayName + " @ " + homeName;
     }
-    return { date: et.date, start: et.time, title: title, type: "sports" };
+    // Fixture placement follows each sport's own convention (see TEAM_SCHEDULE_TEAMS/
+    // SOCCER_LEAGUES comment): American sports show away first, soccer shows home first.
+    const homeFirst = entry.order === "home-away";
+    return {
+      date: et.date, start: et.time, title: title, type: "sports",
+      league: entry.label, leagueLogo: entry.logo, state: state || "pre",
+      leftName: homeFirst ? homeName : awayName,
+      rightName: homeFirst ? awayName : homeName,
+      leftLogo: teamLogoUrl((homeFirst ? home : away).team),
+      rightLogo: teamLogoUrl((homeFirst ? away : home).team),
+      leftScore: homeFirst ? homeScore : awayScore,
+      rightScore: homeFirst ? awayScore : homeScore,
+    };
   }
 
   async function fetchTeamScheduleEvents(entry, minDate, maxDate) {
@@ -148,33 +196,54 @@
       if (!res.ok) return [];
       const data = await res.json();
       const events = Array.isArray(data.events) ? data.events : [];
-      return events.map(ev => parseGameEvent(ev, entry.label)).filter(Boolean)
+      return events.map(ev => parseGameEvent(ev, entry)).filter(Boolean)
         .filter(g => g.date >= minDate && g.date <= maxDate);
     } catch (e) {
       return [];
     }
   }
 
-  async function fetchSoccerLeagueEvents(entry, minDate, maxDate) {
-    try {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 8000);
-      const range = minDate.replace(/-/g, "") + "-" + maxDate.replace(/-/g, "");
-      const url = ESPN + entry.key + "/scoreboard?dates=" + range + "&limit=1000";
-      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-      clearTimeout(timeout);
-      if (!res.ok) return [];
-      const data = await res.json();
-      const events = Array.isArray(data.events) ? data.events : [];
-      return events.filter(ev => {
-        const comp = ev.competitions && ev.competitions[0];
-        const names = ((comp && comp.competitors) || []).map(c =>
-          ((c.team && c.team.displayName) || "").toLowerCase());
-        return entry.patterns.some(p => names.some(n => n.includes(p)));
-      }).map(ev => parseGameEvent(ev, entry.label)).filter(Boolean);
-    } catch (e) {
-      return [];
+  // ESPN's scoreboard endpoint currently rejects the hyphenated range form
+  // (`dates=YYYYMMDD-YYYYMMDD` → 400 "Failed to get events endpoint.", verified
+  // directly against the API, not a local artifact) that this used to rely on
+  // for its whole window in one request. A `dates=YYYYMM` (month) query still
+  // works, so fetch one request per month the window touches and trim the
+  // overshoot at the edges client-side.
+  function monthsBetween(minDate, maxDate) {
+    let [y, m] = minDate.split("-").map(Number);
+    const [y2, m2] = maxDate.split("-").map(Number);
+    const months = [];
+    while (y < y2 || (y === y2 && m <= m2)) {
+      months.push(y + pad2(m));
+      m++; if (m > 12) { m = 1; y++; }
     }
+    return months;
+  }
+
+  async function fetchSoccerLeagueEvents(entry, minDate, maxDate) {
+    async function fetchMonth(ym) {
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
+        const url = ESPN + entry.key + "/scoreboard?dates=" + ym;
+        const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+        clearTimeout(timeout);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data.events) ? data.events : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    const monthJobs = monthsBetween(minDate, maxDate).map(fetchMonth);
+    const events = (await Promise.all(monthJobs)).flat();
+    return events.filter(ev => {
+      const comp = ev.competitions && ev.competitions[0];
+      const names = ((comp && comp.competitors) || []).map(c =>
+        ((c.team && c.team.displayName) || "").toLowerCase());
+      return entry.patterns.some(p => names.some(n => n.includes(p)));
+    }).map(ev => parseGameEvent(ev, entry)).filter(Boolean)
+      .filter(g => g.date >= minDate && g.date <= maxDate);
   }
 
   async function loadSportsEvents() {
@@ -211,6 +280,28 @@
     if (!kind) return "";
     const safe = kind.replace(/[^a-z0-9_-]/g, "");
     return safe ? " cal-ev--" + safe : "";
+  }
+
+  // TEAMLOGO LEAGUELOGO TEAMLOGO, in each sport's own home/away fixture order
+  // (see parseGameEvent). `size` picks a CSS modifier for the three contexts
+  // this renders in: "sm" grid chips (default), "md" the upcoming strip,
+  // "lg" the full-schedule agenda. Falls back to null (caller uses text)
+  // when any logo is missing, e.g. an ESPN response with no team art.
+  function sportsMatchHtml(ev, size) {
+    if (ev.type !== "sports" || !ev.leftLogo || !ev.rightLogo || !ev.leagueLogo) return null;
+    const sizeClass = size && size !== "sm" ? " cal-ev-match--" + size : "";
+    const hasScore = (ev.state === "in" || ev.state === "post") &&
+      ev.leftScore != null && ev.rightScore != null;
+    const scoreHtml = hasScore
+      ? '<span class="cal-ev-score' + (ev.state === "in" ? " cal-ev-score--live" : "") + '">' +
+        esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
+      : '';
+    return '<span class="cal-ev-match' + sizeClass + '">' +
+      '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
+      '<img class="cal-ev-logo cal-ev-logo--league" src="' + esc(ev.leagueLogo) + '" alt="' + esc(ev.league) + '" loading="lazy" decoding="async">' +
+      '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
+      scoreHtml +
+      '</span>';
   }
 
   function renderCalendar() {
@@ -306,7 +397,7 @@
           return '<span class="cal-today-item">' +
             (label ? '<strong>' + esc(label) + '</strong> ' : '') +
             (rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
-            esc(ev.title || '') + '</span>';
+            (sportsMatchHtml(ev, "md") || esc(ev.title || '')) + '</span>';
         }).join('') + '</div>';
     }
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
@@ -336,7 +427,7 @@
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
           (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
           '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
-          '<span class="cal-ev-title">' + esc(ev.title || "") + '</span></div>';
+          '<span class="cal-ev-title">' + (sportsMatchHtml(ev) || esc(ev.title || "")) + '</span></div>';
       });
       html += '</div>';
     });
@@ -356,7 +447,7 @@
         const rng = fmtRange(ev);
         agenda.push('<li class="cal-agenda-item">' +
           '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + esc(ev.title || "") + '</span>' +
+          '<span class="cal-agenda-title">' + (sportsMatchHtml(ev, "lg") || esc(ev.title || "")) + '</span>' +
           (rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
           '</li>');
       });

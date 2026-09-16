@@ -1,7 +1,7 @@
 :root{
   --cal-ink:#1c2024;--cal-paper:#f1f3f1;--cal-muted:#57616b;
   --cal-accent:#1f6f66;--cal-accent-ink:#eef2f1;--cal-border-w:3px;
-  --cal-tab-bg:#dee6e3;--cal-highlight:#d8ece6;--cal-work:#3a5a80;
+  --cal-tab-bg:#dee6e3;--cal-highlight:#d8ece6;--cal-work:#3a5a80;--cal-live:#b8462f;
   --cal-font-display:"Space Grotesk","Arial Black",sans-serif;
   --cal-font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
@@ -75,6 +75,20 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 .cal-ev-s{display:none;}
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
+
+/* Sports fixtures: TEAMLOGO LEAGUELOGO TEAMLOGO, league logo implying "vs" */
+.cal-ev-match{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;}
+.cal-ev-logo{display:block;object-fit:contain;flex:none;background:var(--cal-accent-ink);border-radius:2px;}
+.cal-ev-logo--team{width:14px;height:14px;}
+.cal-ev-logo--league{width:9px;height:9px;opacity:.85;background:none;}
+.cal-ev-score{font-variant-numeric:tabular-nums;font-weight:700;margin-left:3px;font-size:10px;}
+.cal-ev-score--live{color:var(--cal-live);}
+.cal-ev-match--md .cal-ev-logo--team{width:18px;height:18px;}
+.cal-ev-match--md .cal-ev-logo--league{width:11px;height:11px;}
+.cal-ev-match--md .cal-ev-score{font-size:11.5px;}
+.cal-ev-match--lg .cal-ev-logo--team{width:24px;height:24px;}
+.cal-ev-match--lg .cal-ev-logo--league{width:14px;height:14px;}
+.cal-ev-match--lg .cal-ev-score{font-size:14px;margin-left:5px;}
 
 .cal-agenda-wrap{display:none;margin-top:14px;padding-top:10px;border-top:var(--cal-border-w) solid var(--cal-ink);}
 .cal-agenda-wrap h3.sub{margin:0 0 2px;}
