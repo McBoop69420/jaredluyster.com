@@ -387,13 +387,17 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   design can be reloaded and edited again (the PNG alone can't be un-flattened). Same
   binding style as the `DRAFT_ROOM` Durable Object for roto (§ above), except R2 buckets
   bind directly to Pages — no separate Worker needed.
-- **Setup required (not yet done as of this writing):** create the R2 bucket, add the
-  `SOCIAL_ASSETS` binding on the dashboard-managed Pages project, add the custom domain,
-  and — recommended, since the API has no auth of its own — put it behind Cloudflare
-  Access like `news`/`sports`/`calendar`. Full steps in DEPLOY.md's "Social Asset Studio"
-  section.
-- **Until the R2 binding exists:** the editor (templates, canvas, export-to-PNG) still
-  works standalone; only the library (save/list/delete) needs the bucket.
+- **Live since 2026-09-16.** The R2 bucket, the `SOCIAL_ASSETS` binding, and the
+  `social.jaredluyster.com` custom domain are all set up — verified by saving a design
+  through the real editor and watching it round-trip through the actual bucket. The binding
+  needed no manual dashboard step: this project's bindings come entirely from the root
+  `wrangler.toml` (the dashboard says so outright — "Bindings for this project are being
+  managed through wrangler.toml"), so pushing the `[[r2_buckets]]` block was enough. That
+  almost certainly means `DRAFT_ROOM` above was provisioned the same way, not by hand.
+- **Still open:** Cloudflare Access in front of it — recommended since
+  `functions/social/api/[[path]].ts` has no auth of its own, so anyone reaching the
+  subdomain can list/upload/delete library assets. See DEPLOY.md's "Social Asset Studio"
+  section for the policy to reuse.
 
 ## Cloudflare Tunnel Configuration
 
@@ -527,7 +531,7 @@ this repo.
 | `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: MLB value screen, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
-| `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed — setup pending, see DEPLOY.md |
+| `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed — live, Access still recommended |
 
 ## How to Work With This Repo
 

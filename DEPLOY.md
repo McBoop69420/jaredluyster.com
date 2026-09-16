@@ -54,27 +54,32 @@ following the tool-subdomain pattern above (`social` is in `SUBDOMAIN_ROOTS`), p
 piece of real backend: an R2 bucket for the library, reached through
 `functions/social/api/[[path]].ts`.
 
-**One-time setup, not yet done as of this writing:**
+**One-time setup — done 2026-09-16, except Access:**
 
-1. Create the bucket: `wrangler r2 bucket create jaredluyster-social-assets` (or via the
-   dashboard, Workers & Pages -> R2).
-2. `wrangler.toml`'s `[[r2_buckets]]` block already covers `wrangler pages dev`/`deploy`.
-   For the dashboard-managed production project, also add the binding under **Settings ->
-   Bindings -> R2 Bucket**: variable name `SOCIAL_ASSETS`, bucket
-   `jaredluyster-social-assets` — same one-time step the `DRAFT_ROOM` Durable Object
-   needed above.
-3. Add `social.jaredluyster.com` as a **custom domain** on the Pages project (same as any
-   other tool subdomain — Cloudflare creates the CNAME automatically).
-4. **Recommended:** put it behind **Cloudflare Access** with the same "Only Me" policy
-   reused by `news`/`sports`/`calendar` (Zero Trust -> Access -> Applications -> Add). The
-   API in `functions/social/api/[[path]].ts` has no auth of its own — anyone who can reach
-   `social.jaredluyster.com` can list/upload/delete library assets. Access gates that at
-   the edge before a request ever reaches the Function, exactly like it does for the other
-   personal-use subdomains.
+1. ~~Create the bucket~~ — done: `jaredluyster-social-assets` exists (R2 free-tier
+   subscription added to the account first, since this account had never used R2 before).
+2. ~~Add the binding~~ — **turned out to need no manual dashboard step.** This Pages
+   project's bindings are managed entirely through the root `wrangler.toml` (the dashboard
+   says so directly: "Bindings for this project are being managed through wrangler.toml" —
+   the "Add" button under Settings -> Bindings is disabled). Pushing the `[[r2_buckets]]`
+   block to `main` was enough; the next deploy provisioned `SOCIAL_ASSETS` automatically,
+   the same way `sports/wrangler.toml` drives that project's build config (§4b in
+   INFRASTRUCTURE.md). The `DRAFT_ROOM` Durable Object binding documented above must have
+   been added the same way, not by hand — the dashboard has never actually supported adding
+   a binding here independent of the file.
+3. ~~Add the custom domain~~ — done: `social.jaredluyster.com` is a custom domain on the
+   `jaredluyster-com` Pages project, same CNAME-to-`.pages.dev` pattern as
+   `roto`/`wintergreen`.
+4. **Still not done — recommended:** put it behind **Cloudflare Access** with the same
+   "Only Me" policy reused by `news`/`sports`/`calendar` (Zero Trust -> Access ->
+   Applications -> Add). The API in `functions/social/api/[[path]].ts` has no auth of its
+   own — anyone who can reach `social.jaredluyster.com` can list/upload/delete library
+   assets. Access gates that at the edge before a request ever reaches the Function, exactly
+   like it does for the other personal-use subdomains.
 
-Until the R2 binding exists, the editor still works (crafting, export-to-PNG, the
-in-browser draft) — only "Save to Library" and the library grid will fail, with the fetch
-error visible in the library panel rather than failing silently.
+Verified live end-to-end 2026-09-16: saved a design from the editor, watched it land in the
+library grid backed by the real R2 bucket, deleted it, confirmed the grid went back to
+"Nothing saved yet."
 
 ## Roto multiplayer (the DraftRoom Durable Object)
 
