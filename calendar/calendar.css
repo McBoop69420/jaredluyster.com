@@ -78,9 +78,10 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 
 /* Sports fixtures: TEAMLOGO LEAGUELOGO TEAMLOGO, league logo implying "vs" */
 .cal-ev-match{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;}
-.cal-ev-logo{display:block;object-fit:contain;flex:none;background:var(--cal-accent-ink);border-radius:2px;}
+.cal-ev-match-teams{display:inline-flex;align-items:center;gap:3px;}
+.cal-ev-logo{display:block;object-fit:contain;flex:none;}
 .cal-ev-logo--team{width:14px;height:14px;}
-.cal-ev-logo--league{width:9px;height:9px;opacity:.85;background:none;}
+.cal-ev-logo--league{width:9px;height:9px;opacity:.85;}
 .cal-ev-score{font-variant-numeric:tabular-nums;font-weight:700;margin-left:3px;font-size:10px;}
 .cal-ev-score--live{color:var(--cal-live);}
 .cal-ev-match--md .cal-ev-logo--team{width:18px;height:18px;}
@@ -89,6 +90,17 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 .cal-ev-match--lg .cal-ev-logo--team{width:24px;height:24px;}
 .cal-ev-match--lg .cal-ev-logo--league{width:14px;height:14px;}
 .cal-ev-match--lg .cal-ev-score{font-size:14px;margin-left:5px;}
+
+/* Sports chips get their own 2-column grid instead of stacking full-width —
+   a day with four games reads as 2x2 (square-ish cards), not a 4-row list.
+   Each card stacks its logo row above the score, trading the list's spare
+   width for headroom the grid's auto row-sizing happily grants. */
+.cal-ev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}
+.cal-ev-grid .cal-ev{white-space:normal;text-align:center;padding:5px 3px;}
+.cal-ev-grid .cal-ev-match{display:flex;flex-direction:column;gap:3px;}
+.cal-ev-grid .cal-ev-logo--team{width:17px;height:17px;}
+.cal-ev-grid .cal-ev-logo--league{width:10px;height:10px;}
+.cal-ev-grid .cal-ev-score{margin-left:0;}
 
 .cal-agenda-wrap{display:none;margin-top:14px;padding-top:10px;border-top:var(--cal-border-w) solid var(--cal-ink);}
 .cal-agenda-wrap h3.sub{margin:0 0 2px;}

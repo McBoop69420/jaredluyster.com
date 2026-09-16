@@ -297,9 +297,11 @@
         esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
       : '';
     return '<span class="cal-ev-match' + sizeClass + '">' +
-      '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
-      '<img class="cal-ev-logo cal-ev-logo--league" src="' + esc(ev.leagueLogo) + '" alt="' + esc(ev.league) + '" loading="lazy" decoding="async">' +
-      '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
+      '<span class="cal-ev-match-teams">' +
+        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
+        '<img class="cal-ev-logo cal-ev-logo--league" src="' + esc(ev.leagueLogo) + '" alt="' + esc(ev.league) + '" loading="lazy" decoding="async">' +
+        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
+      '</span>' +
       scoreHtml +
       '</span>';
   }
@@ -418,17 +420,26 @@
       html += '<div class="cal-daynum">' +
         (showMon ? '<span class="cal-mon">' + esc(d.toLocaleDateString("en-US", { month: "short" })) + '</span> ' : '') +
         day + '</div>';
-      evs.forEach(ev => {
+      function evChipHtml(ev) {
         const rng = fmtRange(ev);
         const clock = fmtTime(ev.start);   // real HH:MM only — never freetext
         const start = clock || rng;
-        html += '<div class="cal-ev' + eventClass(ev) + '" title="' +
+        return '<div class="cal-ev' + eventClass(ev) + '" title="' +
           esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
           (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
           '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
           '<span class="cal-ev-title">' + (sportsMatchHtml(ev) || esc(ev.title || "")) + '</span></div>';
-      });
+      }
+      // Sports fixtures get their own 2-column grid (square-ish cards, more
+      // vertical room per card) instead of stacking full-width like other
+      // event types — a day with four games reads as 2x2, not a 4-row list.
+      const sportsEvs = evs.filter(ev => ev.type === "sports");
+      const otherEvs = evs.filter(ev => ev.type !== "sports");
+      otherEvs.forEach(ev => { html += evChipHtml(ev); });
+      if (sportsEvs.length) {
+        html += '<div class="cal-ev-grid">' + sportsEvs.map(evChipHtml).join('') + '</div>';
+      }
       html += '</div>';
     });
     html += '</div>';
