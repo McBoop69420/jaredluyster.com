@@ -148,6 +148,16 @@
     return { date: map.year + "-" + map.month + "-" + map.day, time: hh + ":" + map.minute };
   }
 
+  // ESPN's own Gamecast page for this event — an official, legal source for
+  // where/how to watch (broadcast network, streaming partner) rather than us
+  // guessing or linking to any particular streaming service ourselves.
+  function gameLinkUrl(ev) {
+    const links = Array.isArray(ev.links) ? ev.links : [];
+    const l = links.find(x => x && typeof x.href === "string" && /^https?:\/\//.test(x.href) &&
+      Array.isArray(x.rel) && x.rel.includes("summary") && !x.rel.includes("app"));
+    return l ? l.href : null;
+  }
+
   // Picks a display logo URL off an ESPN competitor's team object. Soccer
   // competitors carry a single `team.logo` string; US pro/college sports
   // carry a `team.logos` array of variants (light/dark/scoreboard) instead.
@@ -194,6 +204,7 @@
       date: et.date, start: timeValid ? et.time : null,
       timeLabel: timeValid ? null : "TBD", title: title, type: "sports",
       league: entry.label, leagueLogo: entry.logo, state: state || "pre",
+      gameLink: gameLinkUrl(ev),
       leftName: homeFirst ? homeName : awayName,
       rightName: homeFirst ? awayName : homeName,
       leftLogo: teamLogoUrl((homeFirst ? home : away).team),
@@ -305,7 +316,9 @@
   // to the score. `size` picks a CSS modifier for the three contexts this
   // renders in: "sm" grid chips (default), "md" the upcoming strip, "lg" the
   // full-schedule agenda. Falls back to null (caller uses text) when either
-  // team logo is missing, e.g. an ESPN response with no team art.
+  // team logo is missing, e.g. an ESPN response with no team art. When ESPN
+  // gives us a Gamecast link, the whole chip becomes a link there — the
+  // legal, official source for where/how to watch, never a direct stream.
   function sportsMatchHtml(ev, size) {
     if (ev.type !== "sports" || !ev.leftLogo || !ev.rightLogo) return null;
     const sizeClass = size && size !== "sm" ? " cal-ev-match--" + size : "";
@@ -315,13 +328,16 @@
       ? '<span class="cal-ev-score' + (ev.state === "in" ? " cal-ev-score--live" : "") + '">' +
         esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
       : '<span class="cal-ev-match-time">' + esc(fmtRange(ev)) + '</span>';
-    return '<span class="cal-ev-match' + sizeClass + '">' +
+    const tag = ev.gameLink ? "a" : "span";
+    const linkAttrs = ev.gameLink
+      ? ' href="' + esc(ev.gameLink) + '" target="_blank" rel="noopener"' : "";
+    return '<' + tag + ' class="cal-ev-match' + sizeClass + '"' + linkAttrs + '>' +
       '<span class="cal-ev-match-teams">' +
         '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
         centerHtml +
         '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
       '</span>' +
-      '</span>';
+      '</' + tag + '>';
   }
 
   function renderCalendar() {

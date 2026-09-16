@@ -76,8 +76,12 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
 
-/* Sports fixtures: TEAMLOGO TIME TEAMLOGO (score once the game starts) */
+/* Sports fixtures: TEAMLOGO TIME TEAMLOGO (score once the game starts).
+   When it's a link (ESPN's Gamecast — where/how to watch legally), undo the
+   page's default link underline/hover-invert so it still reads as a chip. */
 .cal-ev-match{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;}
+a.cal-ev-match{border-bottom:0;cursor:pointer;color:inherit;}
+a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
 .cal-ev-match-teams{display:inline-flex;align-items:center;gap:3px;}
 .cal-ev-logo{display:block;object-fit:contain;flex:none;}
 .cal-ev-logo--team{width:14px;height:14px;}
