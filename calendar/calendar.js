@@ -282,27 +282,27 @@
     return safe ? " cal-ev--" + safe : "";
   }
 
-  // TEAMLOGO LEAGUELOGO TEAMLOGO, in each sport's own home/away fixture order
-  // (see parseGameEvent). `size` picks a CSS modifier for the three contexts
-  // this renders in: "sm" grid chips (default), "md" the upcoming strip,
-  // "lg" the full-schedule agenda. Falls back to null (caller uses text)
-  // when any logo is missing, e.g. an ESPN response with no team art.
+  // TEAMLOGO TIME TEAMLOGO, in each sport's own home/away fixture order (see
+  // parseGameEvent). Once the game is live or final, the time slot switches
+  // to the score. `size` picks a CSS modifier for the three contexts this
+  // renders in: "sm" grid chips (default), "md" the upcoming strip, "lg" the
+  // full-schedule agenda. Falls back to null (caller uses text) when either
+  // team logo is missing, e.g. an ESPN response with no team art.
   function sportsMatchHtml(ev, size) {
-    if (ev.type !== "sports" || !ev.leftLogo || !ev.rightLogo || !ev.leagueLogo) return null;
+    if (ev.type !== "sports" || !ev.leftLogo || !ev.rightLogo) return null;
     const sizeClass = size && size !== "sm" ? " cal-ev-match--" + size : "";
     const hasScore = (ev.state === "in" || ev.state === "post") &&
       ev.leftScore != null && ev.rightScore != null;
-    const scoreHtml = hasScore
+    const centerHtml = hasScore
       ? '<span class="cal-ev-score' + (ev.state === "in" ? " cal-ev-score--live" : "") + '">' +
         esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
-      : '';
+      : '<span class="cal-ev-match-time">' + esc(fmtTime(ev.start)) + '</span>';
     return '<span class="cal-ev-match' + sizeClass + '">' +
       '<span class="cal-ev-match-teams">' +
         '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
-        '<img class="cal-ev-logo cal-ev-logo--league" src="' + esc(ev.leagueLogo) + '" alt="' + esc(ev.league) + '" loading="lazy" decoding="async">' +
+        centerHtml +
         '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
       '</span>' +
-      scoreHtml +
       '</span>';
   }
 
@@ -396,10 +396,11 @@
           const label = ev._dateLabel || "";
           const rng = fmtRange(ev);
           const sameAsLabel = rng && label && rng.toLowerCase() === label.toLowerCase();
+          const matchHtml = sportsMatchHtml(ev, "md"); // already carries the time/score, so skip the plain-text rng below
           return '<span class="cal-today-item">' +
             (label ? '<strong>' + esc(label) + '</strong> ' : '') +
-            (rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
-            (sportsMatchHtml(ev, "md") || esc(ev.title || '')) + '</span>';
+            (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
+            (matchHtml || esc(ev.title || '')) + '</span>';
         }).join('') + '</div>';
     }
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
@@ -456,10 +457,11 @@
       if (!evs.length) return;
       evs.forEach(ev => {
         const rng = fmtRange(ev);
+        const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
         agenda.push('<li class="cal-agenda-item">' +
           '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + (sportsMatchHtml(ev, "lg") || esc(ev.title || "")) + '</span>' +
-          (rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
+          '<span class="cal-agenda-title">' + (matchHtml || esc(ev.title || "")) + '</span>' +
+          (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
           '</li>');
       });
     });
