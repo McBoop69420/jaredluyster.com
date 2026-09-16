@@ -61,6 +61,18 @@
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
     { key: "soccer/esp.1", label: "La Liga", order: "home-away", patterns: ["athletic club"],  // Athletic Bilbao
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/15.png" },
+    // Cup/continental competitions layered on top of each club's domestic
+    // league above — these are what actually produce the midweek fixtures a
+    // domestic-only scoreboard misses (Champions/Europa League matchdays,
+    // domestic cup rounds, Leagues Cup/US Open Cup ties). No `logo` here: the
+    // matchup chip only ever shows team logos now, never the league mark.
+    { key: "soccer/uefa.champions", label: "Champions League", order: "home-away", patterns: ["liverpool", "arsenal"] },
+    { key: "soccer/uefa.europa", label: "Europa League", order: "home-away", patterns: ["athletic club"] },
+    { key: "soccer/eng.fa", label: "FA Cup", order: "home-away", patterns: ["liverpool", "arsenal"] },
+    { key: "soccer/eng.league_cup", label: "Carabao Cup", order: "home-away", patterns: ["liverpool", "arsenal"] },
+    { key: "soccer/esp.copa_del_rey", label: "Copa del Rey", order: "home-away", patterns: ["athletic club"] },
+    { key: "soccer/usa.open", label: "US Open Cup", order: "home-away", patterns: ["fc cincinnati", "lexington"] },
+    { key: "soccer/concacaf.leagues.cup", label: "Leagues Cup", order: "home-away", patterns: ["fc cincinnati"] },
   ];
   const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
   const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling ~5-6 week display
@@ -157,6 +169,10 @@
     const home = competitors.find(c => c.homeAway === "home");
     if (!away || !home) return null;
     const et = toET(ev.date || comp.date);
+    // ESPN sets timeValid:false when a kickoff hasn't been announced yet — the
+    // date's time-of-day is then just a placeholder (often midnight ET), not
+    // the real start time, so show "TBD" instead of a made-up clock reading.
+    const timeValid = ev.timeValid !== false && comp.timeValid !== false;
     const state = comp.status && comp.status.type && comp.status.type.state;
     const awayName = (away.team && (away.team.shortDisplayName || away.team.displayName)) || "?";
     const homeName = (home.team && (home.team.shortDisplayName || home.team.displayName)) || "?";
@@ -175,7 +191,8 @@
     // SOCCER_LEAGUES comment): American sports show away first, soccer shows home first.
     const homeFirst = entry.order === "home-away";
     return {
-      date: et.date, start: et.time, title: title, type: "sports",
+      date: et.date, start: timeValid ? et.time : null,
+      timeLabel: timeValid ? null : "TBD", title: title, type: "sports",
       league: entry.label, leagueLogo: entry.logo, state: state || "pre",
       leftName: homeFirst ? homeName : awayName,
       rightName: homeFirst ? awayName : homeName,
@@ -263,6 +280,7 @@
     let h = parseInt(p[0], 10);
     const m = p[1] || "00";
     if (isNaN(h)) return esc(hhmm);
+    if (h === 12 && m === "00") return "Noon";
     const per = h < 12 ? "a" : "p";
     let h12 = h % 12; if (h12 === 0) h12 = 12;
     return h12 + (m === "00" ? "" : ":" + m) + per;
@@ -296,7 +314,7 @@
     const centerHtml = hasScore
       ? '<span class="cal-ev-score' + (ev.state === "in" ? " cal-ev-score--live" : "") + '">' +
         esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
-      : '<span class="cal-ev-match-time">' + esc(fmtTime(ev.start)) + '</span>';
+      : '<span class="cal-ev-match-time">' + esc(fmtRange(ev)) + '</span>';
     return '<span class="cal-ev-match' + sizeClass + '">' +
       '<span class="cal-ev-match-teams">' +
         '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
