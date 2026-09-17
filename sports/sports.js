@@ -165,6 +165,8 @@
   let valueScreenLoading = false;
   let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
   let nflOddsLoading = false;
+  let restDays = null;              // { games: [...], fetchedAt } — soft-factor tracker, no model
+  let restDaysLoading = false;
   // The Spotlight "more from your teams" cycling card: followed-team games
   // that don't hold their own Spotlight slot (finished today, or still more
   // than an hour from kickoff) rotate through this one slot instead of
@@ -1487,6 +1489,7 @@
       await refreshNflGamesForOdds();
     }
     renderValueScreen();
+    renderRestDays();
     renderNflOdds();
     loadNflOdds(); // gamesByLeague("football/nfl") just refreshed above — pick up new/dropped games
     stamp();
@@ -1517,6 +1520,8 @@
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
         renderValueScreen();
         loadValueScreen();
+        renderRestDays();
+        loadRestDays();
         renderNflOdds();
         loadNflOdds();
         render();
@@ -1732,6 +1737,123 @@
       }
     }
     return games;
+  }
+
+  // ---- MLB Days Rest (soft factor, no model) -----------------------------
+  // Tracked separately from the Value Screen above — this doesn't feed the
+  // model, it's just a schedule-fatigue fact worth seeing alongside it. One
+  // range fetch over the trailing week covers every team's last game date at
+  // once, so no per-team API calls are needed.
+  const REST_WINDOW_DAYS = 8; // deep enough to bridge a normal off-day or two
+
+  function dateStrAddDays(dateStr, delta) {
+    const d = new Date(dateStr + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + delta);
+    return d.toISOString().slice(0, 10);
+  }
+
+  async function computeRestDays() {
+    const today = etTodayStr();
+    const startDate = dateStrAddDays(today, -REST_WINDOW_DAYS);
+    const sched = await fetchJSON(STATS + "/schedule?sportId=1&startDate=" + startDate +
+      "&endDate=" + today + "&hydrate=team");
+
+    const lastGame = new Map(); // teamId -> most recent game date before today
+    const todayGames = [];
+    for (const day of (sched && sched.dates) || []) {
+      const gameDate = day.date;
+      for (const g of day.games || []) {
+        const away = g.teams.away.team || {}, home = g.teams.home.team || {};
+        if (gameDate === today) {
+          todayGames.push({
+            away: away.name || "", home: home.name || "",
+            awayAbbr: away.abbreviation || "", homeAbbr: home.abbreviation || "",
+            awayId: away.id, homeId: home.id,
+          });
+          continue;
+        }
+        if (gameDate > today) continue;
+        [away, home].forEach(team => {
+          if (team.id == null) return;
+          const prev = lastGame.get(team.id);
+          if (!prev || gameDate > prev) lastGame.set(team.id, gameDate);
+        });
+      }
+    }
+
+    // Days since that team's last game, minus 1 — played yesterday (1 day
+    // apart) means a true back-to-back, i.e. 0 days of rest in between.
+    function restFor(teamId) {
+      const last = lastGame.get(teamId);
+      if (last == null) return null; // no prior game in the window
+      const days = Math.round((Date.parse(today) - Date.parse(last)) / 86400000);
+      return days - 1;
+    }
+
+    return todayGames.map(g => ({
+      away: g.away, home: g.home, awayAbbr: g.awayAbbr, homeAbbr: g.homeAbbr,
+      awayRest: restFor(g.awayId), homeRest: restFor(g.homeId),
+    }));
+  }
+
+  function restDaysRowsHtml() {
+    const games = restDays && restDays.games;
+    if (!games) {
+      return '<tr><td colspan="3" class="value-empty">' +
+        (restDaysLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
+        "</td></tr>";
+    }
+    if (!games.length) {
+      return '<tr><td colspan="3" class="value-empty">No MLB games scheduled today.</td></tr>';
+    }
+    function cell(rest) {
+      if (rest == null) return "—";
+      return rest <= 0 ? '<span class="value-note">' + rest + " (back-to-back)</span>" : String(rest);
+    }
+    return games.map(r => {
+      const match = "<strong>" + esc(r.awayAbbr) + " @ " + esc(r.homeAbbr) + "</strong>";
+      return "<tr><td>" + match + "</td><td>" + cell(r.awayRest) + "</td><td>" + cell(r.homeRest) +
+        "</td></tr>";
+    }).join("");
+  }
+
+  // Same "rides along with the MLB filter" rule as the Value Screen.
+  function restDaysVisible() {
+    return activeFilter === "all" || activeFilter === "baseball/mlb";
+  }
+
+  function renderRestDays() {
+    const panel = $("#restDays");
+    if (!panel) return;
+    const visible = restDaysVisible();
+    panel.style.display = visible ? "" : "none";
+    if (!visible) return;
+
+    $("#restDaysBody").innerHTML = restDaysRowsHtml();
+    const meta = $("#restDaysMeta");
+    const games = restDays && restDays.games;
+    if (!games) {
+      meta.textContent = restDaysLoading ? "Loading slate…" : "Slate unavailable";
+      return;
+    }
+    const b2b = games.filter(g => g.awayRest === 0 || g.homeRest === 0).length;
+    meta.textContent = games.length + " games · " + b2b + " on a back-to-back";
+  }
+
+  async function loadRestDays() {
+    if (!$("#restDays")) return; // panel doesn't exist on this page (e.g. Games)
+    if (restDaysLoading || !restDaysVisible()) return;
+    restDaysLoading = true;
+    renderRestDays();
+    try {
+      const games = await computeRestDays();
+      restDays = { games, fetchedAt: Date.now() };
+    } catch (e) {
+      // Keep showing the last good slate rather than blanking the panel.
+    } finally {
+      restDaysLoading = false;
+    }
+    renderRestDays();
   }
 
   function callClass(call) {
@@ -1999,12 +2121,12 @@
   }
 
   // Odds and season stats move on the order of minutes, not seconds, so the
-  // betting panels (MLB Value Screen, NFL Odds) get their own slow timer
-  // rather than riding the score loops.
+  // betting panels (MLB Value Screen, Days Rest, NFL Odds) get their own slow
+  // timer rather than riding the score loops.
   function scheduleValueScreenRefresh() {
     if (valueTimer) clearInterval(valueTimer);
     valueTimer = setInterval(() => {
-      if (!document.hidden) { loadValueScreen(); loadNflOdds(); }
+      if (!document.hidden) { loadValueScreen(); loadRestDays(); loadNflOdds(); }
     }, VALUE_REFRESH_MS);
   }
 
@@ -2027,12 +2149,13 @@
     buildFilters();
     const refreshBtn = $("#refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", async () => {
-      await Promise.all([render(), loadValueScreen(), loadNflOdds()]);
+      await Promise.all([render(), loadValueScreen(), loadRestDays(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
     });
     loadValueScreen();
+    loadRestDays();
     render();
     scheduleRefresh();
     scheduleValueScreenRefresh();

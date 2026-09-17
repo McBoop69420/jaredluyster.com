@@ -21,7 +21,7 @@
 <article class="paper">
   <header class="masthead">
     <div class="toprule"></div>
-    <a class="model-btn" href="/model/">How the model works</a>
+    <a class="model-btn" href="/models/">How the model works</a>
     <h1><span class="accent-box">Sports</span></h1>
     <nav class="section-tabs" aria-label="Section">
       <a class="section-tab" href="/">Games</a>
@@ -56,7 +56,7 @@
         by &ge; 10 points, which usually means the model is missing something (stale or thin pitcher
         data) rather than a real edge &mdash; a flag to double-check, not a pick. No tag = model and
         market roughly agree, nothing actionable. Each row's second line explains the specific reasoning
-        behind its call. Full breakdown of the sources and math: <a href="/model">how the model works</a>.</p>
+        behind its call. Full breakdown of the sources and math: <a href="/models">how the model works</a>.</p>
     </div>
     <div class="value-slate-wrap">
       <table class="value-slate">
@@ -69,6 +69,32 @@
       </table>
     </div>
     <p class="value-legend">odds BetExplorer &middot; model MLB stats, starter-adjusted</p>
+  </section>
+
+  <section class="value-screen" id="restDays" aria-labelledby="restDaysTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Soft factors</div>
+        <h2 id="restDaysTitle">Days Rest</h2>
+      </div>
+      <div class="value-screen-meta" id="restDaysMeta">Loading slate&hellip;</div>
+    </header>
+    <div class="value-explain">
+      <p>Days of rest for each team in today's slate &mdash; 0 means a true back-to-back (played
+        yesterday, no day off in between). Doesn't feed the Value Screen model above; it's tracked here
+        on its own as a situational factor worth weighing alongside it.</p>
+    </div>
+    <div class="value-slate-wrap">
+      <table class="value-slate">
+        <thead>
+          <tr><th>Match (ET)</th><th>Away rest</th><th>Home rest</th></tr>
+        </thead>
+        <tbody id="restDaysBody">
+          <tr><td colspan="3" class="value-empty">Loading live slate&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">days since each team's last game, MLB schedule via statsapi.mlb.com</p>
   </section>
 
   <section class="value-screen" id="nflOdds" aria-labelledby="nflOddsTitle">
@@ -91,7 +117,7 @@
     </div>
     <p class="value-legend">
       Market only, no model &middot; odds ESPN/DraftKings &middot; win % de-vigged from the moneyline
-      &middot; <a href="/model">how this works</a>
+      &middot; <a href="/models">how this works</a>
     </p>
   </section>
 
@@ -100,6 +126,6 @@
       Looking for scores and standings? See <a href="/">Games</a>.</p>
   </footer>
 </article>
-<script src="/sports.js?v=64"></script>
+<script src="/sports.js?v=65"></script>
 </body>
 </html>
