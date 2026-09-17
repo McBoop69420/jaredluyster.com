@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Private NCAAF whiparound board — every live game ranked by how close it is, with the network each one is on.">
+<title>RedZone — NCAAF</title>
+<link rel="preconnect" href="https://site.api.espn.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/redzone.css?v=1">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-red">RED</span>ZONE<span class="brand-sub">NCAAF</span></div>
+  <div class="topbar-right">
+    <div class="clock" id="clock" aria-live="off"></div>
+    <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh</button>
+  </div>
+</header>
+
+<div class="ticker" id="ticker" aria-live="polite"></div>
+
+<main class="board">
+  <section aria-label="Live games">
+    <h2 class="section-head"><span class="dot dot-live"></span>Live — ranked by how close it is</h2>
+    <div class="tiles tiles-live" id="liveTiles"></div>
+    <p class="empty" id="liveEmpty" hidden>Nothing live right now.</p>
+  </section>
+
+  <section aria-label="Upcoming games">
+    <h2 class="section-head"><span class="dot dot-pre"></span>Upcoming this week</h2>
+    <div class="rows" id="upcomingRows"></div>
+    <p class="empty" id="upcomingEmpty" hidden>Nothing else on the schedule this week.</p>
+  </section>
+
+  <section aria-label="Final games">
+    <h2 class="section-head"><span class="dot dot-post"></span>Final</h2>
+    <div class="rows rows-final" id="finalRows"></div>
+    <p class="empty" id="finalEmpty" hidden>No finals yet.</p>
+  </section>
+</main>
+
+<footer class="colophon">
+  <p>Live game data from ESPN. Network badges link to that network's own site — you sign in
+    there with whatever you already subscribe to. This board is a private schedule/priority
+    tool; it doesn't stream, embed, or rebroadcast any video itself.</p>
+</footer>
+
+<script src="/redzone.js?v=1"></script>
+</body>
+</html>

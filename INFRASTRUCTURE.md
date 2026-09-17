@@ -402,6 +402,35 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   `functions/social/api/[[path]].ts` still has no auth of its own; Access is what gates it
   at the edge.
 
+### 6. RedZone NCAAF Board — Cloudflare Pages (folder, this repo)
+
+- **Purpose:** personal, private "whiparound" board for college football — ranks every
+  live game by closeness/urgency and shows which network it's on, so it's fast to see
+  what's worth flipping to. Added 2026-09-17.
+- **Subdomain:** `redzone.jaredluyster.com` — added to `SUBDOMAIN_ROOTS` in
+  `functions/_middleware.ts`, same tool-subdomain pattern as `roto`/`wintergreen`/`social`
+  (see DEPLOY.md's "Tool subdomains" section).
+- **Files served from:** [`redzone/`](redzone/index.html) — static frontend, no build step
+  (`index.html`, `redzone.css`, `redzone.js`, `robots.txt`).
+- **No backend.** `redzone.js` fetches ESPN's public scoreboard API
+  (`site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard`) directly
+  from the browser — confirmed CORS-open, the same endpoint `sports/sports.js` already uses
+  — and re-ranks the results client-side. Live games are sorted by a simple urgency score
+  (closer margin + later quarter/OT + ranked-matchup bonus), matching real whiparound shows'
+  "always show the game that matters most" logic.
+- **No video.** This is a schedule/priority board only — network badges (ESPN, FOX, ABC,
+  CBS, NBC, Peacock, BTN, ACC/SEC Network, etc.) link to that broadcaster's own homepage so
+  you can sign in with a subscription you already have; nothing here streams, embeds, or
+  rebroadcasts a game. Deliberate, to stay clear of any copyright exposure — see DEPLOY.md
+  for the reasoning and what a later embed-based pass would need.
+- **Access control — not yet done as of this writing.** Needs the same two one-time
+  Cloudflare dashboard steps as the other gated subdomains (custom domain on the
+  `jaredluyster-com` Pages project, then a `redzone` Access application reusing the "Only
+  Me" policy `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) — see DEPLOY.md. Until then the folder
+  is reachable, unauthenticated, at the path form `jaredluyster.com/redzone/` (no secrets in
+  it — just public ESPN schedule data — but it should still get the same Access gate as its
+  siblings once the subdomain is live).
+
 ## Cloudflare Tunnel Configuration
 
 File: `%USERPROFILE%\.cloudflared\config.yml`
@@ -501,6 +530,11 @@ jaredluyster.com/
 │   ├── library.js          # /social/api/* client + library grid rendering
 │   ├── projects.js         # Project/platform presets
 │   └── robots.txt
+├── redzone/                # RedZone NCAAF board (redzone.jaredluyster.com) — live-game priority board, no video
+│   ├── index.html
+│   ├── redzone.css
+│   ├── redzone.js          # Fetches ESPN's public scoreboard client-side, ranks live games by urgency
+│   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -535,6 +569,7 @@ this repo.
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 | `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |
+| `redzone.jaredluyster.com` | RedZone NCAAF board — live games ranked by closeness/urgency, network badges only (no video) | This repo (`redzone/`) + Access (not yet set up) |
 
 ## How to Work With This Repo
 

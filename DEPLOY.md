@@ -83,6 +83,35 @@ library grid backed by the real R2 bucket, deleted it, confirmed the grid went b
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/social.jaredluyster.com`
 with `Www-Authenticate: Cloudflare-Access` — same signature as the other gated subdomains.
 
+## RedZone NCAAF board (redzone.jaredluyster.com)
+
+A private, personal-use "whiparound" schedule board — ranks every live NCAAF game by how
+close/urgent it is, whiparound-style, and shows which network each game is on. Static
+frontend in `redzone/`, following the tool-subdomain pattern above (`redzone` is in
+`SUBDOMAIN_ROOTS`). No backend: it fetches ESPN's public, CORS-open scoreboard API
+(`site.api.espn.com`) client-side, the same endpoint `sports/sports.js` already relies on.
+
+**Deliberately no video in this pass.** Network badges link out to that broadcaster's own
+homepage (espn.com, foxsports.com, cbssports.com, etc.) — you sign in there with whatever
+you already subscribe to. The board itself never streams, proxies, embeds, or rebroadcasts
+any video, so there's no copyright exposure from this repo. A later pass could add iframe
+embed slots using official embed codes from services you're personally authenticated to
+(ESPN+, a TV-provider login, etc.) — that's a bigger, separate step and hasn't been built.
+
+**One-time setup still needed (Cloudflare dashboard):**
+
+1. Pages project (`jaredluyster-com`) → **Custom domains** → add
+   `redzone.jaredluyster.com`, same as `roto`/`wintergreen`/`social`.
+2. **Put it behind Cloudflare Access** — this is a *private* board, so don't skip this step.
+   Zero Trust → Access → Applications → Add → self-hosted, destination
+   `redzone.jaredluyster.com`, reuse the existing "Only Me" policy
+   (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) the same way `news`/`sports`/`calendar`/`social`
+   do — same Zero Trust org, independently editable per-app.
+
+Until both steps are done, the folder deploys with the rest of the site (reachable at
+`jaredluyster.com/redzone/`, unauthenticated) but the subdomain won't resolve and nothing
+is Access-gated yet.
+
 ## Roto multiplayer (the DraftRoom Durable Object)
 
 Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is
