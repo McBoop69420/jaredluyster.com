@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="How the MLB Value Screen and NFL Odds panels work: data sources, terminology, and the exact math behind the model.">
+<meta name="description" content="The live MLB Value Screen (model vs market) plus how it and NFL Odds work: data sources, terminology, and the exact math behind the model.">
 <title>How the Model Works — Sports</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
@@ -73,16 +73,53 @@
   <div class="model-page" style="margin-top:22px">
 
     <section>
-      <p>This site has two betting-adjacent panels: the <strong>MLB Value Screen</strong>, which
+      <p>The quantitative model work lives here: the <strong>MLB Value Screen</strong> below, which
         compares an independently computed win-probability model against the live market to flag
-        disagreements, and <strong>NFL Odds</strong>, which just shows live market odds with no model
-        attached. This page explains exactly how each one works, where the numbers come from, and what
-        the terminology means &mdash; including where the model is weak.</p>
+        disagreements. (Live market odds with no model attached, plus soft factors like days of rest,
+        are tracked separately on <a href="/betting/">Betting</a>.) This page explains exactly how the
+        model works, where the numbers come from, and what the terminology means &mdash; including where
+        it's weak.</p>
+    </section>
+
+    <section class="value-screen" id="valueScreen" aria-labelledby="valueScreenTitle">
+      <header class="value-screen-head">
+        <div>
+          <div class="value-screen-kicker">Model vs market</div>
+          <h2 id="valueScreenTitle">MLB Value Screen</h2>
+        </div>
+        <div class="value-screen-meta" id="valueScreenMeta">Loading slate&hellip;</div>
+      </header>
+      <div class="value-explain">
+        <p><strong>Fair %</strong> is the market's implied win probability with the sportsbook's built-in
+          margin (the &ldquo;vig&rdquo;) removed, so both teams' numbers add up to 100%.
+          <strong>Model %</strong> is this site's own from-scratch estimate, computed from MLB stats (runs
+          scored/allowed, adjusted for that day's probable starting pitchers) &mdash; it has no idea what
+          the market thinks. <strong>Edge</strong> is Model % &minus; Fair %: how much more (or less) the
+          model likes a team than the market does.</p>
+        <p><span class="call call--value">Value</span> = model favors this side by &ge; 4 points more than
+          the market &mdash; worth a second look. <span class="call call--fade">Fade</span> = model favors
+          them &ge; 4 points less. <span class="call call--check">Check</span> = model and market disagree
+          by &ge; 10 points, which usually means the model is missing something (stale or thin pitcher
+          data) rather than a real edge &mdash; a flag to double-check, not a pick. No tag = model and
+          market roughly agree, nothing actionable. Each row's second line explains the specific reasoning
+          behind its call &mdash; full breakdown of the sources and math below.</p>
+      </div>
+      <div class="value-slate-wrap">
+        <table class="value-slate">
+          <thead>
+            <tr><th>Match (ET)</th><th>ML</th><th>Fair %</th><th>Model %</th><th>Edge</th><th>Call</th></tr>
+          </thead>
+          <tbody id="valueSlateBody">
+            <tr><td colspan="6" class="value-empty">Loading live slate&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="value-legend">odds BetExplorer &middot; model MLB stats, starter-adjusted</p>
     </section>
 
     <section>
       <div class="kicker">MLB &middot; Model vs Market</div>
-      <h2>MLB Value Screen</h2>
+      <h2>How It's Computed</h2>
       <p>The idea: compute a win-probability estimate from MLB stats alone, with no knowledge of what
         the betting market thinks, then compare the two. When they disagree by enough, that's flagged
         as worth a second look &mdash; not a pick, just a place where the model and the market don't
@@ -219,9 +256,10 @@ P(away wins) = 1 / (1 + (homeExpectedRuns / awayExpectedRuns) ^ exponent)</span>
   </div>
 
   <footer class="colophon">
-    <p>Both panels refresh automatically. See
-      <a href="/betting/">the live Betting page</a> for current numbers.</p>
+    <p>The Value Screen above refreshes automatically. Looking for NFL Odds, days of rest, or other
+      soft factors? See <a href="/betting/">Betting</a> for current numbers.</p>
   </footer>
 </article>
+<script src="/sports.js?v=65"></script>
 </body>
 </html>

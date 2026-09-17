@@ -1509,6 +1509,7 @@
   // ---- Filters ----------------------------------------------------------
   function buildFilters() {
     const nav = $("#filters");
+    if (!nav) return; // no league filter on this page (e.g. Models)
     nav.innerHTML = "";
     const mk = (key, label) => {
       const b = el("button", "chip", label);
@@ -1740,10 +1741,10 @@
   }
 
   // ---- MLB Days Rest (soft factor, no model) -----------------------------
-  // Tracked separately from the Value Screen above — this doesn't feed the
-  // model, it's just a schedule-fatigue fact worth seeing alongside it. One
-  // range fetch over the trailing week covers every team's last game date at
-  // once, so no per-team API calls are needed.
+  // Lives on the Betting page (the Value Screen model itself is on Models)
+  // — this doesn't feed the model, it's just a schedule-fatigue fact worth
+  // tracking alongside it. One range fetch over the trailing week covers
+  // every team's last game date at once, so no per-team API calls needed.
   const REST_WINDOW_DAYS = 8; // deep enough to bridge a normal off-day or two
 
   function dateStrAddDays(dateStr, delta) {
