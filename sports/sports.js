@@ -395,8 +395,99 @@
     return result;
   }
 
+  // ---- Where to watch (mirrors the calendar subdomain's same logic) -----
+  // ESPN's own Gamecast page for this event — an official, legal source for
+  // where/how to watch (broadcast network, streaming partner) rather than us
+  // guessing or linking to any particular streaming service ourselves.
+  function gameLinkUrl(ev) {
+    const links = Array.isArray(ev.links) ? ev.links : [];
+    const l = links.find(x => x && typeof x.href === "string" && /^https?:\/\//.test(x.href) &&
+      Array.isArray(x.rel) && x.rel.includes("summary") && !x.rel.includes("app"));
+    return l ? l.href : null;
+  }
+
+  function broadcastNetworks(comp) {
+    const bc = Array.isArray(comp.broadcasts) ? comp.broadcasts : [];
+    const names = [];
+    bc.forEach(b => {
+      if (Array.isArray(b.names)) names.push(...b.names);
+      else if (b.media && b.media.shortName) names.push(b.media.shortName);
+    });
+    return names.map(n => String(n || "").trim().toUpperCase()).filter(Boolean);
+  }
+
+  // Where a given broadcast network's own live stream actually lives —
+  // verified directly (not guessed) against each site: FOX/FS1/FS2/BTN are
+  // all bundled into the FOX One app, CBS/CBSSN into Paramount+, the ESPN
+  // family (incl. conference networks ESPN produces) into ESPN's watch hub.
+  const WATCH_LINK_BY_NETWORK = {
+    FOX: "https://www.foxone.com/", FS1: "https://www.foxone.com/",
+    FS2: "https://www.foxone.com/", BTN: "https://www.foxone.com/",
+    CBS: "https://www.paramountplus.com/live-tv/", CBSSN: "https://www.paramountplus.com/live-tv/",
+    ABC: "https://abc.com/watch-live",
+    ESPN: "https://www.espn.com/watch/", ESPN2: "https://www.espn.com/watch/",
+    ESPNU: "https://www.espn.com/watch/", ESPNEWS: "https://www.espn.com/watch/",
+    "ESPN+": "https://www.espn.com/watch/",
+    SECN: "https://www.espn.com/watch/", "SECN+": "https://www.espn.com/watch/",
+    "SEC NETWORK": "https://www.espn.com/watch/",
+    ACCN: "https://www.espn.com/watch/", ACCNX: "https://www.espn.com/watch/",
+    "ACC NETWORK": "https://www.espn.com/watch/",
+    "LONGHORN NETWORK": "https://www.espn.com/watch/",
+    NBC: "https://www.peacocktv.com/channels/nbc-local",
+    PEACOCK: "https://www.peacocktv.com/channels/nbc-local",
+  };
+
+  // Only for the leagues asked for so far: NFL sticks to exactly the two
+  // services actually named (FOX One / Paramount+) rather than assuming
+  // every NFL broadcaster should get mapped; NCAAF is fully general since
+  // it airs across far more networks. Everything else keeps falling back
+  // to gameLinkUrl()'s ESPN Gamecast page.
+  function watchLinkFor(label, comp) {
+    const networks = broadcastNetworks(comp);
+    if (label === "NFL") {
+      if (networks.includes("FOX")) return WATCH_LINK_BY_NETWORK.FOX;
+      if (networks.includes("CBS")) return WATCH_LINK_BY_NETWORK.CBS;
+      return null;
+    }
+    if (label === "NCAAF") {
+      const hit = networks.find(n => WATCH_LINK_BY_NETWORK[n]);
+      return hit ? WATCH_LINK_BY_NETWORK[hit] : null;
+    }
+    return null;
+  }
+
+  const MLB_STATS_TEAM_ID = 113; // Cincinnati Reds — MLB Stats API's own id, distinct from ESPN's "17"
+  // date (YYYY-MM-DD, ET) -> gamePk. Cached indefinitely (a date's gamePk
+  // never changes) so the 5s live-score poll doesn't re-hit MLB's API.
+  const mlbGamePkCache = new Map();
+
+  // MLB.tv is the actual place to watch regardless of the (often regional/
+  // blacked-out) network ESPN reports, but linking straight to a specific
+  // game's web player needs MLB's own gamePk, which ESPN doesn't carry —
+  // hence this separate lookup against MLB's public Stats API, same as the
+  // calendar subdomain.
+  async function fetchMlbGamePks(dates) {
+    const missing = dates.filter(d => !mlbGamePkCache.has(d));
+    if (!missing.length) return;
+    const minDate = missing.reduce((a, b) => (a < b ? a : b));
+    const maxDate = missing.reduce((a, b) => (a > b ? a : b));
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=" + MLB_STATS_TEAM_ID +
+        "&startDate=" + minDate + "&endDate=" + maxDate;
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return;
+      const data = await res.json();
+      (data.dates || []).forEach(d => {
+        (d.games || []).forEach(g => { if (g.gamePk) mlbGamePkCache.set(d.date, g.gamePk); });
+      });
+    } catch (e) { /* ESPN Gamecast fallback still applies */ }
+  }
+
   // ---- Parse a single scoreboard event ---------------------------------
-  function parseEvent(ev, leagueKey) {
+  function parseEvent(ev, leagueKey, label) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
     const cs = comp.competitors || [];
     if (cs.length < 2) return null;
@@ -473,6 +564,7 @@
       marqueeCount: (isMarqueeClub(away.team.displayName) ? 1 : 0) + (isMarqueeClub(home.team.displayName) ? 1 : 0),
       stakes,
       broadcast,
+      gameLink: watchLinkFor(label, comp) || gameLinkUrl(ev),
     };
   }
 
@@ -657,7 +749,16 @@
   }
 
   function gameCard(g, leagueLabel) {
-    const card = el("div", "game" + (g.state === "in" ? " game--live" : g.state === "post" ? " game--final" : "") + (g.isMyGame ? " game--me" : ""));
+    // Where to watch only matters before/during a game — once it's final,
+    // nobody's tuning in, and the box score below needs its own clickable
+    // <details> (which can't nest inside an <a>).
+    const linkable = !!g.gameLink && g.state !== "post";
+    const card = el(linkable ? "a" : "div", "game" + (g.state === "in" ? " game--live" : g.state === "post" ? " game--final" : "") + (g.isMyGame ? " game--me" : ""));
+    if (linkable) {
+      card.href = g.gameLink;
+      card.target = "_blank";
+      card.rel = "noopener";
+    }
     if (leagueLabel) {
       const tag = g.stakes ? leagueLabel + " · " + g.stakes : leagueLabel;
       card.appendChild(el("div", "spotlight-league-tag", esc(tag)));
@@ -679,8 +780,6 @@
     if (g.state === "in") st.innerHTML = '<span class="live-dot"></span>' + esc(g.statusText);
     else st.textContent = g.statusText;
     card.appendChild(st);
-    // Where to watch only matters before/during a game — once it's final,
-    // nobody's tuning in.
     if (g.broadcast && g.state !== "post") {
       card.appendChild(el("div", "broadcast", esc(g.broadcast)));
     }
@@ -1286,7 +1385,19 @@
       clearTimeout(timeout);
       if (!response.ok) return null;
       const data = await response.json();
-      return (data.events || []).map(event => parseEvent(event, league.key)).filter(Boolean);
+      const games = (data.events || []).map(event => parseEvent(event, league.key, league.label)).filter(Boolean);
+      if (league.key === "baseball/mlb") {
+        const myDates = games.filter(g => g.isMyGame && g.dateET).map(g => g.dateET);
+        if (myDates.length) {
+          await fetchMlbGamePks(myDates);
+          games.forEach(g => {
+            if (g.isMyGame && mlbGamePkCache.has(g.dateET)) {
+              g.gameLink = "https://www.mlb.com/tv/g" + mlbGamePkCache.get(g.dateET) + "/";
+            }
+          });
+        }
+      }
+      return games;
     } catch (e) {
       return null;
     }
