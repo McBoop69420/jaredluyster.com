@@ -150,11 +150,16 @@
 
   // ESPN's own Gamecast page for this event — an official, legal source for
   // where/how to watch (broadcast network, streaming partner) rather than us
-  // guessing or linking to any particular streaming service ourselves.
+  // guessing or linking to any particular streaming service ourselves. ESPN
+  // tags this same page differently depending on state, verified directly
+  // against the API: "summary" for pre/post games, "live" (sometimes also
+  // "gamecast") for in-progress ones — missing "live" would silently drop
+  // the link for exactly the games where watching it matters most.
   function gameLinkUrl(ev) {
     const links = Array.isArray(ev.links) ? ev.links : [];
     const l = links.find(x => x && typeof x.href === "string" && /^https?:\/\//.test(x.href) &&
-      Array.isArray(x.rel) && x.rel.includes("summary") && !x.rel.includes("app"));
+      Array.isArray(x.rel) && !x.rel.includes("app") &&
+      (x.rel.includes("summary") || x.rel.includes("live") || x.rel.includes("gamecast")));
     return l ? l.href : null;
   }
 
