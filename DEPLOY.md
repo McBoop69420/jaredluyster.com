@@ -105,8 +105,10 @@ embed slots using official embed codes from services you're personally authentic
 2. ~~Cloudflare Access~~ — done: a `redzone` self-hosted Access application (destination
    `redzone.jaredluyster.com`) reuses the "Only Me" policy
    (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) the same way `news`/`sports`/`calendar`/`social`
-   do — same Zero Trust org, independently editable per-app. Only "Only Me" is attached
-   (not the sports guest policy).
+   do — same Zero Trust org, independently editable per-app. A second policy,
+   `Redzone guest access` (Include Emails = `mohara350376@yahoo.com`), was added 2026-09-18;
+   that address is also on `Sports guest access`. One guest policy per app, addresses listed
+   inside it.
 
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
