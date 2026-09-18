@@ -652,6 +652,7 @@
     if (Date.now() - sportsLastFetch > SPORTS_MIN_REFETCH_MS) {
       loadSportsEvents().then(renderCalendar);
     }
+    stampDateline(); // re-stamp in case the page has been open across a midnight rollover
     renderCalendar();
     stampUpdated();
     if (btn) btn.disabled = false;
@@ -664,11 +665,27 @@
     const btn = $("refreshBtn");
     if (btn) btn.addEventListener("click", refresh);
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) refresh();
+      if (!document.hidden) { refresh(); requestWakeLock(); }
     });
     window.addEventListener("resize", fitCalendarGrid);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(fitCalendarGrid);
+    }
+    requestWakeLock();
+  }
+
+  // Keeps a mounted-iPad display from auto-dimming/locking while this page
+  // is open (Screen Wake Lock API — Safari 16.4+). The OS releases the lock
+  // whenever the tab is backgrounded, so it has to be re-requested on every
+  // return to visibility (handled in startLoops' visibilitychange listener),
+  // not just once at boot. Silently no-ops on unsupported browsers/OSes.
+  let wakeLock = null;
+  async function requestWakeLock() {
+    if (!("wakeLock" in navigator) || document.hidden) return;
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+    } catch (e) {
+      wakeLock = null;
     }
   }
 

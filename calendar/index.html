@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="McBoop's personal calendar and day plan — a rolling month grid of upcoming commitments, auto-refreshing.">
+<!-- Lets this launch chrome-free full-screen when added to an iPad Home Screen,
+     which is how this page is meant to run as a mounted wall display. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calendar">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Calendar — McBoop Daily</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +19,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/calendar.css?v=1">
+<link rel="stylesheet" href="/calendar.css?v=3">
 </head>
 <body>
 <article class="paper">
@@ -41,6 +47,6 @@
     <p>Auto-refreshing &middot; times in Eastern (ET).</p>
   </footer>
 </article>
-<script src="/calendar.js?v=1"></script>
+<script src="/calendar.js?v=2"></script>
 </body>
 </html>

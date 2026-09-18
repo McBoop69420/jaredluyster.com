@@ -8,11 +8,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+html{overscroll-behavior:none;}
 body{
   background:var(--cal-ink);color:var(--cal-ink);
   font-family:var(--cal-font-body);line-height:1.5;
-  padding:14px 12px 22px;-webkit-font-smoothing:antialiased;
+  padding:calc(14px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right))
+    calc(22px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  /* This runs as a mounted/kiosk display, not a page meant to be touched —
+     no accidental selection highlight or iOS long-press callout menu. */
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
 }
+/* Still allow following the two real links in the masthead. */
+.strip a{-webkit-touch-callout:default;}
 .paper{
   max-width:1500px;margin:0 auto;background:var(--cal-paper);
   padding:16px 30px 22px;box-shadow:10px 10px 0 var(--cal-accent);
@@ -106,9 +116,18 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
    grid) so a lone odd-one-out on the last row centers itself instead of
    hugging the left column with a blank cell beside it. */
 .cal-ev-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;}
-.cal-ev-grid .cal-ev{white-space:normal;text-align:center;padding:5px 3px;flex:1 1 calc(50% - 2px);min-width:0;}
-.cal-ev-grid .cal-ev-match{display:flex;flex-direction:column;gap:3px;}
-.cal-ev-grid .cal-ev-logo--team{width:17px;height:17px;}
+.cal-ev-grid .cal-ev{white-space:normal;text-align:center;padding:5px 3px;
+  flex:1 1 calc(50% - 2px);max-width:calc(50% - 2px);min-width:0;overflow:hidden;}
+.cal-ev-grid .cal-ev-match{display:flex;flex-direction:column;gap:3px;min-width:0;max-width:100%;}
+/* .cal-ev-match-teams is an inline-flex row (logo, time/score, logo); without
+   its own min-width:0 a flex item defaults to min-width:auto, which refuses to
+   shrink below that row's content width even though every ancestor above is
+   already capped at 50% — the row then spills past its card into the next
+   one instead of shrinking, reading as two cards overlapping on a busy day. */
+.cal-ev-grid .cal-ev-match-teams{min-width:0;max-width:100%;}
+.cal-ev-grid .cal-ev-logo--team{width:15px;height:15px;}
+.cal-ev-grid .cal-ev-match-time{font-size:8px;min-width:0;overflow:hidden;}
+.cal-ev-grid .cal-ev-score{min-width:0;overflow:hidden;}
 
 .cal-agenda-wrap{display:none;margin-top:14px;padding-top:10px;border-top:var(--cal-border-w) solid var(--cal-ink);}
 .cal-agenda-wrap h3.sub{margin:0 0 2px;}
