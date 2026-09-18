@@ -423,13 +423,13 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   you can sign in with a subscription you already have; nothing here streams, embeds, or
   rebroadcasts a game. Deliberate, to stay clear of any copyright exposure — see DEPLOY.md
   for the reasoning and what a later embed-based pass would need.
-- **Access control — not yet done as of this writing.** Needs the same two one-time
-  Cloudflare dashboard steps as the other gated subdomains (custom domain on the
-  `jaredluyster-com` Pages project, then a `redzone` Access application reusing the "Only
-  Me" policy `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) — see DEPLOY.md. Until then the folder
-  is reachable, unauthenticated, at the path form `jaredluyster.com/redzone/` (no secrets in
-  it — just public ESPN schedule data — but it should still get the same Access gate as its
-  siblings once the subdomain is live).
+- **Access control — set up 2026-09-18.** Custom domain added on the `jaredluyster-com`
+  Pages project, then a `redzone` self-hosted Access application reusing the "Only Me"
+  policy `e664394b-54a3-4cd4-bc10-18b5f4b90c5b` (same as `news`/`calendar`/`social`; the
+  sports guest policy is *not* attached). Verified via `curl`: `302` →
+  `.../cdn-cgi/access/login/redzone.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`.
+  Gap: Access gates only the `redzone.` hostname — the same files are still reachable
+  unauthenticated at `jaredluyster-com.pages.dev/redzone/` (public ESPN schedule data only).
 
 ## Cloudflare Tunnel Configuration
 
@@ -569,7 +569,7 @@ this repo.
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 | `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |
-| `redzone.jaredluyster.com` | RedZone NCAAF board — live games ranked by closeness/urgency, network badges only (no video) | This repo (`redzone/`) + Access (not yet set up) |
+| `redzone.jaredluyster.com` | RedZone NCAAF board — live games ranked by closeness/urgency, network badges only (no video) | This repo (`redzone/`) + Access |
 
 ## How to Work With This Repo
 

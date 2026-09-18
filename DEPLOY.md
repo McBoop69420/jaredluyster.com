@@ -98,19 +98,25 @@ any video, so there's no copyright exposure from this repo. A later pass could a
 embed slots using official embed codes from services you're personally authenticated to
 (ESPN+, a TV-provider login, etc.) — that's a bigger, separate step and hasn't been built.
 
-**One-time setup still needed (Cloudflare dashboard):**
+**One-time setup — done 2026-09-18 (Cloudflare dashboard):**
 
-1. Pages project (`jaredluyster-com`) → **Custom domains** → add
-   `redzone.jaredluyster.com`, same as `roto`/`wintergreen`/`social`.
-2. **Put it behind Cloudflare Access** — this is a *private* board, so don't skip this step.
-   Zero Trust → Access → Applications → Add → self-hosted, destination
-   `redzone.jaredluyster.com`, reuse the existing "Only Me" policy
+1. ~~Custom domain~~ — done: `redzone.jaredluyster.com` added on the `jaredluyster-com` Pages
+   project (Cloudflare created the `redzone` CNAME → `jaredluyster-com.pages.dev`).
+2. ~~Cloudflare Access~~ — done: a `redzone` self-hosted Access application (destination
+   `redzone.jaredluyster.com`) reuses the "Only Me" policy
    (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) the same way `news`/`sports`/`calendar`/`social`
-   do — same Zero Trust org, independently editable per-app.
+   do — same Zero Trust org, independently editable per-app. Only "Only Me" is attached
+   (not the sports guest policy).
 
-Until both steps are done, the folder deploys with the rest of the site (reachable at
-`jaredluyster.com/redzone/`, unauthenticated) but the subdomain won't resolve and nothing
-is Access-gated yet.
+Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
+`302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
+with `Www-Authenticate: Cloudflare-Access`. Not yet verified: a real signed-in load of the
+board through Access (needs a login).
+
+**Known gap:** Access only gates the `redzone.jaredluyster.com` hostname. The same files are
+still reachable unauthenticated at `jaredluyster-com.pages.dev/redzone/` (and the apex path
+form) — same as every other tool folder in this project. It's only public ESPN schedule
+data, but it isn't truly private until that's closed.
 
 ## Roto multiplayer (the DraftRoom Durable Object)
 
