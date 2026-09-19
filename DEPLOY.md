@@ -110,12 +110,27 @@ embed slots using official embed codes from services you're personally authentic
    that address is also on `Sports guest access`. One guest policy per app, addresses listed
    inside it.
 
-   **Login methods (added 2026-09-18):** the Zero Trust org had only the "Cloudflare"
+   **Login methods (2026-09-18):** the Zero Trust org started with only the "Cloudflare"
    identity provider, which requires a Cloudflare account under the guest's email, so guests
-   couldn't sign in. **One-time PIN** was added as a second provider — the Access login page
-   now shows "Sign in with Cloudflare" *or* an Email box with "Send login code". Verified
-   logged-out on both `redzone.` and `sports.`. Access only emails a code to addresses that
-   match a policy. It applies to every app set to accept all identity providers.
+   couldn't sign in. **One-time PIN** (emailed login code) was added briefly and then
+   deliberately **removed again** the same day — the login page must not offer an
+   email-a-code box. Re-add it under Zero Trust → Integrations → Identity providers if ever
+   wanted; it applies to every app set to accept all identity providers.
+
+   **Google sign-in (added 2026-09-18):** a `Google` identity provider is configured, so
+   the login page offers **Cloudflare or Google** (verified logged-out on `redzone.` and
+   `sports.`; no email box). It uses an OAuth client
+   (`Cloudflare Access`, Web application) in the Google Cloud project "My First Project",
+   with JavaScript origin `https://quiet-frost-ed57.cloudflareaccess.com` and redirect URI
+   `https://quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/callback`. The client ID/secret
+   live only in Cloudflare (never commit them; the secret is not viewable in Google after
+   creation). Not verified with a real guest sign-in.
+   **The Google consent screen is in Testing mode** (External; Publish is blocked until the
+   Branding page has a homepage/privacy/terms link). Only Google accounts on the *Test users*
+   list (Google Auth Platform → Audience) can sign in with Google, so a new guest must be added
+   there *and* to their app's Access policy. `mohara350376@gmail.com` is on the list. With the
+   emailed code removed, a guest who isn't a test user and has no Cloudflare account has no
+   way to sign in.
 
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
