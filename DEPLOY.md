@@ -110,6 +110,13 @@ embed slots using official embed codes from services you're personally authentic
    that address is also on `Sports guest access`. One guest policy per app, addresses listed
    inside it.
 
+   **Login methods (added 2026-09-18):** the Zero Trust org had only the "Cloudflare"
+   identity provider, which requires a Cloudflare account under the guest's email, so guests
+   couldn't sign in. **One-time PIN** was added as a second provider — the Access login page
+   now shows "Sign in with Cloudflare" *or* an Email box with "Send login code". Verified
+   logged-out on both `redzone.` and `sports.`. Access only emails a code to addresses that
+   match a policy. It applies to every app set to accept all identity providers.
+
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
 with `Www-Authenticate: Cloudflare-Access`. Not yet verified: a real signed-in load of the
