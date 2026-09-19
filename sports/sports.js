@@ -70,6 +70,10 @@
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
       playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    // Women's side of Lexington SC. Playoff format isn't wired up, so no
+    // playoff-implication zones (playoffPoolMode null) — just scores + table.
+    { key: "soccer/usa.w.usl.1", label: "USL Super League", myTeams: ["Lexington SC"],         standings: "overall",
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: ["Athletic Club"],            standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",

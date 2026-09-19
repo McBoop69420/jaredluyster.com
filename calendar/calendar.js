@@ -57,6 +57,7 @@
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2323.png" },
     { key: "soccer/usa.usl.1", label: "USL Championship", order: "home-away", patterns: ["lexington"],
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2292.png" },
+    { key: "soccer/usa.w.usl.1", label: "USL Super League", order: "home-away", patterns: ["lexington"] },
     { key: "soccer/eng.1", label: "Premier League", order: "home-away", patterns: ["liverpool", "arsenal"],
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png" },
     { key: "soccer/esp.1", label: "La Liga", order: "home-away", patterns: ["athletic club"],  // Athletic Bilbao
