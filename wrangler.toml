@@ -34,3 +34,19 @@ script_name = "roto-draft-room"
 [[r2_buckets]]
 binding = "SOCIAL_ASSETS"
 bucket_name = "jaredluyster-social-assets"
+
+# RedZone's PRIVATE bet store (functions/redzone/api/[[path]].ts). Picks live in this bucket, not
+# in the repo — the repo is public. Until the block below is uncommented the endpoint answers
+# 503 "not-configured" (fails closed), so shipping without it is safe.
+#
+# ORDER MATTERS: create the bucket BEFORE uncommenting and pushing. Pages fails the deploy of the
+# WHOLE site if a bound R2 bucket doesn't exist, not just this feature.
+#   1. wrangler r2 bucket create jaredluyster-redzone-bets
+#   2. wrangler pages secret put BETS_ALLOWED_EMAILS --project-name jaredluyster-com
+#        (the owner's email; comma-separate several. A SECRET — never put it in [vars] above.
+#         A guest on the redzone Access policy is let through to the hostname but is refused here.)
+#   3. optional hardening: wrangler pages secret put ACCESS_AUD ... (the redzone Access app's AUD tag)
+#   4. uncomment, then push:
+# [[r2_buckets]]
+# binding = "REDZONE_BETS"
+# bucket_name = "jaredluyster-redzone-bets"

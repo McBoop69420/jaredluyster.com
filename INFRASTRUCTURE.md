@@ -432,33 +432,50 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   app, with guest addresses listed inside it — not one policy per address. Verified via `curl`: `302` →
   `.../cdn-cgi/access/login/redzone.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`.
   Gap: Access gates only the `redzone.` hostname — the same files are still reachable
-  unauthenticated at `jaredluyster-com.pages.dev/redzone/` (public ESPN schedule data only —
-  which stops being true if real picks ever land in `redzone/bets.json`, see the bet tracker below).
+  unauthenticated at `jaredluyster-com.pages.dev/redzone/` (public ESPN schedule data and the
+  page's own code only — the bet data is deliberately NOT in this folder, see the bet tracker below).
+- **FBS coverage (2026-09-19).** The board fetches
+  `…/college-football/scoreboard?groups=80&limit=500` — `groups=80` is FBS and, dateless, returns
+  the whole current game week (~75 games incl. FBS-vs-FCS ones; identical to passing `week=N`).
+  Two ESPN traps found by measuring, both of which had the board showing only ~22 of ~75 games:
+  without `groups` the scoreboard returns a ~22-game "featured" subset, and **`limit=1000`
+  silently truncates to 25** (it works up to at least 500). Date ranges (`dates=A-B`) 400.
 - **Inline game panels (added 2026-09-18).** Any tile/row expands in place (Details button, or
   click the row) into a panel built from ESPN's `…/college-football/summary?event=<id>`:
   down & distance, a mini field, drive bar, quarter box score, latest plays, win probability,
   scoring and team stats. ESPN's `yardLine` (situation and drive starts) is a **fixed frame —
   yards from the home team's goal line, whoever has the ball** (verified on 63 play states and
   22 drive starts; `TEX 4 → 4`, `OSU 1 → 99` with TEX home), not offense-relative.
-- **Team logos.** Every team mark is an ESPN logo (`a.espncdn.com` only), using the `/500-dark/`
-  variant for the dark UI, falling back to the default logo and then to the abbreviation.
-- **Bet tracker (added 2026-09-18).** [`redzone/bets.js`](redzone/bets.js) reads
-  [`redzone/bets.json`](redzone/bets.json) (`{ "bets": [...] }`; full schema in the header
-  comment of `bets.js`), grades each leg against live ESPN scores — spread, moneyline, totals
-  (an over that clears the number, or an under that blows through it, is clinched
-  mid-game); props are graded by hand via `result` — and renders a "My bets" section plus a
-  status chip on the matching tiles/rows. Legs on games no longer on the scoreboard (older
-  weeks, other leagues via `leg.league`) are fetched from the per-game summary instead.
-  Picks would be added by hand from slip screenshots (one entry per bet, `gameId` = ESPN
-  event id, `teamId` = ESPN team id). **`bets.json` ships empty and must stay empty in this
-  repo:** the repo is public (see the top of this file), so a committed pick is a published
-  pick no matter what Access says about the subdomain; the `redzone` Access guest policy
-  (`mohara350376@gmail.com`) would also let that guest read it; and the same file is served
-  unauthenticated at `jaredluyster-com.pages.dev/redzone/bets.json`. Real picks need a store
-  outside the public repo — e.g. an R2-backed Function behind the same Access app, mirroring
-  `functions/social/api/` — with `bets.js` reading that instead of a static file.
-  Grading is pure and unit-tested: `node --test redzone/tests/bets.test.js` (the
-  `/tests/` path is 404'd by `functions/_middleware.ts`, so it never ships).
+- **Team logos.** Every team mark is an ESPN logo (`a.espncdn.com` only) in the `/500-dark/`
+  variant for the dark UI. The full logos average ~34 KB (up to 95 KB), ~5 MB for an FBS board's
+  ~150 marks, so the first attempt is ESPN's resizer (`a.espncdn.com/combiner/i?img=…&w=72&h=72`,
+  ~3 KB, CORS-open); fallbacks are the full dark logo, the default logo, then the abbreviation.
+  Row logos are lazy-loaded.
+- **Bet tracker (added 2026-09-18; storage made private 2026-09-19).**
+  [`redzone/bets.js`](redzone/bets.js) grades each leg of the stored bets against live ESPN
+  scores — spread, moneyline, totals (an over that clears the number, or an under that blows
+  through it, is clinched mid-game); props are graded by hand via `result` — and renders a "My
+  bets" section plus a status chip on the matching tiles/rows. Legs on games no longer on the
+  scoreboard (older weeks, other leagues via `leg.league`) are fetched from the per-game summary.
+  Full bet/leg schema is in the header comment of `bets.js`. Picks are added by hand from slip
+  screenshots (`gameId` = ESPN event id, `teamId` = ESPN team id).
+  **Storage is a private R2 object, not the repo** — the repo is public (see the top of this
+  file), so anything committed is published whatever Access says. `bets.js` reads
+  `GET /redzone/api/bets` ([`functions/redzone/api/[[path]].ts`](functions/redzone/api/[[path]].ts),
+  R2 binding `REDZONE_BETS`, bucket `jaredluyster-redzone-bets`, key `bets.json`). The endpoint is
+  read-only and layered: it only answers on `redzone.jaredluyster.com` (the hostname Access gates;
+  the ungated `*.pages.dev` copy gets a 404), requires a valid signed Access JWT
+  ([`functions/redzone/_lib/access.ts`](functions/redzone/_lib/access.ts): RS256 pinned, issuer =
+  the `quiet-frost-ed57` team, `exp` required, optional `ACCESS_AUD`), and requires the token's
+  email to be in the `BETS_ALLOWED_EMAILS` **secret** — because the `Redzone guest access` policy
+  lets a guest reach the hostname and the bets are the owner's alone. Everything fails closed
+  (`401` no valid identity, `403` not on the allowlist, `503` unconfigured). One-time setup is in
+  DEPLOY.md ("RedZone bet tracker — private store setup"); **the `[[r2_buckets]]` block in
+  `wrangler.toml` is commented out until the bucket exists** because Pages fails the whole site's
+  deploy on a missing bound bucket. `redzone/bets.json` is gitignored so a working copy can't be
+  committed. Tests: `node --test redzone/tests/api.test.mjs` (auth/endpoint, real RSA signatures;
+  every guard mutation-tested) and `node --test redzone/tests/bets.test.js` (grading); both live
+  under `/tests/`, which `functions/_middleware.ts` 404s.
 
 ## Cloudflare Tunnel Configuration
 
@@ -563,9 +580,8 @@ jaredluyster.com/
 │   ├── index.html
 │   ├── redzone.css
 │   ├── redzone.js          # Fetches ESPN's public scoreboard client-side, ranks live games by urgency; inline game panels
-│   ├── bets.js             # Bet tracker: grades bets.json legs against live scores (pure grading, unit-tested)
-│   ├── bets.json           # Personal picks — see the privacy preconditions in § 6 before adding real ones
-│   ├── tests/bets.test.js  # node --test; never served (middleware 404s /tests/)
+│   ├── bets.js             # Bet tracker: grades stored bets against live scores (pure grading, unit-tested)
+│   ├── tests/              # bets.test.js (grading), api.test.mjs (auth/endpoint) — never served (middleware 404s /tests/)
 │   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets

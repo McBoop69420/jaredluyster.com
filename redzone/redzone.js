@@ -13,7 +13,12 @@
 (function () {
   "use strict";
 
-  const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?limit=1000";
+  // groups=80 is FBS. Dateless, it returns the whole current game week (Thu-Sun
+  // plus late-night kickoffs; identical to passing week=N), ~75 games. Two ESPN
+  // gotchas found by measuring: with no groups it returns only a ~22-game
+  // "featured" subset, and limit=1000 silently truncates to 25 (limit works up
+  // to at least 500), so keep the limit at 500.
+  const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=500";
   const SUMMARY_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=";
   const REFRESH_MS = 20000;
   const MAX_PLAYS = 8;
@@ -68,11 +73,18 @@
   // (listed as rel "dark" in the summary payload's logos[]), which suits this
   // UI. Fallback chain if an image fails: dark -> default -> abbreviation text.
   const LOGO_HOST = /^https:\/\/a\.espncdn\.com\//;
+  // The full logos are 500px PNGs (measured: ~34 KB each, up to 95 KB), and an
+  // FBS board shows ~150 of them. ESPN's own resizer serves the same image at
+  // 72px for ~3 KB (measured: ~13x lighter, CORS-open), which still covers the
+  // largest slot (34px) at 2x. Tried first; the full-size images stay as fallbacks.
+  const LOGO_PX = 72;
   function logoUrls(team) {
     const base = team && typeof team.logo === "string" && LOGO_HOST.test(team.logo) ? team.logo : null;
-    if (!base) return { logo: null, logoDark: null };
+    if (!base) return { logo: null, logoDark: null, logoSmall: null };
     const dark = base.replace("/teamlogos/ncaa/500/", "/teamlogos/ncaa/500-dark/");
-    return { logo: base, logoDark: dark !== base ? dark : null };
+    if (dark === base) return { logo: base, logoDark: null, logoSmall: null };
+    const path = dark.replace(LOGO_HOST, "/");
+    return { logo: base, logoDark: dark, logoSmall: "https://a.espncdn.com/combiner/i?img=" + path + "&w=" + LOGO_PX + "&h=" + LOGO_PX };
   }
 
   // A team's visual mark: its logo at size sm|md|lg, or its abbreviation as
@@ -83,8 +95,9 @@
       mark.textContent = t.abbr;
       mark.classList.add("is-text");
     };
-    const first = t.logoDark || t.logo;
-    if (!first) {
+    // resized dark -> full dark -> default; each failure advances one step.
+    const sources = [t.logoSmall, t.logoDark, t.logo].filter((u, i, a) => u && a.indexOf(u) === i);
+    if (!sources.length) {
       asText();
       return mark;
     }
@@ -92,16 +105,15 @@
     img.alt = t.name;
     img.title = t.name;
     img.decoding = "async";
-    let triedDefault = first === t.logo;
+    // Row logos sit below the fold on a 75-game board; tile/ticker ones are on screen at once.
+    if (size === "md") img.loading = "lazy";
+    let step = 0;
     img.onerror = () => {
-      if (!triedDefault && t.logo) {
-        triedDefault = true;
-        img.src = t.logo;
-      } else {
-        asText();
-      }
+      step += 1;
+      if (step < sources.length) img.src = sources[step];
+      else asText();
     };
-    img.src = first;
+    img.src = sources[0];
     mark.appendChild(img);
     return mark;
   }
@@ -725,9 +737,9 @@
   }
 
   function render(games) {
-    // ESPN's default (dateless) scoreboard call already scopes to the
-    // current game week (roughly Tue-Mon), so no extra date filtering is
-    // needed here — that would just make the board look empty on off days.
+    // The FBS scoreboard call (see SCOREBOARD_URL) already returns the whole
+    // current game week, so no extra date filtering is needed here — that
+    // would just make the board look empty on off days.
     const live = games.filter((g) => g.state === "in").sort((a, b) => liveScore(b) - liveScore(a));
     const upcoming = games.filter((g) => g.state === "pre").sort((a, b) => a.kickoffMs - b.kickoffMs);
     const final = games.filter((g) => g.state === "post").sort((a, b) => b.kickoffMs - a.kickoffMs);

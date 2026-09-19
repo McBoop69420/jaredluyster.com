@@ -142,6 +142,44 @@ still reachable unauthenticated at `jaredluyster-com.pages.dev/redzone/` (and th
 form) — same as every other tool folder in this project. It's only public ESPN schedule
 data, but it isn't truly private until that's closed.
 
+### RedZone bet tracker — private store setup (one-time, needs your Cloudflare login)
+
+The tracker's picks are personal, and this repo is **public**, so they live in a private R2
+bucket read through `functions/redzone/api/[[path]].ts` — never in git. Until the steps below
+are done the endpoint answers `503 not-configured` (fails closed) and the board simply shows a
+"bet store isn't set up yet" note; shipping the code first is safe.
+
+**Order matters — create the bucket BEFORE uncommenting the binding in `wrangler.toml`.** Pages
+fails the deploy of the *whole site* if a bound R2 bucket doesn't exist.
+
+1. Create the bucket: `wrangler r2 bucket create jaredluyster-redzone-bets`
+2. Set the allowlist secret (the owner's email; comma-separate several):
+   `wrangler pages secret put BETS_ALLOWED_EMAILS --project-name jaredluyster-com`
+   It is a **secret, not a `[vars]` entry** — `wrangler.toml` is public. The `Redzone guest
+   access` policy lets a guest reach this hostname; this allowlist is what keeps them out of the
+   bets (they get `403`, and the section stays hidden for them).
+3. Optional hardening: also set `ACCESS_AUD` to the `redzone` Access application's AUD tag
+   (Zero Trust → Access → Applications → redzone → Overview), so a token issued for a different
+   Access app in the same org is refused.
+4. Uncomment the `[[r2_buckets]]` block for `REDZONE_BETS` at the bottom of `wrangler.toml`
+   and push.
+5. Put picks in the bucket (a JSON file shaped `{ "bets": [ ... ] }`, schema in the header of
+   `redzone/bets.js`; `redzone/bets.json` is gitignored so a working copy can't be committed):
+   `wrangler r2 object put jaredluyster-redzone-bets/bets.json --file redzone/bets.json --content-type application/json --remote`
+6. Load `https://redzone.jaredluyster.com/` signed in as the owner. If the "My bets" section
+   doesn't appear, open the browser console: `no access to the bet store (HTTP 401)` means Access's
+   token was rejected (check `ACCESS_AUD` / the team domain in `functions/redzone/_lib/access.ts`);
+   `403` means you're signed in with an address that isn't in `BETS_ALLOWED_EMAILS`.
+
+**Not yet verified against a real login:** the code was verified with real RSA signatures and
+against Cloudflare's live key endpoint, but a token actually issued by Access hasn't been seen.
+The claim names it checks (`iss`, `email`, `aud`, `exp`) follow Cloudflare's docs. If one is off
+the failure is safe — the endpoint refuses and no bets show — never the reverse.
+
+Tests: `node --test redzone/tests/api.test.mjs` (auth + endpoint) and
+`node --test redzone/tests/bets.test.js` (grading). Neither is ever served (`/tests/` is 404'd by
+`functions/_middleware.ts`).
+
 ## Roto multiplayer (the DraftRoom Durable Object)
 
 Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is

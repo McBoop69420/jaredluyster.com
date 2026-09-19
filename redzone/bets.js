@@ -1,14 +1,14 @@
 /* RedZone — bet tracker
  *
- * Picks live in bets.json (same folder), added from slip screenshots. This
- * file grades each leg against live ESPN scores and shows the results in a
- * "My bets" section plus a small chip on the matching game tiles/rows. Nothing
- * is stored in the browser and nothing is sent anywhere.
+ * Picks live in a private R2 object served by functions/redzone/api (NOT a file
+ * in this public repo), added from slip screenshots. This file grades each leg
+ * against live ESPN scores and shows the results in a "My bets" section plus a
+ * small chip on the matching game tiles/rows. Nothing is stored in the browser.
  *
  * Grading (gradeLeg/gradeBet/summarize) is pure and shared with the Node tests
  * in tests/bets.test.js; the DOM half below only runs in a browser.
  *
- * bets.json: { "bets": [ Bet, ... ] }
+ * The stored document: { "bets": [ Bet, ... ] }
  *   Bet = {
  *     id, placed?: "YYYY-MM-DD", book?, note?,
  *     stake: number, odds?: American odds for the whole bet, toWin?: number (overrides odds),
@@ -290,24 +290,37 @@
     });
   }
 
+  // The endpoint only answers the owner, on redzone.jaredluyster.com. Everyone else gets
+  // 401/403 (a guest Access lets in, no Access session) or 404 (any other hostname, or a
+  // dev server with no Function) — all of which just mean "no bets for you", not an error,
+  // so the section stays hidden instead of hinting that something is there.
+  const BETS_URL = "/redzone/api/bets";
+
   async function fetchBets() {
     if (fetchingBets) return;
     fetchingBets = true;
     try {
-      const res = await fetch("/bets.json?_=" + Date.now(), { cache: "no-store" });
-      if (res.status === 404) {
+      const res = await fetch(BETS_URL + "?_=" + Date.now(), { cache: "no-store", credentials: "same-origin" });
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        // Logged, not shown: this is also what a guest sees, and the owner can spot it here
+        // (401 = Access token rejected, 403 = signed in but not on the allowlist).
+        console.info("RedZone bets: no access to the bet store (HTTP " + res.status + ")");
         state.bets = [];
         state.error = null;
         return;
       }
+      if (res.status === 503) throw new Error("the bet store isn't set up yet");
       if (!res.ok) throw new Error("HTTP " + res.status);
+      // Pages answers an unknown path with its HTML catch-all and a 200, which is what a
+      // missing Function looks like; say so instead of failing inside res.json().
+      if (!/json/i.test(res.headers.get("Content-Type") || "")) throw new Error("the bet endpoint isn't deployed");
       const data = await res.json();
       const list = Array.isArray(data) ? data : data && data.bets;
       if (!Array.isArray(list)) throw new Error("expected an array or { \"bets\": [...] }");
       state.bets = list;
       state.error = null;
     } catch (err) {
-      console.error("RedZone bets: couldn't read bets.json", err);
+      console.error("RedZone bets: couldn't load bets", err);
       state.error = String(err.message || err);
     } finally {
       fetchingBets = false;
@@ -426,7 +439,7 @@
     if (!section || !body) return;
     body.textContent = "";
     if (state.error) {
-      body.appendChild(el("p", "bets-error", "Couldn't read bets.json: " + state.error));
+      body.appendChild(el("p", "bets-error", "Couldn't load bets: " + state.error));
     }
     if (!graded.length) {
       section.hidden = !state.error;
