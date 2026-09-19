@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/redzone.css?v=1">
+<link rel="stylesheet" href="/redzone.css?v=6">
 </head>
 <body>
 <header class="topbar">
@@ -24,6 +24,11 @@
 <div class="ticker" id="ticker" aria-live="polite"></div>
 
 <main class="board">
+  <section id="betsSection" aria-label="My bets" hidden>
+    <h2 class="section-head"><span class="dot dot-bets"></span>My bets</h2>
+    <div id="betsBody"></div>
+  </section>
+
   <section aria-label="Live games">
     <h2 class="section-head"><span class="dot dot-live"></span>Live — ranked by how close it is</h2>
     <div class="tiles tiles-live" id="liveTiles"></div>
@@ -46,9 +51,11 @@
 <footer class="colophon">
   <p>Live game data from ESPN. Network badges link to that network's own site — you sign in
     there with whatever you already subscribe to. This board is a private schedule/priority
-    tool; it doesn't stream, embed, or rebroadcast any video itself.</p>
+    tool; it doesn't stream, embed, or rebroadcast any video itself. Tap any game to expand
+    its live detail — field position, latest plays, win probability, scoring and team stats.</p>
 </footer>
 
-<script src="/redzone.js?v=1"></script>
+<script src="/redzone.js?v=7"></script>
+<script src="/bets.js?v=2"></script>
 </body>
 </html>
