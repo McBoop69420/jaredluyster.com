@@ -137,10 +137,23 @@ Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster
 with `Www-Authenticate: Cloudflare-Access`. Not yet verified: a real signed-in load of the
 board through Access (needs a login).
 
-**Known gap:** Access only gates the `redzone.jaredluyster.com` hostname. The same files are
-still reachable unauthenticated at `jaredluyster-com.pages.dev/redzone/` (and the apex path
-form) — same as every other tool folder in this project. It's only public ESPN schedule
-data, but it isn't truly private until that's closed.
+**Extra Access destination (2026-09-20):** the `redzone` Access app also protects
+`jaredluyster-com.pages.dev` path `redzone/*`, so the Pages default hostname no longer serves
+the board's files without a login (verified: `302` to Access on `/redzone/` and
+`/redzone/redzone.js`; `pages.dev/roto/` and `jaredluyster.com/` are unaffected).
+
+**Known limit — the apex can't be gated.** `jaredluyster.com` resolves to Render's own IPs
+(`216.24.57.x`), not through this Cloudflare zone, so Cloudflare Access never sees those
+requests (the `Server: cloudflare` header there is Render's CDN). `app.py` serves any file in
+the repo root, so `jaredluyster.com/redzone/redzone.js` etc. answer 200 without a login. A
+`jaredluyster.com/redzone/*` Access destination was tried and removed the same day because it
+did nothing. This is acceptable because the repo is public on GitHub anyway and the only
+private data (the bets) is behind the API's own auth — see the bet tracker section. Do not
+put anything secret in `redzone/`.
+
+**Google sign-in test (2026-09-20):** Cloudflare's "Test" on the Google provider (run as the
+owner) returned "Your Identity Provider works", confirming the OAuth client ID/secret are
+valid. A real guest sign-in (`mohara350376@gmail.com`) is still untested.
 
 ### RedZone bet tracker — private store setup (one-time, needs your Cloudflare login)
 

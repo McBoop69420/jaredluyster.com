@@ -438,9 +438,12 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   Emails = `mohara350376@gmail.com`, added 2026-09-18). Convention: one guest policy per
   app, with guest addresses listed inside it — not one policy per address. Verified via `curl`: `302` →
   `.../cdn-cgi/access/login/redzone.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`.
-  Gap: Access gates only the `redzone.` hostname — the same files are still reachable
-  unauthenticated at `jaredluyster-com.pages.dev/redzone/` (public ESPN schedule data and the
-  page's own code only — the bet data is deliberately NOT in this folder, see the bet tracker below).
+  Since 2026-09-20 the `redzone` Access app also covers `jaredluyster-com.pages.dev/redzone/*`,
+  so the Pages default hostname is gated too. Remaining limit: the apex `jaredluyster.com` is
+  served by Render (not proxied through this zone), so `jaredluyster.com/redzone/*` files are
+  reachable without a login and Access cannot cover them — public ESPN schedule data and the
+  page's own code only (the repo is public anyway; the bet data is deliberately NOT in this
+  folder, see the bet tracker below). See DEPLOY.md.
 - **FBS coverage (2026-09-19).** The board fetches
   `…/college-football/scoreboard?groups=80&limit=500` — `groups=80` is FBS and, dateless, returns
   the whole current game week (~75 games incl. FBS-vs-FCS ones; identical to passing `week=N`).
