@@ -233,6 +233,22 @@
     return null;
   }
 
+  // US pro/college sports nest the score in an object ({displayValue|value});
+  // soccer competitors carry it as a bare string/number instead.
+  function scoreOf(c) {
+    const s = c && c.score;
+    if (s == null) return null;
+    return typeof s === "object" ? (s.displayValue || s.value) : s;
+  }
+
+  function gameTitle(label, awayName, awayScore, homeName, homeScore, state) {
+    if ((state === "post" || state === "in") && awayScore != null && homeScore != null) {
+      return label + " · " + awayName + " " + awayScore + ", " + homeName + " " + homeScore +
+        (state === "post" ? " (Final)" : " (Live)");
+    }
+    return label + " · " + awayName + " @ " + homeName + (state === "in" ? " (Live)" : "");
+  }
+
   function parseGameEvent(ev, entry) {
     const comp = ev && ev.competitions && ev.competitions[0];
     if (!comp) return null;
@@ -248,23 +264,14 @@
     const state = comp.status && comp.status.type && comp.status.type.state;
     const awayName = (away.team && (away.team.shortDisplayName || away.team.displayName)) || "?";
     const homeName = (home.team && (home.team.shortDisplayName || home.team.displayName)) || "?";
-    // US pro/college sports nest the score in an object ({displayValue|value});
-    // soccer competitors carry it as a bare string/number instead.
-    const scoreOf = c => {
-      const s = c.score;
-      if (s == null) return null;
-      return typeof s === "object" ? (s.displayValue || s.value) : s;
-    };
     const live = state === "post" || state === "in";
-    const awayScore = live ? (scoreOf(away) != null ? scoreOf(away) : "0") : null;
-    const homeScore = live ? (scoreOf(home) != null ? scoreOf(home) : "0") : null;
-    let title;
-    if (live) {
-      title = entry.label + " · " + awayName + " " + awayScore +
-        ", " + homeName + " " + homeScore + (state === "post" ? " (Final)" : " (Live)");
-    } else {
-      title = entry.label + " · " + awayName + " @ " + homeName;
-    }
+    // ESPN's team-schedule endpoint reports a game as "in" progress but with NO
+    // score until it's final, so a missing score stays null (the chip then shows
+    // the start time) rather than being faked as 0-0; refreshLiveGames() below
+    // fills in the real score from the per-game summary endpoint.
+    const awayScore = live ? scoreOf(away) : null;
+    const homeScore = live ? scoreOf(home) : null;
+    const title = gameTitle(entry.label, awayName, awayScore, homeName, homeScore, state);
     // Fixture placement follows each sport's own convention (see TEAM_SCHEDULE_TEAMS/
     // SOCCER_LEAGUES comment): American sports show away first, soccer shows home first.
     const homeFirst = entry.order === "home-away";
@@ -272,6 +279,7 @@
       date: et.date, start: timeValid ? et.time : null,
       timeLabel: timeValid ? null : "TBD", title: title, type: "sports",
       league: entry.label, leagueLogo: entry.logo, state: state || "pre",
+      id: ev.id, srcKey: entry.key, homeFirst: homeFirst,   // for refreshLiveGames()
       gameLink: watchLinkFor(entry, comp) || gameLinkUrl(ev),
       leftName: homeFirst ? homeName : awayName,
       rightName: homeFirst ? awayName : homeName,
@@ -377,13 +385,104 @@
     const [results, mlbGamePks] = await Promise.all([
       Promise.all(jobs), fetchMlbGamePks(minDate, maxDate),
     ]);
+    const prevLive = new Map(sportsEvents.filter(e => e.id && e.state === "in" && e.leftScore != null)
+      .map(e => [e.id, e]));
     sportsEvents = results.flat();
     sportsEvents.forEach(ev => {
       if (ev.league === "MLB" && mlbGamePks[ev.date]) {
         ev.gameLink = "https://www.mlb.com/tv/g" + mlbGamePks[ev.date] + "/";
       }
+      // The schedule feed has no live score; keep the last one we polled so a
+      // full reload doesn't blank it back to the start time.
+      const prev = ev.state === "in" && ev.leftScore == null && prevLive.get(ev.id);
+      if (prev) {
+        ev.leftScore = prev.leftScore; ev.rightScore = prev.rightScore; ev.title = prev.title;
+      }
     });
     sportsLastFetch = Date.now();
+    refreshLiveGames();
+  }
+
+  // ---- Live scores ------------------------------------------------------
+  // Full sports loads are heavy (dozens of requests) so they run every few
+  // minutes to hourly. In-progress games instead get a light poll of ESPN's
+  // per-game summary endpoint — one request per live game, nothing when no
+  // game is on — which carries the real running score.
+  const LIVE_POLL_MS = 30 * 1000;
+  const LIVE_PRESTART_WINDOW_MIN = 300; // a "pre" game this long past kickoff is likely postponed, stop polling
+  let liveInFlight = false;
+
+  function etNowMinutes() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date());
+    const get = t => Number((parts.find(p => p.type === t) || {}).value);
+    return get("hour") * 60 + get("minute");
+  }
+
+  function needsLivePoll(ev) {
+    if (ev.type !== "sports" || !ev.id || !ev.srcKey) return false;
+    if (ev.state === "in") return true;
+    // Kickoff has passed but the schedule still says "pre": it has probably
+    // started, so poll to catch the pre -> live flip.
+    if (ev.state === "pre" && ev.start && ev.date === etTodayStr()) {
+      const [h, m] = ev.start.split(":").map(Number);
+      const sinceStart = etNowMinutes() - (h * 60 + m);
+      return sinceStart >= 0 && sinceStart <= LIVE_PRESTART_WINDOW_MIN;
+    }
+    return false;
+  }
+
+  async function fetchLiveComp(ev) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(ESPN + ev.srcKey + "/summary?event=" + encodeURIComponent(ev.id),
+        { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return (data.header && data.header.competitions && data.header.competitions[0]) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Returns true when the chip's state or score changed.
+  function applyLiveComp(ev, comp) {
+    const state = comp.status && comp.status.type && comp.status.type.state;
+    const competitors = comp.competitors || [];
+    const home = competitors.find(c => c.homeAway === "home");
+    const away = competitors.find(c => c.homeAway === "away");
+    if (!state || !home || !away) return false;
+    const live = state === "in" || state === "post";
+    const left = ev.homeFirst ? home : away, right = ev.homeFirst ? away : home;
+    const leftScore = live ? scoreOf(left) : null, rightScore = live ? scoreOf(right) : null;
+    if (ev.state === state && ev.leftScore === leftScore && ev.rightScore === rightScore) return false;
+    ev.state = state; ev.leftScore = leftScore; ev.rightScore = rightScore;
+    const awayName = ev.homeFirst ? ev.rightName : ev.leftName;
+    const homeName = ev.homeFirst ? ev.leftName : ev.rightName;
+    ev.title = gameTitle(ev.league, awayName, ev.homeFirst ? rightScore : leftScore,
+      homeName, ev.homeFirst ? leftScore : rightScore, state);
+    return true;
+  }
+
+  async function refreshLiveGames() {
+    if (liveInFlight || document.hidden) return;
+    const targets = sportsEvents.filter(needsLivePoll);
+    if (!targets.length) return;
+    liveInFlight = true;
+    try {
+      const changed = await Promise.all(targets.map(async ev => {
+        const comp = await fetchLiveComp(ev);
+        return comp ? applyLiveComp(ev, comp) : false;
+      }));
+      // renderCalendar() skips the DOM swap when the markup is identical, so
+      // this only redraws when a score/state actually moved.
+      if (changed.some(Boolean)) renderCalendar();
+    } finally {
+      liveInFlight = false;
+    }
   }
 
   function fmtTime(hhmm) {
@@ -698,10 +797,11 @@
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(refresh, REFRESH_MS);
     setInterval(() => { loadSportsEvents().then(renderCalendar); }, SPORTS_REFRESH_MS);
+    setInterval(refreshLiveGames, LIVE_POLL_MS);
     const btn = $("refreshBtn");
     if (btn) btn.addEventListener("click", refresh);
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) { refresh(); requestWakeLock(); }
+      if (!document.hidden) { refresh(); refreshLiveGames(); requestWakeLock(); }
     });
     window.addEventListener("resize", fitCalendarGrid);
     if (document.fonts && document.fonts.ready) {
