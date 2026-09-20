@@ -155,6 +155,13 @@ Sports has its own project and its own deploy mechanism; see §4b.
   in `~/.config/cloudflare_pages_token.txt`) and its own post-deploy verification.
   Same `LogonType=Interactive` requirement as `McBoop Ledger Push` (git push needs
   the logged-on user's credential store), so it does not fire while logged out.
+  **Runs windowless (2026-09-18):** the task's action is `wscript.exe //B
+  "McBoop Newspaper\deploy-pages-hidden.vbs"`, which launches the same `bash.exe -l
+  deploy-pages.sh` with window style 0 and waits for it. It used to run `bash.exe`
+  directly — a console program under an interactive logon — which popped a console
+  window onto the desktop every 15 minutes and stole focus, interrupting Steam Link
+  streams. The VBS passes bash's exit code through as the task's last result. If
+  the task is ever re-registered, keep it on the launcher (not bare `bash.exe`).
   Most runs ship byte-identical content — the script has no generation step left
   to skip (see below), so it is cheap and safe to over-run; `wrangler pages
   deploy` and the ledger push are both idempotent/no-op when nothing changed.
