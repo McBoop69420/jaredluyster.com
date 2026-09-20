@@ -124,10 +124,26 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
    shrink below that row's content width even though every ancestor above is
    already capped at 50% — the row then spills past its card into the next
    one instead of shrinking, reading as two cards overlapping on a busy day. */
-.cal-ev-grid .cal-ev-match-teams{min-width:0;max-width:100%;}
+/* Unplayed chip: the two logos side by side with the start time on its own line
+   beneath. In a single LOGO TIME LOGO row the ~50px chip clipped the time
+   ("7:15p" -> "7::"). */
+.cal-ev-grid .cal-ev-match-teams{min-width:0;max-width:100%;flex-wrap:wrap;justify-content:center;gap:2px 4px;}
 .cal-ev-grid .cal-ev-logo--team{width:15px;height:15px;}
-.cal-ev-grid .cal-ev-match-time{font-size:8px;min-width:0;overflow:hidden;}
+.cal-ev-grid .cal-ev-match-time{order:1;flex-basis:100%;text-align:center;font-size:10px;opacity:1;min-width:0;}
 .cal-ev-grid .cal-ev-score{min-width:0;overflow:hidden;}
+
+/* Scored grid chip: a two-line scoreboard (logo + score per team) with the
+   winner bolded and the loser dimmed, plus a tiny FINAL/LIVE tag. */
+.cal-ev-grid .cal-ev-match--board{align-items:stretch;gap:2px;}
+.cal-ev-line{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;}
+.cal-ev-pts{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;line-height:1.1;}
+.cal-ev-line--win .cal-ev-pts{font-weight:800;}
+.cal-ev-line--lose{opacity:.6;}
+.cal-ev-line--lose .cal-ev-pts{font-weight:500;}
+.cal-ev-grid .cal-ev-match--board .cal-ev-logo--team{width:16px;height:16px;}
+.cal-ev-state{font-size:7px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.75;text-align:center;line-height:1;}
+/* --cal-live is too dark to read on the chips' dark-green fill; use a lighter tint. */
+.cal-ev-match--live .cal-ev-pts,.cal-ev-match--live .cal-ev-state{color:#ffb199;opacity:1;}
 
 .cal-agenda-wrap{display:none;margin-top:14px;padding-top:10px;border-top:var(--cal-border-w) solid var(--cal-ink);}
 .cal-agenda-wrap h3.sub{margin:0 0 2px;}

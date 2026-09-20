@@ -431,6 +431,26 @@
     const sizeClass = size && size !== "sm" ? " cal-ev-match--" + size : "";
     const hasScore = (ev.state === "in" || ev.state === "post") &&
       ev.leftScore != null && ev.rightScore != null;
+    // The grid chips are only ~50px wide, too narrow for LOGO 27–33 LOGO in one
+    // row (the score wrapped digit-by-digit). With a score, stack it as a
+    // mini scoreboard instead: one logo+score line per team, winner emphasized.
+    if (hasScore && (!size || size === "sm")) {
+      const final = ev.state === "post";
+      const l = parseFloat(ev.leftScore), r = parseFloat(ev.rightScore);
+      const line = (logo, name, score, cls) =>
+        '<span class="cal-ev-line' + cls + '">' +
+          '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(logo) + '" alt="' + esc(name) + '" loading="lazy" decoding="async">' +
+          '<span class="cal-ev-pts">' + esc(score) + '</span></span>';
+      const win = (a, b) => final && a > b ? " cal-ev-line--win" : final && a < b ? " cal-ev-line--lose" : "";
+      const tag = ev.gameLink ? "a" : "span";
+      const linkAttrs = ev.gameLink
+        ? ' href="' + esc(ev.gameLink) + '" target="_blank" rel="noopener"' : "";
+      return '<' + tag + ' class="cal-ev-match cal-ev-match--board' + (final ? "" : " cal-ev-match--live") + '"' + linkAttrs + '>' +
+        line(ev.leftLogo, ev.leftName, ev.leftScore, win(l, r)) +
+        line(ev.rightLogo, ev.rightName, ev.rightScore, win(r, l)) +
+        '<span class="cal-ev-state">' + (final ? "Final" : "Live") + '</span>' +
+        '</' + tag + '>';
+    }
     const centerHtml = hasScore
       ? '<span class="cal-ev-score' + (ev.state === "in" ? " cal-ev-score--live" : "") + '">' +
         esc(ev.leftScore) + '–' + esc(ev.rightScore) + '</span>'
