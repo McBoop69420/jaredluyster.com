@@ -12,6 +12,7 @@
   let calEvents = null; // loaded from /calendar.json (null = not yet fetched)
   let generatedAt = null;
   let refreshTimer = null;
+  let lastCalendarHtml = null; // what #calRoot currently shows (see renderCalendar)
 
   // ---- Sports: games for the teams I follow ------------------------------
   // Pulled live from ESPN's public JSON (CORS-enabled), same source and same
@@ -110,10 +111,12 @@
       if (!res.ok) throw new Error("calendar.json " + res.status);
       const j = await res.json();
       calEvents = Array.isArray(j.events) ? j.events.slice() : [];
+      generatedAt = Date.now();
     } catch (e) {
-      calEvents = [];
+      // A failed refresh keeps the last good events (and their "updated" time)
+      // rather than blanking the calendar; only a failed first load starts empty.
+      if (calEvents === null) { calEvents = []; generatedAt = Date.now(); }
     }
-    generatedAt = Date.now();
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -439,7 +442,7 @@
       const l = parseFloat(ev.leftScore), r = parseFloat(ev.rightScore);
       const line = (logo, name, score, cls) =>
         '<span class="cal-ev-line' + cls + '">' +
-          '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(logo) + '" alt="' + esc(name) + '" loading="lazy" decoding="async">' +
+          '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(logo) + '" alt="' + esc(name) + '" decoding="async">' +
           '<span class="cal-ev-pts">' + esc(score) + '</span></span>';
       const win = (a, b) => final && a > b ? " cal-ev-line--win" : final && a < b ? " cal-ev-line--lose" : "";
       const tag = ev.gameLink ? "a" : "span";
@@ -460,9 +463,9 @@
       ? ' href="' + esc(ev.gameLink) + '" target="_blank" rel="noopener"' : "";
     return '<' + tag + ' class="cal-ev-match' + sizeClass + '"' + linkAttrs + '>' +
       '<span class="cal-ev-match-teams">' +
-        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" loading="lazy" decoding="async">' +
+        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" decoding="async">' +
         centerHtml +
-        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" loading="lazy" decoding="async">' +
+        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" decoding="async">' +
       '</span>' +
       '</' + tag + '>';
   }
@@ -471,7 +474,10 @@
     const root = $("calRoot");
     if (!root) return;
     if (calEvents === null) {
+      // First load only — refresh() no longer nulls calEvents, so an
+      // already-drawn calendar stays up while new data is fetched.
       root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
+      lastCalendarHtml = null;
       loadCalendar().then(() => { renderCalendar(); stampUpdated(); });
       return;
     }
@@ -642,6 +648,10 @@
         '<ul class="cal-agenda">' + agenda.join("") + '</ul></div>';
     }
 
+    // Most refreshes produce identical markup. Skip the swap then: rebuilding
+    // the DOM re-creates every logo <img> and can blink the whole grid.
+    if (html === lastCalendarHtml) return;
+    lastCalendarHtml = html;
     root.innerHTML = html;
     fitCalendarGrid();
     requestAnimationFrame(fitCalendarGrid);
@@ -669,14 +679,19 @@
   async function refresh() {
     const btn = $("refreshBtn");
     if (btn) btn.disabled = true;
-    calEvents = null; // force a fresh /calendar.json fetch so new commitments appear
     if (Date.now() - sportsLastFetch > SPORTS_MIN_REFETCH_MS) {
       loadSportsEvents().then(renderCalendar);
     }
     stampDateline(); // re-stamp in case the page has been open across a midnight rollover
-    renderCalendar();
-    stampUpdated();
-    if (btn) btn.disabled = false;
+    // Fetch fresh /calendar.json so new commitments appear, but keep the
+    // current grid on screen meanwhile and only redraw once it arrives.
+    try {
+      await loadCalendar();
+      renderCalendar();
+      stampUpdated();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   function startLoops() {

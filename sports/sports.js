@@ -1436,7 +1436,9 @@
 
     // Scoreboard (the priority — never blocked by standings)
     const fetchedGames = await fetchGames(league);
-    const games = fetchedGames == null ? [] : fetchedGames;
+    // A failed fetch falls back to the last good slate rather than blanking the
+    // league to "No games scheduled" until the next refresh.
+    const games = fetchedGames == null ? (gamesByLeague.get(league.key) || []) : fetchedGames;
     if (fetchedGames != null) gamesByLeague.set(league.key, fetchedGames);
 
     const grid = el("div", "games-grid");
@@ -1444,14 +1446,19 @@
     fillGameGrid(grid, games);
     section.appendChild(grid);
 
-    // Standings slot — filled asynchronously, non-blocking.
+    // Standings slot — filled asynchronously, non-blocking. On a periodic
+    // re-render, seed it with the previous table so the standings don't vanish
+    // for the duration of the refetch; the fresh table replaces it below.
     const slot = el("div", "standings-slot");
+    const prevSlot = document.querySelector('.league[data-league-key="' + league.key + '"] .standings-slot');
+    if (prevSlot) prevSlot.childNodes.forEach(n => slot.appendChild(n.cloneNode(true)));
     section.appendChild(slot);
     if (league.standings) {
       loadStandings(league).then(tbl => {
         if (tbl) {
-          slot.appendChild(el("div", "standings-head", esc(league.label + " Standings")));
-          slot.appendChild(tbl);
+          slot.replaceChildren(
+            el("div", "standings-head", esc(league.label + " Standings")),
+            tbl);
         }
         // Standings for this league just became available (or were attempted) —
         // re-check Spotlight's playoff-implications boost, which depends on them.
@@ -1471,6 +1478,7 @@
   }
 
   // ---- Master render ----------------------------------------------------
+  let renderedFilter = null; // filter the board was last built for (see render)
   async function render() {
     const board = $("#board");
     if (board) {
@@ -1478,16 +1486,24 @@
         ? LEAGUES
         : LEAGUES.filter(l => l.key === activeFilter);
 
-      board.innerHTML = "";
-      list.forEach(() => board.appendChild(el("div", "skeleton")));
+      // Skeletons only when there's nothing useful on screen (first paint, or
+      // a different filter). The periodic re-render keeps the current board up
+      // and swaps it for the fresh one in a single step — no blank/skeleton flash.
+      if (!board.children.length || renderedFilter !== activeFilter) {
+        board.innerHTML = "";
+        list.forEach(() => board.appendChild(el("div", "skeleton")));
+      }
+      renderedFilter = activeFilter;
 
       const results = await Promise.allSettled(list.map(loadLeague));
-      board.innerHTML = "";
-      let any = false;
-      results.forEach(r => {
-        if (r.status === "fulfilled" && r.value) { board.appendChild(r.value); any = true; }
-      });
-      if (!any) board.appendChild(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
+      const fresh = results.filter(r => r.status === "fulfilled" && r.value).map(r => r.value);
+      if (fresh.length) {
+        board.replaceChildren(...fresh);
+      } else if (!board.querySelector(".league")) {
+        // Nothing to show and nothing already on screen: report the failure.
+        // If a good board is already up, a failed refresh leaves it alone.
+        board.replaceChildren(el("div", "error", "Couldn't load any league. Check your connection and refresh."));
+      }
       renderSpotlight();
     } else if ($("#nflOdds")) {
       await refreshNflGamesForOdds();

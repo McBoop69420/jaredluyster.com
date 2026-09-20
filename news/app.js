@@ -101,6 +101,18 @@
       { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
   }
 
+  // Poll-driven panels (headlines, weather, traffic) redraw every few minutes.
+  // Rewriting innerHTML with identical markup still tears down and rebuilds the
+  // DOM — a visible flicker, and it resets any inner scroll position. So skip
+  // the write when nothing changed, and put scroll positions back when it did.
+  function setHtmlIfChanged(node, html) {
+    if (!node || node.__html === html) return;
+    const scrolls = [...node.querySelectorAll(".traffic-scroll")].map(n => n.scrollTop);
+    node.innerHTML = html;
+    node.__html = html;
+    node.querySelectorAll(".traffic-scroll").forEach((n, i) => { n.scrollTop = scrolls[i] || 0; });
+  }
+
   // ---- Live news feed ---------------------------------------------------
   // Real RSS items fetched server-side by the /api/feeds worker route, then
   // polled here on a short timer so a tab updates without a page reload.
@@ -147,7 +159,7 @@
       liveFeedsLoadedAt = now;
       const sec = activeSection();
       const list = $("feedList");
-      if (sec && list) list.innerHTML = feedItemsHtml(sec.liveFeed);
+      if (sec && list) setHtmlIfChanged(list, feedItemsHtml(sec.liveFeed));
       stampUpdated();
     } catch (e) {
       // Keep showing the last good feed items; a stale list beats an empty one.
@@ -215,12 +227,16 @@
             { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })) : "") +
           "</div>";
       });
-      box.innerHTML = weatherHead('<div class="weather-live-kicker">' +
+      // Both NWS calls failing (fetchNWS resolves null) isn't worth showing
+      // over a forecast that's already up — a stale reading beats an error flash.
+      if (!forecast && !alerts && box.__html) return;
+      setHtmlIfChanged(box, weatherHead('<div class="weather-live-kicker">' +
         '<a href="https://forecast.weather.gov/MapClick.php?lat=38.0297&lon=-84.4947" ' +
-        'target="_blank" rel="noopener">Open NWS &rarr;</a></div>') + html;
+        'target="_blank" rel="noopener">Open NWS &rarr;</a></div>') + html);
     } catch (e) {
-      box.innerHTML = weatherHead() +
-        '<div class="weather-err">Live weather unavailable (offline, or NWS blocked).</div>';
+      if (box.__html) return;
+      setHtmlIfChanged(box, weatherHead() +
+        '<div class="weather-err">Live weather unavailable (offline, or NWS blocked).</div>');
     }
   }
 
@@ -344,10 +360,11 @@
         ).join("") + "</ul></div>";
       }
 
-      box.innerHTML = html;
+      setHtmlIfChanged(box, html);
     } catch (e) {
-      box.innerHTML = trafficHead() +
-        '<div class="weather-err">Live traffic data unavailable right now.</div>';
+      if (box.__html) return; // keep the last good closures rather than flash an error
+      setHtmlIfChanged(box, trafficHead() +
+        '<div class="weather-err">Live traffic data unavailable right now.</div>');
     }
   }
 
