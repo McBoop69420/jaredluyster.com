@@ -160,7 +160,11 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
 .cal-loading,.cal-empty{font-size:13px;color:var(--cal-muted);font-style:italic;}
 
 /* Toolbar */
-.board-toolbar{display:flex;align-items:center;justify-content:flex-end;margin:10px 0 0;}
+.board-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0;}
+/* Reads as the sibling of Refresh, not as body copy — so undo the page's
+   default link underline/hover-invert and give it the button's slab. */
+a.daily-link{font-family:var(--cal-font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:8px 16px;border:2px solid var(--cal-ink);background:var(--cal-paper);color:var(--cal-ink);box-shadow:4px 4px 0 var(--cal-accent);transition:transform .12s ease,box-shadow .12s ease;-webkit-touch-callout:default;}
+a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--cal-ink);}
 .refresh-btn{font-family:var(--cal-font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;padding:8px 16px;border:2px solid var(--cal-ink);border-radius:0;background:var(--cal-ink);color:var(--cal-paper);box-shadow:4px 4px 0 var(--cal-accent);transition:transform .12s ease,box-shadow .12s ease;}
 .refresh-btn:hover{background:var(--cal-ink);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--cal-accent);}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--cal-accent);}
