@@ -1013,7 +1013,8 @@
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
       '<div class="daily-link-row"><button type="button" class="add-todo-btn" data-add-todo>+ Add todo</button>' +
-      '<a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
+      '<a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a>' +
+      '<a class="daily-link" href="https://social.jaredluyster.com/">Social &rarr;</a></div></div>';
     // What's owed now: overdue, due today, or undated. Anything later only sits on its
     // own day, so a repeating todo you just ticked doesn't bounce straight back in as
     // "tomorrow". Overdue first, then by date, undated last.
