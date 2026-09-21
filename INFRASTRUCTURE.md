@@ -142,7 +142,17 @@ Sports has its own project and its own deploy mechanism; see §4b.
   - [`calendar/`](calendar/index.html) — `index.html`, `calendar.css`,
     `calendar.js`, `robots.txt` (self-contained month-grid calendar; reads the
     same `/calendar.json` the news shell used to, still served from the deploy
-    root — see below)
+    root — see below) plus `todos.json` (added 2026-09-20: the to-do list drawn on
+    the calendar). **`todos.json` is public by the owner's informed choice.** It is
+    committed to this public repo, so anyone can read it on GitHub and at
+    `jaredluyster.com/calendar/todos.json` (git-deployed, no Access), and on
+    `mcboop-daily.pages.dev` too; the Access sign-in only covers
+    `calendar.jaredluyster.com`. Nothing sensitive goes in it. A web page can't
+    write to git, so ticking a todo is remembered per device in `localStorage`
+    (key `calendar.todos.done`), not written back to the file — delete finished
+    todos from the file by hand. A deploy that doesn't copy `todos.json` shows up as
+    the site's HTML fallback (200, `text/html`) at `/calendar/todos.json`, which the
+    page treats as "no todos"; check it returns JSON after the first deploy
 - **Deploy pipeline — moved off Hermes cron to a Windows Scheduled Task,
   2026-09-08.** Task `McBoop Daily Deploy` runs `McBoop Newspaper/deploy-pages.sh`
   every 15 minutes (not just twice a day — deliberately short so a `news/` or
@@ -576,7 +586,8 @@ jaredluyster.com/
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
 │   ├── index.html
 │   ├── calendar.css
-│   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged)
+│   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged) and /todos.json; tap-to-tick todos with per-device undo
+│   ├── todos.json          # To-do list — PUBLIC (repo is public); ticks live in the browser's localStorage, see §4
 │   └── robots.txt
 ├── social/                 # Social Asset Studio (social.jaredluyster.com) — canvas editor + R2-backed library
 │   ├── index.html

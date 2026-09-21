@@ -1,0 +1,4 @@
+{
+  "note": "PUBLIC FILE. It is committed to a public GitHub repo and served without a login at jaredluyster.com/calendar/todos.json, so never put anything private here. Each todo is { \"title\": \"...\", \"date\": \"YYYY-MM-DD\" }; date is optional (an undated todo only shows in the To do strip). Ticking a todo on the page hides it on that device only, so delete it from this file once it's done.",
+  "todos": []
+}
