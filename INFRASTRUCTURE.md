@@ -155,7 +155,21 @@ Sports has its own project and its own deploy mechanism; see §4b.
     page treats as "no todos"; check it returns JSON after the first deploy.
     `deploy-pages.sh` (in `McBoop Newspaper/`, outside this repo) got a
     `cp` line for `todos.json` on 2026-09-20 — it hadn't been copying it, so
-    `mcboop-daily.pages.dev` served the HTML fallback until then
+    `mcboop-daily.pages.dev` served the HTML fallback until then.
+    **Todos added on the page itself** (the "+ Add todo" button; added 2026-09-21)
+    are a separate, private list: they live only in that browser's `localStorage`
+    (key `calendar.todos.local`), so they are not in the repo but also are NOT shared
+    between devices (the wall iPad and a phone each have their own). A shared list
+    would need a private store (KV/R2) behind Access, like the RedZone bet tracker.
+    They can repeat (daily, weekly on chosen days, monthly, yearly); a repeating todo
+    is one live item that jumps to its next date when ticked, never a pile of overdue
+    copies. The recurrence maths is in `calendar/todo-repeat.js`, unit-tested in
+    `tests/todo-repeat.test.mjs`. The To do strip shows what's owed now (overdue, due
+    today, undated); later todos sit only on their day.
+    **`deploy-pages.sh` copies `calendar/` files by explicit `cp` line, so every NEW file
+    there needs one added on the Windows box** (`todos.json` did; `todo-repeat.js` does,
+    from 2026-09-21). Without it `/todo-repeat.js` comes back as the HTML fallback, the
+    page's Repeat menu stays hidden, and adding todos still works
 - **Deploy pipeline — moved off Hermes cron to a Windows Scheduled Task,
   2026-09-08.** Task `McBoop Daily Deploy` runs `McBoop Newspaper/deploy-pages.sh`
   every 15 minutes (not just twice a day — deliberately short so a `news/` or
@@ -616,6 +630,7 @@ jaredluyster.com/
 │   ├── index.html
 │   ├── calendar.css
 │   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged) and /todos.json; tap-to-tick todos with per-device undo
+│   ├── todo-repeat.js      # Recurrence rules for page-made todos (pure, unit-tested in tests/todo-repeat.test.mjs)
 │   ├── todos.json          # To-do list — PUBLIC (repo is public); ticks live in the browser's localStorage, see §4
 │   └── robots.txt
 ├── social/                 # Social Asset Studio (social.jaredluyster.com) — canvas editor + R2-backed library

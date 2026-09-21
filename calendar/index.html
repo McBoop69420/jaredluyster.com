@@ -19,7 +19,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/calendar.css?v=8">
+<link rel="stylesheet" href="/calendar.css?v=9">
 </head>
 <body>
 <article class="paper">
@@ -40,6 +40,7 @@
   </div>
 
   <div class="board-toolbar">
+    <button class="refresh-btn" id="addTodoBtn" type="button">+ Add todo</button>
     <button class="refresh-btn" id="refreshBtn" type="button">&#8635; Refresh now</button>
   </div>
 
@@ -47,7 +48,52 @@
     <p>Auto-refreshing &middot; times in Eastern (ET).</p>
   </footer>
 </article>
+<div class="todo-sheet" id="todoSheet" hidden>
+  <div class="todo-panel" role="dialog" aria-modal="true" aria-labelledby="todoSheetTitle">
+    <div class="todo-panel-head">
+      <h2 id="todoSheetTitle">Add a todo</h2>
+      <button type="button" class="todo-close" id="todoClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="todoForm" autocomplete="off">
+      <label class="todo-field">What needs doing?
+        <input type="text" id="todoTitle" maxlength="120" required>
+      </label>
+      <div class="todo-row">
+        <label class="todo-field"><span>Date <span class="todo-opt">(optional)</span></span>
+          <input type="date" id="todoDue">
+        </label>
+        <label class="todo-field" id="todoRepeatField">Repeat
+          <select id="todoRepeat">
+            <option value="">Doesn't repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekly">Every week</option>
+            <option value="monthly">Every month</option>
+            <option value="yearly">Every year</option>
+          </select>
+        </label>
+      </div>
+      <div class="todo-field todo-days" id="todoDays" hidden>
+        <span>On</span>
+        <div class="todo-day-row">
+          <button type="button" class="todo-day" data-day="SU" aria-pressed="false" aria-label="Sunday">S</button>
+          <button type="button" class="todo-day" data-day="MO" aria-pressed="false" aria-label="Monday">M</button>
+          <button type="button" class="todo-day" data-day="TU" aria-pressed="false" aria-label="Tuesday">T</button>
+          <button type="button" class="todo-day" data-day="WE" aria-pressed="false" aria-label="Wednesday">W</button>
+          <button type="button" class="todo-day" data-day="TH" aria-pressed="false" aria-label="Thursday">T</button>
+          <button type="button" class="todo-day" data-day="FR" aria-pressed="false" aria-label="Friday">F</button>
+          <button type="button" class="todo-day" data-day="SA" aria-pressed="false" aria-label="Saturday">S</button>
+        </div>
+      </div>
+      <p class="todo-hint">No date: it waits in the To do strip until you tick it. A repeating todo starts on the first matching day from the date (or today).</p>
+      <button type="submit" class="refresh-btn todo-add-btn">Add</button>
+      <p class="todo-note" id="todoNote" role="status" aria-live="polite"></p>
+    </form>
+    <h3 class="sub">Added on this page</h3>
+    <ul class="todo-list" id="todoList"></ul>
+  </div>
+</div>
 <div class="todo-undo" id="todoUndo" role="status" aria-live="polite"></div>
-<script src="/calendar.js?v=7"></script>
+<script src="/todo-repeat.js?v=1"></script>
+<script src="/calendar.js?v=8"></script>
 </body>
 </html>

@@ -136,6 +136,16 @@
   let todoDone = readTodoDone();   // { key: tickedAtMs } — this device only
   let todoSeen = null;             // keys drawn by the last render; null until the first, so page load doesn't pop everything in
   let todoUndoTimer = null;
+  let todoUndoFn = null;           // restores whatever the Undo bar last acted on
+
+  // Page-made todos: added from the "+ Add todo" sheet and kept in this browser's
+  // localStorage. Unlike todos.json they are private, but they belong to this device
+  // only. { id, title, due: "YYYY-MM-DD" | "", repeat: null | a TodoRepeat rule }.
+  // A repeating todo is ONE live item that jumps to its next date when ticked (it never
+  // piles up overdue copies); a one-off is removed when ticked.
+  const LOCAL_TODOS_KEY = "calendar.todos.local";
+  const REPEAT = window.TodoRepeat || null;   // ./todo-repeat.js; without it todos just can't repeat
+  let localTodos = readLocalTodos();
 
   function readTodoDone() {
     try {
@@ -184,11 +194,19 @@
   // undated one gets no date, which renderCalendar's byDate pass skips, so only
   // the strip shows it.
   function todoEvents(todayStr) {
-    return todoList.filter(t => !todoDone[t.key]).map(t => ({
+    const fromFile = todoList.filter(t => !todoDone[t.key]).map(t => ({
       type: "todo", title: t.title, todoKey: t.key,
       date: t.date && t.date < todayStr ? todayStr : t.date,
       overdue: !!t.date && t.date < todayStr,
+      repeat: "",
     }));
+    const fromPage = localTodos.map(t => ({
+      type: "todo", title: t.title, todoKey: "L:" + t.id,   // repo keys are "date|title", so never clash
+      date: t.due && t.due < todayStr ? todayStr : t.due,
+      overdue: !!t.due && t.due < todayStr,
+      repeat: t.repeat && REPEAT ? REPEAT.describe(t.repeat) : "",
+    }));
+    return fromFile.concat(fromPage);
   }
 
   // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
@@ -196,40 +214,127 @@
     const isNew = todoSeen && !todoSeen.has(ev.todoKey);
     return '<button type="button" class="cal-todo' + (ev.overdue ? " cal-todo--overdue" : "") +
       (isNew ? " cal-todo--new" : "") + '" data-todo-key="' + esc(ev.todoKey) +
-      '" aria-label="Mark done: ' + esc(ev.title) + '">' +
+      '" aria-label="Mark done: ' + esc(ev.title) + (ev.repeat ? " (" + esc(ev.repeat.toLowerCase()) + ")" : "") + '">' +
       '<span class="cal-todo-box" aria-hidden="true"></span>' +
       '<span class="cal-todo-text">' + esc(ev.title) + '</span>' +
+      (ev.repeat ? '<span class="cal-todo-rep" aria-hidden="true" title="' + esc(ev.repeat) + '">&#8635;</span>' : '') +
       (when ? '<span class="cal-todo-tag">' + esc(when) + '</span>' : '') +
       '</button>';
   }
 
+  // ---- Page-made todos: storage, add, tick, delete ----------------------
+  function cleanLocalTodo(t) {
+    if (!t || typeof t.id !== "string" || typeof t.title !== "string" || !t.title.trim()) return null;
+    const repeat = t.repeat ? (REPEAT ? REPEAT.validate(t.repeat) : t.repeat) : null;
+    let due = /^\d{4}-\d{2}-\d{2}$/.test(t.due || "") ? t.due : "";
+    if (repeat && !due) due = etTodayStr();   // a repeating todo always has a next date
+    return { id: t.id, title: t.title.trim(), due: due, repeat: repeat };
+  }
+
+  function readLocalTodos() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOCAL_TODOS_KEY) || "[]");
+      return Array.isArray(raw) ? raw.map(cleanLocalTodo).filter(Boolean) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveLocalTodos() {
+    try { localStorage.setItem(LOCAL_TODOS_KEY, JSON.stringify(localTodos)); } catch (e) { /* in-memory only */ }
+  }
+
+  function storageWorks() {
+    try {
+      localStorage.setItem("calendar.todos.probe", "1");
+      localStorage.removeItem("calendar.todos.probe");
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // `freq` is "" (one-off) or a TodoRepeat frequency. A repeating todo starts on its
+  // first matching day on or after the chosen date (today when none was chosen).
+  function addLocalTodo(title, due, freq, days) {
+    title = String(title || "").trim().slice(0, 120);
+    if (!title) return null;
+    due = /^\d{4}-\d{2}-\d{2}$/.test(due || "") ? due : "";
+    let repeat = null;
+    if (freq && REPEAT) {
+      const anchor = due || etTodayStr();
+      repeat = REPEAT.make(freq, anchor, days);
+      if (repeat) due = REPEAT.startOn(repeat, anchor);
+    }
+    const t = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title, due: due, repeat: repeat };
+    localTodos.push(t);
+    saveLocalTodos();
+    return t;
+  }
+
+  // Each of these returns { title, restore } for the Undo bar, or null if the todo is gone.
+  // restore() puts back just that one todo, so it can't clobber anything added since.
+  function completeLocalTodo(id) {
+    const idx = localTodos.findIndex(x => x.id === id);
+    if (idx < 0) return null;
+    const t = localTodos[idx];
+    if (t.repeat && REPEAT) {
+      const prevDue = t.due, today = etTodayStr();
+      // Strictly after today or the current due date, whichever is later: ticking early
+      // skips the occurrence you just did, and an overdue one doesn't come straight back.
+      t.due = REPEAT.nextAfter(t.repeat, prevDue && prevDue > today ? prevDue : today) || prevDue;
+      saveLocalTodos();
+      return { title: t.title, restore() {
+        const cur = localTodos.find(x => x.id === id);
+        if (cur) { cur.due = prevDue; saveLocalTodos(); }
+      } };
+    }
+    return removeLocalTodo(idx);
+  }
+
+  function removeLocalTodo(idx) {
+    const t = localTodos[idx];
+    localTodos.splice(idx, 1);
+    saveLocalTodos();
+    return { title: t.title, restore() {
+      if (!localTodos.some(x => x.id === t.id)) localTodos.splice(Math.min(idx, localTodos.length), 0, t);
+      saveLocalTodos();
+    } };
+  }
+
+  function deleteLocalTodo(id) {
+    const idx = localTodos.findIndex(x => x.id === id);
+    return idx < 0 ? null : removeLocalTodo(idx);
+  }
+
   function completeTodo(key) {
-    if (todoDone[key]) return;
-    const t = todoList.find(x => x.key === key);
-    todoDone[key] = Date.now();
-    saveTodoDone();
+    let result;
+    if (key.indexOf("L:") === 0) {
+      result = completeLocalTodo(key.slice(2));
+      if (!result) return;
+    } else {
+      if (todoDone[key]) return;
+      const t = todoList.find(x => x.key === key);
+      todoDone[key] = Date.now();
+      saveTodoDone();
+      result = { title: t ? t.title : "Todo", restore() { delete todoDone[key]; saveTodoDone(); } };
+    }
     // Every copy on screen (strip, grid, agenda) fades out together; the redraw
     // then drops it. The tick is already saved, so an interrupted animation is fine.
     document.querySelectorAll("[data-todo-key]").forEach(el => {
       if (el.dataset.todoKey === key) el.classList.add("cal-todo--done");
     });
-    showTodoUndo(t ? t.title : "Todo", key);
-    setTimeout(renderCalendar, TODO_EXIT_MS);
+    showTodoUndo("Done", result.title, result.restore);
+    setTimeout(() => { renderCalendar(); renderTodoSheetList(); }, TODO_EXIT_MS);
   }
 
-  function undoTodo(key) {
-    delete todoDone[key];
-    saveTodoDone();
-    hideTodoUndo();
-    renderCalendar();
-  }
-
-  // A wall display gets brushed by accident; give the last tick a short undo.
-  function showTodoUndo(title, key) {
+  // A wall display gets brushed by accident; give the last change a short undo.
+  function showTodoUndo(verb, title, restore) {
     const bar = $("todoUndo");
     if (!bar) return;
-    bar.innerHTML = '<span class="todo-undo-text">Done: ' + esc(title) + '</span>' +
-      '<button type="button" class="todo-undo-btn" data-undo-key="' + esc(key) + '">Undo</button>';
+    todoUndoFn = restore;
+    bar.innerHTML = '<span class="todo-undo-text">' + esc(verb) + ': ' + esc(title) + '</span>' +
+      '<button type="button" class="todo-undo-btn" data-undo>Undo</button>';
     bar.classList.add("is-open");
     clearTimeout(todoUndoTimer);
     todoUndoTimer = setTimeout(hideTodoUndo, TODO_UNDO_MS);
@@ -238,6 +343,109 @@
   function hideTodoUndo() {
     const bar = $("todoUndo");
     if (bar) bar.classList.remove("is-open");
+  }
+
+  function undoLast() {
+    const fn = todoUndoFn;
+    todoUndoFn = null;
+    hideTodoUndo();
+    if (!fn) return;
+    fn();
+    renderCalendar();
+    renderTodoSheetList();
+  }
+
+  // ---- The "+ Add todo" sheet -------------------------------------------
+  function todoDueLabel(due) {
+    if (!due) return "";
+    const p = due.split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2], 12)
+      .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  }
+
+  function renderTodoSheetList() {
+    const ul = $("todoList");
+    if (!ul) return;
+    const items = localTodos.slice().sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999"));
+    ul.innerHTML = items.length ? items.map(t => {
+      const meta = t.repeat && REPEAT
+        ? REPEAT.describe(t.repeat) + " · next " + todoDueLabel(t.due)
+        : (t.due ? "Due " + todoDueLabel(t.due) : "No date");
+      return '<li class="todo-list-item"><span class="todo-list-main">' +
+        '<span class="todo-list-title">' + esc(t.title) + '</span>' +
+        '<span class="todo-list-meta">' + esc(meta) + '</span></span>' +
+        '<button type="button" class="todo-del" data-del="' + esc(t.id) + '" aria-label="Delete ' + esc(t.title) + '">Delete</button></li>';
+    }).join("") : '<li class="todo-list-empty">Nothing here yet. Todos added on this page are kept in this browser only.</li>';
+  }
+
+  function todoFormDays() {
+    return Array.prototype.map.call(document.querySelectorAll("#todoDays [aria-pressed='true']"), b => b.dataset.day);
+  }
+
+  // The day picker only applies to weekly; the first time it appears it starts on the
+  // weekday of the chosen date (or today), which is also what an empty pick means.
+  function syncTodoRepeatUi() {
+    const weekly = $("todoRepeat").value === "weekly";
+    $("todoDays").hidden = !weekly;
+    if (weekly && REPEAT && !todoFormDays().length) {
+      const code = REPEAT.make("weekly", $("todoDue").value || etTodayStr()).days[0];
+      const b = document.querySelector('#todoDays [data-day="' + code + '"]');
+      if (b) b.setAttribute("aria-pressed", "true");
+    }
+  }
+
+  function openTodoSheet() {
+    const sheet = $("todoSheet");
+    if (!sheet) return;
+    sheet.hidden = false;
+    $("todoNote").textContent = storageWorks() ? "" :
+      "This browser is blocking storage, so todos added here will be gone when the page reloads.";
+    renderTodoSheetList();
+    $("todoTitle").focus();
+  }
+
+  function closeTodoSheet() {
+    const sheet = $("todoSheet");
+    if (!sheet || sheet.hidden) return;
+    sheet.hidden = true;
+    const opener = $("addTodoBtn");
+    if (opener) opener.focus();
+  }
+
+  function initTodoSheet() {
+    const sheet = $("todoSheet");
+    if (!sheet) return;
+    if (!REPEAT) { const f = $("todoRepeatField"); if (f) f.hidden = true; }
+    $("addTodoBtn").addEventListener("click", openTodoSheet);
+    $("todoClose").addEventListener("click", closeTodoSheet);
+    sheet.addEventListener("click", e => { if (e.target === sheet) closeTodoSheet(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeTodoSheet(); });
+    $("todoRepeat").addEventListener("change", syncTodoRepeatUi);
+    $("todoDays").addEventListener("click", e => {
+      const b = e.target.closest && e.target.closest("[data-day]");
+      if (b) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+    });
+    $("todoForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const t = addLocalTodo($("todoTitle").value, $("todoDue").value, REPEAT ? $("todoRepeat").value : "", todoFormDays());
+      if (!t) { $("todoTitle").focus(); return; }
+      $("todoForm").reset();
+      Array.prototype.forEach.call(document.querySelectorAll("#todoDays [data-day]"), b => b.setAttribute("aria-pressed", "false"));
+      $("todoDays").hidden = true;
+      $("todoNote").textContent = "Added: " + t.title;
+      $("todoTitle").focus();
+      renderCalendar();
+      renderTodoSheetList();
+    });
+    $("todoList").addEventListener("click", e => {
+      const b = e.target.closest && e.target.closest("[data-del]");
+      if (!b) return;
+      const r = deleteLocalTodo(b.dataset.del);
+      if (!r) return;
+      showTodoUndo("Deleted", r.title, r.restore);
+      renderCalendar();
+      renderTodoSheetList();
+    });
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -805,15 +1013,15 @@
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
       '<div class="daily-link-row"><a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
-    // What's owed now: overdue, due today or tomorrow, or undated. Later todos
-    // only sit on their own day. Overdue first, then by date, undated last.
+    // What's owed now: overdue, due today, or undated. Anything later only sits on its
+    // own day, so a repeating todo you just ticked doesn't bounce straight back in as
+    // "tomorrow". Overdue first, then by date, undated last.
     function todoWhen(ev) {
       if (ev.overdue) return "overdue";
       if (ev.date === todayStr) return "today";
-      if (ev.date === tomorrowStr) return "tomorrow";
       return "";
     }
-    const stripTodos = todoEvts.filter(ev => !ev.date || ev.date <= tomorrowStr)
+    const stripTodos = todoEvts.filter(ev => !ev.date || ev.date <= todayStr)
       .sort((a, b) => (a.overdue ? 0 : a.date ? 1 : 2) - (b.overdue ? 0 : b.date ? 1 : 2) ||
         (a.date || "").localeCompare(b.date || ""));
     if (stripTodos.length) {
@@ -961,9 +1169,9 @@
     });
     const undoBar = $("todoUndo");
     if (undoBar) undoBar.addEventListener("click", e => {
-      const b = e.target.closest && e.target.closest("[data-undo-key]");
-      if (b) undoTodo(b.dataset.undoKey);
+      if (e.target.closest && e.target.closest("[data-undo]")) undoLast();
     });
+    initTodoSheet();
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) { refresh(); refreshLiveGames(); requestWakeLock(); }
     });
