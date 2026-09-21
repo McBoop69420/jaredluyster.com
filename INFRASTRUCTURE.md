@@ -152,7 +152,10 @@ Sports has its own project and its own deploy mechanism; see §4b.
     (key `calendar.todos.done`), not written back to the file — delete finished
     todos from the file by hand. A deploy that doesn't copy `todos.json` shows up as
     the site's HTML fallback (200, `text/html`) at `/calendar/todos.json`, which the
-    page treats as "no todos"; check it returns JSON after the first deploy
+    page treats as "no todos"; check it returns JSON after the first deploy.
+    `deploy-pages.sh` (in `McBoop Newspaper/`, outside this repo) got a
+    `cp` line for `todos.json` on 2026-09-20 — it hadn't been copying it, so
+    `mcboop-daily.pages.dev` served the HTML fallback until then
 - **Deploy pipeline — moved off Hermes cron to a Windows Scheduled Task,
   2026-09-08.** Task `McBoop Daily Deploy` runs `McBoop Newspaper/deploy-pages.sh`
   every 15 minutes (not just twice a day — deliberately short so a `news/` or
@@ -163,15 +166,25 @@ Sports has its own project and its own deploy mechanism; see §4b.
   to this public repo — see below), runs `push-ledger.sh` (see the ledger bullet
   below), then `wrangler pages deploy public --project-name mcboop-daily` (token
   in `~/.config/cloudflare_pages_token.txt`) and its own post-deploy verification.
-  Same `LogonType=Interactive` requirement as `McBoop Ledger Push` (git push needs
-  the logged-on user's credential store), so it does not fire while logged out.
-  **Runs windowless (2026-09-18):** the task's action is `wscript.exe //B
-  "McBoop Newspaper\deploy-pages-hidden.vbs"`, which launches the same `bash.exe -l
-  deploy-pages.sh` with window style 0 and waits for it. It used to run `bash.exe`
-  directly — a console program under an interactive logon — which popped a console
-  window onto the desktop every 15 minutes and stole focus, interrupting Steam Link
-  streams. The VBS passes bash's exit code through as the task's last result. If
-  the task is ever re-registered, keep it on the launcher (not bare `bash.exe`).
+  **Runs silently in the background (2026-09-20):** the task uses
+  `LogonType=S4U` (Limited), so it runs in a non-interactive session with no desktop
+  to take over and also fires while logged out. It used to be Interactive (a leftover
+  from when the ledger `git push` needed the logged-on user's credential store; that
+  push is gone and the script only needs `~/.config/cloudflare_pages_token.txt`).
+  Interactive was the cause of the Steam Link interruptions: on every run Windows
+  briefly moves the foreground to a `ForegroundStaging` window as it starts the
+  process in the desktop session (~0.4s), which is enough to drop a stream to the
+  desktop — even with no visible window. Switching to S4U needs an **elevated**
+  PowerShell (`Set-ScheduledTask ... -Principal (New-ScheduledTaskPrincipal -UserId
+  'Jared' -LogonType S4U -RunLevel Limited)`); a normal shell gets "Access is
+  denied", so if the task is ever re-registered, do it from an admin shell and keep
+  S4U. Verified with a foreground/window watcher during a run: zero foreground
+  changes, zero new windows, result 0.
+  The task's action is `wscript.exe //B "McBoop Newspaper\deploy-pages-hidden.vbs"`,
+  which launches the same `bash.exe -l deploy-pages.sh` with window style 0 and waits
+  for it (bash is a console program; run directly it would pop a console window). The
+  VBS passes bash's exit code through as the task's last result. Keep the launcher
+  (not bare `bash.exe`).
   Most runs ship byte-identical content — the script has no generation step left
   to skip (see below), so it is cheap and safe to over-run; `wrangler pages
   deploy` and the ledger push are both idempotent/no-op when nothing changed.
