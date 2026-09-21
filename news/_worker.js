@@ -242,13 +242,40 @@ async function serveSubsite(request, env, url, dir) {
   });
 }
 
+// Private data that deploy-pages.sh layers into this deploy (calendar.json, the
+// frozen archive/ gallery) must only be served on hostnames that sit behind a
+// Cloudflare Access app. mcboop-daily.pages.dev, and the unique
+// <id>.mcboop-daily.pages.dev URL every deploy gets, serve these same files with
+// NO login, so they answer 404 for those paths. Everything else (the app shell,
+// /api/feeds, the calendar shell) stays reachable there because deploy-pages.sh's
+// post-deploy verification probes it unauthenticated. localhost is allowed so
+// `wrangler pages dev` keeps working.
+const GATED_HOSTS = new Set([
+  "news.jaredluyster.com",
+  "calendar.jaredluyster.com",
+  "localhost",
+  "127.0.0.1",
+]);
+
+function isPrivatePath(pathname) {
+  // The asset server percent-decodes and is case-insensitive enough that
+  // /%63alendar.json or /Calendar.json could otherwise slip past a raw compare.
+  let p;
+  try { p = decodeURIComponent(pathname).toLowerCase(); } catch (e) { return true; }
+  return p.startsWith("/calendar.json") || p === "/archive" || p.startsWith("/archive/");
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (isPrivatePath(url.pathname) && !GATED_HOSTS.has(url.hostname)) {
+      return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+    }
+
     // Calendar data is no-cache so newly added commitments show immediately,
-    // regardless of which hostname/subsite is asking for it — the file itself
-    // lives at the deploy root, not under calendar/.
+    // regardless of which (gated) hostname/subsite is asking for it — the file
+    // itself lives at the deploy root, not under calendar/.
     if (url.pathname === "/calendar.json") {
       const res = await env.ASSETS.fetch(
         new Request(url.origin + url.pathname + url.search, request),

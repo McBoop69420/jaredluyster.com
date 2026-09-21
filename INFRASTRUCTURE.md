@@ -295,6 +295,22 @@ Sports has its own project and its own deploy mechanism; see §4b.
   `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`.
   (Allow-list *contents* are managed in the Zero Trust dashboard and not
   externally verifiable.)
+- **The `pages.dev` hosts are NOT behind Access — found 2026-09-20, gated in the
+  Worker.** Access only covers the two custom domains. `mcboop-daily.pages.dev`, and
+  the unique `<id>.mcboop-daily.pages.dev` URL every deploy gets, served the same
+  files with no login, including the private `calendar.json` (18 events with
+  locations/links) and `archive/`. `news/_worker.js` now answers 404 for
+  `/calendar.json*` and `/archive*` (percent-decoded, case-insensitive) on any host
+  outside `GATED_HOSTS` (`news.`/`calendar.jaredluyster.com`, plus localhost for
+  `wrangler pages dev`); tests in `tests/news-worker.test.mjs`
+  (`node --test tests/*.test.mjs`, mutation-tested). Live only once the deploy task
+  ships the new Worker; anything that was in `calendar.json` before then should be
+  treated as having been readable.
+  **Why not just put Access on the whole `pages.dev` host:** the post-deploy check
+  above fetches `mcboop-daily.pages.dev/app.js` and `/api/feeds` unauthenticated, so a
+  host-wide Access app would turn every 15-minute run red, and an Access app on the
+  main host wouldn't cover the per-deploy `<id>.` hostnames anyway. If you add one
+  as defense in depth, scope it to the paths `/calendar.json` and `/archive/*` only.
 
 ### 4b. McBoop Sports — Cloudflare Pages (`mcboop-sports` project, Git-integrated)
 
