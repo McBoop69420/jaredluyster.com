@@ -58,9 +58,10 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
   font-family:var(--cal-font-body);font-size:12px;line-height:1.35;}
 .cal-today-label{font-family:var(--cal-font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cal-accent);}
 .cal-today-item{font-weight:700;color:var(--cal-ink);background:var(--cal-paper);border:1px solid var(--cal-ink);padding:2px 8px;}
-/* Link to the news subdomain, last in the strip. Inverted so it reads as a
+/* Link to the news subdomain, on its own centered row under the games. Inverted so it reads as a
    link rather than another event, and undoes the page's default link
    underline/hover-invert. */
+.daily-link-row{flex-basis:100%;text-align:center;}
 a.daily-link{font-family:var(--cal-font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border:1px solid var(--cal-ink);background:var(--cal-ink);color:var(--cal-paper);-webkit-touch-callout:default;}
 a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 

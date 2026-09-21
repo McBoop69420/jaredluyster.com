@@ -681,7 +681,7 @@
             (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
-      '<a class="daily-link" href="https://news.jaredluyster.com/">The McBoop Daily &rarr;</a></div>';
+      '<div class="daily-link-row"><a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
       html += '<div class="cal-dow">' + d + '</div>');
