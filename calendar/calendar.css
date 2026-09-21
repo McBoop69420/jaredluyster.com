@@ -61,7 +61,13 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 /* Link to the news subdomain, on its own centered row under the games. Inverted so it reads as a
    link rather than another event, and undoes the page's default link
    underline/hover-invert. */
-.daily-link-row{flex-basis:100%;text-align:center;}
+.daily-link-row{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;text-align:center;}
+/* "+ Add todo", beside the News link. Same pill as News but accent-filled, since it does something
+   rather than going somewhere. */
+button.add-todo-btn{margin:0;padding:2px 8px;font:inherit;font-family:var(--cal-font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--cal-accent-ink);background:var(--cal-accent);border:1px solid var(--cal-accent);border-radius:0;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+button.add-todo-btn:hover{background:var(--cal-ink);border-color:var(--cal-ink);}
+button.add-todo-btn:focus-visible{outline:2px solid var(--cal-ink);outline-offset:2px;}
 a.daily-link{font-family:var(--cal-font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border:1px solid var(--cal-ink);background:var(--cal-ink);color:var(--cal-paper);-webkit-touch-callout:default;}
 a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 

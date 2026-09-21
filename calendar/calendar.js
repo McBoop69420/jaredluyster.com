@@ -408,7 +408,8 @@
     const sheet = $("todoSheet");
     if (!sheet || sheet.hidden) return;
     sheet.hidden = true;
-    const opener = $("addTodoBtn");
+    // The button lives in the redrawn strip, so look it up now rather than holding a reference.
+    const opener = document.querySelector("[data-add-todo]");
     if (opener) opener.focus();
   }
 
@@ -416,7 +417,6 @@
     const sheet = $("todoSheet");
     if (!sheet) return;
     if (!REPEAT) { const f = $("todoRepeatField"); if (f) f.hidden = true; }
-    $("addTodoBtn").addEventListener("click", openTodoSheet);
     $("todoClose").addEventListener("click", closeTodoSheet);
     sheet.addEventListener("click", e => { if (e.target === sheet) closeTodoSheet(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeTodoSheet(); });
@@ -1012,7 +1012,8 @@
             (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
-      '<div class="daily-link-row"><a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
+      '<div class="daily-link-row"><button type="button" class="add-todo-btn" data-add-todo>+ Add todo</button>' +
+      '<a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
     // What's owed now: overdue, due today, or undated. Anything later only sits on its
     // own day, so a repeating todo you just ticked doesn't bounce straight back in as
     // "tomorrow". Overdue first, then by date, undated last.
@@ -1164,6 +1165,7 @@
     // The grid is rebuilt on every redraw, so listen once on the stable parents.
     const calRoot = $("calRoot");
     if (calRoot) calRoot.addEventListener("click", e => {
+      if (e.target.closest && e.target.closest("[data-add-todo]")) { openTodoSheet(); return; }
       const chip = e.target.closest && e.target.closest("[data-todo-key]");
       if (chip) completeTodo(chip.dataset.todoKey);
     });
