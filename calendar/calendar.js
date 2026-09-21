@@ -667,8 +667,10 @@
     else range = sM + " " + sy + " – " + lM + " " + ly;
 
     let html = '<div class="cal-range">' + esc(range) + '</div>';
-    if (featuredEvents.length) {
-      html += '<div class="cal-today-strip"><span class="cal-today-label">Upcoming</span>' +
+    // The strip always renders: it carries the link to the news subdomain even
+    // when there's nothing today or tomorrow.
+    html += '<div class="cal-today-strip">' +
+      (featuredEvents.length ? '<span class="cal-today-label">Upcoming</span>' : '') +
         featuredEvents.map(ev => {
           const label = ev._dateLabel || "";
           const rng = fmtRange(ev);
@@ -678,8 +680,8 @@
             (label ? '<strong>' + esc(label) + '</strong> ' : '') +
             (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
             (matchHtml || eventTitleHtml(ev)) + '</span>';
-        }).join('') + '</div>';
-    }
+        }).join('') +
+      '<a class="daily-link" href="https://news.jaredluyster.com/">The McBoop Daily &rarr;</a></div>';
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
       html += '<div class="cal-dow">' + d + '</div>');
