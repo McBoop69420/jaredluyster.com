@@ -142,7 +142,17 @@ Sports has its own project and its own deploy mechanism; see §4b.
   - [`calendar/`](calendar/index.html) — `index.html`, `calendar.css`,
     `calendar.js`, `robots.txt` (self-contained month-grid calendar; reads the
     same `/calendar.json` the news shell used to, still served from the deploy
-    root — see below)
+    root — see below) plus `todos.json` (added 2026-09-20: the to-do list drawn on
+    the calendar). **`todos.json` is public by the owner's informed choice.** It is
+    committed to this public repo, so anyone can read it on GitHub and at
+    `jaredluyster.com/calendar/todos.json` (git-deployed, no Access), and on
+    `mcboop-daily.pages.dev` too; the Access sign-in only covers
+    `calendar.jaredluyster.com`. Nothing sensitive goes in it. A web page can't
+    write to git, so ticking a todo is remembered per device in `localStorage`
+    (key `calendar.todos.done`), not written back to the file — delete finished
+    todos from the file by hand. A deploy that doesn't copy `todos.json` shows up as
+    the site's HTML fallback (200, `text/html`) at `/calendar/todos.json`, which the
+    page treats as "no todos"; check it returns JSON after the first deploy
 - **Deploy pipeline — moved off Hermes cron to a Windows Scheduled Task,
   2026-09-08.** Task `McBoop Daily Deploy` runs `McBoop Newspaper/deploy-pages.sh`
   every 15 minutes (not just twice a day — deliberately short so a `news/` or
@@ -285,6 +295,22 @@ Sports has its own project and its own deploy mechanism; see §4b.
   `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`.
   (Allow-list *contents* are managed in the Zero Trust dashboard and not
   externally verifiable.)
+- **The `pages.dev` hosts are NOT behind Access — found 2026-09-20, gated in the
+  Worker.** Access only covers the two custom domains. `mcboop-daily.pages.dev`, and
+  the unique `<id>.mcboop-daily.pages.dev` URL every deploy gets, served the same
+  files with no login, including the private `calendar.json` (18 events with
+  locations/links) and `archive/`. `news/_worker.js` now answers 404 for
+  `/calendar.json*` and `/archive*` (percent-decoded, case-insensitive) on any host
+  outside `GATED_HOSTS` (`news.`/`calendar.jaredluyster.com`, plus localhost for
+  `wrangler pages dev`); tests in `tests/news-worker.test.mjs`
+  (`node --test tests/*.test.mjs`, mutation-tested). Live only once the deploy task
+  ships the new Worker; anything that was in `calendar.json` before then should be
+  treated as having been readable.
+  **Why not just put Access on the whole `pages.dev` host:** the post-deploy check
+  above fetches `mcboop-daily.pages.dev/app.js` and `/api/feeds` unauthenticated, so a
+  host-wide Access app would turn every 15-minute run red, and an Access app on the
+  main host wouldn't cover the per-deploy `<id>.` hostnames anyway. If you add one
+  as defense in depth, scope it to the paths `/calendar.json` and `/archive/*` only.
 
 ### 4b. McBoop Sports — Cloudflare Pages (`mcboop-sports` project, Git-integrated)
 
@@ -576,7 +602,8 @@ jaredluyster.com/
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
 │   ├── index.html
 │   ├── calendar.css
-│   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged)
+│   ├── calendar.js         # Reads /calendar.json (deploy-root file, unchanged) and /todos.json; tap-to-tick todos with per-device undo
+│   ├── todos.json          # To-do list — PUBLIC (repo is public); ticks live in the browser's localStorage, see §4
 │   └── robots.txt
 ├── social/                 # Social Asset Studio (social.jaredluyster.com) — canvas editor + R2-backed library
 │   ├── index.html

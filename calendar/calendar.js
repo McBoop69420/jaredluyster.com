@@ -119,6 +119,127 @@
     }
   }
 
+  // ---- Todos ------------------------------------------------------------
+  // Read from /todos.json: { "todos": [ { "title": "...", "date": "YYYY-MM-DD" } ] },
+  // date optional. That file is committed to this repo, so it is public (its own
+  // "note" says so). A page can't write back to git, so ticking a todo is
+  // remembered per device in localStorage instead; once a todo is dropped from
+  // the file its tick is forgotten too (pruneTodoDone), so nothing piles up.
+  //   dated todo   -> drawn on its day, and once that day has passed on today:
+  //                   unlike an event, an unticked todo is still owed.
+  //   undated todo -> only in the "To do" strip.
+  const TODO_DONE_KEY = "calendar.todos.done";
+  const TODO_UNDO_MS = 6000;
+  const TODO_EXIT_MS = 320;   // matches the .cal-todo--done transition in calendar.css
+
+  let todoList = [];               // [{ key, title, date }] from /todos.json
+  let todoDone = readTodoDone();   // { key: tickedAtMs } — this device only
+  let todoSeen = null;             // keys drawn by the last render; null until the first, so page load doesn't pop everything in
+  let todoUndoTimer = null;
+
+  function readTodoDone() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(TODO_DONE_KEY) || "{}");
+      return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveTodoDone() {
+    // Storage can be blocked (private mode, kiosk lockdown); ticks then last
+    // until the page reloads instead of throwing.
+    try { localStorage.setItem(TODO_DONE_KEY, JSON.stringify(todoDone)); } catch (e) { /* in-memory only */ }
+  }
+
+  async function loadTodos() {
+    try {
+      const res = await fetch("/todos.json?v=" + Date.now(), { cache: "no-store" });
+      // A todos.json that isn't deployed yet comes back as the site's HTML
+      // fallback page with a 200, so it's the JSON parse below that rejects it.
+      // Any failure keeps the last good list rather than blanking the todos or
+      // forgetting which ones were ticked.
+      if (!res.ok) throw new Error("todos.json " + res.status);
+      const j = await res.json();
+      if (!j || !Array.isArray(j.todos)) throw new Error("todos.json has no todos array");
+      todoList = j.todos.filter(t => t && typeof t.title === "string" && t.title.trim()).map(t => {
+        const title = t.title.trim();
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(t.date || "") ? t.date : "";
+        return { key: date + "|" + title, title: title, date: date };
+      });
+      pruneTodoDone();
+    } catch (e) { /* keep the last good list */ }
+  }
+
+  function pruneTodoDone() {
+    const live = new Set(todoList.map(t => t.key));
+    let changed = false;
+    Object.keys(todoDone).forEach(k => {
+      if (!live.has(k)) { delete todoDone[k]; changed = true; }
+    });
+    if (changed) saveTodoDone();
+  }
+
+  // Unticked todos as calendar events. An overdue one is pinned to today; an
+  // undated one gets no date, which renderCalendar's byDate pass skips, so only
+  // the strip shows it.
+  function todoEvents(todayStr) {
+    return todoList.filter(t => !todoDone[t.key]).map(t => ({
+      type: "todo", title: t.title, todoKey: t.key,
+      date: t.date && t.date < todayStr ? todayStr : t.date,
+      overdue: !!t.date && t.date < todayStr,
+    }));
+  }
+
+  // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
+  function todoChipHtml(ev, when) {
+    const isNew = todoSeen && !todoSeen.has(ev.todoKey);
+    return '<button type="button" class="cal-todo' + (ev.overdue ? " cal-todo--overdue" : "") +
+      (isNew ? " cal-todo--new" : "") + '" data-todo-key="' + esc(ev.todoKey) +
+      '" aria-label="Mark done: ' + esc(ev.title) + '">' +
+      '<span class="cal-todo-box" aria-hidden="true"></span>' +
+      '<span class="cal-todo-text">' + esc(ev.title) + '</span>' +
+      (when ? '<span class="cal-todo-tag">' + esc(when) + '</span>' : '') +
+      '</button>';
+  }
+
+  function completeTodo(key) {
+    if (todoDone[key]) return;
+    const t = todoList.find(x => x.key === key);
+    todoDone[key] = Date.now();
+    saveTodoDone();
+    // Every copy on screen (strip, grid, agenda) fades out together; the redraw
+    // then drops it. The tick is already saved, so an interrupted animation is fine.
+    document.querySelectorAll("[data-todo-key]").forEach(el => {
+      if (el.dataset.todoKey === key) el.classList.add("cal-todo--done");
+    });
+    showTodoUndo(t ? t.title : "Todo", key);
+    setTimeout(renderCalendar, TODO_EXIT_MS);
+  }
+
+  function undoTodo(key) {
+    delete todoDone[key];
+    saveTodoDone();
+    hideTodoUndo();
+    renderCalendar();
+  }
+
+  // A wall display gets brushed by accident; give the last tick a short undo.
+  function showTodoUndo(title, key) {
+    const bar = $("todoUndo");
+    if (!bar) return;
+    bar.innerHTML = '<span class="todo-undo-text">Done: ' + esc(title) + '</span>' +
+      '<button type="button" class="todo-undo-btn" data-undo-key="' + esc(key) + '">Undo</button>';
+    bar.classList.add("is-open");
+    clearTimeout(todoUndoTimer);
+    todoUndoTimer = setTimeout(hideTodoUndo, TODO_UNDO_MS);
+  }
+
+  function hideTodoUndo() {
+    const bar = $("todoUndo");
+    if (bar) bar.classList.remove("is-open");
+  }
+
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
 
   function etTodayStr() {
@@ -577,11 +698,12 @@
       // already-drawn calendar stays up while new data is fetched.
       root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
       lastCalendarHtml = null;
-      loadCalendar().then(() => { renderCalendar(); stampUpdated(); });
+      Promise.all([loadCalendar(), loadTodos()]).then(() => { renderCalendar(); stampUpdated(); });
       return;
     }
 
     const todayStr = etTodayStr();
+    const todoEvts = todoEvents(todayStr);
     const tp = todayStr.split("-").map(Number);
     const dow = new Date(tp[0], tp[1] - 1, tp[2], 12).getDay();   // 0 = Sun
     // Rolling window: start on the Sunday of the current week, then run enough
@@ -602,7 +724,7 @@
       const copy = Object.assign({}, ev, { date: dateStr });
       (byDate[dateStr] = byDate[dateStr] || []).push(copy);
     }
-    calEvents.concat(sportsEvents).forEach(ev => {
+    calEvents.concat(sportsEvents, todoEvts).forEach(ev => {
       if (!ev || !ev.date) return;
       const recur = ev.recurrence || {};
       const freq = String(recur.freq || "").toLowerCase();
@@ -655,7 +777,8 @@
     const featuredEvents = [];
     [todayStr, tomorrowStr].forEach(ds => {
       (byDate[ds] || []).forEach(ev => {
-        if (!isWorkEvent(ev)) featuredEvents.push(Object.assign({}, ev, { _dateLabel: featuredLabel(ds) }));
+        // Todos have their own strip below.
+        if (!isWorkEvent(ev) && ev.type !== "todo") featuredEvents.push(Object.assign({}, ev, { _dateLabel: featuredLabel(ds) }));
       });
     });
 
@@ -682,6 +805,21 @@
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
       '<div class="daily-link-row"><a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a></div></div>';
+    // What's owed now: overdue, due today or tomorrow, or undated. Later todos
+    // only sit on their own day. Overdue first, then by date, undated last.
+    function todoWhen(ev) {
+      if (ev.overdue) return "overdue";
+      if (ev.date === todayStr) return "today";
+      if (ev.date === tomorrowStr) return "tomorrow";
+      return "";
+    }
+    const stripTodos = todoEvts.filter(ev => !ev.date || ev.date <= tomorrowStr)
+      .sort((a, b) => (a.overdue ? 0 : a.date ? 1 : 2) - (b.overdue ? 0 : b.date ? 1 : 2) ||
+        (a.date || "").localeCompare(b.date || ""));
+    if (stripTodos.length) {
+      html += '<div class="cal-todo-strip"><span class="cal-todo-label">To do</span>' +
+        stripTodos.map(ev => todoChipHtml(ev, todoWhen(ev))).join('') + '</div>';
+    }
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
       html += '<div class="cal-dow">' + d + '</div>');
@@ -701,6 +839,9 @@
         (showMon ? '<span class="cal-mon">' + esc(d.toLocaleDateString("en-US", { month: "short" })) + '</span> ' : '') +
         day + '</div>';
       function evChipHtml(ev) {
+        if (ev.type === "todo") {
+          return '<div class="cal-ev cal-ev--todo">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</div>';
+        }
         const rng = fmtRange(ev);
         const clock = fmtTime(ev.start);   // real HH:MM only — never freetext
         const start = clock || rng;
@@ -735,6 +876,12 @@
       const evs = byDate[ds] || [];
       if (!evs.length) return;
       evs.forEach(ev => {
+        if (ev.type === "todo") {
+          agenda.push('<li class="cal-agenda-item">' +
+            '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
+            '<span class="cal-agenda-title">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</span></li>');
+          return;
+        }
         const rng = fmtRange(ev);
         const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
         agenda.push('<li class="cal-agenda-item">' +
@@ -748,6 +895,10 @@
       html += '<div class="cal-agenda-wrap"><h3 class="sub">Full Schedule</h3>' +
         '<ul class="cal-agenda">' + agenda.join("") + '</ul></div>';
     }
+
+    // Only a todo that wasn't in the previous draw gets the pop-in, so a redraw
+    // for some other reason (a live score) doesn't replay it on every chip.
+    todoSeen = new Set(todoEvts.map(ev => ev.todoKey));
 
     // Most refreshes produce identical markup. Skip the swap then: rebuilding
     // the DOM re-creates every logo <img> and can blink the whole grid.
@@ -787,7 +938,7 @@
     // Fetch fresh /calendar.json so new commitments appear, but keep the
     // current grid on screen meanwhile and only redraw once it arrives.
     try {
-      await loadCalendar();
+      await Promise.all([loadCalendar(), loadTodos()]);
       renderCalendar();
       stampUpdated();
     } finally {
@@ -802,6 +953,17 @@
     setInterval(refreshLiveGames, LIVE_POLL_MS);
     const btn = $("refreshBtn");
     if (btn) btn.addEventListener("click", refresh);
+    // The grid is rebuilt on every redraw, so listen once on the stable parents.
+    const calRoot = $("calRoot");
+    if (calRoot) calRoot.addEventListener("click", e => {
+      const chip = e.target.closest && e.target.closest("[data-todo-key]");
+      if (chip) completeTodo(chip.dataset.todoKey);
+    });
+    const undoBar = $("todoUndo");
+    if (undoBar) undoBar.addEventListener("click", e => {
+      const b = e.target.closest && e.target.closest("[data-undo-key]");
+      if (b) undoTodo(b.dataset.undoKey);
+    });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) { refresh(); refreshLiveGames(); requestWakeLock(); }
     });
