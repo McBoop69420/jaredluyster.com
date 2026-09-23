@@ -76,8 +76,9 @@
     { key: "soccer/usa.open", label: "US Open Cup", order: "home-away", patterns: ["fc cincinnati", "lexington"] },
     { key: "soccer/concacaf.leagues.cup", label: "Leagues Cup", order: "home-away", patterns: ["fc cincinnati"] },
   ];
+  const CALENDAR_WEEKS = 3;               // rows shown in the rolling grid
   const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
-  const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling ~5-6 week display
+  const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling 3-week display (plenty of slack)
   const SPORTS_REFRESH_MS = 60 * 60 * 1000;      // schedules rarely change; poll hourly
   const SPORTS_MIN_REFETCH_MS = 10 * 60 * 1000;  // floor so manual refresh can't hammer ESPN
 
@@ -998,10 +999,10 @@
     const tp = todayStr.split("-").map(Number);
     const dow = new Date(tp[0], tp[1] - 1, tp[2], 12).getDay();   // 0 = Sun
     // Rolling window: start on the Sunday of the current week, then run enough
-    // whole weeks to cover ~a month ahead. Days flow continuously across month
+    // whole weeks to cover three weeks. Days flow continuously across month
     // boundaries (bleedthrough); there's no navigation into the past.
     const start = new Date(tp[0], tp[1] - 1, tp[2] - dow, 12);
-    const totalDays = Math.ceil((dow + 31) / 7) * 7;
+    const totalDays = CALENDAR_WEEKS * 7;
 
     const days = [];
     for (let i = 0; i < totalDays; i++) {
