@@ -204,6 +204,8 @@
   //   release   -> a new film's opening date, drawn as an untimed chip.
   // A failed fetch keeps the last good list, like the todos above.
   let movieList = [];
+  // Films never shown on the calendar, even if the tracker keeps adding them.
+  const MOVIE_HIDE = /rocky horror/i;
 
   async function loadMovies() {
     try {
@@ -212,7 +214,7 @@
       const j = await res.json();
       if (!j || !Array.isArray(j.movies)) throw new Error("movies.json has no movies array");
       movieList = j.movies.filter(m => m && typeof m.title === "string" && m.title.trim() &&
-        /^\d{4}-\d{2}-\d{2}$/.test(m.date || ""));
+        !MOVIE_HIDE.test(m.title) && /^\d{4}-\d{2}-\d{2}$/.test(m.date || ""));
     } catch (e) { /* keep the last good list */ }
   }
 
