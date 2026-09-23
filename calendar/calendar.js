@@ -1125,7 +1125,7 @@
       const ds = d.getFullYear() + "-" + pad2(Mo) + "-" + pad2(day);
       const isToday = ds === todayStr;
       const isPast = ds < todayStr;
-      const evs = byDate[ds] || [];
+      const evs = isPast ? [] : (byDate[ds] || []);   // days already gone show empty
       const showMon = day === 1 || i === 0;   // mark each new month for bleedthrough
       html += '<div class="cal-cell' +
         (isToday ? " cal-cell--today" : "") +
