@@ -229,6 +229,7 @@
       const year = m.year ? " (" + m.year + ")" : "";
       const venue = !release && m.venue ? " \u00b7 " + m.venue : "";
       const run = m.end && m.end > m.date ? "thru " + shortDate(m.end) : "";
+      const url = movieTicketUrl(m);
       return {
         type: "movie",
         title: m.title + year + (release ? " opens" : venue),
@@ -237,9 +238,39 @@
         // A dated run or an untimed screening still says something useful;
         // fmtRange prefers timeLabel, so only set it when there's no showtime.
         timeLabel: m.start && !run ? "" : (run || m.timeLabel || ""),
-        url: m.url || "",
+        url: url,
+        // Nothing specific to link to: offer each home theatre's own page instead.
+        // The tracker may add film-specific regal_url / cinemark_url; use them when present.
+        theatres: url ? null : [
+          { name: "Regal", url: m.regal_url || HOME_THEATRES[0].url },
+          { name: "Cinemark", url: m.cinemark_url || HOME_THEATRES[1].url },
+        ],
       };
     });
+  }
+
+  // Where a movie chip sends you. A screening keeps the link the tracker found
+  // for its own venue (the Kentucky Theatre's ticketing page for that showing,
+  // Fathom's page for that event) and the whole chip is one link. Regal's bare
+  // homepage is no use, so it becomes the Hamburg Pavilion page. An entry with
+  // no link at all (most new releases) gets one link per home theatre, since
+  // it may be showing at either chain.
+  const REGAL_HAMBURG_URL = "https://www.regmovies.com/theatres/regal-hamburg-pavilion-0728";
+  const HOME_THEATRES = [
+    { name: "Regal", url: REGAL_HAMBURG_URL },
+    { name: "Cinemark", url: "https://www.cinemark.com/theatres/ky-lexington/cinemark-fayette-mall-and-xd" },
+  ];
+  function movieTicketUrl(m) {
+    const u = String(m.url || "").trim();
+    if (!/^https?:\/\//i.test(u)) return "";
+    return /^https?:\/\/(www\.)?regmovies\.com\/?$/i.test(u) ? REGAL_HAMBURG_URL : u;
+  }
+
+  // "Tickets: Regal · Cinemark" for a movie chip that has no single link.
+  function theatreLinksHtml(ev) {
+    if (!ev.theatres) return "";
+    return '<span class="cal-ev-theatres">' + ev.theatres.map(t =>
+      '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.name) + '</a>').join(" &middot; ") + '</span>';
   }
 
   // Unticked todos as calendar events. An overdue one is pinned to today; an
@@ -1107,12 +1138,18 @@
         const rng = fmtRange(ev);
         const clock = fmtTime(ev.start);   // real HH:MM only — never freetext
         const start = clock || rng;
-        return '<div class="cal-ev' + eventClass(ev) + '" title="' +
-          esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
+        // A movie chip is one big link to its tickets: the whole purple box is
+        // the tap target, not just the title text inside it.
+        const wholeLink = ev.type === "movie" && ev.url;
+        const tag = wholeLink ? "a" : "div";
+        return '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + '"' +
+          (wholeLink ? ' href="' + esc(ev.url) + '" target="_blank" rel="noopener"' : '') +
+          ' title="' + esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
           (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
           '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
-          '<span class="cal-ev-title">' + (sportsMatchHtml(ev) || eventTitleHtml(ev)) + '</span></div>';
+          '<span class="cal-ev-title">' + (wholeLink ? esc(ev.title || "") : (sportsMatchHtml(ev) || eventTitleHtml(ev))) +
+          '</span>' + theatreLinksHtml(ev) + '</' + tag + '>';
       }
       // Sports fixtures get their own 2-column grid (square-ish cards, more
       // vertical room per card) instead of stacking full-width like other
@@ -1148,7 +1185,7 @@
         const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
         agenda.push('<li class="cal-agenda-item">' +
           '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + '</span>' +
+          '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + theatreLinksHtml(ev) + '</span>' +
           (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
           '</li>');
       });

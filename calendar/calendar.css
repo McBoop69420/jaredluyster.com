@@ -102,6 +102,14 @@ a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
    time every other event type hides here. The mobile rule further down still
    wins on narrow screens, where .cal-ev-mobile carries the clock instead. */
 .cal-ev--movie .cal-ev-s{display:inline;font-variant-numeric:tabular-nums;opacity:.85;}
+/* A whole-chip link (movies): block-level, no link underline, dims on hover. */
+a.cal-ev--linked{display:block;border-bottom:0;cursor:pointer;}
+a.cal-ev--linked:hover{background:var(--cal-movie);color:var(--cal-accent-ink);opacity:.8;}
+/* Per-theatre links on a movie with no single ticket page: own line, small. */
+.cal-ev-theatres{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.9;}
+.cal-ev-theatres a{border-bottom:1px solid currentColor;color:inherit;}
+.cal-ev-theatres a:hover{background:none;color:inherit;opacity:.7;}
+.cal-agenda-title .cal-ev-theatres{display:inline;margin-left:8px;}
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
 /* A non-sports event's own link (registry, tickets, etc.) — same "still
