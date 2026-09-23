@@ -205,7 +205,7 @@
   // A failed fetch keeps the last good list, like the todos above.
   let movieList = [];
   // Films never shown on the calendar, even if the tracker keeps adding them.
-  const MOVIE_HIDE = /rocky horror/i;
+  const MOVIE_HIDE = /^(the )?rocky horror picture show$/i;
 
   async function loadMovies() {
     try {
