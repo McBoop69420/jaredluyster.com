@@ -190,6 +190,58 @@
     if (changed) saveTodoDone();
   }
 
+  // ---- Movies -----------------------------------------------------------
+  // Read from /movies.json: { "movies": [ { "title", "date", "end", "start",
+  // "venue", "kind": "screening" | "release", "year", "series", "url" } ] }.
+  // Public like todos.json (published showtimes only, nothing private), and
+  // rewritten each week by the "lexington-marquee-refresh" scheduled task from
+  // the Lexington Marquee tracker. Two kinds:
+  //   screening -> an old film playing at a theater near Lexington, drawn on
+  //                its day at its showtime; a multi-day run is ONE chip on the
+  //                opening day labelled "thru <end>", not a chip every day,
+  //                which would bury the rest of the month.
+  //   release   -> a new film's opening date, drawn as an untimed chip.
+  // A failed fetch keeps the last good list, like the todos above.
+  let movieList = [];
+
+  async function loadMovies() {
+    try {
+      const res = await fetch("/movies.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("movies.json " + res.status);
+      const j = await res.json();
+      if (!j || !Array.isArray(j.movies)) throw new Error("movies.json has no movies array");
+      movieList = j.movies.filter(m => m && typeof m.title === "string" && m.title.trim() &&
+        /^\d{4}-\d{2}-\d{2}$/.test(m.date || ""));
+    } catch (e) { /* keep the last good list */ }
+  }
+
+  // "2026-10-14" -> "Oct 14", for the run label on a multi-day engagement.
+  function shortDate(dateStr) {
+    const p = String(dateStr || "").split("-").map(Number);
+    if (p.length !== 3 || !p[0]) return "";
+    return new Date(p[0], p[1] - 1, p[2], 12)
+      .toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function movieEvents() {
+    return movieList.map(m => {
+      const release = String(m.kind || "").toLowerCase() === "release";
+      const year = m.year ? " (" + m.year + ")" : "";
+      const venue = !release && m.venue ? " \u00b7 " + m.venue : "";
+      const run = m.end && m.end > m.date ? "thru " + shortDate(m.end) : "";
+      return {
+        type: "movie",
+        title: m.title + year + (release ? " opens" : venue),
+        date: m.date,
+        start: release ? "" : (m.start || ""),
+        // A dated run or an untimed screening still says something useful;
+        // fmtRange prefers timeLabel, so only set it when there's no showtime.
+        timeLabel: m.start && !run ? "" : (run || m.timeLabel || ""),
+        url: m.url || "",
+      };
+    });
+  }
+
   // Unticked todos as calendar events. An overdue one is pinned to today; an
   // undated one gets no date, which renderCalendar's byDate pass skips, so only
   // the strip shows it.
@@ -906,7 +958,7 @@
       // already-drawn calendar stays up while new data is fetched.
       root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
       lastCalendarHtml = null;
-      Promise.all([loadCalendar(), loadTodos()]).then(() => { renderCalendar(); stampUpdated(); });
+      Promise.all([loadCalendar(), loadTodos(), loadMovies()]).then(() => { renderCalendar(); stampUpdated(); });
       return;
     }
 
@@ -932,7 +984,7 @@
       const copy = Object.assign({}, ev, { date: dateStr });
       (byDate[dateStr] = byDate[dateStr] || []).push(copy);
     }
-    calEvents.concat(sportsEvents, todoEvts).forEach(ev => {
+    calEvents.concat(sportsEvents, todoEvts, movieEvents()).forEach(ev => {
       if (!ev || !ev.date) return;
       const recur = ev.recurrence || {};
       const freq = String(recur.freq || "").toLowerCase();
@@ -1148,7 +1200,7 @@
     // Fetch fresh /calendar.json so new commitments appear, but keep the
     // current grid on screen meanwhile and only redraw once it arrives.
     try {
-      await Promise.all([loadCalendar(), loadTodos()]);
+      await Promise.all([loadCalendar(), loadTodos(), loadMovies()]);
       renderCalendar();
       stampUpdated();
     } finally {

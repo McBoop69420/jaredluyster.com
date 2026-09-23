@@ -2,6 +2,7 @@
   --cal-ink:#1c2024;--cal-paper:#f1f3f1;--cal-muted:#57616b;
   --cal-accent:#1f6f66;--cal-accent-ink:#eef2f1;--cal-border-w:3px;
   --cal-tab-bg:#dee6e3;--cal-highlight:#d8ece6;--cal-work:#3a5a80;--cal-live:#b8462f;
+  --cal-movie:#6d3f70;
   --cal-font-display:"Space Grotesk","Arial Black",sans-serif;
   --cal-font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
@@ -93,9 +94,14 @@ a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
   white-space:normal;overflow-wrap:break-word;}
 .cal-ev--work{background:var(--cal-work);color:var(--cal-accent-ink);}
 .cal-ev--sports{background:var(--cal-accent);color:var(--cal-accent-ink);}
+.cal-ev--movie{background:var(--cal-movie);color:var(--cal-accent-ink);}
 .cal-ev--todo{background:none;color:var(--cal-ink);padding:0;}
 .cal-ev-t{font-weight:700;opacity:.95;}
 .cal-ev-s{display:none;}
+/* A screening is worth nothing without its showtime, so movie chips keep the
+   time every other event type hides here. The mobile rule further down still
+   wins on narrow screens, where .cal-ev-mobile carries the clock instead. */
+.cal-ev--movie .cal-ev-s{display:inline;font-variant-numeric:tabular-nums;opacity:.85;}
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
 /* A non-sports event's own link (registry, tickets, etc.) — same "still
