@@ -110,6 +110,16 @@ a.cal-ev--linked:hover{background:var(--cal-movie);color:var(--cal-accent-ink);o
 .cal-ev-theatres a{border-bottom:1px solid currentColor;color:inherit;}
 .cal-ev-theatres a:hover{background:none;color:inherit;opacity:.7;}
 .cal-agenda-title .cal-ev-theatres{display:inline;margin-left:8px;}
+/* Movie chips carry a dismiss-forever x in the top-right corner. It sits beside the
+   chip (a button can't nest in the chip's link), so the wrapper anchors it. */
+.cal-ev-wrap{position:relative;flex:none;}
+.cal-ev-wrap .cal-ev{padding-right:20px;}
+.cal-dismiss{position:absolute;top:0;right:0;width:20px;height:20px;padding:0;border:0;border-radius:0;
+  background:none;color:var(--cal-accent-ink);font:700 15px/1 var(--cal-font-body);cursor:pointer;opacity:.6;}
+.cal-dismiss:hover,.cal-dismiss:focus-visible{opacity:1;background:rgba(0,0,0,.25);}
+.cal-agenda-item .cal-dismiss{position:static;flex:none;width:28px;height:28px;font-size:20px;
+  color:var(--cal-muted);align-self:center;}
+.cal-agenda-item .cal-dismiss:hover,.cal-agenda-item .cal-dismiss:focus-visible{color:var(--cal-ink);background:none;}
 .cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
 /* A non-sports event's own link (registry, tickets, etc.) — same "still
@@ -313,6 +323,9 @@ button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
   .cal-ev .cal-ev-t{display:none;}
   .cal-ev .cal-ev-s{display:none;}
   .cal-ev .cal-ev-mobile{display:inline;}
+  /* No room for an x on a time pill; dismissing happens from the agenda below. */
+  .cal-ev-wrap .cal-ev{padding-right:3px;}
+  .cal-ev-wrap .cal-dismiss{display:none;}
   .cal-daynum{font-size:10px;}
   .cal-todo-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
   .todo-sheet{padding:calc(12px + env(safe-area-inset-top)) 8px 12px;}

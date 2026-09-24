@@ -226,8 +226,38 @@
       .toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
+  // Movies you've dismissed with the little x on a chip. movies.json is rewritten
+  // weekly by the tracker, so a dismissal can't live in the file: like a ticked
+  // todo it's remembered per device in localStorage. Keyed by title + year, so
+  // every screening of that film stays hidden, including ones added later.
+  const MOVIE_DISMISSED_KEY = "calendar.movies.dismissed";
+  let movieDismissed = readMovieDismissed();   // Set of movieKey()s
+
+  function movieKey(m) {
+    return String(m.title || "").trim().toLowerCase() + "|" + String(m.year || "").trim();
+  }
+  function readMovieDismissed() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(MOVIE_DISMISSED_KEY) || "[]");
+      return new Set(Array.isArray(raw) ? raw.filter(k => typeof k === "string") : []);
+    } catch (e) { return new Set(); }
+  }
+  function saveMovieDismissed() {
+    try { localStorage.setItem(MOVIE_DISMISSED_KEY, JSON.stringify(Array.from(movieDismissed))); } catch (e) { /* in-memory only */ }
+  }
+  // Returns { title, restore } for the Undo bar.
+  function dismissMovie(key, title) {
+    movieDismissed.add(key);
+    saveMovieDismissed();
+    return { title: title, restore() { movieDismissed.delete(key); saveMovieDismissed(); } };
+  }
+  function dismissButtonHtml(ev) {
+    return '<button type="button" class="cal-dismiss" data-dismiss-movie="' + esc(ev.movieKey) +
+      '" aria-label="Dismiss ' + esc(ev.movieTitle) + ' for good" title="Dismiss for good">&times;</button>';
+  }
+
   function movieEvents() {
-    return movieList.map(m => {
+    return movieList.filter(m => !movieDismissed.has(movieKey(m))).map(m => {
       const release = String(m.kind || "").toLowerCase() === "release";
       const year = m.year ? " (" + m.year + ")" : "";
       const venue = !release && m.venue ? " \u00b7 " + m.venue : "";
@@ -235,6 +265,8 @@
       const url = movieTicketUrl(m);
       return {
         type: "movie",
+        movieKey: movieKey(m),
+        movieTitle: m.title,
         title: m.title + year + (release ? " opens" : venue),
         date: m.date,
         start: release ? "" : (m.start || ""),
@@ -1145,7 +1177,7 @@
         // the tap target, not just the title text inside it.
         const wholeLink = ev.type === "movie" && ev.url;
         const tag = wholeLink ? "a" : "div";
-        return '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + '"' +
+        const chip = '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + '"' +
           (wholeLink ? ' href="' + esc(ev.url) + '" target="_blank" rel="noopener"' : '') +
           ' title="' + esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
@@ -1153,6 +1185,9 @@
           '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
           '<span class="cal-ev-title">' + (wholeLink ? esc(ev.title || "") : (sportsMatchHtml(ev) || eventTitleHtml(ev))) +
           '</span>' + theatreLinksHtml(ev) + '</' + tag + '>';
+        // The x is a sibling of the chip, not inside it: a button can't live in
+        // the chip's link, and a click on it mustn't follow the ticket link.
+        return ev.type === "movie" ? '<div class="cal-ev-wrap">' + chip + dismissButtonHtml(ev) + '</div>' : chip;
       }
       // Sports fixtures get their own 2-column grid (square-ish cards, more
       // vertical room per card) instead of stacking full-width like other
@@ -1190,6 +1225,7 @@
           '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
           '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + theatreLinksHtml(ev) + '</span>' +
           (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
+          (ev.type === "movie" ? dismissButtonHtml(ev) : '') +
           '</li>');
       });
     });
@@ -1259,6 +1295,15 @@
     const calRoot = $("calRoot");
     if (calRoot) calRoot.addEventListener("click", e => {
       if (e.target.closest && e.target.closest("[data-add-todo]")) { openTodoSheet(); return; }
+      const x = e.target.closest && e.target.closest("[data-dismiss-movie]");
+      if (x) {
+        const key = x.dataset.dismissMovie;
+        const m = movieList.find(f => movieKey(f) === key);
+        const r = dismissMovie(key, m ? m.title : "Movie");
+        showTodoUndo("Dismissed", r.title, r.restore);
+        renderCalendar();
+        return;
+      }
       const chip = e.target.closest && e.target.closest("[data-todo-key]");
       if (chip) completeTodo(chip.dataset.todoKey);
     });
