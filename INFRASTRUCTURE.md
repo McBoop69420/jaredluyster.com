@@ -8,6 +8,29 @@
 - **Local working copy (active):** `%USERPROFILE%\Documents\jaredluyster.com`
 - **Local clean copy:** `%USERPROFILE%\Projects\jaredluyster.com` (clean, matches HEAD)
 
+## Self-hosted machines
+
+**2026-09-26: every self-hosted piece of the site moved from Jared-PC (the "Gaming PC",
+`192.168.68.69`, user `Jared`) to JARED-SERVER (`192.168.68.59`, user `Jared Server`).**
+Anything below that says `C:\Users\Jared\` is historical unless noted; the live paths are
+under `C:\Users\Jared Server\`.
+
+| What | Runs on | How |
+|---|---|---|
+| News + calendar deploy (`mcboop-daily`) | JARED-SERVER | Scheduled Task `McBoop Daily Deploy`, S4U, every 15 min — §4 |
+| Radio origin (`node server.js`, :8080) | JARED-SERVER | Scheduled Task `Radio Service`, S4U, at startup — §3 |
+| Radio tunnel (`mcboop-news`) | JARED-SERVER | Scheduled Task `Radio Tunnel`, S4U, at startup — §3 |
+| Site repo checkout used by the deploy | JARED-SERVER | `C:\Users\Jared Server\jaredluyster.com`, fast-forwarded by every deploy run |
+| Kavita (:5000), media catalog (:8800), Hermes + local LLM | **Jared-PC** (deliberately) | They read the Buffalo LinkStation NAS (`\\192.168.68.62\Share`), which only speaks SMB1; JARED-SERVER keeps SMB1 off. The LLM also needs Jared-PC's RTX 2060. |
+
+On Jared-PC the old copies are switched off but not deleted: task `McBoop Daily Deploy`
+is Disabled, and the NSSM services `RadioService` / `RadioTunnel` are Stopped + Disabled.
+
+**Not retired after all:** `shop.jaredluyster.com` (see below) is still served — by the
+`marketplace` tunnel on JARED-SERVER pointing at an old `marketplace/server.py` process on
+:5000, launched from a folder that no longer exists in this repo. Nothing in this repo
+depends on it.
+
 ## Deployment Architecture
 
 The site is a **hybrid deployment** — two hosting mechanisms under one domain umbrella:
@@ -113,10 +136,20 @@ that repo for its own infrastructure notes.
 - **Stream:** `https://radio.jaredluyster.com/stream.mp3`
 - **Status JSON:** `https://radio.jaredluyster.com/status.json` (currently showing Youth Fountain - Take One Capusle A Day)
 - **Art endpoint:** `https://radio.jaredluyster.com/art/now`
-- **Tunnel:** Cloudflare Tunnel (`~/.cloudflared/config.yml`)
-  - Tunnel ID: `<TUNNEL_ID>`
-  - Routes: `radio.jaredluyster.com` → `localhost:8081` (the `news.jaredluyster.com` route in this file is legacy/unused — see §4, news is Pages-hosted, not tunneled)
-- **Player page:** `radio.html` (static, served via Render from site root)
+- **Host (since 2026-09-26):** JARED-SERVER, `C:\Users\Jared Server\Internet Radio\`
+  (copied from Jared-PC's `Documents\Internet Radio`, including 118 MB of `music/` and an
+  **uncommitted** `server.js` change that adds `/art/now` — commit it to `radio-service`).
+  Started at boot by Scheduled Task `Radio Service` (S4U, restarts on failure) via
+  `start-radio.cmd`, which puts ffmpeg + node on PATH, sets
+  `PUBLIC_BASE_URL=https://radio.jaredluyster.com`, and logs to `radio.log`. Listens on
+  **:8080** (the server's default — earlier docs saying 8081 were wrong).
+- **Tunnel:** Cloudflare Tunnel `mcboop-news` (`14eb8ecb-…`), run by Scheduled Task
+  `Radio Tunnel` with `%USERPROFILE%\.cloudflared\radio.yml`:
+  `radio.jaredluyster.com` → `http://127.0.0.1:8080` (127.0.0.1, not `localhost` —
+  cloudflared tries `::1` first and the server isn't reached there). Its credentials file
+  was generated on JARED-SERVER from the account cert (`cloudflared tunnel token
+  --cred-file`), so DNS did not change.
+- **Player page:** `radio/index.html` (static, served via Render)
 
 ### 4. McBoop Newspaper + Calendar — Cloudflare Pages (`mcboop-daily` project, Wrangler-CLI deployed)
 
@@ -128,8 +161,9 @@ is NOT part of this project**, despite `news/_worker.js` containing hostname-rou
 code that looks like it should serve it — that code was dead, and has been removed.
 Sports has its own project and its own deploy mechanism; see §4b.
 
-- **Local project root:** `C:\Users\Jared\McBoop Newspaper\` (NOT in this repo — a
-  separate, non-git-tracked directory containing the content-generation pipeline:
+- **Local project root:** `C:\Users\Jared Server\McBoop Newspaper\` on JARED-SERVER since
+  2026-09-26 (was `C:\Users\Jared\McBoop Newspaper\` on Jared-PC; NOT in this repo — a
+  separate local-only git repo containing the content-generation pipeline:
   `generate.py`, `archive.py`, `jsonize.py`, `export_betting_tracker.py`, betting
   tracker data, RSS/odds scraping scripts, etc.)
 - **Deployable site shell — moved into this repo 2026-08-21** (news) / **2026-09-06**
@@ -178,9 +212,15 @@ Sports has its own project and its own deploy mechanism; see §4b.
   `deploy-pages.sh` copies the shell fresh from this repo's `news/` and
   `calendar/` into a local `public/` staging dir, layers in `calendar.json` and
   the frozen `archive/` gallery (both private data that must never be committed
-  to this public repo — see below), runs `push-ledger.sh` (see the ledger bullet
-  below), then `wrangler pages deploy public --project-name mcboop-daily` (token
-  in `~/.config/cloudflare_pages_token.txt`) and its own post-deploy verification.
+  to this public repo — see below), then `wrangler pages deploy public --project-name
+  mcboop-daily` (token in `~/.config/cloudflare_pages_token.txt`) and its own post-deploy
+  verification. (It no longer calls `push-ledger.sh` — see the ledger bullet below.)
+  **Since 2026-09-26 the task runs on JARED-SERVER** (as `Jared Server`, S4U) and the
+  script first runs `git pull --ff-only origin main` in `C:\Users\Jared Server\jaredluyster.com`,
+  so **a push to `main` from any machine goes live on the next run** — on Jared-PC the
+  script only ever shipped whatever that checkout happened to have pulled. A failed pull
+  logs a WARN and deploys the current checkout. wrangler is a global npm install there
+  (`npm i -g wrangler`).
   **Runs silently in the background (2026-09-20):** the task uses
   `LogonType=S4U` (Limited), so it runs in a non-interactive session with no desktop
   to take over and also fires while logged out. It used to be Interactive (a leftover
@@ -191,7 +231,7 @@ Sports has its own project and its own deploy mechanism; see §4b.
   process in the desktop session (~0.4s), which is enough to drop a stream to the
   desktop — even with no visible window. Switching to S4U needs an **elevated**
   PowerShell (`Set-ScheduledTask ... -Principal (New-ScheduledTaskPrincipal -UserId
-  'Jared' -LogonType S4U -RunLevel Limited)`); a normal shell gets "Access is
+  'Jared Server' -LogonType S4U -RunLevel Limited)`); a normal shell gets "Access is
   denied", so if the task is ever re-registered, do it from an admin shell and keep
   S4U. Verified with a foreground/window watcher during a run: zero foreground
   changes, zero new windows, result 0.
@@ -234,9 +274,10 @@ Sports has its own project and its own deploy mechanism; see §4b.
   - The Calendar tab, already retired when it moved to its own domain.
 
   Calendar page reads `/calendar.json` (hand-edited at
-  `C:\Users\Jared\McBoop Newspaper\public\calendar.json`, no-cache so new
-  commitments show up without a redeploy) — no longer rendered anywhere on
-  `news.jaredluyster.com`.
+  `C:\Users\Jared Server\McBoop Newspaper\public\calendar.json` on JARED-SERVER, no-cache
+  so new commitments show up without a redeploy) — no longer rendered anywhere on
+  `news.jaredluyster.com`. **Edit it on JARED-SERVER only:** Jared-PC still has its old
+  copy, but nothing deploys from there any more, so edits made there never go live.
 - **The Hermes cron jobs were retired 2026-09-08** in favor of the Scheduled
   Task above. They had gone dormant anyway — the twice-daily jobs (`McBoop Daily
   — Morning` 7:30a, `McBoop Daily — Evening` 8p, `cd "C:\Users\Jared\McBoop
@@ -254,7 +295,11 @@ Sports has its own project and its own deploy mechanism; see §4b.
   What actually motivated moving to a 15-minute Scheduled Task instead of a
   twice-daily one was wanting shell edits to go live quickly without a manual
   step, not any content-generation need.
-- **Ledger push is now a Windows Scheduled Task — added 2026-09-08.** Task
+- **Retired 2026-09-09** (McBoop Newspaper commit `439b1bc`, "Retire the paper-bet ledger
+  push pipeline"): no `McBoop Ledger Push` task exists and `deploy-pages.sh` no longer
+  calls `push-ledger.sh`. It was not moved to JARED-SERVER, and neither was the Obsidian
+  vault it read (`C:\Users\Jared\Documents\Obsidian Vault` on Jared-PC). Historical:
+  **Ledger push is now a Windows Scheduled Task — added 2026-09-08.** Task
   `McBoop Ledger Push`, daily 7:30a + 8:00p, runs
   `McBoop Newspaper/push-ledger.sh`: regenerate `sports/fake-bets.json` from the
   Obsidian tracker, and commit+push it to `main` only if it actually changed
@@ -267,7 +312,7 @@ Sports has its own project and its own deploy mechanism; see §4b.
   Verified in the Task Scheduler context (not just from a shell) on both the
   no-op and the push path, each returning result 0.
 - **The pipeline directory is a git repo as of 2026-09-08.**
-  `C:\Users\Jared\McBoop Newspaper\` held `deploy-pages.sh`,
+  `McBoop Newspaper\` (then on Jared-PC; now `C:\Users\Jared Server\McBoop Newspaper\`) held `deploy-pages.sh`,
   `export_betting_tracker.py`, `generate.py`, `jsonize.py`, `archive.py`,
   `serve.py`, `verify-live.sh` and 161 archived editions with no version control
   at all. It is now an initialised repo (673 files tracked, `public/*` and the
@@ -543,26 +588,17 @@ else here. It rebuilds and redeploys automatically on every push to `main`
 
 ## Cloudflare Tunnel Configuration
 
-File: `%USERPROFILE%\.cloudflared\config.yml`
+Both tunnels run on JARED-SERVER (`C:\Users\Jared Server\.cloudflared\`):
 
-```yaml
-tunnel: <TUNNEL_ID>
-credentials-file: %USERPROFILE%\.cloudflared\<TUNNEL_ID>.json
+| Tunnel | Config | Routes | Started by |
+|---|---|---|---|
+| `mcboop-news` (`14eb8ecb-…`) | `radio.yml` | `radio.jaredluyster.com` → `http://127.0.0.1:8080` | Scheduled Task `Radio Tunnel` (logs to `radio-tunnel.log`) |
+| `marketplace` (`1259c1a1-…`) | `config.yml` | `shop.jaredluyster.com` → `http://localhost:5000` | a separate `cloudflared tunnel run marketplace` process (legacy shop — see top) |
 
-ingress:
-  - hostname: news.jaredluyster.com
-    service: http://localhost:8213
-  - hostname: radio.jaredluyster.com
-    service: http://localhost:8081
-  - service: http_status:404
-```
-
-- `radio.jaredluyster.com` → Radio service (port 8081, public)
-- The `news.jaredluyster.com` route above is **legacy/unused** — news is
-  actually Cloudflare-Pages-hosted (see §4), not tunneled. `localhost:8213` is
-  a LAN-only local mirror (`serve.py` in `C:\Users\Jared\McBoop Newspaper\`,
-  launched by `start-server.bat` from the Windows Startup folder) that the
-  public domain does not depend on.
+Until 2026-09-26 `mcboop-news` ran on Jared-PC as the NSSM service `RadioTunnel`
+(now Stopped + Disabled there). Its old config also routed `news.jaredluyster.com` to
+`localhost:8213`; that route was always unused (news is Pages-hosted, §4), and the
+`serve.py` LAN mirror on 8213 hadn't been running since 2026-08-20. Neither was carried over.
 
 ## Directory Structure
 
@@ -697,17 +733,17 @@ this repo.
 ### Deployment triggers
 - **GitHub Pages (Wizard Battle):** Push to `main` branch (`docs/` directory)
 - **Render (Homepage):** Push to `main` branch (auto-deploys from `render.yaml`)
-- **Cloudflare Tunnel (Radio):** Runs locally via `cloudflared` (public, no Access)
+- **Cloudflare Tunnel (Radio):** Runs on JARED-SERVER via `cloudflared` (public, no Access); radio code changes need a restart of the `Radio Service` task there
 - **Cloudflare Pages, Git-integrated (Sports, Bluegrass Cube, and a few legacy
   subdomains — see each project's own section):** Push to `main` branch, same as
   GitHub Pages/Render above — Cloudflare's own GitHub integration builds directly
   from this repo using each project's configured root directory.
-- **Cloudflare Pages, Wrangler-CLI deployed (News + Calendar):** NOT triggered by
-  `git push` — only by `deploy-pages.sh` (Windows Scheduled Task `McBoop Daily
-  Deploy`, every 15 min — see §4) or a manual `wrangler pages deploy`, run from
-  the separate `McBoop Newspaper` directory. Pushing changes to `news/` or
-  `calendar/` in this repo does nothing live on its own until that next
-  scheduled run picks them up.
+- **Cloudflare Pages, Wrangler-CLI deployed (News + Calendar):** not a Cloudflare
+  git build, but effectively push-triggered since 2026-09-26: `deploy-pages.sh`
+  (Scheduled Task `McBoop Daily Deploy` on JARED-SERVER, every 15 min — see §4) pulls
+  `main` and deploys it, so a push to `news/` or `calendar/` from any machine is live
+  within 15 minutes. To deploy immediately, run `Start-ScheduledTask -TaskName "McBoop
+  Daily Deploy"` on JARED-SERVER.
 
 ### Git workflow
 - Working copy: `%USERPROFILE%\Documents\jaredluyster.com` (active)
