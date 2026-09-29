@@ -72,7 +72,7 @@ button.add-todo-btn:focus-visible{outline:2px solid var(--cal-ink);outline-offse
 a.daily-link{font-family:var(--cal-font-display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border:1px solid var(--cal-ink);background:var(--cal-ink);color:var(--cal-paper);-webkit-touch-callout:default;}
 a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(108px,auto);gap:1px;
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(108px,auto);gap:1px;
   background:var(--cal-ink);overflow:hidden;border:2px solid var(--cal-ink);}
 .cal-dow{background:var(--cal-tab-bg);color:var(--cal-muted);font-family:var(--cal-font-display);
   font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
@@ -99,8 +99,7 @@ a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 .cal-ev-t{font-weight:700;opacity:.95;}
 .cal-ev-s{display:none;}
 /* A screening is worth nothing without its showtime, so movie chips keep the
-   time every other event type hides here. The mobile rule further down still
-   wins on narrow screens, where .cal-ev-mobile carries the clock instead. */
+   time every other event type hides here. */
 .cal-ev--movie .cal-ev-s{display:inline;font-variant-numeric:tabular-nums;opacity:.85;}
 /* A whole-chip link (movies): block-level, no link underline, dims on hover. */
 a.cal-ev--linked{display:block;border-bottom:0;cursor:pointer;}
@@ -120,8 +119,16 @@ a.cal-ev--linked:hover{background:var(--cal-movie);color:var(--cal-accent-ink);o
 .cal-agenda-item .cal-dismiss{position:static;flex:none;width:28px;height:28px;font-size:20px;
   color:var(--cal-muted);align-self:center;}
 .cal-agenda-item .cal-dismiss:hover,.cal-agenda-item .cal-dismiss:focus-visible{color:var(--cal-ink);background:none;}
-.cal-ev-mobile{display:none;}
 .cal-ev-title{display:inline;}
+/* One dot per event: the phone grid's stand-in for chips, and a type key in the lists. */
+.cal-dots,.cal-day-panel{display:none;}
+.cal-dot{display:inline-block;flex:none;width:7px;height:7px;border-radius:50%;background:var(--cal-ink);}
+.cal-dot.cal-ev--work{background:var(--cal-work);}
+.cal-dot.cal-ev--sports{background:var(--cal-accent);}
+.cal-dot.cal-ev--movie{background:var(--cal-movie);}
+.cal-dot.cal-ev--todo{background:none;box-shadow:inset 0 0 0 1.5px var(--cal-ink);}
+.cal-dot-more{font-size:9px;font-weight:700;line-height:7px;color:var(--cal-muted);}
+.cal-agenda-item .cal-dot{align-self:center;}
 /* A non-sports event's own link (registry, tickets, etc.) — same "still
    reads as a chip" treatment as the sports Gamecast links below. */
 a.cal-ev-link{border-bottom:0;cursor:pointer;color:inherit;}
@@ -310,31 +317,22 @@ button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
   .panel-inner--cal{padding:10px 6px 14px;}
   .cal-today-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
   .cal-today-item{padding:1px 6px;}
-  .cal-cell{padding:6px 4px;gap:3px;}
-  /* Grid chips become compact start-time pills; full titles live in the
-     agenda below. Only that short clock string is ever visible here (the
-     full title is display:none below), so it must never wrap — the desktop
-     fix that lets full titles wrap would otherwise break "1:40p" into a
-     letter-per-line stack at pill width. */
-  .cal-ev,.cal-ev-grid .cal-ev{font-size:9px;padding:2px 3px;border-radius:0;text-align:center;
-    display:block;line-height:1.5;white-space:nowrap;overflow-wrap:normal;
-    overflow:hidden;text-overflow:ellipsis;}
-  .cal-ev .cal-ev-title{display:none;}
-  .cal-ev .cal-ev-t{display:none;}
-  .cal-ev .cal-ev-s{display:none;}
-  .cal-ev .cal-ev-mobile{display:inline;}
-  /* No room for an x on a time pill; dismissing happens from the agenda below. */
-  .cal-ev-wrap .cal-ev{padding-right:3px;}
-  .cal-ev-wrap .cal-dismiss{display:none;}
-  .cal-daynum{font-size:10px;}
+  /* Grid cells are tap targets holding a day number and dots; the tapped
+     day's events are listed in full in .cal-day-panel under the grid. */
+  .cal-cell{padding:5px 2px;gap:5px;align-items:center;cursor:pointer;}
+  .cal-cell--past{cursor:default;}
+  .cal-cell > .cal-ev,.cal-cell > .cal-ev-wrap,.cal-cell > .cal-ev-grid{display:none;}
+  .cal-cell--selected{box-shadow:inset 0 0 0 2px var(--cal-ink);}
+  .cal-cell--today.cal-cell--selected{box-shadow:inset 0 0 0 2px var(--cal-accent),inset 0 0 0 4px var(--cal-ink);}
+  .cal-daynum{font-size:11px;text-align:center;}
+  .cal-mon{display:block;font-size:9px;}
+  .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;max-width:100%;}
+  .cal-day-panel{display:block;margin-top:12px;}
+  .cal-day-panel h3.sub{margin:0 0 2px;}
   .cal-todo-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
   .todo-sheet{padding:calc(12px + env(safe-area-inset-top)) 8px 12px;}
   .todo-panel{padding:12px 12px 14px;box-shadow:none;}
   .todo-row{flex-direction:column;align-items:stretch;gap:0;}
-  /* A grid pill is too small to read or tap: just the empty circle. Ticking
-     happens from the strip or the agenda, where the text is. */
-  .cal-ev--todo button.cal-todo{justify-content:center;padding:2px 3px;pointer-events:none;}
-  .cal-ev--todo .cal-todo-text,.cal-ev--todo .cal-todo-tag{display:none;}
   .cal-agenda-wrap{display:block;}
   .cal-agenda-item{padding:5px 2px;gap:3px 10px;}
   .cal-agenda-date{min-width:0;flex-basis:100%;margin-bottom:2px;}

@@ -13,6 +13,7 @@
   let generatedAt = null;
   let refreshTimer = null;
   let lastCalendarHtml = null; // what #calRoot currently shows (see renderCalendar)
+  let selectedDate = null;     // day tapped in the phone grid; null = today
 
   // ---- Sports: games for the teams I follow ------------------------------
   // Pulled live from ESPN's public JSON (CORS-enabled), same source and same
@@ -77,6 +78,8 @@
     { key: "soccer/concacaf.leagues.cup", label: "Leagues Cup", order: "home-away", patterns: ["fc cincinnati"] },
   ];
   const CALENDAR_WEEKS = 3;               // rows shown in the rolling grid
+  const MAX_DOTS = 4;                     // per day in the phone grid, then "+N"
+  const PHONE_QUERY = "(max-width:680px)"; // must match the phone @media in calendar.css
   const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
   const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling 3-week display (plenty of slack)
   const SPORTS_REFRESH_MS = 60 * 60 * 1000;      // schedules rarely change; poll hourly
@@ -567,6 +570,7 @@
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function dateStr(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
 
   function etTodayStr() {
     try {
@@ -1148,6 +1152,7 @@
       html += '<div class="cal-todo-strip"><span class="cal-todo-label">To do</span>' +
         stripTodos.map(ev => todoChipHtml(ev, todoWhen(ev))).join('') + '</div>';
     }
+    if (!selectedDate || selectedDate < todayStr || selectedDate > dateStr(last)) selectedDate = todayStr;
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
       html += '<div class="cal-dow">' + d + '</div>');
@@ -1162,10 +1167,19 @@
       html += '<div class="cal-cell' +
         (isToday ? " cal-cell--today" : "") +
         (isPast ? " cal-cell--past" : "") +
-        (evs.length ? " cal-cell--has" : "") + '">';
+        (ds === selectedDate ? " cal-cell--selected" : "") +
+        (evs.length ? " cal-cell--has" : "") + '"' +
+        (isPast ? '' : ' data-date="' + ds + '"') + '>';
       html += '<div class="cal-daynum">' +
         (showMon ? '<span class="cal-mon">' + esc(d.toLocaleDateString("en-US", { month: "short" })) + '</span> ' : '') +
         day + '</div>';
+      // Phones show one dot per event instead of chips (CSS picks which).
+      if (evs.length) {
+        html += '<div class="cal-dots" aria-hidden="true">' +
+          evs.slice(0, MAX_DOTS).map(ev => '<span class="cal-dot' + eventClass(ev) + '"></span>').join('') +
+          (evs.length > MAX_DOTS ? '<span class="cal-dot-more">+' + (evs.length - MAX_DOTS) + '</span>' : '') +
+          '</div>';
+      }
       function evChipHtml(ev) {
         if (ev.type === "todo") {
           return '<div class="cal-ev cal-ev--todo">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</div>';
@@ -1182,7 +1196,6 @@
           ' title="' + esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
           (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
-          '<span class="cal-ev-mobile">' + esc(clock || "•") + '</span>' +
           '<span class="cal-ev-title">' + (wholeLink ? esc(ev.title || "") : (sportsMatchHtml(ev) || eventTitleHtml(ev))) +
           '</span>' + theatreLinksHtml(ev) + '</' + tag + '>';
         // The x is a sibling of the chip, not inside it: a button can't live in
@@ -1206,28 +1219,40 @@
     // the grid (the grid chips compress to time pills on small screens; this
     // list is where the full titles live, for every day in view, not just the
     // next 7). Rendered always, shown via CSS on mobile.
+    function agendaItemHtml(ev, ds, withDate) {
+      const dateHtml = withDate ? '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' : '';
+      if (ev.type === "todo") {
+        return '<li class="cal-agenda-item">' + dateHtml +
+          '<span class="cal-agenda-title">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</span></li>';
+      }
+      const rng = fmtRange(ev);
+      const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
+      return '<li class="cal-agenda-item">' + dateHtml +
+        '<span class="cal-dot' + eventClass(ev) + '" aria-hidden="true"></span>' +
+        '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + theatreLinksHtml(ev) + '</span>' +
+        (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
+        (ev.type === "movie" ? dismissButtonHtml(ev) : '') +
+        '</li>';
+    }
+
+    // Phone only (CSS hides it on wider screens): the tapped day's events in
+    // full, right under the dot grid.
+    const selParts = selectedDate.split("-").map(Number);
+    const selLabel = new Date(selParts[0], selParts[1] - 1, selParts[2], 12)
+      .toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    const selEvs = byDate[selectedDate] || [];
+    html += '<div class="cal-day-panel" aria-live="polite"><h3 class="sub">' +
+      esc((selectedDate === todayStr ? "Today · " : selectedDate === tomorrowStr ? "Tomorrow · " : "") + selLabel) + '</h3>' +
+      (selEvs.length
+        ? '<ul class="cal-agenda">' + selEvs.map(ev => agendaItemHtml(ev, selectedDate, false)).join("") + '</ul>'
+        : '<p class="cal-empty">Nothing scheduled.</p>') +
+      '</div>';
+
     const agenda = [];
     days.forEach(d => {
-      const ds = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+      const ds = dateStr(d);
       if (ds < todayStr) return;
-      const evs = byDate[ds] || [];
-      if (!evs.length) return;
-      evs.forEach(ev => {
-        if (ev.type === "todo") {
-          agenda.push('<li class="cal-agenda-item">' +
-            '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-            '<span class="cal-agenda-title">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</span></li>');
-          return;
-        }
-        const rng = fmtRange(ev);
-        const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
-        agenda.push('<li class="cal-agenda-item">' +
-          '<span class="cal-agenda-date">' + esc(featuredLabel(ds)) + '</span>' +
-          '<span class="cal-agenda-title">' + (matchHtml || eventTitleHtml(ev)) + theatreLinksHtml(ev) + '</span>' +
-          (!matchHtml && rng ? '<span class="cal-agenda-time">' + esc(rng) + '</span>' : '') +
-          (ev.type === "movie" ? dismissButtonHtml(ev) : '') +
-          '</li>');
-      });
+      (byDate[ds] || []).forEach(ev => agenda.push(agendaItemHtml(ev, ds, true)));
     });
     if (agenda.length) {
       html += '<div class="cal-agenda-wrap"><h3 class="sub">Full Schedule</h3>' +
@@ -1256,13 +1281,18 @@
     const grid = document.querySelector(".cal-grid");
     if (!grid) return;
     const weeks = Number(grid.getAttribute("data-weeks")) || 5;
+    grid.style.removeProperty("height");
+    // Phone cells hold only a day number and dots; keep rows short so the day
+    // panel under the grid stays on screen.
+    if (window.matchMedia(PHONE_QUERY).matches) {
+      grid.style.gridTemplateRows = "auto repeat(" + weeks + ", minmax(52px, auto))";
+      return;
+    }
     const gr = grid.getBoundingClientRect();
     const top = gr.top;
-    const minWeekRow = window.innerWidth <= 680 ? 116 : 150;
     const belowChrome = document.documentElement.scrollHeight - (gr.bottom + window.scrollY);
     const viewportFit = Math.round(window.innerHeight - top - belowChrome - 12);
-    const rowFloor = Math.max(minWeekRow, Math.floor((viewportFit - 28) / weeks));
-    grid.style.removeProperty("height");
+    const rowFloor = Math.max(150, Math.floor((viewportFit - 28) / weeks));
     grid.style.gridTemplateRows = "auto repeat(" + weeks + ", minmax(" + rowFloor + "px, auto))";
   }
 
@@ -1305,7 +1335,12 @@
         return;
       }
       const chip = e.target.closest && e.target.closest("[data-todo-key]");
-      if (chip) completeTodo(chip.dataset.todoKey);
+      if (chip) { completeTodo(chip.dataset.todoKey); return; }
+      const cell = e.target.closest && e.target.closest(".cal-cell[data-date]");
+      if (cell && window.matchMedia(PHONE_QUERY).matches && cell.dataset.date !== selectedDate) {
+        selectedDate = cell.dataset.date;
+        renderCalendar();
+      }
     });
     const undoBar = $("todoUndo");
     if (undoBar) undoBar.addEventListener("click", e => {
