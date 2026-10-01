@@ -26,10 +26,28 @@ under `C:\Users\Jared Server\`.
 On Jared-PC the old copies are switched off but not deleted: task `McBoop Daily Deploy`
 is Disabled, and the NSSM services `RadioService` / `RadioTunnel` are Stopped + Disabled.
 
-**Not retired after all:** `shop.jaredluyster.com` (see below) is still served — by the
-`marketplace` tunnel on JARED-SERVER pointing at an old `marketplace/server.py` process on
-:5000, launched from a folder that no longer exists in this repo. Nothing in this repo
-depends on it.
+**Audit 2026-09-30 — every public hostname is on a hosted service or JARED-SERVER.**
+Checked live (zone DNS via the API, `curl` on each host, `cloudflared tunnel info`, and a
+read-only look at both machines' tasks/services/ports/tunnel configs):
+
+- Hosted: apex + `www` (Render), `wizardbattle.` (GitHub Pages), `bcs.`/`bluegrasscube.`/
+  `news.`/`calendar.`/`sports.`/`social.`/`redzone.`/`roto.`/`wintergreen.` (Cloudflare Pages),
+  `mail.` and the `*.` wildcard (Hover).
+- JARED-SERVER: `radio.` only — the `mcboop-news` tunnel has exactly one connector, started
+  by the `Radio Tunnel` task here.
+- Jared-PC serves nothing public: no `cloudflared` running, `RadioService`/`RadioTunnel`
+  Stopped + Disabled, `McBoop Daily Deploy` Disabled. Kavita (:5000) and the media catalog
+  (:8800, localhost-only) are LAN/local and not tunneled. Its `.cloudflared\config.yml` still
+  holds the `mcboop-news` credentials — if `cloudflared` were ever started there it would join
+  the radio tunnel and send part of the traffic to a dead port.
+- **`theatre.jaredluyster.com` is down everywhere** (404 from the tunnel). Its DNS record
+  points at the `mcboop-news` tunnel; Jared-PC's old config routed it to `localhost:8082`,
+  but nothing listens there on either machine and the backend's source isn't in any repo
+  found. `theatre.html` (apex, not linked from the homepage) calls its `catalog.json`.
+- **`shop.jaredluyster.com` is gone**, not "still served" as this file used to say: there is
+  no DNS record for it (it falls to the Hover wildcard), the `marketplace` tunnel has no
+  connectors, and nothing listens on :5000 on JARED-SERVER. `config.yml` for that tunnel is
+  a leftover.
 
 ## Deployment Architecture
 
@@ -588,12 +606,15 @@ else here. It rebuilds and redeploys automatically on every push to `main`
 
 ## Cloudflare Tunnel Configuration
 
-Both tunnels run on JARED-SERVER (`C:\Users\Jared Server\.cloudflared\`):
+Tunnel configs live on JARED-SERVER (`C:\Users\Jared Server\.cloudflared\`); only one runs:
 
 | Tunnel | Config | Routes | Started by |
 |---|---|---|---|
 | `mcboop-news` (`14eb8ecb-…`) | `radio.yml` | `radio.jaredluyster.com` → `http://127.0.0.1:8080` | Scheduled Task `Radio Tunnel` (logs to `radio-tunnel.log`) |
-| `marketplace` (`1259c1a1-…`) | `config.yml` | `shop.jaredluyster.com` → `http://localhost:5000` | a separate `cloudflared tunnel run marketplace` process (legacy shop — see top) |
+| `marketplace` (`1259c1a1-…`) | `config.yml` | `shop.jaredluyster.com` → `http://localhost:5000` | **nothing — not running, no connectors, no DNS record (audit 2026-09-30)** |
+
+`theatre.jaredluyster.com` also CNAMEs to the `mcboop-news` tunnel, but `radio.yml` has no
+route for it, so it answers 404 (see the audit at the top).
 
 Until 2026-09-26 `mcboop-news` ran on Jared-PC as the NSSM service `RadioTunnel`
 (now Stopped + Disabled there). Its old config also routed `news.jaredluyster.com` to
