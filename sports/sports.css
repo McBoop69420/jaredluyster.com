@@ -205,6 +205,29 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 .team-cell .team-name{font-size:12px;font-weight:700;overflow-wrap:break-word}
 .team-cell .team-rec{display:block;font-size:10px;color:var(--muted);font-weight:400;line-height:1.05}
 
+/* Postseason bracket — takes the standings' place while a league is in its
+   playoffs (see loadBracket in sports.js). One column per round, in the
+   order they're played; space-around lines each round's matchups up between
+   the previous round's, and the whole thing scrolls sideways on a phone. */
+.bracket{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,1fr);gap:14px;overflow-x:auto;padding:2px 6px 10px 2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.bracket-round{display:flex;flex-direction:column;min-width:0;scroll-snap-align:start}
+.bracket-round-head{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;border-bottom:2px solid var(--ink);padding-bottom:3px;margin-bottom:8px}
+.bracket-round-body{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
+.bracket-match{background:var(--card);border:2px solid var(--ink);border-left:4px solid var(--muted);padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+.bracket-match--live{border-left-color:var(--live)}
+.bracket-match--final{border-left-color:var(--ink)}
+.bracket-match--me{background:var(--highlight);box-shadow:4px 4px 0 var(--accent)}
+.bracket-conf{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.bracket-team{display:flex;align-items:center;gap:6px;min-width:0}
+.bracket-team .team-logo,.bracket-team .team-badge{width:18px;height:18px;font-size:8px}
+.bracket-team-name{flex:1 1 auto;min-width:0;font-size:12px;font-weight:700;line-height:1.15;overflow-wrap:break-word}
+.bracket-team-score{font-family:var(--font-display);font-size:16px;font-weight:700;min-width:1.2em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bracket-team--out{color:var(--muted)}
+.bracket-team--out .bracket-team-name{font-weight:500}
+.bracket-team--out .team-logo{opacity:.5}
+.bracket-status{font-size:10px;line-height:1.25;color:var(--muted);border-top:1px dotted #b3a98e;padding-top:3px;margin-top:2px}
+.bracket-status--live{color:var(--live);font-weight:700}
+
 /* States */
 .empty,.error{padding:10px 2px;font-style:italic;color:var(--muted);font-size:14px}
 .error{color:var(--live)}

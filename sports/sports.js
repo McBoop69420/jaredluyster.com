@@ -53,6 +53,11 @@
   // or by MAX_SPOTLIGHT_GAMES — see the `mine` exemption in renderSpotlight.
   // Only NFL has this today: a full Sunday slate should always show in full,
   // never lose a slot to a tighter soccer scoreline or a crowded budget.
+  // bracket: once this league's scoreboard is showing postseason games, the
+  // standings table is swapped for a playoff bracket (see loadBracket). Only
+  // set on leagues whose playoffs decide the champion — the European leagues'
+  // relegation/conference-league playoffs are a footnote to a table that
+  // still matters, so they keep their standings.
   const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, WNBA: 40, MLB: 50 };
   // Order below is deliberate, not declaration-convenience: leagues with a
   // followed team come first (roughly by prominence — MLB/NFL, then
@@ -62,13 +67,13 @@
   // order on the "All" view, so reordering here reorders both.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB, bracket: true },
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true, bracket: true },
     { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
       scoreboardQuery: "groups=80&limit=500" },
@@ -79,17 +84,17 @@
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
       scoreboardQuery: "groups=50&limit=500" },
     { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     // Women's side of Lexington SC. Playoff format isn't wired up, so no
     // playoff-implication zones (playoffPoolMode null) — just scores + table.
     { key: "soccer/usa.w.usl.1", label: "USL Super League", myTeams: ["Lexington SC"],         standings: "overall",
-      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: ["Athletic Club"],            standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall",
@@ -103,7 +108,7 @@
     { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true },
   ];
 
   // Substring patterns (lowercased) marking "my" teams, so we catch
@@ -196,6 +201,14 @@
   const SPOTLIGHT_CYCLE_INTERVAL_MS = 5000;
   const SPOTLIGHT_CYCLE_FADE_MS = 220; // must match .spotlight-cycle's transition-duration in sports.css
   const gamesByLeague = new Map();
+  // Raw ESPN events from each league's latest scoreboard fetch — the bracket
+  // overlays these on its (slower-refreshing) month-by-month postseason
+  // fetch so a game that just went final updates its series right away.
+  const rawEventsByLeague = new Map();
+  const postseasonEventsByLeague = new Map();
+  // "leagueKey|YYYYMM" or "leagueKey|YYYYMMDD" -> events, only for periods
+  // entirely in the past (those games can't change any more).
+  const postseasonPeriodCache = new Map();
   const detailedBoxScoreCache = new Map();
   const openDetailedBoxScores = new Set();
 
@@ -575,6 +588,7 @@
       boxScoreEventId: leagueKey === "baseball/mlb" && state === "post" ? ev.id : null,
       state,
       isPlayoff,
+      isPostseason: isPostseasonEvent(ev),
       away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner, rank: rankOf(away) },
       home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner, rank: rankOf(home) },
       dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
@@ -1401,8 +1415,320 @@
     return null;
   }
 
+  // ---- Postseason bracket -----------------------------------------------
+  // ESPN has no public bracket endpoint, so the bracket is assembled from the
+  // postseason games themselves. US leagues mark them with season type 3 and
+  // name the round in the notes headline ("ALDS - Game 1", "AFC Divisional
+  // Playoffs", "WNBA Semifinals - Game 2"). Soccer leagues instead give every
+  // playoff stage its own season type, readable only from the slug
+  // ("eastern-conference-playoffs---round-one", "apertura---finals",
+  // "mls-cup") — regular-season slugs vary too ("regular-season",
+  // "torneo-apertura"), so this matches the playoff words rather than
+  // excluding the regular-season ones.
+  const POSTSEASON_SLUG = /playoff|final|mls-cup|seed-game|place-vs|play-?in|liguilla/;
+  function eventHeadline(ev) {
+    const comp = (ev.competitions && ev.competitions[0]) || {};
+    return (comp.notes && comp.notes[0] && comp.notes[0].headline) || "";
+  }
+  // The Pro Bowl is filed under the NFL postseason (type 3), but it's an
+  // exhibition — neither a playoff game nor a regular-season one.
+  const isExhibitionEvent = ev => /pro bowl|all-star/i.test(eventHeadline(ev));
+  function isPostseasonEvent(ev) {
+    const season = ev.season || {};
+    if (isExhibitionEvent(ev)) return false;
+    return season.type === 3 || POSTSEASON_SLUG.test(season.slug || "");
+  }
+
+  const SLUG_ACRONYMS = { mls: "MLS", usl: "USL", nwsl: "NWSL", wnba: "WNBA" };
+  function slugTitle(slug) {
+    return slug.split("-").filter(Boolean)
+      .map(w => SLUG_ACRONYMS[w] || w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  const MLB_ROUNDS = { WC: "Wild Card", DS: "Division Series", CS: "Championship Series" };
+  // { conf, round } for a postseason game. conf is the bracket half it
+  // belongs to (AL/NL, AFC/NFC, Eastern/Western; null for the final and for
+  // single-table leagues) and round is its name with the conference
+  // stripped, so both halves' games share one bracket column.
+  function postseasonRound(ev) {
+    const season = ev.season || {};
+    if (season.type === 3) {
+      const label = eventHeadline(ev).replace(/\s+-\s+Game\s+\d+.*$/i, "").trim() || "Playoffs";
+      const mlb = label.match(/^(AL|NL)(WC|DS|CS)$/i);
+      if (mlb) return { conf: mlb[1].toUpperCase(), round: MLB_ROUNDS[mlb[2].toUpperCase()] };
+      const nfl = label.match(/^(AFC|NFC)\s+(.+?)(\s+Playoffs)?$/i);
+      if (nfl) return { conf: nfl[1].toUpperCase(), round: nfl[2] };
+      return { conf: null, round: label };
+    }
+    const [stage, round] = (season.slug || "").split("---");
+    if (round == null) return { conf: null, round: slugTitle(stage) };
+    const conf = stage.match(/^([a-z]+)-conference-/);
+    return {
+      conf: conf ? slugTitle(conf[1]) : null,
+      // Liga MX's play-in is three separately named games ("7th place vs 8th
+      // place", "9th place vs 10th place", "8th seed game") — one round here.
+      round: /place-vs|seed-game|play-?in/.test(round) ? "Play-In" : slugTitle(round),
+    };
+  }
+
+  // Placeholder sides ("TBD", "Phillies/Braves" before a wild-card series
+  // ends) carry negative ids that aren't even stable across one series'
+  // games, so they're keyed by name instead.
+  function bracketTeam(c) {
+    const t = (c && c.team) || {};
+    const id = Number(t.id) > 0 ? String(t.id) : null;
+    return {
+      key: id || "tbd:" + (t.displayName || "TBD"),
+      id,
+      name: (t.shortDisplayName || t.displayName || "TBD").trim(), // ESPN has "Tulsa " etc.
+      abbr: id ? teamAbbr(c) : "TBD",
+      logo: id ? teamLogo(c) : null,
+      mine: isMyTeam(t.displayName),
+    };
+  }
+
+  // Rounds (bracket columns) in the order they're played, each holding its
+  // matchups — a matchup being every game between the same two sides in that
+  // round: a series, a two-legged tie, or a single game.
+  function buildBracket(events) {
+    const rounds = new Map();
+    events
+      .filter(ev => (((ev.status || {}).type) || {}).name !== "STATUS_CANCELED") // unneeded "if necessary" games
+      .sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
+      .forEach(ev => {
+        const comp = (ev.competitions && ev.competitions[0]) || {};
+        const cs = comp.competitors || [];
+        if (cs.length < 2) return;
+        const { conf, round } = postseasonRound(ev);
+        const roundKey = (conf ? "conf:" : "") + round.toLowerCase();
+        if (!rounds.has(roundKey)) {
+          rounds.set(roundKey, {
+            name: conf && /^(final|championship)$/i.test(round) ? "Conference " + round : round,
+            matchups: new Map(),
+          });
+        }
+        const home = cs.find(c => c.homeAway === "home") || cs[0];
+        const away = cs.find(c => c !== home);
+        // Home side of the first game listed on top — the higher seed, in
+        // every league here that hosts game 1 / the single game by seed.
+        const teams = [bracketTeam(home), bracketTeam(away)];
+        // Two TBD sides can't be told apart, so only a numbered series ("ALCS
+        // - Game 3") merges them; one-off TBD games (NFL Divisional) stay
+        // separate matchups.
+        const sides = teams.every(t => !t.id) && !/\bGame\s+\d/i.test(eventHeadline(ev))
+          ? "ev:" + ev.id
+          : teams.map(t => t.key).sort().join("|");
+        const matchups = rounds.get(roundKey).matchups;
+        const key = (conf || "") + "|" + sides;
+        if (!matchups.has(key)) matchups.set(key, { conf, teams, games: [] });
+        matchups.get(key).games.push({ ev, comp });
+      });
+    return [...rounds.values()].map(r => ({
+      name: r.name,
+      // Conference halves stay together (AL above NL, AFC above NFC, Eastern
+      // above Western); insertion order is already by first game.
+      matchups: [...r.matchups.values()].sort((a, b) => (a.conf || "").localeCompare(b.conf || "")),
+    }));
+  }
+
+  // Games ESPN hasn't set a start time for yet (later rounds, "if
+  // necessary" games) carry timeValid:false and a midnight-ET placeholder
+  // time — show just the date for those.
+  function bracketWhen(g) {
+    const timeKnown = g.comp.timeValid !== false;
+    return new Date(g.ev.date).toLocaleString("en-US", Object.assign(
+      { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric" },
+      timeKnown ? { hour: "numeric", minute: "2-digit" } : {})) + (timeKnown ? " ET" : "");
+  }
+
+  // Per-side score (series wins, aggregate goals, or the one game's score),
+  // the winning side once decided, and a one-line status.
+  function summarizeMatchup(m) {
+    const stateOf = g => (((g.ev.status || {}).type) || {}).state || "pre";
+    const started = m.games.filter(g => stateOf(g) !== "pre");
+    const live = m.games.find(g => stateOf(g) === "in");
+    const next = m.games.find(g => stateOf(g) === "pre");
+    const latest = started[started.length - 1];
+    const sideIn = (g, team) => (g.comp.competitors || []).find(c => bracketTeam(c).key === team.key) || {};
+    const isSoccer = m.games.some(g => (g.ev.season || {}).type !== 3);
+    let scores = ["", ""];
+    let winner = -1;
+    let summary = "";
+    const series = latest && latest.comp.series;
+    if (!latest) {
+      // Not started — nothing to score yet.
+    } else if (series && series.type === "playoff" && Array.isArray(series.competitors)) {
+      // MLB/WNBA: ESPN tracks the series itself, on every game in it.
+      scores = m.teams.map(t => {
+        const s = series.competitors.find(c => String(c.id) === t.id);
+        return s ? s.wins : 0;
+      });
+      if (series.completed) winner = scores[0] > scores[1] ? 0 : 1;
+      summary = series.summary || "";
+    } else if (m.games.some(g => g.comp.leg)) {
+      // Liga MX two-legged ties: aggregate goals across the legs played.
+      scores = m.teams.map(t => started.reduce((sum, g) => sum + (Number(sideIn(g, t).score) || 0), 0));
+      if (!live && !next) {
+        winner = scores[0] !== scores[1]
+          ? (scores[0] > scores[1] ? 0 : 1)
+          : m.teams.findIndex(t => sideIn(latest, t).winner); // level on aggregate: penalties / higher seed
+      }
+      summary = eventHeadline(latest.ev).replace(/^\w+ Leg(\s+-\s+)?/i, "");
+    } else if (m.games.length > 1) {
+      // MLS round one: best-of-three, penalty shootouts count as wins.
+      scores = m.teams.map(t => started.filter(g => sideIn(g, t).winner).length);
+      winner = scores.findIndex(s => s > m.games.length / 2);
+      summary = eventHeadline(latest.ev);
+    } else {
+      const shown = c => c.score == null ? "" : c.score + (c.shootoutScore != null ? " (" + c.shootoutScore + ")" : "");
+      scores = m.teams.map(t => shown(sideIn(latest, t)));
+      if (stateOf(latest) === "post") winner = m.teams.findIndex(t => sideIn(latest, t).winner);
+      // US headlines here are just the round name; soccer's say who advanced
+      // and how ("… advance 4-3 on penalties").
+      if (isSoccer) summary = eventHeadline(latest.ev);
+    }
+
+    let status;
+    if (live) {
+      status = [((live.ev.status || {}).type || {}).shortDetail, summary].filter(Boolean).join(" · ");
+    } else if (winner < 0 && next) {
+      status = [summary, (latest ? "Next " : "") + bracketWhen(next)].filter(Boolean).join(" · ");
+    } else {
+      status = summary || (latest ? ((latest.ev.status || {}).type || {}).shortDetail || "Final" : "");
+    }
+    return { scores, winner, live: !!live, status };
+  }
+
+  function bracketTeamRow(t, score, outcome) {
+    const row = el("div", "bracket-team" + (outcome ? " bracket-team--" + outcome : ""));
+    if (t.logo) {
+      const img = el("img", "team-logo");
+      img.src = t.logo; img.alt = ""; img.loading = "lazy";
+      img.onerror = () => { img.replaceWith(badge(t.abbr)); };
+      row.appendChild(img);
+    } else {
+      row.appendChild(badge(t.abbr));
+    }
+    const name = el("span", "bracket-team-name", esc(t.name));
+    if (t.mine) name.appendChild(el("span", "team-star", "★"));
+    row.appendChild(name);
+    row.appendChild(el("span", "bracket-team-score", esc(score)));
+    return row;
+  }
+
+  function bracketMatchCard(m) {
+    const s = summarizeMatchup(m);
+    const card = el("div", "bracket-match"
+      + (s.live ? " bracket-match--live" : s.winner >= 0 ? " bracket-match--final" : "")
+      + (m.teams.some(t => t.mine) ? " bracket-match--me" : ""));
+    if (m.conf) card.appendChild(el("div", "bracket-conf", esc(m.conf)));
+    m.teams.forEach((t, i) => card.appendChild(bracketTeamRow(t, s.scores[i],
+      s.winner < 0 ? "" : s.winner === i ? "win" : "out")));
+    if (s.status) {
+      const st = el("div", "bracket-status" + (s.live ? " bracket-status--live" : ""));
+      if (s.live) st.innerHTML = '<span class="live-dot"></span>' + esc(s.status);
+      else st.textContent = s.status;
+      card.appendChild(st);
+    }
+    return card;
+  }
+
+  function bracketView(league, events) {
+    const wrap = el("div", "bracket");
+    wrap.setAttribute("aria-label", league.label + " playoff bracket");
+    buildBracket(events).forEach(r => {
+      const col = el("section", "bracket-round");
+      col.appendChild(el("div", "bracket-round-head", esc(r.name)));
+      const body = el("div", "bracket-round-body");
+      r.matchups.forEach(m => body.appendChild(bracketMatchCard(m)));
+      col.appendChild(body);
+      wrap.appendChild(col);
+    });
+    return wrap;
+  }
+
+  // ---- Postseason data: a whole month per request ----------------------
+  // The scoreboard rejects date ranges (400) but takes a whole month
+  // (dates=YYYYMM) or a single day (dates=YYYYMMDD) — verified 2026-10-01.
+  const etToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const compactDate = d => d.toISOString().slice(0, 10).replace(/-/g, "");
+  function shiftMonth(ym, n) {
+    return compactDate(new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(4, 6) - 1 + n, 1))).slice(0, 6);
+  }
+
+  async function fetchScoreboardPeriod(league, period) {
+    const cacheKey = league.key + "|" + period;
+    if (postseasonPeriodCache.has(cacheKey)) return postseasonPeriodCache.get(cacheKey);
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const response = await fetch(ESPN + league.key + "/scoreboard?limit=1000&dates=" + period,
+        { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!response.ok) return null;
+      const events = (await response.json()).events || [];
+      const today = etToday().replace(/-/g, "");
+      if (period < today.slice(0, period.length)) postseasonPeriodCache.set(cacheKey, events);
+      return events;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // True once the fetched window reaches back past the first playoff game
+  // (a regular-season game dated before it), i.e. nothing earlier is needed.
+  function reachesRegularSeason(events) {
+    const post = events.filter(isPostseasonEvent);
+    if (!post.length) return true;
+    const first = Math.min(...post.map(ev => Date.parse(ev.date)));
+    return events.some(ev => !isPostseasonEvent(ev) && !isExhibitionEvent(ev) && Date.parse(ev.date) < first);
+  }
+
+  // Every postseason game: the month of the current slate plus the next one
+  // (later rounds ESPN has already scheduled, even as TBD), walking back
+  // month by month until the playoffs' first game is covered. Each step back
+  // probes the month's last week a day at a time first — MLB's postseason
+  // starts in the final days of September, and the whole month is ~370
+  // regular-season games (7MB of JSON) for those two playoff days.
+  async function loadPostseasonEvents(league, games) {
+    const postDates = games.filter(g => g.isPostseason && g.dateET).map(g => g.dateET).sort();
+    const anchor = (postDates[postDates.length - 1] || etToday()).slice(0, 7).replace("-", "");
+    const [current, next] = await Promise.all([anchor, shiftMonth(anchor, 1)].map(p => fetchScoreboardPeriod(league, p)));
+    if (current == null) return null;
+    let events = current.concat(next || []);
+    let month = shiftMonth(anchor, -1);
+    for (let i = 0; i < 3 && !reachesRegularSeason(events); i++) {
+      const lastDay = new Date(Date.UTC(+month.slice(0, 4), +month.slice(4, 6), 0));
+      const days = [0, 1, 2, 3, 4, 5, 6].map(k => compactDate(new Date(lastDay.getTime() - k * 86400000)));
+      (await Promise.all(days.map(d => fetchScoreboardPeriod(league, d))))
+        .forEach(evs => { if (evs) events = events.concat(evs); });
+      if (reachesRegularSeason(events)) break;
+      const whole = await fetchScoreboardPeriod(league, month);
+      if (whole) events = events.concat(whole);
+      month = shiftMonth(month, -1);
+    }
+    const byId = new Map();
+    events.forEach(ev => { if (isPostseasonEvent(ev)) byId.set(ev.id, ev); });
+    return [...byId.values()];
+  }
+
+  // The month fetch overlaid with the latest scoreboard poll, which is fresher.
+  function mergedPostseasonEvents(league) {
+    const byId = new Map();
+    (postseasonEventsByLeague.get(league.key) || []).forEach(ev => byId.set(ev.id, ev));
+    (rawEventsByLeague.get(league.key) || []).forEach(ev => { if (isPostseasonEvent(ev)) byId.set(ev.id, ev); });
+    return [...byId.values()];
+  }
+
+  async function loadBracket(league, games) {
+    const events = await loadPostseasonEvents(league, games);
+    if (!events) return null;
+    postseasonEventsByLeague.set(league.key, events);
+    const merged = mergedPostseasonEvents(league);
+    return merged.length ? bracketView(league, merged) : null;
+  }
+
   // ---- Fetch + render scoreboards ---------------------------------------
-  const gameRank = game => (game.isMyGame ? 0 : 1)
+  const gameRank =game => (game.isMyGame ? 0 : 1)
     + (game.state === "in" ? 0 : game.state === "pre" ? 1 : 2) * 0.01;
 
   async function fetchGames(league) {
@@ -1414,6 +1740,7 @@
       clearTimeout(timeout);
       if (!response.ok) return null;
       const data = await response.json();
+      rawEventsByLeague.set(league.key, data.events || []);
       const games = (data.events || []).map(event => parseEvent(event, league.key, league.label)).filter(Boolean);
       if (league.key === "baseball/mlb") {
         const myDates = games.filter(g => g.isMyGame && g.dateET).map(g => g.dateET);
@@ -1467,11 +1794,27 @@
     // Standings slot — filled asynchronously, non-blocking. On a periodic
     // re-render, seed it with the previous table so the standings don't vanish
     // for the duration of the refetch; the fresh table replaces it below.
+    // Postseason swaps the standings for a bracket (see `bracket` on LEAGUES):
+    // the regular-season table stops changing the moment the playoffs start.
+    const inPostseason = !!league.bracket && games.some(g => g.isPostseason);
     const slot = el("div", "standings-slot");
     const prevSlot = document.querySelector('.league[data-league-key="' + league.key + '"] .standings-slot');
-    if (prevSlot) prevSlot.childNodes.forEach(n => slot.appendChild(n.cloneNode(true)));
+    // Only carry over the same kind of content — on the day the postseason
+    // starts, a stale standings table shouldn't sit there under a bracket
+    // heading while the bracket loads.
+    if (prevSlot && !!prevSlot.querySelector(".bracket") === inPostseason) {
+      prevSlot.childNodes.forEach(n => slot.appendChild(n.cloneNode(true)));
+    }
     section.appendChild(slot);
-    if (league.standings) {
+    if (inPostseason) {
+      loadBracket(league, games).then(bracket => {
+        if (bracket) {
+          slot.replaceChildren(
+            el("div", "standings-head", esc(league.label + " Postseason")),
+            bracket);
+        }
+      }).catch(() => {});
+    } else if (league.standings) {
       loadStandings(league).then(tbl => {
         if (tbl) {
           slot.replaceChildren(
@@ -2138,6 +2481,12 @@
         if (games == null) return false;
         gamesByLeague.set(league.key, games);
         fillGameGrid(grid, games);
+        // Re-draw an existing bracket from the fresh scoreboard (no refetch)
+        // so a series score moves the moment a game goes final.
+        const bracket = grid.parentNode && grid.parentNode.querySelector(".standings-slot .bracket");
+        if (bracket && postseasonEventsByLeague.has(league.key)) {
+          bracket.replaceWith(bracketView(league, mergedPostseasonEvents(league)));
+        }
         return true;
       }));
       if (results.some(result => result.status === "fulfilled" && result.value)) {
