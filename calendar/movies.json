@@ -1,18 +1,17 @@
 {
   "note": "PUBLIC FILE, like todos.json: committed to a public GitHub repo and served without a login at jaredluyster.com/calendar/movies.json. Published showtimes only, nothing private. Rewritten each week by the 'lexington-marquee-refresh' scheduled task from the Lexington Marquee tracker (https://claude.ai/artifact/8adwiC69rae2a1GcHgJqLD); hand edits here are overwritten on the next run. kind: 'screening' = an old film playing near Lexington (multi-day runs carry 'end' and draw one chip on the opening day); 'release' = a new film's opening date. 'start' is 24h ET.",
-  "generated": "2026-09-23",
+  "generated": "2026-09-30",
   "movies": [
     {
       "title": "The Transformers: The Movie",
       "date": "2026-09-21",
-      "end": "2026-10-08",
+      "end": "2026-10-07",
       "start": "",
       "venue": "Fathom",
       "kind": "screening",
       "year": "1986",
       "series": "40th anniversary",
       "url": "https://www.fathomentertainment.com/releases/the-transformers-the-movie-40th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/the-transformers-the-movie-40th-anniversary-ho00022176",
       "cinemark_url": "https://www.cinemark.com/movies/the-transformers-the-movie-40th-anniversary"
     },
     {
@@ -47,7 +46,7 @@
       "year": "1997",
       "series": "Studio Ghibli Fest",
       "url": "https://www.fathomentertainment.com/releases/princess-mononoke-studio-ghibli-fest-2026/",
-      "regal_url": "https://www.regmovies.com/movies/princess-mononoke-ghibli-2026-ho00021568"
+      "cinemark_url": "https://www.cinemark.com/movies/studio-ghibli-fest-princess-mononoke-english-dubbed"
     },
     {
       "title": "Ruby in Paradise",
@@ -72,6 +71,17 @@
       "url": "https://www.kentuckytheatre.org/"
     },
     {
+      "title": "Avengers: Endgame",
+      "date": "2026-09-30",
+      "end": "",
+      "start": "",
+      "venue": "Cinemark Fayette Mall",
+      "kind": "screening",
+      "year": "2019",
+      "series": "Encore re-release",
+      "url": "https://www.cinemark.com/movies/avengers-endgame-encore"
+    },
+    {
       "title": "Wings of Desire",
       "date": "2026-09-30",
       "end": "",
@@ -90,7 +100,7 @@
       "venue": "Regal Hamburg",
       "kind": "screening",
       "year": "",
-      "series": "Regal 31 Screams on Screen",
+      "series": "31 Screams on Screen",
       "url": "https://www.regmovies.com/theatres/regal-hamburg-pavilion-0728"
     },
     {
@@ -103,6 +113,17 @@
       "year": "2022",
       "series": "Studio Ghibli Fest",
       "url": "https://www.fathomentertainment.com/releases/spirited-away-live-on-stage-studio-ghibli-fest-2026/"
+    },
+    {
+      "title": "Beware Boiúna",
+      "date": "2026-10-02",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
     },
     {
       "title": "Digger",
@@ -124,8 +145,7 @@
       "kind": "screening",
       "year": "2001",
       "series": "25th anniversary",
-      "url": "https://www.fathomentertainment.com/releases/donnie-darko-25th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/donnie-darko-25th-anniversary-ho00022257"
+      "url": "https://www.fathomentertainment.com/releases/donnie-darko-25th-anniversary/"
     },
     {
       "title": "Rolling Loud: The Movie",
@@ -139,6 +159,17 @@
       "url": ""
     },
     {
+      "title": "Sleepaway Camp",
+      "date": "2026-10-02",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1983",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=658936~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
       "title": "Verity",
       "date": "2026-10-02",
       "end": "",
@@ -148,6 +179,17 @@
       "year": "",
       "series": "",
       "url": ""
+    },
+    {
+      "title": "Tales from the Hood",
+      "date": "2026-10-03",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1995",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=658937~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
     },
     {
       "title": "Arrival",
@@ -161,6 +203,17 @@
       "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=650374~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
     },
     {
+      "title": "Carnival of Souls",
+      "date": "2026-10-07",
+      "end": "",
+      "start": "19:30",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1962",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659688~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
       "title": "Pan's Labyrinth",
       "date": "2026-10-08",
       "end": "2026-10-15",
@@ -169,11 +222,43 @@
       "kind": "screening",
       "year": "2006",
       "series": "20th anniversary",
-      "url": "https://www.fathomentertainment.com/releases/guillermo-del-toro-pans-labyrinth-20th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/pans-labyrinth-20th-anniversary-spanish-ho00022415"
+      "url": "https://www.fathomentertainment.com/releases/guillermo-del-toro-pans-labyrinth-20th-anniversary/"
+    },
+    {
+      "title": "Other Mommy",
+      "date": "2026-10-09",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Society",
+      "date": "2026-10-09",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1989",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659690~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
     },
     {
       "title": "The Beast",
+      "date": "2026-10-09",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "The Social Reckoning",
       "date": "2026-10-09",
       "end": "",
       "start": "",
@@ -192,8 +277,51 @@
       "kind": "screening",
       "year": "1939",
       "series": "Big Screen Classics",
-      "url": "https://www.fathomentertainment.com/releases/gone-with-the-wind-2026/",
-      "regal_url": "https://www.regmovies.com/movies/gone-with-the-wind-ho00020769"
+      "url": "https://www.fathomentertainment.com/releases/gone-with-the-wind-2026/"
+    },
+    {
+      "title": "The Driller Killer",
+      "date": "2026-10-10",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1979",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659692~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "Cinemark Fear of Missing Out (5 films)",
+      "date": "2026-10-14",
+      "end": "2026-10-31",
+      "start": "",
+      "venue": "Cinemark Fayette Mall",
+      "kind": "screening",
+      "year": "",
+      "series": "Cinemark Fear of Missing Out",
+      "url": "https://www.cinemark.com/fomo"
+    },
+    {
+      "title": "Little Shop of Horrors",
+      "date": "2026-10-14",
+      "end": "",
+      "start": "19:30",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1986",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659695~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "Crawlers",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
     },
     {
       "title": "Ken Russell's The Devils",
@@ -204,11 +332,21 @@
       "kind": "screening",
       "year": "1971",
       "series": "Re-release",
-      "url": "https://www.regmovies.com/movies/ken-russells-the-devils-ho00022671",
-      "regal_url": "https://www.regmovies.com/movies/ken-russells-the-devils-ho00022671"
+      "url": "https://www.regmovies.com/movies/ken-russells-the-devils-ho00022671"
     },
     {
       "title": "Musk",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Sense and Sensibility",
       "date": "2026-10-16",
       "end": "",
       "start": "",
@@ -230,6 +368,61 @@
       "url": ""
     },
     {
+      "title": "The Devils",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1971",
+      "series": "Re-release",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=656782~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "The Incredibly Strange Creatures Who Stopped Living and Became Mixed-Up Zombies",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1964",
+      "series": "Freaky Fridays",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=615782~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "Trust Me, I'm a Doctor",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Whalefall",
+      "date": "2026-10-16",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Repo! The Genetic Opera",
+      "date": "2026-10-17",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "2008",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659699~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
       "title": "Spirited Away",
       "date": "2026-10-17",
       "end": "2026-10-21",
@@ -237,9 +430,30 @@
       "venue": "Fathom",
       "kind": "screening",
       "year": "2001",
-      "series": "Studio Ghibli Fest \u00b7 25th anniv.",
-      "url": "https://www.fathomentertainment.com/releases/spirited-away-studio-ghibli-fest-2026/",
-      "regal_url": "https://www.regmovies.com/movies/spirited-away-25th-anniv-ghibli-2026-ho00021569"
+      "series": "Studio Ghibli Fest · 25th anniv.",
+      "url": "https://www.fathomentertainment.com/releases/spirited-away-studio-ghibli-fest-2026/"
+    },
+    {
+      "title": "The Silence of the Lambs",
+      "date": "2026-10-21",
+      "end": "",
+      "start": "19:30",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1991",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=658938~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "A Bay of Blood",
+      "date": "2026-10-23",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1971",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659702~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
     },
     {
       "title": "Clayface",
@@ -264,8 +478,63 @@
       "url": ""
     },
     {
+      "title": "Nosferatu",
+      "date": "2026-10-23",
+      "end": "",
+      "start": "19:15",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1922",
+      "series": "Silent film",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=236322~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
       "title": "Wildwood",
       "date": "2026-10-23",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Pieces",
+      "date": "2026-10-24",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1982",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659705~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "The Lost Boys",
+      "date": "2026-10-28",
+      "end": "",
+      "start": "19:30",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1987",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659707~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "Cannibal Holocaust",
+      "date": "2026-10-30",
+      "end": "",
+      "start": "22:00",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1980",
+      "series": "October horror",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=659709~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
+      "title": "Christmas at the Kringles",
+      "date": "2026-10-30",
       "end": "",
       "start": "",
       "venue": "",
@@ -286,6 +555,17 @@
       "url": ""
     },
     {
+      "title": "The Rocky Horror Picture Show",
+      "date": "2026-10-31",
+      "end": "",
+      "start": "20:30",
+      "venue": "Kentucky Theatre",
+      "kind": "screening",
+      "year": "1975",
+      "series": "Halloween",
+      "url": "https://prod5.agileticketing.net/websales/pages/info.aspx?evtinfo=204109~4bf9e7f1-1009-40cc-a9d9-a2c743b0ce02&"
+    },
+    {
       "title": "V for Vendetta",
       "date": "2026-11-01",
       "end": "2026-11-05",
@@ -294,11 +574,21 @@
       "kind": "screening",
       "year": "2005",
       "series": "20th anniversary",
-      "url": "https://www.fathomentertainment.com/releases/v-for-vendetta/",
-      "regal_url": "https://www.regmovies.com/movies/v-for-vendetta-20th-anniversary-ho00022454"
+      "url": "https://www.fathomentertainment.com/releases/v-for-vendetta/"
     },
     {
       "title": "Dr. Seuss' The Cat in the Hat",
+      "date": "2026-11-06",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Drummer Boy",
       "date": "2026-11-06",
       "end": "",
       "start": "",
@@ -350,8 +640,18 @@
       "kind": "screening",
       "year": "1976",
       "series": "50th anniversary",
-      "url": "https://www.fathomentertainment.com/releases/rocky-50th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/rocky-50th-anniversary-ho00022583"
+      "url": "https://www.fathomentertainment.com/releases/rocky-50th-anniversary/"
+    },
+    {
+      "title": "Ghost Soldier",
+      "date": "2026-11-11",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
     },
     {
       "title": "Ebenezer: A Christmas Carol",
@@ -405,9 +705,19 @@
       "venue": "Fathom",
       "kind": "screening",
       "year": "2001",
-      "series": "Big Screen Classics \u00b7 25th anniv.",
-      "url": "https://www.fathomentertainment.com/releases/a-beautiful-mind-25th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/a-beautiful-mind-25th-anniversary-ho00020770"
+      "series": "Big Screen Classics · 25th anniv.",
+      "url": "https://www.fathomentertainment.com/releases/a-beautiful-mind-25th-anniversary/"
+    },
+    {
+      "title": "Doctor Who: The Satan Pit",
+      "date": "2026-11-23",
+      "end": "",
+      "start": "",
+      "venue": "Fathom",
+      "kind": "screening",
+      "year": "2006",
+      "series": "Doctor Who Day",
+      "url": "https://www.fathomentertainment.com/releases/doctor-who-the-satan-pit/"
     },
     {
       "title": "Focker In-Law",
@@ -443,6 +753,28 @@
       "url": ""
     },
     {
+      "title": "The Further Mis-Adventures of Cliff Booth",
+      "date": "2026-11-25",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Above the Below",
+      "date": "2026-12-04",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
       "title": "Violent Night 2",
       "date": "2026-12-04",
       "end": "",
@@ -461,9 +793,19 @@
       "venue": "Fathom",
       "kind": "screening",
       "year": "1941",
-      "series": "Big Screen Classics \u00b7 85th anniv.",
-      "url": "https://www.fathomentertainment.com/releases/the-maltese-falcon-85th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/the-maltese-falcon-85th-anniversary-ho00020771"
+      "series": "Big Screen Classics · 85th anniv.",
+      "url": "https://www.fathomentertainment.com/releases/the-maltese-falcon-85th-anniversary/"
+    },
+    {
+      "title": "Zero A.D.: The Birth of Christ",
+      "date": "2026-12-11",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
     },
     {
       "title": "Avengers: Doomsday",
@@ -495,9 +837,8 @@
       "venue": "Fathom",
       "kind": "screening",
       "year": "1946",
-      "series": "Big Screen Classics \u00b7 80th anniv.",
-      "url": "https://www.fathomentertainment.com/releases/its-a-wonderful-life-80th-anniversary/",
-      "regal_url": "https://www.regmovies.com/movies/its-a-wonderful-life-80th-anniversary-ho00020772"
+      "series": "Big Screen Classics · 80th anniv.",
+      "url": "https://www.fathomentertainment.com/releases/its-a-wonderful-life-80th-anniversary/"
     },
     {
       "title": "The Angry Birds Movie 3",
@@ -535,6 +876,116 @@
     {
       "title": "Werwulf",
       "date": "2026-12-25",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Pendulum",
+      "date": "2027-01-01",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Children of Blood and Bone",
+      "date": "2027-01-15",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "River",
+      "date": "2027-01-15",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "The Beekeeper 2",
+      "date": "2027-01-15",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Air Bud Returns",
+      "date": "2027-01-22",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Animal Friends",
+      "date": "2027-01-22",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "The Third Parent",
+      "date": "2027-01-22",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Drag",
+      "date": "2027-01-29",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "Karoshi",
+      "date": "2027-01-29",
+      "end": "",
+      "start": "",
+      "venue": "",
+      "kind": "release",
+      "year": "",
+      "series": "",
+      "url": ""
+    },
+    {
+      "title": "The Rescue",
+      "date": "2027-01-29",
       "end": "",
       "start": "",
       "venue": "",
