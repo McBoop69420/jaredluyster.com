@@ -28,18 +28,27 @@
   // count (covers UCL+UEL+UECL together) rather than tracking the exact
   // competition split, which shifts most seasons on UEFA coefficient swing
   // spots.
-  // spotlightRankedOnly: college sports have far more teams playing at once
-  // than any pro league (100+ FBS/D-I games some Saturdays), so a live game
-  // alone would flood Spotlight. For these leagues a live game only counts as
-  // "big" if it's also Top-25 ranked (see `ranked` on the parsed game) —
-  // followed-team games still always show via isMyGame regardless of rank, and
-  // a `stakes` game (conference championship, bowl, tournament final — see
-  // `stakes` in parseEvent) always shows regardless of rank too, live or not.
+  // spotlightRankBoost: a Top-25 team playing (see `ranked` on the parsed
+  // game) rates a college game higher in Spotlight, but rank is never
+  // required — an unranked live game qualifies the same as any other
+  // league's. Ranked games win ties in the sort and are kept first when the
+  // live-only sub-caps overflow (college sports have far more teams playing
+  // at once than any pro league — 100+ FBS/D-I games some Saturdays). A
+  // ranked team also qualifies a game pre-game (within the window) and once
+  // it's final, the way a marquee club does for soccer.
   // spotlightRank: how a league is ordered against every other league in
   // Spotlight when more than one qualifies at the same tier (live, or
   // followed-team, etc. — see SPOTLIGHT_RANK and the entries.sort() call in
   // renderSpotlight). Lower sorts first. Left off a league (undefined) falls
   // back to SPOTLIGHT_RANK.SOCCER.
+  // scoreboardQuery: query string for this league's ESPN scoreboard fetch
+  // (default "limit=1000"). Without `groups`, ESPN's college football
+  // scoreboard returns only a ~16-25 game "featured" subset for the week —
+  // weeknight games and most unranked ones never appear at all. groups=80
+  // is all of FBS; it needs limit=500, because limit=1000 silently truncates
+  // to 25 (both verified against the live endpoint). College basketball has
+  // the same trap (17 of 132 D-I men's games on a February Saturday);
+  // groups=50 is all of Division I there.
   // spotlightExempt: this league's games are never cut by a Spotlight sub-cap
   // or by MAX_SPOTLIGHT_GAMES — see the `mine` exemption in renderSpotlight.
   // Only NFL has this today: a full Sunday slate should always show in full,
@@ -61,11 +70,14 @@
     { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
       playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+      playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
+      scoreboardQuery: "groups=80&limit=500" },
     { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+      playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
+      scoreboardQuery: "groups=50&limit=500" },
     { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRankedOnly: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE },
+      playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
+      scoreboardQuery: "groups=50&limit=500" },
     { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
@@ -129,13 +141,14 @@
   // the entire overall budget with games from leagues nobody follows and push
   // every followed team off Spotlight outright. Sub-cap them the same way,
   // keeping the closest scores (most competitive right now) when there's
-  // overflow. NFL and NCAAF each have their own separate budget below.
+  // overflow (ranked college games first — see spotlightRankBoost). NFL and
+  // NCAAF each have their own separate budget below.
   const MAX_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
   // Live college football gets its own budget instead of sharing the one
-  // above: Saturdays run a full slate of simultaneous ranked matchups (the
-  // only kind that count as "live" for NCAAF — see spotlightRankedOnly), and
-  // a shared cap with soccer's own Saturday slate meant close soccer
-  // scorelines could crowd every CFB game out of Spotlight entirely.
+  // above: Saturdays run a full slate of simultaneous games, and a shared
+  // cap with soccer's own Saturday slate meant close soccer scorelines could
+  // crowd every CFB game out of Spotlight entirely. Overflow keeps ranked
+  // matchups first (by combined rank), then the closest scores.
   const MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES = 4;
   // NFL games are exempt from every sub-cap and from MAX_SPOTLIGHT_GAMES
   // itself (see the isMyGame-style exemption below) — the NFL is the one
@@ -209,7 +222,7 @@
   // and an ordinary midtable fixture can carry the same or even opposite
   // broadcast prominence). This is a hand-curated stand-in for "this game
   // draws a crowd regardless of the table," the soccer equivalent of
-  // spotlightRankedOnly's Top-25 check for college sports. Exact ESPN
+  // spotlightRankBoost's Top-25 check for college sports. Exact ESPN
   // displayName spellings verified against each league's /teams endpoint
   // (e.g. Internazionale, not "Inter Milan"; Ajax Amsterdam, not "Ajax").
   const MARQUEE_CLUBS = [
@@ -835,14 +848,15 @@
       const league = LEAGUES.find(l => l.key === key);
       games.forEach(g => {
         if (g.dateET !== todayET) return;
-        const liveCounts = g.state === "in" && (!league || !league.spotlightRankedOnly || g.ranked);
+        const liveCounts = g.state === "in";
         const stakesCounts = g.stakes && g.state !== "post";
         const implicationDistance = league ? playoffImplicationDistance(league, g, poolsFor(league)) : null;
-        // A ranked team playing is its own reason to be "big," separate from
-        // liveCounts (which only uses rank to gate whether a *live* college
-        // game counts at all). This surfaces marquee pre-game and final
-        // matchups too, not just live ones.
-        const rankedCounts = !liveCounts && g.ranked && league && league.spotlightRankedOnly;
+        // A ranked college team playing boosts the game everywhere below (sort
+        // order, live sub-cap overflow), and is also its own reason to be
+        // "big" for a game that isn't live — surfacing ranked pre-game and
+        // final matchups too, not just live ones.
+        const rankBoosted = !!(g.ranked && league && league.spotlightRankBoost);
+        const rankedCounts = !liveCounts && rankBoosted;
         const rankScore = (g.away.rank || 26) + (g.home.rank || 26);
         // A marquee club playing is soccer's equivalent of rankedCounts for
         // college — a reason to show the game whether or not it's live, since
@@ -889,7 +903,7 @@
           ? SPOTLIGHT_RANK.SOCCER
           : (league && league.spotlightRank != null ? league.spotlightRank : SPOTLIGHT_RANK.SOCCER);
         const spotlightExempt = !!(league && league.spotlightExempt);
-        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankedOnly, marqueeOnly, marqueeCount: g.marqueeCount, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
+        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankBoosted, rankedOnly, marqueeOnly, marqueeCount: g.marqueeCount, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
       });
     });
 
@@ -921,17 +935,20 @@
     // with soccer (also often live in bulk on Saturdays, and decided by much
     // narrower margins) meant close soccer scorelines could crowd every CFB
     // game out of Spotlight. Exempt leagues (NFL) skip this sub-cap step
-    // entirely.
+    // entirely. Both budgets keep ranked college matchups first (lowest
+    // combined rank — an unranked game scores 52, so it never beats one with
+    // a ranked team), then the closest scores.
+    const byRankThenMargin = (a, b) => a.rankScore - b.rankScore || a.scoreMargin - b.scoreMargin;
     const liveOnly = entries.filter(e => e.liveOnly && !e.spotlightExempt);
     const ncaafLiveOnly = liveOnly.filter(e => e.leagueKey === "football/college-football");
     const otherLiveOnly = liveOnly.filter(e => e.leagueKey !== "football/college-football");
     if (ncaafLiveOnly.length > MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES) {
-      ncaafLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
+      ncaafLiveOnly.sort(byRankThenMargin);
       const keep = new Set(ncaafLiveOnly.slice(0, MAX_NCAAF_LIVE_ONLY_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !(e.liveOnly && e.leagueKey === "football/college-football") || keep.has(e));
     }
     if (otherLiveOnly.length > MAX_LIVE_ONLY_SPOTLIGHT_GAMES) {
-      otherLiveOnly.sort((a, b) => a.scoreMargin - b.scoreMargin);
+      otherLiveOnly.sort(byRankThenMargin);
       const keep = new Set(otherLiveOnly.slice(0, MAX_LIVE_ONLY_SPOTLIGHT_GAMES));
       entries = entries.filter(e => !(e.liveOnly && !e.spotlightExempt && e.leagueKey !== "football/college-football") || keep.has(e));
     }
@@ -964,14 +981,15 @@
       const sa = stateOrder(a.g.state), sb = stateOrder(b.g.state);
       if (sa !== sb) return sa - sb;
       if (a.spotlightRank !== b.spotlightRank) return a.spotlightRank - b.spotlightRank;
-      // rankedOnly (college) and marqueeOnly (soccer) never compete directly
-      // here — they only ever tie at this step against another entry with the
-      // same spotlightRank, and the two belong to different tiers (20 vs 30)
-      // — so tier 1 can safely pick whichever comparator applies.
-      const reasonRank = e => e.stakesCounts ? 0 : (e.rankedOnly || e.marqueeOnly) ? 1 : e.implicationDistance != null ? 2 : 3;
+      // Rank-boosted (college, live or not) and marqueeOnly (soccer) never
+      // compete directly here — they only ever tie at this step against
+      // another entry with the same spotlightRank, and the two belong to
+      // different tiers (20 vs 30) — so tier 1 can safely pick whichever
+      // comparator applies.
+      const reasonRank = e => e.stakesCounts ? 0 : (e.rankBoosted || e.marqueeOnly) ? 1 : e.implicationDistance != null ? 2 : 3;
       const ra = reasonRank(a), rb = reasonRank(b);
       if (ra !== rb) return ra - rb;
-      if (ra === 1) return a.rankedOnly ? a.rankScore - b.rankScore : b.marqueeCount - a.marqueeCount;
+      if (ra === 1) return a.rankBoosted ? a.rankScore - b.rankScore : b.marqueeCount - a.marqueeCount;
       if (ra === 2) return a.implicationDistance - b.implicationDistance;
       return 0;
     });
@@ -1388,7 +1406,7 @@
     + (game.state === "in" ? 0 : game.state === "pre" ? 1 : 2) * 0.01;
 
   async function fetchGames(league) {
-    const url = ESPN + league.key + "/scoreboard?limit=1000&_=" + Date.now();
+    const url = ESPN + league.key + "/scoreboard?" + (league.scoreboardQuery || "limit=1000") + "&_=" + Date.now();
     try {
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), 8000);
