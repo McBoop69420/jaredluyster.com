@@ -1797,6 +1797,7 @@
     // Postseason swaps the standings for a bracket (see `bracket` on LEAGUES):
     // the regular-season table stops changing the moment the playoffs start.
     const inPostseason = !!league.bracket && games.some(g => g.isPostseason);
+    if (inPostseason) section.dataset.postseason = "true"; // render() floats these to the top
     const slot = el("div", "standings-slot");
     const prevSlot = document.querySelector('.league[data-league-key="' + league.key + '"] .standings-slot');
     // Only carry over the same kind of content — on the day the postseason
@@ -1858,6 +1859,10 @@
 
       const results = await Promise.allSettled(list.map(loadLeague));
       const fresh = results.filter(r => r.status === "fulfilled" && r.value).map(r => r.value);
+      // Leagues in their playoffs go first; otherwise LEAGUES order holds
+      // (the sort is stable). The filter chips keep their fixed order.
+      const postseasonFirst = section => (section.dataset.postseason ? 0 : 1);
+      fresh.sort((a, b) => postseasonFirst(a) - postseasonFirst(b));
       if (fresh.length) {
         board.replaceChildren(...fresh);
       } else if (!board.querySelector(".league")) {
