@@ -224,6 +224,11 @@
   let standingsTimer = null;
   let valueTimer = null;
   let scoresRefreshInFlight = false;
+  // A full refresh that arrives while another refresh holds the lock runs
+  // when that one finishes rather than being dropped. The 5s live timer and
+  // the 30s discovery timer fire on the same tick every 30s, the live one
+  // first, so without this discovery never ran while any game was live.
+  let fullRefreshPending = false;
   let valueScreen = null;          // { games: [...], fetchedAt } for today (ET)
   let valueScreenLoading = false;
   let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
@@ -629,6 +634,12 @@
     // is an actual playoff game, as opposed to a regular-season game that
     // merely has playoff *implications* (see playoffImplicationDistance).
     const isPlayoff = !!(ev.season && ev.season.type === 3);
+    // Football only: ESPN's live situation names the team with the ball by
+    // team id, plus a down-and-distance line ("2nd & 10 at OSU 44").
+    const situation = (state === "in" && leagueKey.indexOf("football/") === 0 && comp.situation) || {};
+    const possId = situation.possession != null ? String(situation.possession) : null;
+    const possOf = c => (possId && String((c.team && c.team.id) || c.id) === possId)
+      ? (situation.downDistanceText || "Has the ball") : null;
 
     return {
       eventId: ev.id,
@@ -637,8 +648,8 @@
       state,
       isPlayoff,
       isPostseason: isPostseasonEvent(ev),
-      away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner, rank: rankOf(away) },
-      home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner, rank: rankOf(home) },
+      away: { name: away.team.displayName, abbr: teamAbbr(away), logo: teamLogo(away), rec: recOf(away), score: away.score, winner: !!away.winner, rank: rankOf(away), poss: possOf(away) },
+      home: { name: home.team.displayName, abbr: teamAbbr(home), logo: teamLogo(home), rec: recOf(home), score: home.score, winner: !!home.winner, rank: rankOf(home), poss: possOf(home) },
       dateET: dt ? dt.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : null, // YYYY-MM-DD
       kickoffMs: dt ? dt.getTime() : null,
       startTime,
@@ -668,7 +679,13 @@
     const nameRow = el("div", "team-name-row");
     if (t.rank) nameRow.appendChild(el("span", "team-rank", "#" + t.rank));
     nameRow.appendChild(el("span", "team-name", esc(t.name)));
-    if (isMyTeam(t.name)) nameRow.appendChild(el("span", "team-star", "★"));
+    if (t.poss) {
+      const poss = el("span", "team-poss");
+      poss.setAttribute("role", "img");
+      poss.setAttribute("aria-label", "Possession: " + t.poss);
+      poss.title = t.poss;
+      nameRow.appendChild(poss);
+    }
     txt.appendChild(nameRow);
     if (t.rec) txt.appendChild(el("div", "team-rec", esc(t.rec)));
     wrap.appendChild(txt);
@@ -1541,7 +1558,7 @@
   function buildBracket(events) {
     const rounds = new Map();
     events
-      .filter(ev => (((ev.status || {}).type) || {}).name !== "STATUS_CANCELED") // unneeded "if necessary" games
+      .slice()
       .sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
       .forEach(ev => {
         const comp = (ev.competitions && ev.competitions[0]) || {};
@@ -1553,6 +1570,8 @@
           rounds.set(roundKey, {
             name: conf && /^(final|championship)$/i.test(round) ? "Conference " + round : round,
             matchups: new Map(),
+            bestOf: 0,
+            legs: false,
           });
         }
         const home = cs.find(c => c.homeAway === "home") || cs[0];
@@ -1568,14 +1587,30 @@
           : teams.map(t => t.key).sort().join("|");
         const matchups = rounds.get(roundKey).matchups;
         const key = (conf || "") + "|" + sides;
-        if (!matchups.has(key)) matchups.set(key, { conf, teams, games: [] });
-        matchups.get(key).games.push({ ev, comp });
+        if (!matchups.has(key)) matchups.set(key, { conf, teams, games: [], scheduled: 0 });
+        const m = matchups.get(key);
+        // Series length: ESPN's own count where it has one (MLB/WNBA), else
+        // the highest game number scheduled ("ALCS - Game 7 If Necessary" —
+        // TBD rounds have no series object yet), else (MLS best-of-three) how
+        // many games the matchup was given. Unneeded games still count
+        // toward the length before they're dropped below.
+        const r = rounds.get(roundKey);
+        const gameNo = eventHeadline(ev).match(/\bGame\s+(\d+)/i);
+        r.bestOf = Math.max(r.bestOf, Number(comp.series && comp.series.totalCompetitions) || 0,
+          gameNo ? Number(gameNo[1]) : 0, ++m.scheduled);
+        if (comp.leg) r.legs = true;
+        // Unneeded "if necessary" games are canceled once a series is decided.
+        if ((((ev.status || {}).type) || {}).name === "STATUS_CANCELED") return;
+        m.games.push({ ev, comp });
       });
     return [...rounds.values()].map(r => ({
       name: r.name,
+      // Two-legged ties (Liga MX) are decided on aggregate, not "best of 2".
+      format: r.legs ? "Two legs" : r.bestOf > 1 ? "Best of " + r.bestOf : "",
       // Conference halves stay together (AL above NL, AFC above NFC, Eastern
       // above Western); insertion order is already by first game.
-      matchups: [...r.matchups.values()].sort((a, b) => (a.conf || "").localeCompare(b.conf || "")),
+      matchups: [...r.matchups.values()].filter(m => m.games.length)
+        .sort((a, b) => (a.conf || "").localeCompare(b.conf || "")),
     }));
   }
 
@@ -1658,7 +1693,6 @@
       row.appendChild(badge(t.abbr));
     }
     const name = el("span", "bracket-team-name", esc(t.name));
-    if (t.mine) name.appendChild(el("span", "team-star", "★"));
     row.appendChild(name);
     row.appendChild(el("span", "bracket-team-score", esc(score)));
     return row;
@@ -1686,7 +1720,9 @@
     wrap.setAttribute("aria-label", league.label + " playoff bracket");
     buildBracket(events).forEach(r => {
       const col = el("section", "bracket-round");
-      col.appendChild(el("div", "bracket-round-head", esc(r.name)));
+      const head = el("div", "bracket-round-head", esc(r.name));
+      if (r.format) head.appendChild(el("span", "bracket-round-format", esc(r.format)));
+      col.appendChild(head);
       const body = el("div", "bracket-round-body");
       r.matchups.forEach(m => body.appendChild(bracketMatchCard(m)));
       col.appendChild(body);
@@ -1874,8 +1910,6 @@
     section.dataset.leagueKey = league.key;
     const head = el("div", "league-head");
     head.appendChild(el("div", "league-name", esc(league.label)));
-    const sub = league.myTeams.join(", ");
-    if (sub) head.appendChild(el("div", "league-sub", "★ " + esc(sub)));
     section.appendChild(head);
 
     // Scoreboard (the priority — never blocked by standings)
@@ -2574,7 +2608,11 @@
   }
 
   async function refreshScores(leagues, liveOnly) {
-    if (scoresRefreshInFlight || document.hidden || !leagues.length) return;
+    if (document.hidden || !leagues.length) return;
+    if (scoresRefreshInFlight) {
+      if (!liveOnly) fullRefreshPending = true;
+      return;
+    }
     scoresRefreshInFlight = true;
     try {
       const results = await Promise.allSettled(leagues.map(async league => {
@@ -2599,6 +2637,10 @@
       }
     } finally {
       scoresRefreshInFlight = false;
+      if (fullRefreshPending) {
+        fullRefreshPending = false;
+        refreshAllScores();
+      }
     }
   }
 

@@ -89,7 +89,6 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .league{margin:26px 0 8px}
 .league-head{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:2px solid var(--ink);margin-bottom:12px}
 .league-name{font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;color:var(--accent)}
-.league-sub{font-family:var(--font-body);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 
 /* Game cards */
 /* 360px is measured, not chosen: below it the team-name column gets too
@@ -126,7 +125,7 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
    team column was narrower than that. Short records sit on one line either
    way; this just stops the tail from disappearing when space is tight. */
 .team-rec{font-size:10.5px;color:var(--muted);font-weight:400;line-height:1.05}
-.team-star{color:var(--accent);font-size:13px;margin-left:2px;flex:0 0 auto}
+.team-poss{width:11px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--ink);margin-left:3px;flex:0 0 auto}
 .team-rank{font-family:var(--font-display);font-size:10px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:1px solid var(--ink);padding:0 4px;flex:0 0 auto}
 .score{display:flex;justify-content:center;align-items:center;gap:9px}
 .score-num{font-family:var(--font-display);font-size:22px;font-weight:700}
@@ -211,7 +210,8 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
    the previous round's, and the whole thing scrolls sideways on a phone. */
 .bracket{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,1fr);gap:14px;overflow-x:auto;padding:2px 6px 10px 2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
 .bracket-round{display:flex;flex-direction:column;min-width:0;scroll-snap-align:start}
-.bracket-round-head{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;border-bottom:2px solid var(--ink);padding-bottom:3px;margin-bottom:8px}
+.bracket-round-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 8px;font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;border-bottom:2px solid var(--ink);padding-bottom:3px;margin-bottom:8px}
+.bracket-round-format{font-family:var(--font-body);font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--accent);white-space:nowrap}
 .bracket-round-body{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
 .bracket-match{background:var(--card);border:2px solid var(--ink);border-left:4px solid var(--muted);padding:6px 8px;display:flex;flex-direction:column;gap:3px}
 .bracket-match--live{border-left-color:var(--live)}
@@ -265,8 +265,6 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
   .standings-head{font-size:15px}
   .division-head{font-size:12px}
   .conference-head{font-size:15px}
-  /* League sub-label */
-  .league-sub{font-size:10px}
 }
 @media(max-width:520px){
   /* Standings tables with many columns: let them scroll horizontally
