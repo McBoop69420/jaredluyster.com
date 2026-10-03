@@ -443,7 +443,9 @@ else here. It rebuilds and redeploys automatically on every push to `main`
 - **Content:** pulls live scoreboards/standings **client-side from ESPN's public
   API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
   Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
-  Super Lig, NWSL, USL, NFL (Games page), plus the MLB Value Screen and NFL Odds
+  Super Lig, NWSL, USL, NFL, plus international soccer (Games page; men's and
+  women's national teams, ~20 ESPN competitions merged into one "International" section —
+  see `competitions` in `sports.js`), plus the MLB Value Screen and NFL Odds
   betting panels below (Betting page). The "Paper Bets — Live" panel fed by
   `sports/fake-bets.json` described in this section below was removed
   (`6bffb99`, `2c06570`) — the paper-bet freshness bullet and

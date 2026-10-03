@@ -58,6 +58,12 @@
   // set on leagues whose playoffs decide the champion — the European leagues'
   // relegation/conference-league playoffs are a footnote to a table that
   // still matters, so they keep their standings.
+  // competitions: this "league" is really several ESPN leagues merged into
+  // one board section/filter chip (see fetchCompetitionGames) — its `key` is
+  // then a synthetic id, never fetched. Only International uses it: national
+  // teams play across a dozen ESPN competitions that each run a few weeks a
+  // year, and a chip per competition would mostly be empty.
+  // Labels go on each game card, so they have to stand on their own.
   const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, WNBA: 40, MLB: 50 };
   // Order below is deliberate, not declaration-convenience: leagues with a
   // followed team come first (roughly by prominence — MLB/NFL, then
@@ -93,6 +99,35 @@
       playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: ["Athletic Club"],            standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+    // National teams, men's and women's (ESPN names both "United States").
+    // Listed in the order their games appear on the board. Keys verified
+    // against the live endpoint 2026-10-03; a dormant tournament still
+    // answers with its last match, which the window in
+    // fetchCompetitionGames drops.
+    { key: "soccer/international", label: "International", myTeams: ["United States"],      standings: null,
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER,
+      competitions: [
+        { key: "soccer/fifa.world",              label: "World Cup" },
+        { key: "soccer/fifa.wwc",                label: "Women's World Cup" },
+        { key: "soccer/fifa.olympics",           label: "Olympics" },
+        { key: "soccer/fifa.w.olympics",         label: "Women's Olympics" },
+        { key: "soccer/fifa.worldq.concacaf",    label: "WC Qualifying · Concacaf" },
+        { key: "soccer/fifa.worldq.uefa",        label: "WC Qualifying · UEFA" },
+        { key: "soccer/fifa.worldq.conmebol",    label: "WC Qualifying · CONMEBOL" },
+        { key: "soccer/fifa.wworldq.uefa",       label: "Women's WC Qualifying · UEFA" },
+        { key: "soccer/concacaf.gold",           label: "Gold Cup" },
+        { key: "soccer/concacaf.w.gold",         label: "W Gold Cup" },
+        { key: "soccer/concacaf.womens.championship", label: "Concacaf W Championship" },
+        { key: "soccer/concacaf.nations.league", label: "Concacaf Nations League" },
+        { key: "soccer/conmebol.america",        label: "Copa América" },
+        { key: "soccer/uefa.euro",               label: "Euro" },
+        { key: "soccer/uefa.weuro",              label: "Women's Euro" },
+        { key: "soccer/uefa.euroq",              label: "Euro Qualifying" },
+        { key: "soccer/uefa.nations",            label: "UEFA Nations League" },
+        { key: "soccer/uefa.w.nations",          label: "Women's Nations League" },
+        { key: "soccer/fifa.friendly",           label: "Int'l Friendly" },
+        { key: "soccer/fifa.friendly.w",         label: "Women's Int'l Friendly" },
+      ] },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
     { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
@@ -117,6 +152,7 @@
     "cincinnati reds", "fc cincinnati", "racing louisville", "lexington",
     "liverpool", "arsenal", "cincinnati bengals", "kentucky wildcats", "louisville cardinals",
     "athletic club", // Athletic Bilbao — ESPN's displayName is "Athletic Club", not "Bilbao"
+    "united states", // USMNT/USWNT — no club or youth side fetched here contains it
   ].map(s => s.toLowerCase());
 
   const LIVE_SCORE_REFRESH_MS = 5 * 1000;       // current live games: near pitch-by-pitch
@@ -246,10 +282,17 @@
     "paris saint-germain", "marseille",
     "ajax amsterdam", "psv eindhoven", "feyenoord rotterdam",
   ].map(s => s.toLowerCase());
+  // The national-team equivalent, matched exactly rather than as a substring
+  // like the clubs above — "england" would otherwise catch New England
+  // Revolution.
+  const MARQUEE_NATIONS = new Set([
+    "argentina", "brazil", "france", "england", "spain", "germany",
+    "portugal", "netherlands", "italy", "mexico",
+  ]);
   function isMarqueeClub(name) {
     if (!name) return false;
     const n = name.toLowerCase();
-    return MARQUEE_CLUBS.some(p => n.indexOf(p) !== -1);
+    return MARQUEE_NATIONS.has(n) || MARQUEE_CLUBS.some(p => n.indexOf(p) !== -1);
   }
 
   // ---- Team identification ---------------------------------------------
@@ -884,7 +927,7 @@
         // (within the hour) followed-team games are unaffected and fall
         // through to the normal handling below.
         if (g.isMyGame && g.state !== "in" && !(g.state === "pre" && kickoffSoon)) {
-          cycleGames.push({ g, label: league ? league.label : "" });
+          cycleGames.push({ g, label: g.competition || (league ? league.label : "") });
           return;
         }
         // None of the non-live reasons (followed team, stakes, ranked team,
@@ -917,7 +960,7 @@
           ? SPOTLIGHT_RANK.SOCCER
           : (league && league.spotlightRank != null ? league.spotlightRank : SPOTLIGHT_RANK.SOCCER);
         const spotlightExempt = !!(league && league.spotlightExempt);
-        entries.push({ g, label: league ? league.label : "", leagueKey: key, stakesCounts, rankedCounts, rankBoosted, rankedOnly, marqueeOnly, marqueeCount: g.marqueeCount, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
+        entries.push({ g, label: g.competition || (league ? league.label : ""), leagueKey: key, stakesCounts, rankedCounts, rankBoosted, rankedOnly, marqueeOnly, marqueeCount: g.marqueeCount, liveOnly, rankScore, scoreMargin, implicationDistance, implicationOnly, spotlightRank, spotlightExempt });
       });
     });
 
@@ -1731,7 +1774,56 @@
   const gameRank =game => (game.isMyGame ? 0 : 1)
     + (game.state === "in" ? 0 : game.state === "pre" ? 1 : 2) * 0.01;
 
-  async function fetchGames(league) {
+  // A merged league's competitions, fetched one ESPN scoreboard each.
+  // Without a `dates` param ESPN returns the competition's current day, else
+  // its next matchday, else — for a tournament that's over — its final, even
+  // years later. The window keeps "next matchday" and drops the stale finals.
+  // A competition with nothing in the window is dormant: re-checked at the
+  // standings cadence instead of every 30s, since most of the list is
+  // between tournaments at any given time. liveOnly (the 5s poll) refetches
+  // only competitions with a game in progress.
+  const COMPETITION_WINDOW_BACK_MS = 2 * 24 * 60 * 60 * 1000;
+  const COMPETITION_WINDOW_AHEAD_MS = 7 * 24 * 60 * 60 * 1000;
+  const competitionCache = new Map(); // competition key -> { games, fetchedAt, dormant }
+  async function fetchCompetitionGames(league, liveOnly) {
+    const now = Date.now();
+    const lists = await Promise.all(league.competitions.map(async comp => {
+      const cached = competitionCache.get(comp.key);
+      if (cached && (liveOnly
+        ? !cached.games.some(g => g.state === "in")
+        : cached.dormant && now - cached.fetchedAt < STANDINGS_REFRESH_MS)) {
+        return cached.games;
+      }
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
+        const response = await fetch(ESPN + comp.key + "/scoreboard?limit=1000&_=" + now,
+          { cache: "no-store", signal: ctrl.signal });
+        clearTimeout(timeout);
+        if (!response.ok) return cached ? cached.games : null;
+        const events = ((await response.json()).events || []).filter(ev => {
+          const t = Date.parse(ev.date);
+          return t > now - COMPETITION_WINDOW_BACK_MS && t < now + COMPETITION_WINDOW_AHEAD_MS;
+        });
+        const games = events.map(ev => {
+          const g = parseEvent(ev, league.key, league.label);
+          if (g) g.competition = comp.label;
+          return g;
+        }).filter(Boolean);
+        competitionCache.set(comp.key, { games, fetchedAt: now, dormant: !games.length });
+        return games;
+      } catch (e) {
+        return cached ? cached.games : null;
+      }
+    }));
+    if (lists.every(list => list == null)) return null;
+    // Chronological across competitions — fillGameGrid's sort is stable, so
+    // this is the order within each live/upcoming/final tier.
+    return [].concat(...lists.filter(Boolean)).sort((a, b) => (a.kickoffMs || 0) - (b.kickoffMs || 0));
+  }
+
+  async function fetchGames(league, liveOnly) {
+    if (league.competitions) return fetchCompetitionGames(league, liveOnly);
     const url = ESPN + league.key + "/scoreboard?" + (league.scoreboardQuery || "limit=1000") + "&_=" + Date.now();
     try {
       const ctrl = new AbortController();
@@ -1763,7 +1855,8 @@
     grid.innerHTML = "";
     if (games.length) {
       games.sort((a, b) => gameRank(a) - gameRank(b));
-      games.forEach(game => grid.appendChild(gameCard(game)));
+      // A merged league (International) tags each card with its competition.
+      games.forEach(game => grid.appendChild(gameCard(game, game.competition)));
     } else {
       grid.appendChild(el("div", "empty", "No games scheduled right now (offseason or between fixtures)."));
     }
@@ -2474,7 +2567,7 @@
     return activeFilter === "all" ? LEAGUES : LEAGUES.filter(league => league.key === activeFilter);
   }
 
-  async function refreshScores(leagues) {
+  async function refreshScores(leagues, liveOnly) {
     if (scoresRefreshInFlight || document.hidden || !leagues.length) return;
     scoresRefreshInFlight = true;
     try {
@@ -2482,7 +2575,7 @@
         const grid = [...document.querySelectorAll(".games-grid")]
           .find(node => node.dataset.leagueKey === league.key);
         if (!grid) return false;
-        const games = await fetchGames(league);
+        const games = await fetchGames(league, liveOnly);
         if (games == null) return false;
         gamesByLeague.set(league.key, games);
         fillGameGrid(grid, games);
@@ -2506,7 +2599,7 @@
   function refreshLiveScores() {
     const live = filteredLeagues().filter(league =>
       (gamesByLeague.get(league.key) || []).some(game => game.state === "in"));
-    return refreshScores(live);
+    return refreshScores(live, true);
   }
 
   function refreshAllScores() {
