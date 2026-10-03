@@ -2046,8 +2046,12 @@
 
   // ---- Board order: how far along each league's season is ---------------
   const DAY_MS = 86400000;
-  // 0 at a season's first game rising to 1 at its final; after the final it
-  // fades from 1 back down to 0 as the next season's first game approaches
+  // After its final, a league fades from the top to below every in-season
+  // league over this long, then stays down there until its next season.
+  const OFFSEASON_FADE_MS = 14 * 86400000;
+  // 0 at a season's first game rising to 1 at its final. After the final it
+  // fades from 1 to 0 over OFFSEASON_FADE_MS, then goes negative — below
+  // every league still playing — sinking further the longer it's been off
   // (see `season` on LEAGUES).
   function seasonProgress(league, todayMs) {
     if (!league.season) return 0;
@@ -2067,7 +2071,9 @@
     if (current) return (todayMs - current[0]) / Math.max(DAY_MS, current[1] - current[0]);
     const lastEnd = Math.max(...spans.map(([, e]) => e).filter(e => e < todayMs));
     const nextStart = Math.min(...spans.map(([s]) => s).filter(s => s > todayMs));
-    return (nextStart - todayMs) / Math.max(DAY_MS, nextStart - lastEnd);
+    const sinceFinal = todayMs - lastEnd;
+    if (sinceFinal < OFFSEASON_FADE_MS) return 1 - sinceFinal / OFFSEASON_FADE_MS;
+    return -sinceFinal / Math.max(DAY_MS, nextStart - lastEnd);
   }
 
   // FIFA's current top 20 (men's and women's), by three-letter code — ESPN
