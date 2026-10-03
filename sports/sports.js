@@ -53,6 +53,11 @@
   // or by MAX_SPOTLIGHT_GAMES — see the `mine` exemption in renderSpotlight.
   // Only NFL has this today: a full Sunday slate should always show in full,
   // never lose a slot to a tighter soccer scoreline or a crowded budget.
+  // spotlightPregame: every game in this league counts once it's within
+  // PREGAME_SPOTLIGHT_WINDOW_MS of kickoff, no other reason needed. Other
+  // leagues' plain games only count once live; NFL has so few games (and
+  // early-season standings too thin for implications) that a primetime
+  // kickoff an hour out is worth the slot on its own.
   // bracket: once this league's scoreboard is showing postseason games, the
   // standings table is swapped for a playoff bracket (see loadBracket). Only
   // set on leagues whose playoffs decide the champion — the European leagues'
@@ -75,7 +80,7 @@
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB, bracket: true },
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true, bracket: true },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true, spotlightPregame: true, bracket: true },
     { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
     { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
@@ -936,7 +941,8 @@
         // reason it qualifies under. Once it's live, or already over, or
         // within the window, it counts normally.
         const pregameImminent = g.state !== "pre" || kickoffSoon;
-        const big = liveCounts || (pregameImminent && (g.isMyGame || stakesCounts || rankedCounts || marqueeCounts || implicationDistance != null));
+        const pregameCounts = g.state === "pre" && kickoffSoon && !!(league && league.spotlightPregame);
+        const big = liveCounts || pregameCounts || (pregameImminent && (g.isMyGame || stakesCounts || rankedCounts || marqueeCounts || implicationDistance != null));
         if (!big) return;
         // "Implication-only" / "ranked-only" / "marquee-only" / "live-only" =
         // the sole reason this game qualified is standings implications / a
