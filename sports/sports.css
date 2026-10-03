@@ -134,6 +134,8 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .score-vs{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em}
 .status{text-align:center;font-size:11px;color:var(--muted)}
 .status--live{color:var(--live);font-weight:700}
+.football-situation{text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-top:-4px}
+.football-situation--redzone{color:var(--live)}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:4px;vertical-align:middle}
 .broadcast{text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:2px}
 .baseball-situation{border-top:1px dotted #b3a98e;padding-top:6px;display:grid;gap:4px;font-family:var(--font-body)}

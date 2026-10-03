@@ -62,7 +62,16 @@
   // standings table is swapped for a playoff bracket (see loadBracket). Only
   // set on leagues whose playoffs decide the champion — the European leagues'
   // relegation/conference-league playoffs are a footnote to a table that
-  // still matters, so they keep their standings.
+  // still matters, so they keep their standings. After the final, through
+  // the offseason, the finished bracket and the standings show together.
+  // season: the league's typical season, first game through the final
+  // (playoffs included), as ["MM-DD", "MM-DD"] pairs reused every year — a
+  // pair that ends earlier in the year than it starts runs into the next
+  // year. Liga MX has two (Apertura, Clausura). The "All" board orders
+  // leagues by how far along they are (see seasonProgress): ESPN's own season
+  // dates are placeholders (every European league reads Jun 1 → Jun 1) and
+  // its game calendars stop short of the playoffs for several leagues, so
+  // these are set by hand. Approximate is fine — this only drives ordering.
   // competitions: this "league" is really several ESPN leagues merged into
   // one board section/filter chip (see fetchCompetitionGames) — its `key` is
   // then a synthetic id, never fetched. Only International uses it: national
@@ -78,32 +87,32 @@
   // order on the "All" view, so reordering here reorders both.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB, bracket: true },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB, bracket: true, season: [["03-26", "11-01"]] },
     { key: "football/nfl",    label: "NFL",              myTeams: ["Cincinnati Bengals"],       standings: "division",
-      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true, spotlightPregame: true, bracket: true },
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 7, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NFL, spotlightExempt: true, spotlightPregame: true, bracket: true, season: [["09-05", "02-10"]] },
     { key: "soccer/eng.1",    label: "Premier League",   myTeams: ["Liverpool", "Arsenal"],    standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-15", "05-25"]] },
     { key: "soccer/usa.1",    label: "MLS",              myTeams: ["FC Cincinnati"],            standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 9, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["02-21", "12-07"]] },
     { key: "football/college-football", label: "NCAAF",  myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
-      scoreboardQuery: "groups=80&limit=500" },
+      scoreboardQuery: "groups=80&limit=500", season: [["08-23", "01-20"]] },
     { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
-      scoreboardQuery: "groups=50&limit=500" },
+      scoreboardQuery: "groups=50&limit=500", season: [["11-03", "04-07"]] },
     { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
-      scoreboardQuery: "groups=50&limit=500" },
+      scoreboardQuery: "groups=50&limit=500", season: [["11-03", "04-06"]] },
     { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["03-13", "11-22"]] },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
-      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["03-07", "11-22"]] },
     // Women's side of Lexington SC. Playoff format isn't wired up, so no
     // playoff-implication zones (playoffPoolMode null) — just scores + table.
     { key: "soccer/usa.w.usl.1", label: "USL Super League", myTeams: ["Lexington SC"],         standings: "overall",
-      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["08-15", "05-31"]] },
     { key: "soccer/esp.1",    label: "La Liga",          myTeams: ["Athletic Club"],            standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-15", "05-25"]] },
     // National teams, men's and women's (ESPN names both "United States").
     // Listed in the order their games appear on the board. Keys verified
     // against the live endpoint 2026-10-03; a dormant tournament still
@@ -134,21 +143,21 @@
         { key: "soccer/fifa.friendly.w",         label: "Women's Int'l Friendly" },
       ] },
     { key: "soccer/mex.1",    label: "Liga MX",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["07-10", "12-15"], ["01-09", "05-25"]] },
     { key: "soccer/ger.1",    label: "Bundesliga",       myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-22", "05-27"]] },
     { key: "soccer/ita.1",    label: "Serie A",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 6, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-22", "05-31"]] },
     { key: "soccer/fra.1",    label: "Ligue 1",          myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 5, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 5, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-15", "05-27"]] },
     { key: "soccer/uefa.champions", label: "UCL",         myTeams: [],                           standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["09-15", "05-31"]] },
     { key: "soccer/uefa.europa",    label: "UEL",         myTeams: [],                           standings: null,
-      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["09-22", "05-21"]] },
     { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER },
+      playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-08", "05-25"]] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
-      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true },
+      playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true, season: [["05-15", "10-25"]] },
   ];
 
   // Substring patterns (lowercased) marking "my" teams, so we catch
@@ -346,6 +355,42 @@
     const period = status.period || 0;
     return (clock + (period ? " • P" + period : "")).trim()
       || type.shortDetail || type.detail || "In Progress";
+  }
+
+  // The line under a live football score. ESPN clears possession (and the
+  // down and distance with it) whenever nobody has a snap coming — after a
+  // score, on a kickoff, during a timeout, between quarters — but always keeps
+  // the last play, so those gaps say what just happened instead of going
+  // blank. Never guesses who has the ball: the marker on the team name only
+  // appears when ESPN names a team.
+  function parseFootballSituation(situation, possId, status, competitors) {
+    const typeName = ((status && status.type) || {}).name || "";
+    if (!situation || typeName === "STATUS_HALFTIME" || typeName === "STATUS_END_PERIOD") return null;
+    const abbrById = id => {
+      const c = competitors.find(x => String((x.team && x.team.id) || x.id) === String(id));
+      return c ? teamAbbr(c) : null;
+    };
+    if (possId) {
+      const spot = situation.possessionText;
+      const text = situation.shortDownDistanceText
+        ? situation.shortDownDistanceText + (spot ? " · " + spot : "")
+        : situation.downDistanceText;
+      return text ? { text, redZone: !!situation.isRedZone } : null;
+    }
+    const play = situation.lastPlay;
+    const type = play && play.type && play.type.text;
+    if (!type) return null;
+    if (/^End (Period|of Half)/i.test(type)) {
+      return { text: String(play.text || type).replace(/\.$/, "") };
+    }
+    const label = type.charAt(0) + type.slice(1).toLowerCase();
+    // A kickoff's team is ambiguous (kicking or receiving side), so it gets
+    // the receiving team's spot instead, when ESPN already has one.
+    if (/kickoff/i.test(type)) {
+      return { text: situation.downDistanceText ? label + " · " + situation.downDistanceText : label };
+    }
+    const abbr = play.team && play.team.id != null ? abbrById(play.team.id) : null;
+    return { text: abbr ? abbr + " · " + label : label };
   }
 
   function parseBaseballSituation(comp, state, leagueKey) {
@@ -640,6 +685,7 @@
     const possId = situation.possession != null ? String(situation.possession) : null;
     const possOf = c => (possId && String((c.team && c.team.id) || c.id) === possId)
       ? (situation.downDistanceText || "Has the ball") : null;
+    const footballSituation = parseFootballSituation(situation, possId, status, cs);
 
     return {
       eventId: ev.id,
@@ -655,6 +701,7 @@
       startTime,
       statusText: formatGameStatus(status, state, startTime, leagueKey),
       baseballSituation: parseBaseballSituation(comp, state, leagueKey),
+      footballSituation,
       lineScore: parseBaseballLineScore(comp, state, leagueKey),
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
       ranked: isRanked(away) || isRanked(home),
@@ -683,7 +730,6 @@
       const poss = el("span", "team-poss");
       poss.setAttribute("role", "img");
       poss.setAttribute("aria-label", "Possession: " + t.poss);
-      poss.title = t.poss;
       nameRow.appendChild(poss);
     }
     txt.appendChild(nameRow);
@@ -883,6 +929,10 @@
     if (g.state === "in") st.innerHTML = '<span class="live-dot"></span>' + esc(g.statusText);
     else st.textContent = g.statusText;
     card.appendChild(st);
+    if (g.footballSituation) {
+      card.appendChild(el("div", "football-situation" + (g.footballSituation.redZone ? " football-situation--redzone" : ""),
+        esc(g.footballSituation.text)));
+    }
     if (g.broadcast && g.state !== "post") {
       card.appendChild(el("div", "broadcast", esc(g.broadcast)));
     }
@@ -1804,12 +1854,28 @@
     return [...byId.values()];
   }
 
+  // The playoffs are over once the last round is a single, decided matchup
+  // between the two halves (World Series, MLS Cup, Super Bowl, ...) and
+  // nothing is left to play. Checking the final itself — not just "no games
+  // left" — keeps a gap between rounds (soccer's next round not yet on
+  // ESPN's schedule) from reading as the end of the season.
+  function postseasonComplete(events) {
+    const rounds = buildBracket(events);
+    const last = rounds[rounds.length - 1];
+    if (!last || last.matchups.length !== 1 || last.matchups[0].conf) return false;
+    const final = summarizeMatchup(last.matchups[0]);
+    return final.winner >= 0 && !rounds.some(r => r.matchups.some(m =>
+      m.games.some(g => ((((g.ev.status || {}).type) || {}).state || "pre") !== "post")));
+  }
+
+  // { node, complete } — complete once the final has been played (see
+  // postseasonComplete), when the standings come back alongside it.
   async function loadBracket(league, games) {
     const events = await loadPostseasonEvents(league, games);
     if (!events) return null;
     postseasonEventsByLeague.set(league.key, events);
     const merged = mergedPostseasonEvents(league);
-    return merged.length ? bracketView(league, merged) : null;
+    return merged.length ? { node: bracketView(league, merged), complete: postseasonComplete(merged) } : null;
   }
 
   // ---- Fetch + render scoreboards ---------------------------------------
@@ -1849,7 +1915,7 @@
         });
         const games = events.map(ev => {
           const g = parseEvent(ev, league.key, league.label);
-          if (g) g.competition = comp.label;
+          if (g) { g.competition = comp.label; g.competitionKey = comp.key; }
           return g;
         }).filter(Boolean);
         competitionCache.set(comp.key, { games, fetchedAt: now, dormant: !games.length });
@@ -1924,32 +1990,27 @@
     fillGameGrid(grid, games);
     section.appendChild(grid);
 
-    // Standings slot — filled asynchronously, non-blocking. On a periodic
-    // re-render, seed it with the previous table so the standings don't vanish
-    // for the duration of the refetch; the fresh table replaces it below.
-    // Postseason swaps the standings for a bracket (see `bracket` on LEAGUES):
-    // the regular-season table stops changing the moment the playoffs start.
+    // Bracket and standings slots — each filled asynchronously, non-blocking.
+    // On a periodic re-render, seed each with its previous content so nothing
+    // vanishes for the duration of the refetch; the fresh copy replaces it.
+    // During the playoffs the bracket stands in for the standings (see
+    // `bracket` on LEAGUES): the regular-season table stops changing the
+    // moment they start. Once the final is played, through the offseason,
+    // the finished bracket and the standings show together.
     const inPostseason = !!league.bracket && games.some(g => g.isPostseason);
-    if (inPostseason) section.dataset.postseason = "true"; // render() floats these to the top
-    const slot = el("div", "standings-slot");
-    const prevSlot = document.querySelector('.league[data-league-key="' + league.key + '"] .standings-slot');
-    // Only carry over the same kind of content — on the day the postseason
-    // starts, a stale standings table shouldn't sit there under a bracket
-    // heading while the bracket loads.
-    if (prevSlot && !!prevSlot.querySelector(".bracket") === inPostseason) {
-      prevSlot.childNodes.forEach(n => slot.appendChild(n.cloneNode(true)));
-    }
-    section.appendChild(slot);
-    if (inPostseason) {
-      loadBracket(league, games).then(bracket => {
-        if (bracket) {
-          slot.replaceChildren(
-            el("div", "standings-head", esc(league.label + " Postseason")),
-            bracket);
-        }
-      }).catch(() => {});
-    } else if (league.standings) {
-      loadStandings(league).then(tbl => {
+    const prevSection = document.querySelector('.league[data-league-key="' + league.key + '"]');
+    const seededSlot = (cls, keep) => {
+      const s = el("div", cls);
+      const prev = keep && prevSection && prevSection.querySelector("." + cls);
+      if (prev) prev.childNodes.forEach(n => s.appendChild(n.cloneNode(true)));
+      section.appendChild(s);
+      return s;
+    };
+    const bracketSlot = seededSlot("bracket-slot", inPostseason);
+    // Mid-playoffs the previous render left this empty, so it stays empty
+    // until the bracket says the final is done.
+    const slot = seededSlot("standings-slot", true);
+    const fillStandings = () => loadStandings(league).then(tbl => {
         if (tbl) {
           slot.replaceChildren(
             el("div", "standings-head", esc(league.label + " Standings")),
@@ -1959,6 +2020,17 @@
         // re-check Spotlight's playoff-implications boost, which depends on them.
         renderSpotlight();
       }).catch(() => {});
+    if (inPostseason) {
+      loadBracket(league, games).then(bracket => {
+        if (!bracket) return;
+        bracketSlot.replaceChildren(
+          el("div", "standings-head", esc(league.label + " Postseason")),
+          bracket.node);
+        if (bracket.complete && league.standings) fillStandings();
+        else slot.replaceChildren();
+      }).catch(() => {});
+    } else if (league.standings) {
+      fillStandings();
     }
     return section;
   }
@@ -1970,6 +2042,71 @@
     const nfl = LEAGUES.find(l => l.key === "football/nfl");
     const games = await fetchGames(nfl);
     if (games != null) gamesByLeague.set(nfl.key, games);
+  }
+
+  // ---- Board order: how far along each league's season is ---------------
+  const DAY_MS = 86400000;
+  // 0 at a season's first game rising to 1 at its final; after the final it
+  // fades from 1 back down to 0 as the next season's first game approaches
+  // (see `season` on LEAGUES).
+  function seasonProgress(league, todayMs) {
+    if (!league.season) return 0;
+    const year = new Date(todayMs).getUTCFullYear();
+    const at = (y, md) => Date.UTC(y, +md.slice(0, 2) - 1, +md.slice(3, 5));
+    // Every occurrence of every window from last year through next year.
+    const spans = [];
+    league.season.forEach(([start, end]) => {
+      [year - 1, year, year + 1].forEach(y => {
+        const s = at(y, start);
+        let e = at(y, end);
+        if (e < s) e = at(y + 1, end); // runs over New Year (Aug → May)
+        spans.push([s, e]);
+      });
+    });
+    const current = spans.find(([s, e]) => s <= todayMs && todayMs <= e);
+    if (current) return (todayMs - current[0]) / Math.max(DAY_MS, current[1] - current[0]);
+    const lastEnd = Math.max(...spans.map(([, e]) => e).filter(e => e < todayMs));
+    const nextStart = Math.min(...spans.map(([s]) => s).filter(s => s > todayMs));
+    return (nextStart - todayMs) / Math.max(DAY_MS, nextStart - lastEnd);
+  }
+
+  // FIFA's current top 20 (men's and women's), by three-letter code — ESPN
+  // uses FIFA's own codes for national teams (verified 2026-10-03). Fetched
+  // once per page load; FIFA republishes the ranking about monthly.
+  const FIFA_TOP_N = 20;
+  let fifaTop = null; // { men: Set, women: Set }
+  let fifaTopLoading = null;
+  function loadFifaTop() {
+    if (fifaTop || fifaTopLoading) return fifaTopLoading;
+    const top = gender => fetch("https://api.fifa.com/api/v3/rankings?gender=" + gender + "&count=" + FIFA_TOP_N,
+      { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(d => new Set((d.Results || []).map(t => t.IdCountry)));
+    fifaTopLoading = Promise.all([top(1), top(2)])
+      .then(([men, women]) => { fifaTop = { men, women }; })
+      .catch(() => {}) // friendlies just don't count until it loads
+      .finally(() => { fifaTopLoading = null; });
+    return fifaTopLoading;
+  }
+
+  // International rises to the top when anything on its slate has stakes:
+  // every competition except friendlies, plus friendlies between two FIFA
+  // top-20 sides (by the matching men's or women's ranking).
+  function internationalHasStakes(games) {
+    return games.some(g => {
+      const key = g.competitionKey || "";
+      if (!/\.friendly/.test(key)) return true;
+      if (!fifaTop) return false;
+      const ranked = /\.friendly\.w$/.test(key) ? fifaTop.women : fifaTop.men;
+      return ranked.has(g.away.abbr) && ranked.has(g.home.abbr);
+    });
+  }
+
+  function boardScore(league, todayMs) {
+    if (league.competitions) {
+      return internationalHasStakes(gamesByLeague.get(league.key) || []) ? 2 : -1;
+    }
+    return seasonProgress(league, todayMs);
   }
 
   // ---- Master render ----------------------------------------------------
@@ -1990,12 +2127,15 @@
       }
       renderedFilter = activeFilter;
 
+      const fifaReady = loadFifaTop();
       const results = await Promise.allSettled(list.map(loadLeague));
+      await fifaReady;
       const fresh = results.filter(r => r.status === "fulfilled" && r.value).map(r => r.value);
-      // Leagues in their playoffs go first; otherwise LEAGUES order holds
+      // Farthest-along season first (see boardScore); ties keep LEAGUES order
       // (the sort is stable). The filter chips keep their fixed order.
-      const postseasonFirst = section => (section.dataset.postseason ? 0 : 1);
-      fresh.sort((a, b) => postseasonFirst(a) - postseasonFirst(b));
+      const todayMs = Date.parse(etToday() + "T00:00:00Z");
+      const scoreOf = new Map(LEAGUES.map(l => [l.key, boardScore(l, todayMs)]));
+      fresh.sort((a, b) => scoreOf.get(b.dataset.leagueKey) - scoreOf.get(a.dataset.leagueKey));
       if (fresh.length) {
         board.replaceChildren(...fresh);
       } else if (!board.querySelector(".league")) {
@@ -2625,7 +2765,7 @@
         fillGameGrid(grid, games);
         // Re-draw an existing bracket from the fresh scoreboard (no refetch)
         // so a series score moves the moment a game goes final.
-        const bracket = grid.parentNode && grid.parentNode.querySelector(".standings-slot .bracket");
+        const bracket = grid.parentNode && grid.parentNode.querySelector(".bracket-slot .bracket");
         if (bracket && postseasonEventsByLeague.has(league.key)) {
           bracket.replaceWith(bracketView(league, mergedPostseasonEvents(league)));
         }
