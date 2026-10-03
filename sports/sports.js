@@ -49,6 +49,11 @@
   // to 25 (both verified against the live endpoint). College basketball has
   // the same trap (17 of 132 D-I men's games on a February Saturday);
   // groups=50 is all of Division I there.
+  // slowLiveRefresh: leave this league out of the 5s live-score loop; it
+  // still updates every SCORE_DISCOVERY_REFRESH_MS (30s) with the full
+  // refresh. For college basketball's full D-I feeds, which run ~2.5 MB of
+  // JSON each (~190 KB gzipped) on a busy Saturday — re-downloading and
+  // parsing both every 5s was ~4 MB/min per open tab.
   // spotlightExempt: this league's games are never cut by a Spotlight sub-cap
   // or by MAX_SPOTLIGHT_GAMES — see the `mine` exemption in renderSpotlight.
   // Only NFL has this today: a full Sunday slate should always show in full,
@@ -99,10 +104,10 @@
       scoreboardQuery: "groups=80&limit=500", season: [["08-23", "01-20"]] },
     { key: "basketball/mens-college-basketball", label: "NCAAM", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
-      scoreboardQuery: "groups=50&limit=500", season: [["11-03", "04-07"]] },
+      scoreboardQuery: "groups=50&limit=500", slowLiveRefresh: true, season: [["11-03", "04-07"]] },
     { key: "basketball/womens-college-basketball", label: "NCAAW", myTeams: ["Kentucky Wildcats", "Louisville Cardinals"], standings: null,
       playoffPoolMode: null, implicationZones: [], spotlightRankBoost: true, spotlightRank: SPOTLIGHT_RANK.COLLEGE,
-      scoreboardQuery: "groups=50&limit=500", season: [["11-03", "04-06"]] },
+      scoreboardQuery: "groups=50&limit=500", slowLiveRefresh: true, season: [["11-03", "04-06"]] },
     { key: "soccer/usa.nwsl", label: "NWSL",             myTeams: ["Racing Louisville FC"],     standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.SOCCER, bracket: true, season: [["03-13", "11-22"]] },
     { key: "soccer/usa.usl.1", label: "USL Championship", myTeams: ["Lexington SC"],             standings: "overall",
@@ -2791,7 +2796,7 @@
   }
 
   function refreshLiveScores() {
-    const live = filteredLeagues().filter(league =>
+    const live = filteredLeagues().filter(league => !league.slowLiveRefresh &&
       (gamesByLeague.get(league.key) || []).some(game => game.state === "in"));
     return refreshScores(live, true);
   }
