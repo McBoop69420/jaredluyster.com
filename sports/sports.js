@@ -2113,7 +2113,33 @@
     });
   }
 
-  function boardScore(league, todayMs) {
+  // Weekend viewing slots (Eastern): during one, its leagues go above
+  // everything else — International included — but only a league with games
+  // on today's slate. Hours are [from, to). Several leagues in one slot keep
+  // their season-progress order among themselves.
+  const EUROPEAN_SOCCER = ["soccer/eng.1", "soccer/esp.1", "soccer/ger.1", "soccer/ita.1",
+    "soccer/fra.1", "soccer/ned.1", "soccer/uefa.champions", "soccer/uefa.europa"];
+  const WEEKEND_SLOTS = [
+    { days: ["Sat", "Sun"], from: 7, to: 12, leagues: EUROPEAN_SOCCER },
+    { days: ["Sat"], from: 12, to: 24, leagues: ["football/college-football"] },
+    { days: ["Sun"], from: 12, to: 18, leagues: ["football/nfl"] },
+  ];
+  function etWeekdayHour() {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York", weekday: "short", hour: "numeric", hourCycle: "h23",
+    }).formatToParts(new Date());
+    const part = type => (parts.find(p => p.type === type) || {}).value;
+    return { day: part("weekday"), hour: Number(part("hour")) };
+  }
+  function inWeekendSlot(league, now) {
+    const slot = WEEKEND_SLOTS.find(s => s.days.includes(now.day) && now.hour >= s.from && now.hour < s.to);
+    if (!slot || !slot.leagues.includes(league.key)) return false;
+    const today = etToday();
+    return (gamesByLeague.get(league.key) || []).some(g => g.dateET === today);
+  }
+
+  function boardScore(league, todayMs, now) {
+    if (inWeekendSlot(league, now)) return 10 + seasonProgress(league, todayMs);
     if (league.competitions) {
       return internationalHasStakes(gamesByLeague.get(league.key) || []) ? 2 : -1;
     }
@@ -2145,7 +2171,8 @@
       // Farthest-along season first (see boardScore); ties keep LEAGUES order
       // (the sort is stable). The filter chips keep their fixed order.
       const todayMs = Date.parse(etToday() + "T00:00:00Z");
-      const scoreOf = new Map(LEAGUES.map(l => [l.key, boardScore(l, todayMs)]));
+      const now = etWeekdayHour();
+      const scoreOf = new Map(LEAGUES.map(l => [l.key, boardScore(l, todayMs, now)]));
       fresh.sort((a, b) => scoreOf.get(b.dataset.leagueKey) - scoreOf.get(a.dataset.leagueKey));
       if (fresh.length) {
         board.replaceChildren(...fresh);
