@@ -132,7 +132,23 @@
     type = t;
     tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.type === t)));
     form.querySelectorAll("fieldset").forEach((fs) => { fs.hidden = fs.dataset.type !== t; });
+    if (t !== "url") showTypes(true);
   }
+
+  // Links are the everyday case, so the other types stay tucked away until asked for (or
+  // until a draft or Recent code of another type is loaded).
+  function showTypes(open) {
+    $("typeTabs").hidden = !open;
+    const btn = $("moreTypes");
+    btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = open ? "Just a link" : "Other kinds of code — Wi-Fi, contact card, text, email…";
+  }
+
+  $("moreTypes").addEventListener("click", () => {
+    if ($("typeTabs").hidden) { showTypes(true); return; }
+    showTypes(false);
+    if (type !== "url") { setType("url"); update(); }
+  });
 
   // ---- center logo controls -----------------------------------------------------------
 

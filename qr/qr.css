@@ -536,3 +536,9 @@ input[type="range"] {
   /* Dashed cut guides only when the page is tiled. */
   .print-sheet.tiled .print-tile { outline: 0.5pt dashed #bbb; outline-offset: 0.06in; }
 }
+
+.more-types {
+  align-self: flex-start;
+  margin-top: -6px;
+  text-align: left;
+}
