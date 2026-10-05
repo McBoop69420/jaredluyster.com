@@ -222,10 +222,11 @@ all — with jsQR (Apache-2.0, vendored at `qr/vendor/jsQR.js`, lazy-loaded) and
 reads back as exactly the intended content. It runs with `inversionAttempts: "dontInvert"`, so
 light-on-dark codes fail the check on purpose.
 
-**One-time setup (Cloudflare dashboard, needs your login):** `jaredluyster-com` Pages
-project → Custom domains → add `qr.jaredluyster.com`. Cloudflare creates the CNAME, which
-takes precedence over the zone's `*` wildcard. Until then the tool is reachable at
-`jaredluyster-com.pages.dev/qr/`.
+**One-time setup — done 2026-10-05:** ~~`jaredluyster-com` Pages project → Custom domains →
+add `qr.jaredluyster.com`~~. Cloudflare created the CNAME `qr` → `jaredluyster-com.pages.dev`,
+which takes precedence over the zone's `*` wildcard (the wildcard record stays). Serving within
+about a minute of activation; verified `qr.jaredluyster.com/` 200, `/tests/` 404. No Access
+application — deliberately public. Also reachable at `jaredluyster-com.pages.dev/qr/`.
 
 Tests: `node --test qr/tests/qr.test.js` (payload formats, version selection, overflow, SVG
 geometry, and center logos decoded with jsQR at the size cap across versions 3–40). Never served (`/tests/` is 404'd by `functions/_middleware.ts`). Every payload

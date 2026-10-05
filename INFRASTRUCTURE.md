@@ -612,8 +612,8 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   Wi-Fi logins, contact cards (vCard), email, phone, SMS. Added 2026-10-04.
 - **Subdomain:** `qr.jaredluyster.com` — added to `SUBDOMAIN_ROOTS` in
   `functions/_middleware.ts`, same tool-subdomain pattern as `redzone`/`social` (see
-  DEPLOY.md's "Tool subdomains" section). The custom domain is a one-time dashboard step —
-  see DEPLOY.md's "QR Code Maker" section.
+  DEPLOY.md's "Tool subdomains" section). Custom domain added on the `jaredluyster-com` Pages
+  project 2026-10-05 (CNAME `qr` → `jaredluyster-com.pages.dev`, overriding the `*` wildcard).
 - **Files served from:** [`qr/`](qr/index.html) — static frontend, no build step
   (`index.html`, `qr.css`, `qr.js`, `payload.js`, `code.js`, `vendor/qrcode.js`,
   `vendor/jsQR.js` + `vendor/jsQR-LICENSE.txt`, `robots.txt`).
