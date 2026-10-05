@@ -198,6 +198,7 @@ button:focus-visible {
   color: var(--paper);
 }
 
+.center-group,
 .style-group,
 .print-group {
   display: flex;
@@ -208,6 +209,80 @@ button:focus-visible {
 }
 
 .colors { align-items: center; flex-wrap: wrap; }
+
+/* ---- Center logo -------------------------------------------------------- */
+
+.seg {
+  display: flex;
+  border: 2px solid var(--paper);
+  align-self: flex-start;
+}
+
+.seg button {
+  padding: 7px 16px;
+  background: var(--bg);
+  border: 0;
+  border-left: 2px solid var(--paper);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.seg button:first-child { border-left: 0; }
+.seg button:hover { background: var(--paper); color: var(--ink); }
+
+.seg button[aria-checked="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.center-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.file-btn { position: relative; max-width: 100%; }
+.file-btn span { overflow: hidden; text-overflow: ellipsis; }
+
+/* The native control is invisible but still focusable and clickable over the button. */
+.file-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-btn:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.shape-field { flex: 0 1 180px; }
+
+.scan-check {
+  margin: -8px 0 0;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border: 2px solid currentColor;
+}
+
+.scan-check.ok { color: #7fc890; }
+.scan-check.bad { color: var(--danger); }
+.scan-check.pending { color: var(--muted); border-style: dashed; }
 
 .color-field {
   display: flex;
@@ -456,7 +531,7 @@ button:focus-visible {
     line-height: 0;
   }
 
-  .print-tile svg { display: block; width: 100%; height: auto; }
+  .print-tile img { display: block; width: 100%; height: auto; }
 
   /* Dashed cut guides only when the page is tiled. */
   .print-sheet.tiled .print-tile { outline: 0.5pt dashed #bbb; outline-offset: 0.06in; }

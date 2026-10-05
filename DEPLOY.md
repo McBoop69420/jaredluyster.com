@@ -207,13 +207,28 @@ encoder (Kazuhiko Arase's `qrcode-generator`, MIT, v2.0.4) is vendored at
 `qr/vendor/qrcode.js` rather than loaded from a CDN, so the page itself keeps working too.
 Payload formats are in the header of `qr/payload.js`.
 
+**Center logo (added 2026-10-04):** an uploaded image or a short text badge ("SCAN ME",
+"50% OFF", an emoji) in the middle of the code, on a plate (rounded square or circle, any
+color). The modules under it are cleared, error correction is locked to High while it's on,
+and tiny codes are bumped to version 3 so the logo has room. Size is capped at 30% of the
+code's width (`CENTER_MAX` in `qr/code.js`) — decoding only started failing around 46% in
+stress tests with random noise in the center, so the cap leaves margin for real-world print
+blur and camera angles. Images are processed in the browser (transparent margins trimmed,
+scaled to ≤512px; small SVGs kept as vector) and stored only in that browser's
+`localStorage`, never uploaded.
+
+**Scan check:** after every change the page decodes its own finished code — logo, colors and
+all — with jsQR (Apache-2.0, vendored at `qr/vendor/jsQR.js`, lazy-loaded) and says whether it
+reads back as exactly the intended content. It runs with `inversionAttempts: "dontInvert"`, so
+light-on-dark codes fail the check on purpose.
+
 **One-time setup (Cloudflare dashboard, needs your login):** `jaredluyster-com` Pages
 project → Custom domains → add `qr.jaredluyster.com`. Cloudflare creates the CNAME, which
 takes precedence over the zone's `*` wildcard. Until then the tool is reachable at
 `jaredluyster-com.pages.dev/qr/`.
 
 Tests: `node --test qr/tests/qr.test.js` (payload formats, version selection, overflow, SVG
-geometry). Never served (`/tests/` is 404'd by `functions/_middleware.ts`). Every payload
+geometry, and center logos decoded with jsQR at the size cap across versions 3–40). Never served (`/tests/` is 404'd by `functions/_middleware.ts`). Every payload
 type was also round-trip decoded with an independent decoder (jsQR) at all four
 error-correction levels when this was built.
 

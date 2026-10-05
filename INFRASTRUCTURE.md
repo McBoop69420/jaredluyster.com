@@ -615,11 +615,15 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   DEPLOY.md's "Tool subdomains" section). The custom domain is a one-time dashboard step —
   see DEPLOY.md's "QR Code Maker" section.
 - **Files served from:** [`qr/`](qr/index.html) — static frontend, no build step
-  (`index.html`, `qr.css`, `qr.js`, `payload.js`, `code.js`, `vendor/qrcode.js`, `robots.txt`).
+  (`index.html`, `qr.css`, `qr.js`, `payload.js`, `code.js`, `vendor/qrcode.js`,
+  `vendor/jsQR.js` + `vendor/jsQR-LICENSE.txt`, `robots.txt`).
 - **No backend, public (no Access).** Codes are generated in the browser and are *static*:
   the content itself is encoded in the pattern, with no redirect or short link that could
   lapse. The encoder is vendored (`qrcode-generator` 2.0.4, MIT) rather than CDN-loaded. A
   "Recent" list and the last draft live in the visitor's `localStorage` only.
+- **Center logo:** optional image or text badge in the middle, ≤30% of the code's width, with
+  error correction locked to High; a built-in scan check decodes every finished code with the
+  vendored jsQR and flags any that won't read. Details in DEPLOY.md's "QR Code Maker" section.
 - **Printing:** builds a print-only sheet of vector SVGs at a chosen physical size (1–7.25 in),
   one copy or tiled to fill a Letter/A4 page with dashed cut lines; warns when a dense code is
   printed below ~0.5 mm per module.
@@ -730,10 +734,11 @@ jaredluyster.com/
 ├── qr/                     # QR Code Maker (qr.jaredluyster.com) — static, never-expiring codes; download + print
 │   ├── index.html
 │   ├── qr.css
-│   ├── qr.js               # UI: preview, PNG/SVG export, print sheet, per-browser Recent list
+│   ├── qr.js               # UI: preview, center logo, scan check, PNG/SVG export, print sheet, per-browser Recent list
 │   ├── payload.js          # What each type encodes (URL, WIFI:, vCard, mailto:, tel:, SMSTO:) — pure, unit-tested
-│   ├── code.js             # Payload -> module matrix -> SVG (pure, unit-tested)
+│   ├── code.js             # Payload -> module matrix -> SVG, center-logo geometry (pure, unit-tested)
 │   ├── vendor/qrcode.js    # qrcode-generator 2.0.4 (MIT), vendored so the tool never depends on a CDN
+│   ├── vendor/jsQR.js      # jsQR 1.4.0 (Apache-2.0, license alongside) — the page's scan check + the tests' decoder
 │   ├── tests/              # qr.test.js — never served (middleware 404s /tests/)
 │   └── robots.txt
 ├── card-designer/          # Card designer tool
