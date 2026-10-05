@@ -193,6 +193,30 @@ Tests: `node --test redzone/tests/api.test.mjs` (auth + endpoint) and
 `node --test redzone/tests/bets.test.js` (grading). Neither is ever served (`/tests/` is 404'd by
 `functions/_middleware.ts`).
 
+## QR Code Maker (qr.jaredluyster.com)
+
+Make, download (PNG/SVG) and print QR codes for links, text, Wi-Fi logins, contact cards,
+email, phone and SMS. Static frontend in `qr/`, following the tool-subdomain pattern above
+(`qr` is in `SUBDOMAIN_ROOTS`). **No backend and no Access gate** — it holds nothing private,
+and every code is generated in the visitor's browser.
+
+**Why the codes never expire:** they're *static* — the payload (the URL, the `WIFI:` string,
+the vCard…) is encoded directly into the modules. There's no short link or redirect in
+between, which is what makes commercial "dynamic" codes die when a subscription lapses. The
+encoder (Kazuhiko Arase's `qrcode-generator`, MIT, v2.0.4) is vendored at
+`qr/vendor/qrcode.js` rather than loaded from a CDN, so the page itself keeps working too.
+Payload formats are in the header of `qr/payload.js`.
+
+**One-time setup (Cloudflare dashboard, needs your login):** `jaredluyster-com` Pages
+project → Custom domains → add `qr.jaredluyster.com`. Cloudflare creates the CNAME, which
+takes precedence over the zone's `*` wildcard. Until then the tool is reachable at
+`jaredluyster-com.pages.dev/qr/`.
+
+Tests: `node --test qr/tests/qr.test.js` (payload formats, version selection, overflow, SVG
+geometry). Never served (`/tests/` is 404'd by `functions/_middleware.ts`). Every payload
+type was also round-trip decoded with an independent decoder (jsQR) at all four
+error-correction levels when this was built.
+
 ## Roto multiplayer (the DraftRoom Durable Object)
 
 Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is

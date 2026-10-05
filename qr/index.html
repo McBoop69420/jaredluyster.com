@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="description" content="Make, download and print static QR codes. The data lives in the code itself, so they never expire." />
+<title>QR Codes — Jared Luyster</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%23131113'/%3E%3Cpath fill='%23f2971d' d='M1 1h3v3H1zM5 1h2v2H5zM1 5h2v2H1zM4 4h1v1H4zM5 5h2v2H5z'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../shared-theme.css" />
+<link rel="stylesheet" href="qr.css?v=1" />
+</head>
+<body>
+<div class="screen">
+<header class="qr-header">
+  <div class="qr-brand">
+    <span class="qr-mark" aria-hidden="true">QR</span>
+    <h1>Code Maker</h1>
+  </div>
+  <p class="tagline">Static codes: the data is printed into the code itself, so they never expire.</p>
+</header>
+
+<main class="qr-main">
+  <section class="panel panel-form" aria-label="What the code contains">
+    <div class="type-tabs" role="tablist" aria-label="Code type">
+      <button type="button" role="tab" data-type="url" aria-selected="true">Link</button>
+      <button type="button" role="tab" data-type="text" aria-selected="false">Text</button>
+      <button type="button" role="tab" data-type="wifi" aria-selected="false">Wi-Fi</button>
+      <button type="button" role="tab" data-type="contact" aria-selected="false">Contact</button>
+      <button type="button" role="tab" data-type="email" aria-selected="false">Email</button>
+      <button type="button" role="tab" data-type="phone" aria-selected="false">Phone</button>
+      <button type="button" role="tab" data-type="sms" aria-selected="false">SMS</button>
+    </div>
+
+    <form id="fields" autocomplete="off" onsubmit="return false">
+      <fieldset data-type="url">
+        <label class="field">
+          <span class="field-label">Link</span>
+          <input name="url" type="text" inputmode="url" placeholder="jaredluyster.com" spellcheck="false" />
+          <span class="field-hint">https:// is added if you leave it off. The code works as long as this page does.</span>
+        </label>
+      </fieldset>
+
+      <fieldset data-type="text" hidden>
+        <label class="field">
+          <span class="field-label">Text</span>
+          <textarea name="text" rows="5" placeholder="Anything — shown as plain text when scanned."></textarea>
+        </label>
+      </fieldset>
+
+      <fieldset data-type="wifi" hidden>
+        <label class="field">
+          <span class="field-label">Network name (SSID)</span>
+          <input name="ssid" type="text" spellcheck="false" />
+        </label>
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input name="password" type="text" spellcheck="false" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Security</span>
+            <select name="security">
+              <option value="WPA">WPA / WPA2 / WPA3</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None (open)</option>
+            </select>
+          </label>
+          <label class="check">
+            <input name="hidden" type="checkbox" />
+            <span>Hidden network</span>
+          </label>
+        </div>
+        <span class="field-hint">Scanning joins the network. If you change the password, print a new code.</span>
+      </fieldset>
+
+      <fieldset data-type="contact" hidden>
+        <div class="field-row">
+          <label class="field"><span class="field-label">First name</span><input name="first" type="text" /></label>
+          <label class="field"><span class="field-label">Last name</span><input name="last" type="text" /></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span class="field-label">Company</span><input name="org" type="text" /></label>
+          <label class="field"><span class="field-label">Title</span><input name="title" type="text" /></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span class="field-label">Phone</span><input name="phone" type="tel" /></label>
+          <label class="field"><span class="field-label">Email</span><input name="email" type="email" spellcheck="false" /></label>
+        </div>
+        <label class="field"><span class="field-label">Website</span><input name="website" type="text" inputmode="url" spellcheck="false" /></label>
+        <label class="field"><span class="field-label">Address</span><input name="address" type="text" /></label>
+        <label class="field"><span class="field-label">Note</span><input name="note" type="text" /></label>
+        <span class="field-hint">Scanning offers to save this as a new contact.</span>
+      </fieldset>
+
+      <fieldset data-type="email" hidden>
+        <label class="field"><span class="field-label">To</span><input name="to" type="email" spellcheck="false" /></label>
+        <label class="field"><span class="field-label">Subject</span><input name="subject" type="text" /></label>
+        <label class="field"><span class="field-label">Message</span><textarea name="body" rows="4"></textarea></label>
+        <span class="field-hint">Scanning opens a new email, filled in and ready to send.</span>
+      </fieldset>
+
+      <fieldset data-type="phone" hidden>
+        <label class="field">
+          <span class="field-label">Phone number</span>
+          <input name="number" type="tel" placeholder="+1 859 555 0123" />
+          <span class="field-hint">Include the country code (+1 in the US) so it dials from anywhere.</span>
+        </label>
+      </fieldset>
+
+      <fieldset data-type="sms" hidden>
+        <label class="field"><span class="field-label">Phone number</span><input name="number" type="tel" placeholder="+1 859 555 0123" /></label>
+        <label class="field"><span class="field-label">Message</span><textarea name="message" rows="3"></textarea></label>
+        <span class="field-hint">Scanning opens a new text message, ready to send.</span>
+      </fieldset>
+    </form>
+
+    <div class="style-group">
+      <h2 class="group-head">Style</h2>
+      <label class="field">
+        <span class="field-label">Caption <span class="field-optional">(optional, printed under the code)</span></span>
+        <input id="caption" type="text" maxlength="48" placeholder="Scan for the menu" />
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Error correction</span>
+          <select id="ecc">
+            <option value="L">Low — 7%, smallest code</option>
+            <option value="M" selected>Medium — 15%</option>
+            <option value="Q">Quartile — 25%</option>
+            <option value="H">High — 30%, survives scuffs</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Quiet border</span>
+          <select id="margin">
+            <option value="2">2 modules</option>
+            <option value="4" selected>4 modules (standard)</option>
+            <option value="6">6 modules</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-row colors">
+        <label class="color-field">
+          <input id="dark" type="color" value="#000000" />
+          <span>Code</span>
+        </label>
+        <label class="color-field">
+          <input id="light" type="color" value="#ffffff" />
+          <span>Background</span>
+        </label>
+        <button id="resetColors" class="link-btn" type="button">Black on white</button>
+      </div>
+      <p class="warn" id="colorWarn" hidden></p>
+    </div>
+  </section>
+
+  <section class="panel panel-preview" aria-label="Preview, download and print">
+    <div class="preview-card">
+      <div id="preview" class="preview"></div>
+      <p id="empty" class="preview-empty">Fill in the form to make a code.</p>
+    </div>
+    <p id="stats" class="stats" aria-live="polite"></p>
+    <p id="error" class="warn" hidden></p>
+
+    <div class="scans-as">
+      <span class="field-label">Scans as</span>
+      <pre id="encoded"></pre>
+    </div>
+
+    <div class="actions">
+      <button id="downloadPng" class="button button-primary" type="button" disabled>PNG</button>
+      <button id="downloadSvg" class="button button-secondary" type="button" disabled>SVG</button>
+      <button id="copyPng" class="button button-secondary" type="button" disabled hidden>Copy</button>
+    </div>
+
+    <div class="print-group">
+      <h2 class="group-head">Print</h2>
+      <div class="field-row three">
+        <label class="field">
+          <span class="field-label">Size</span>
+          <select id="printSize">
+            <option value="1">1 in</option>
+            <option value="1.5">1.5 in</option>
+            <option value="2" selected>2 in</option>
+            <option value="3">3 in</option>
+            <option value="4">4 in</option>
+            <option value="5">5 in</option>
+            <option value="6">6 in</option>
+            <option value="7.25">Full width</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Copies</span>
+          <select id="copies">
+            <option value="1">Just one</option>
+            <option value="fill">Fill the page</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Paper</span>
+          <select id="paper">
+            <option value="letter">Letter</option>
+            <option value="A4">A4</option>
+          </select>
+        </label>
+      </div>
+      <p id="printNote" class="field-hint"></p>
+      <button id="print" class="button button-primary print-btn" type="button" disabled>Print</button>
+    </div>
+  </section>
+</main>
+
+<section class="recent" id="recentSection" aria-label="Recent codes" hidden>
+  <div class="recent-head">
+    <h2 class="group-head">Recent</h2>
+    <span class="field-hint">Codes you downloaded or printed — saved in this browser only.</span>
+  </div>
+  <ul id="recentList" class="recent-list"></ul>
+</section>
+
+<footer class="qr-footer">
+  <p><strong>Why these never expire.</strong> Most "free QR code" sites hand you a code that points
+    at their own short link, then redirect it to you — and when the trial ends or the site shuts
+    down, the redirect stops and every printed copy goes dead. The codes made here hold the
+    actual link, text, Wi-Fi login or contact card in the pattern itself. Nothing is hosted,
+    tracked or counted, there's no account to lapse, and it all runs in your browser — the code
+    you print today will scan the same way in twenty years.</p>
+  <p>The one thing a static code can't change after it's printed is what it says, so a Link code
+    works as long as that web page stays up.</p>
+</footer>
+</div>
+
+<div id="printSheet" class="print-sheet" aria-hidden="true"></div>
+
+<script src="vendor/qrcode.js"></script>
+<script src="payload.js?v=1"></script>
+<script src="code.js?v=1"></script>
+<script src="qr.js?v=1"></script>
+</body>
+</html>

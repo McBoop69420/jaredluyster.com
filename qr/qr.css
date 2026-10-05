@@ -1,0 +1,463 @@
+/* QR Code Maker — layered on shared-theme.css's zine tokens. */
+
+[hidden] { display: none !important; }
+
+.qr-header {
+  padding: 24px min(5vw, 48px) 20px;
+  border-bottom: var(--border-w) solid var(--accent);
+}
+
+.qr-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 2px solid var(--paper);
+  box-shadow: 4px 4px 0 var(--paper);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.qr-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tagline {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.qr-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: 20px;
+  padding: 20px min(5vw, 48px);
+  align-items: start;
+  max-width: 1100px;
+}
+
+@media (max-width: 860px) {
+  .qr-main { grid-template-columns: minmax(0, 1fr); }
+}
+
+.panel {
+  background: var(--surface);
+  border: var(--border-w) solid var(--border);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.panel-preview {
+  position: sticky;
+  top: 16px;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 860px) {
+  .panel-preview { position: static; }
+}
+
+/* ---- Type tabs ---------------------------------------------------------- */
+
+.type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.type-tabs button {
+  padding: 7px 12px;
+  background: var(--bg);
+  border: 2px solid var(--paper);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.type-tabs button:hover { background: var(--paper); color: var(--ink); }
+
+.type-tabs button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+/* ---- Fields ------------------------------------------------------------- */
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.field-row > .field { flex: 1 1 0; }
+
+@media (max-width: 520px) {
+  .field-row:not(.colors) { flex-direction: column; align-items: stretch; }
+}
+
+.field-label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.field-optional {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+select,
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+textarea { resize: vertical; min-height: 4.5em; }
+
+select:focus,
+input:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.group-head {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+}
+
+.style-group,
+.print-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--muted);
+}
+
+.colors { align-items: center; flex-wrap: wrap; }
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.color-field input {
+  width: 40px;
+  height: 32px;
+  border: 2px solid var(--border);
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.warn {
+  margin: 0;
+  padding: 8px 10px;
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* ---- Preview ------------------------------------------------------------ */
+
+.preview-card {
+  position: relative;
+  background: var(--paper);
+  border: 2px solid var(--paper);
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+}
+
+.preview {
+  width: 100%;
+  max-width: 340px;
+  line-height: 0;
+}
+
+.preview svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  box-shadow: 0 0 0 1px rgba(19, 17, 19, 0.12);
+}
+
+.preview-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: #6b645b;
+  font-size: 0.95rem;
+}
+
+.preview.is-empty { opacity: 0.08; }
+
+.stats {
+  margin: -4px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.scans-as {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scans-as pre {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 7.5em;
+  overflow: auto;
+  background: var(--bg);
+  border: 2px solid #3a353a;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--paper);
+}
+
+.scans-as pre:empty::before { content: "—"; color: var(--muted); }
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actions .button { flex: 1 1 0; min-width: 84px; }
+
+.print-btn { width: 100%; }
+
+.field-row.three > .field { min-width: 0; }
+
+/* ---- Recent ------------------------------------------------------------- */
+
+.recent {
+  padding: 4px min(5vw, 48px) 20px;
+  max-width: 1100px;
+}
+
+.recent-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.recent-item {
+  position: relative;
+  background: var(--surface);
+  border: 2px solid var(--paper);
+}
+
+.recent-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recent-open:hover { background: #262226; }
+
+.recent-thumb {
+  background: var(--paper);
+  padding: 6px;
+  line-height: 0;
+}
+
+.recent-thumb svg { width: 100%; height: auto; }
+
+.recent-label {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-type {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.recent-remove {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.recent-remove:hover { background: var(--danger); color: var(--ink); }
+
+/* ---- Footer ------------------------------------------------------------- */
+
+.qr-footer {
+  margin-top: 12px;
+  padding: 20px min(5vw, 48px) 40px;
+  border-top: var(--border-w) solid var(--paper);
+  max-width: 1100px;
+}
+
+.qr-footer p {
+  margin: 0 0 10px;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.qr-footer strong { color: var(--paper); }
+
+/* ---- Print -------------------------------------------------------------- */
+
+.print-sheet { display: none; }
+
+@media print {
+  html, body { background: #fff !important; color: #000; min-height: 0; }
+  .screen { display: none !important; }
+
+  .print-sheet {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    gap: 0.25in;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-tile {
+    break-inside: avoid;
+    line-height: 0;
+  }
+
+  .print-tile svg { display: block; width: 100%; height: auto; }
+
+  /* Dashed cut guides only when the page is tiled. */
+  .print-sheet.tiled .print-tile { outline: 0.5pt dashed #bbb; outline-offset: 0.06in; }
+}

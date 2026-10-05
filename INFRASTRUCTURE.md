@@ -606,6 +606,25 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   every guard mutation-tested) and `node --test redzone/tests/bets.test.js` (grading); both live
   under `/tests/`, which `functions/_middleware.ts` 404s.
 
+### 7. QR Code Maker — Cloudflare Pages (folder, this repo)
+
+- **Purpose:** make, download (PNG/SVG) and print QR codes that never expire — links, text,
+  Wi-Fi logins, contact cards (vCard), email, phone, SMS. Added 2026-10-04.
+- **Subdomain:** `qr.jaredluyster.com` — added to `SUBDOMAIN_ROOTS` in
+  `functions/_middleware.ts`, same tool-subdomain pattern as `redzone`/`social` (see
+  DEPLOY.md's "Tool subdomains" section). The custom domain is a one-time dashboard step —
+  see DEPLOY.md's "QR Code Maker" section.
+- **Files served from:** [`qr/`](qr/index.html) — static frontend, no build step
+  (`index.html`, `qr.css`, `qr.js`, `payload.js`, `code.js`, `vendor/qrcode.js`, `robots.txt`).
+- **No backend, public (no Access).** Codes are generated in the browser and are *static*:
+  the content itself is encoded in the pattern, with no redirect or short link that could
+  lapse. The encoder is vendored (`qrcode-generator` 2.0.4, MIT) rather than CDN-loaded. A
+  "Recent" list and the last draft live in the visitor's `localStorage` only.
+- **Printing:** builds a print-only sheet of vector SVGs at a chosen physical size (1–7.25 in),
+  one copy or tiled to fill a Letter/A4 page with dashed cut lines; warns when a dense code is
+  printed below ~0.5 mm per module.
+- Tests: `node --test qr/tests/qr.test.js`, under `/tests/`, which `functions/_middleware.ts` 404s.
+
 ## Cloudflare Tunnel Configuration
 
 Tunnel configs live on JARED-SERVER (`C:\Users\Jared Server\.cloudflared\`); only one runs:
@@ -708,6 +727,15 @@ jaredluyster.com/
 │   ├── bets.js             # Bet tracker: grades stored bets against live scores (pure grading, unit-tested)
 │   ├── tests/              # bets.test.js (grading), api.test.mjs (auth/endpoint) — never served (middleware 404s /tests/)
 │   └── robots.txt
+├── qr/                     # QR Code Maker (qr.jaredluyster.com) — static, never-expiring codes; download + print
+│   ├── index.html
+│   ├── qr.css
+│   ├── qr.js               # UI: preview, PNG/SVG export, print sheet, per-browser Recent list
+│   ├── payload.js          # What each type encodes (URL, WIFI:, vCard, mailto:, tel:, SMSTO:) — pure, unit-tested
+│   ├── code.js             # Payload -> module matrix -> SVG (pure, unit-tested)
+│   ├── vendor/qrcode.js    # qrcode-generator 2.0.4 (MIT), vendored so the tool never depends on a CDN
+│   ├── tests/              # qr.test.js — never served (middleware 404s /tests/)
+│   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -743,6 +771,7 @@ this repo.
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 | `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |
 | `redzone.jaredluyster.com` | RedZone NCAAF board — live games ranked by closeness/urgency, network badges only (no video) | This repo (`redzone/`) + Access |
+| `qr.jaredluyster.com` | QR Code Maker — static codes that never expire; download PNG/SVG or print | This repo (`qr/`), public (no Access) |
 
 ## How to Work With This Repo
 
