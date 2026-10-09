@@ -460,6 +460,26 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   and the paper-bet ledger above it agree by construction. Rows are sorted by
   biggest disagreement with the market. It's MLB-only, so it shows under the
   "All" and "MLB" filters and hides for every other league.
+- **Team Context — ported from BettingEdge 2026-10-09.** Replaced the Betting page's
+  "Days Rest" panel (`#teamContext`). It brings the live-slate half of
+  [BettingEdge](https://github.com/McBoop69420/BettingEdge) (a local DuckDB + Electron app)
+  to the web: per team, a 0-100 fatigue score and tier (BettingEdge's
+  `sql/020_build_team_daily_fatigue_profile.sql` weights), days off, games in the last
+  3/7/10 days, road streak and road-trip day, next off day, days until it next plays at
+  another park, and today's starting lineup's average/median starts over the previous 10
+  days, plus BettingEdge's wave-1 "rest edge" flag (`src/db/wave1-fatigue-rule.mjs`), with
+  a date picker. The maths is [`sports/team-context.js`](sports/team-context.js) (DOM-free;
+  `tests/team-context.test.mjs`, mutation-tested, and cross-checked against BettingEdge's
+  own `compute-slate-metrics.mjs` on live data: 340 values over six 2026 dates, 0
+  mismatches). Everything is fetched client-side from `statsapi.mlb.com`. Lineup starts
+  come from batched fielding game logs (`gamesStarted`) rather than BettingEdge's
+  ~150 box-score downloads. Postponed games are not counted as games played (BettingEdge's
+  live path counts them). **Not ported:** the DuckDB historical tables (Retrosheet
+  2022-2025), the bet ledger/bankroll (needs a private store; RedZone already has one) and
+  the Python Model Lab. **Calibration note:** with BettingEdge's thresholds, 77% of 2026
+  team-games score "burnt" (an everyday schedule alone scores 79), and the wave-1 flag
+  fired 0 times in the 2026 season, so the flag is wired up but effectively silent until
+  the thresholds change in BettingEdge.
 - **Paper-bet ledger freshness — fixed 2026-09-06:** `export_betting_tracker.py`
   used to write to `McBoop Newspaper/public/sports/fake-bets.json`, which only
   ever reached the *old, dead* `mcboop-daily` sports route — never this project.
@@ -702,10 +722,11 @@ jaredluyster.com/
 │   └── robots.txt
 ├── sports/                 # Sports site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com — split 2026-09-14 into Games (root) and Betting (/betting/) pages, sharing sports.css/sports.js
 │   ├── index.html          # Games: Spotlight + per-league scoreboards/standings
-│   ├── betting/index.html  # Betting: MLB Value Screen (model vs market) + NFL Odds
-│   ├── model/index.html    # Static explainer for the betting panels' math/sources
+│   ├── betting/index.html  # Betting: MLB Team Context (BettingEdge port) + NFL Odds
+│   ├── models/index.html   # Models: MLB Value Screen (model vs market) + how it and NFL Odds work
 │   ├── sports.css
-│   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadValueScreen()/loadNflOdds() each gate on which page's DOM elements are present
+│   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadValueScreen()/loadTeamContext()/loadNflOdds() each gate on which page's DOM elements are present
+│   ├── team-context.js     # Team Context maths (pure, unit-tested in tests/team-context.test.mjs), loaded by betting/ only
 │   ├── _worker.js          # Pages Worker (advanced mode): proxies /api/odds, else falls through to assets — see §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt

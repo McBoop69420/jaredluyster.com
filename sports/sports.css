@@ -332,3 +332,22 @@ table.value-slate tr.value-starters td{padding:0 10px 8px;border-bottom:1px dott
 .call--none{background:var(--card);color:var(--muted)}
 .value-legend{margin:10px 0 0;font-size:.78rem;color:var(--muted);line-height:1.9}
 .value-legend .call{margin-right:4px}
+/* Team Context (Betting page) */
+.ctx-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ctx-controls input[type=date]{font-family:var(--font-body);font-size:.85rem;padding:4px 6px;border:2px solid var(--ink);background:var(--paper);color:var(--ink)}
+.ctx-btn{font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:5px 10px;border:2px solid var(--ink);background:var(--accent);color:var(--accent-ink);cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.ctx-btn:active{transform:translate(2px,2px);box-shadow:none}
+.value-empty .ctx-btn{margin-left:6px;font-style:normal}
+.ctx-flags{margin-top:10px;font-size:.85rem}
+.ctx-flags p{margin:4px 0}
+.ctx-flags .call{margin-right:6px}
+table.ctx-slate tr.ctx-away td:not(.ctx-match){border-bottom:none;padding-bottom:2px}
+table.ctx-slate tr.ctx-home td{padding-top:2px;border-bottom:2px solid var(--ink)}
+table.ctx-slate td.ctx-match{border-bottom:2px solid var(--ink);line-height:1.6}
+table.ctx-slate td.ctx-match .call{margin:2px 0}
+.ctx-hot{color:var(--live);font-weight:700}
+.tier{display:inline-block;padding:1px 7px;border:1px solid var(--ink);font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.tier--fresh{background:#e3f3ea;color:#1b8a3f}
+.tier--elevated{background:var(--card);color:var(--ink)}
+.tier--stressed{background:var(--highlight);color:#8a6414}
+.tier--burnt{background:#fdeaea;color:var(--live)}

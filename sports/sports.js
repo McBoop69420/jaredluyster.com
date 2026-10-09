@@ -247,8 +247,8 @@
   let valueScreenLoading = false;
   let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
   let nflOddsLoading = false;
-  let restDays = null;              // { games: [...], fetchedAt } — soft-factor tracker, no model
-  let restDaysLoading = false;
+  let teamCtx = null;               // { date, rows, nextDate } — soft-factor tracker, no model
+  let teamCtxLoading = false;
   // The Spotlight "more from your teams" cycling card: followed-team games
   // that don't hold their own Spotlight slot (finished today, or still more
   // than an hour from kickoff) rotate through this one slot instead of
@@ -2186,7 +2186,7 @@
       await refreshNflGamesForOdds();
     }
     renderValueScreen();
-    renderRestDays();
+    renderTeamContext();
     renderNflOdds();
     loadNflOdds(); // gamesByLeague("football/nfl") just refreshed above — pick up new/dropped games
     stamp();
@@ -2218,8 +2218,8 @@
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
         renderValueScreen();
         loadValueScreen();
-        renderRestDays();
-        loadRestDays();
+        renderTeamContext();
+        loadTeamContext();
         renderNflOdds();
         loadNflOdds();
         render();
@@ -2437,121 +2437,241 @@
     return games;
   }
 
-  // ---- MLB Days Rest (soft factor, no model) -----------------------------
-  // Lives on the Betting page (the Value Screen model itself is on Models)
-  // — this doesn't feed the model, it's just a schedule-fatigue fact worth
-  // tracking alongside it. One range fetch over the trailing week covers
-  // every team's last game date at once, so no per-team API calls needed.
-  const REST_WINDOW_DAYS = 8; // deep enough to bridge a normal off-day or two
+  // ---- MLB Team Context (soft factors, no model) --------------------------
+  // Lives on the Betting page. A port of BettingEdge's live slate
+  // (github.com/McBoop69420/BettingEdge): schedule fatigue, road trips, next
+  // off day and travel, lineup workload, and its wave-1 fatigue/rest flag. The
+  // maths is in team-context.js (DOM-free, unit-tested); this part fetches,
+  // caches and draws it. Doesn't feed the MLB model on Models.
+  //
+  // Three kinds of request per load, all statsapi.mlb.com (CORS-open):
+  //   1. one schedule range, 30 days back to 21 ahead, trimmed with `fields`
+  //      (~190 KB) — history for fatigue/road trips, future for off days/travel
+  //   2. the chosen day's schedule with team abbreviations and posted lineups
+  //   3. fielding game logs for every posted starter, 40 players a request, to
+  //      count starts in the 10 days before — BettingEdge downloads every box
+  //      score in that window instead (~150 games, ~25 MB), too heavy for a page.
+  const TEAM_CTX_FIELDS = "dates,date,games,gamePk,gameType,gameDate,officialDate,status,detailedState," +
+    "codedGameState,teams,away,home,team,id,name,venue,gameNumber";
+  const STARTS_CHUNK = 40;
+  const startsCache = new Map();   // date + "|" + playerId -> starts in the 10 days before date
+  let teamCtxDate = null;          // the date picker's value; null = today (ET)
+  let teamCtxSeq = 0;              // only the newest load may draw
 
-  function dateStrAddDays(dateStr, delta) {
-    const d = new Date(dateStr + "T00:00:00Z");
-    d.setUTCDate(d.getUTCDate() + delta);
-    return d.toISOString().slice(0, 10);
-  }
+  function teamCtxDay() { return teamCtxDate || etTodayStr(); }
 
-  async function computeRestDays() {
-    const today = etTodayStr();
-    const startDate = dateStrAddDays(today, -REST_WINDOW_DAYS);
-    const sched = await fetchJSON(STATS + "/schedule?sportId=1&startDate=" + startDate +
-      "&endDate=" + today + "&hydrate=team");
-
-    const lastGame = new Map(); // teamId -> most recent game date before today
-    const todayGames = [];
-    for (const day of (sched && sched.dates) || []) {
-      const gameDate = day.date;
-      for (const g of day.games || []) {
-        const away = g.teams.away.team || {}, home = g.teams.home.team || {};
-        if (gameDate === today) {
-          todayGames.push({
-            away: away.name || "", home: home.name || "",
-            awayAbbr: away.abbreviation || "", homeAbbr: home.abbreviation || "",
-            awayId: away.id, homeId: home.id,
-          });
-          continue;
-        }
-        if (gameDate > today) continue;
-        [away, home].forEach(team => {
-          if (team.id == null) return;
-          const prev = lastGame.get(team.id);
-          if (!prev || gameDate > prev) lastGame.set(team.id, gameDate);
-        });
-      }
-    }
-
-    // Days since that team's last game, minus 1 — played yesterday (1 day
-    // apart) means a true back-to-back, i.e. 0 days of rest in between.
-    function restFor(teamId) {
-      const last = lastGame.get(teamId);
-      if (last == null) return null; // no prior game in the window
-      const days = Math.round((Date.parse(today) - Date.parse(last)) / 86400000);
-      return days - 1;
-    }
-
-    return todayGames.map(g => ({
-      away: g.away, home: g.home, awayAbbr: g.awayAbbr, homeAbbr: g.homeAbbr,
-      awayRest: restFor(g.awayId), homeRest: restFor(g.homeId),
+  async function fetchStarts(date, ids) {
+    const TC = window.TeamContext;
+    const missing = ids.filter(id => !startsCache.has(date + "|" + id));
+    const from = TC.addDays(date, -TC.LINEUP_WINDOW_DAYS), to = TC.addDays(date, -1);
+    const chunks = [];
+    for (let i = 0; i < missing.length; i += STARTS_CHUNK) chunks.push(missing.slice(i, i + STARTS_CHUNK));
+    await Promise.all(chunks.map(async chunk => {
+      const json = await fetchJSON(STATS + "/people?personIds=" + chunk.join(",") +
+        "&hydrate=stats(group=[fielding],type=[gameLog],startDate=" + from + ",endDate=" + to +
+        ",gameType=[" + TC.COUNTED_GAME_TYPES.join(",") + "])" +
+        "&fields=people,id,stats,splits,stat,gamesStarted,game,gamePk");
+      if (!json) return; // leave them uncounted; the next refresh retries
+      TC.startsFromPeople(json).forEach((n, id) => startsCache.set(date + "|" + id, n));
     }));
+    const starts = new Map();
+    ids.forEach(id => {
+      const n = startsCache.get(date + "|" + id);
+      if (n != null) starts.set(id, n);
+    });
+    return starts;
   }
 
-  function restDaysRowsHtml() {
-    const games = restDays && restDays.games;
+  async function computeTeamContext(date) {
+    const TC = window.TeamContext;
+    const from = TC.addDays(date, -TC.HISTORY_DAYS), to = TC.addDays(date, TC.FUTURE_DAYS);
+    const [rangeJson, dayJson] = await Promise.all([
+      fetchJSON(STATS + "/schedule?sportId=1&startDate=" + from + "&endDate=" + to + "&fields=" + TEAM_CTX_FIELDS),
+      fetchJSON(STATS + "/schedule?sportId=1&date=" + date + "&hydrate=team,lineups"),
+    ]);
+    if (!rangeJson || !dayJson) throw new Error("MLB schedule unavailable");
+    const games = TC.scheduleGames(rangeJson);
+    const slate = TC.scheduleGames(dayJson);
+    const ids = [...new Set(slate.flatMap(g => (g.awayLineup || []).concat(g.homeLineup || [])).map(p => p.id))];
+    const starts = ids.length ? await fetchStarts(date, ids) : new Map();
+    const next = games.find(g => g.date > date && !g.off);
+    return { date, rows: TC.buildSlate(games, slate, date, starts), nextDate: next ? next.date : null };
+  }
+
+  function fmtDay(date, weekday) {
+    const opts = { timeZone: "UTC", month: "short", day: "numeric" };
+    if (weekday) opts.weekday = "short";
+    return new Date(date + "T12:00:00Z").toLocaleDateString("en-US", opts);
+  }
+
+  function fmtStartEt(iso) {
+    if (!iso) return "TBD";
+    return new Date(iso).toLocaleTimeString("en-US",
+      { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+  }
+
+  const TIER_NOTE = {
+    burnt: "70+: no rest and a packed week",
+    stressed: "45 to 69",
+    elevated: "25 to 44",
+    fresh: "under 25: rested",
+  };
+
+  function teamCtxSideCells(row, s, isAway) {
+    const abbr = isAway ? row.game.awayAbbr : row.game.homeAbbr;
+    const team = "<strong>" + esc(abbr) + '</strong> <span class="value-note">' + (isAway ? "away" : "home") + "</span>";
+    const f = s.fatigue;
+    if (!f) {
+      return "<td>" + team + '</td><td colspan="7" class="value-note">' +
+        (row.game.off ? esc(row.game.status) : "—") + "</td>";
+    }
+    const fatigue = '<span class="tier tier--' + f.tier + '" title="' + TIER_NOTE[f.tier] + '">' +
+      f.score + " " + f.tier + "</span>";
+    let rest = f.offDays == null ? "—" : f.offDays === 0
+      ? '0 <span class="value-note">(back-to-back)</span>' : String(f.offDays);
+    if (f.gamesToday >= 2) rest += ' <span class="value-note">· DH today</span>';
+    const recent = f.gamesPrev3d + " / " + f.gamesPrev7d + " / " + s.games10d;
+    const road = isAway
+      ? f.roadStreak + (f.roadStreak === 1 ? " game" : " games") +
+        (s.roadDays != null ? ' <span class="value-note">· day ' + s.roadDays + "</span>" : "")
+      : '<span class="value-note">home</span>';
+    const off = s.nextOff
+      ? fmtDay(s.nextOff.date) + ' <span class="value-note">(+' + s.nextOff.inDays + ")</span>"
+      : '<span class="value-note">none in 21d</span>';
+    const travel = !s.travel ? '<span class="value-note">none scheduled</span>'
+      : s.travel.inDays === 0 ? '<span class="ctx-hot">after tonight</span>'
+      : "in " + s.travel.inDays + "d";
+    const lineup = s.lineup && s.lineup.mean != null
+      ? "avg " + s.lineup.mean.toFixed(1) + ' <span class="value-note">· med ' + s.lineup.median + "</span>"
+      : '<span class="value-note">' + (s.lineup ? "starts unavailable" : "not posted") + "</span>";
+    return "<td>" + team + "</td><td>" + fatigue + "</td><td>" + rest + "</td><td>" + recent + "</td><td>" +
+      road + "</td><td>" + off + "</td><td>" + travel + "</td><td>" + lineup + "</td>";
+  }
+
+  function teamCtxRowsHtml() {
+    const games = teamCtx && teamCtx.rows;
     if (!games) {
-      return '<tr><td colspan="3" class="value-empty">' +
-        (restDaysLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
-        "</td></tr>";
+      return '<tr><td colspan="9" class="value-empty">' +
+        (teamCtxLoading ? "Loading slate&hellip;" : "MLB schedule unavailable right now.") + "</td></tr>";
     }
     if (!games.length) {
-      return '<tr><td colspan="3" class="value-empty">No MLB games scheduled today.</td></tr>';
+      const next = teamCtx.nextDate
+        ? ' <button type="button" class="ctx-btn" data-ctx-date="' + teamCtx.nextDate + '">Next slate: ' +
+          fmtDay(teamCtx.nextDate, true) + " &rarr;</button>"
+        : " None in the next three weeks either.";
+      return '<tr><td colspan="9" class="value-empty">No MLB games on ' + fmtDay(teamCtx.date, true) + "." +
+        next + "</td></tr>";
     }
-    function cell(rest) {
-      if (rest == null) return "—";
-      return rest <= 0 ? '<span class="value-note">' + rest + " (back-to-back)</span>" : String(rest);
+    return games.map(row => {
+      const g = row.game;
+      const notes = [];
+      if (g.off) notes.push('<span class="value-note">' + esc(g.status) + "</span>");
+      if (row.flag) {
+        const abbr = row.flag.side === "away" ? g.awayAbbr : g.homeAbbr;
+        notes.push('<span class="call call--value" title="Wave-1 fatigue/rest rule">Rest edge ' + esc(abbr) + "</span>");
+      }
+      if (row.travelFlag) {
+        notes.push('<span class="value-note">only ' + esc(row.travelFlag === "away" ? g.awayAbbr : g.homeAbbr) +
+          " travels after tonight</span>");
+      }
+      if (row.lineupEdge != null) {
+        notes.push('<span class="value-note">lineup starts A&minus;H ' + (row.lineupEdge > 0 ? "+" : "") +
+          row.lineupEdge.toFixed(1) + "</span>");
+      }
+      const match = '<td rowspan="2" class="ctx-match"><strong>' + esc(g.awayAbbr) + " @ " + esc(g.homeAbbr) +
+        '</strong><br><span class="value-note">' + fmtStartEt(g.start) +
+        (g.gameNumber > 1 ? " · game " + g.gameNumber : "") + "</span>" +
+        (notes.length ? "<br>" + notes.join("<br>") : "") + "</td>";
+      return '<tr class="ctx-away">' + match + teamCtxSideCells(row, row.away, true) + "</tr>" +
+        '<tr class="ctx-home">' + teamCtxSideCells(row, row.home, false) + "</tr>";
+    }).join("");
+  }
+
+  function teamCtxFlagsHtml() {
+    const rows = (teamCtx && teamCtx.rows) || [];
+    const flagged = rows.filter(r => r.flag);
+    if (!flagged.length) {
+      return rows.length ? '<p class="value-note">No rest-edge flags on this slate. The rule needs a burnt team ' +
+        "(70+) against a fresh one (under 25) holding at least " +
+        window.TeamContext.WAVE1_MIN_REST_ADVANTAGE_DAYS + " more days of rest, which is rare: an " +
+        "ordinary run of daily games already scores 79, and a team only reads fresh after two or more " +
+        "days off.</p>" : "";
     }
-    return games.map(r => {
-      const match = "<strong>" + esc(r.awayAbbr) + " @ " + esc(r.homeAbbr) + "</strong>";
-      return "<tr><td>" + match + "</td><td>" + cell(r.awayRest) + "</td><td>" + cell(r.homeRest) +
-        "</td></tr>";
+    const days = f => (f.offDays == null ? "?" : f.offDays) + (f.offDays === 1 ? " day off" : " days off");
+    return flagged.map(r => {
+      const g = r.game;
+      const away = { abbr: g.awayAbbr, f: r.away.fatigue }, home = { abbr: g.homeAbbr, f: r.home.fatigue };
+      const pick = r.flag.side === "away" ? away : home, fade = r.flag.side === "away" ? home : away;
+      return '<p><span class="call call--value">' + esc(pick.abbr) + " ML</span> " +
+        esc(pick.abbr) + " fresh (" + pick.f.score + ", " + days(pick.f) + ") vs " +
+        esc(fade.abbr) + " burnt (" + fade.f.score + ", " + days(fade.f) + ") &middot; +" +
+        r.flag.restAdvantageDays + " days rest advantage</p>";
     }).join("");
   }
 
   // Same "rides along with the MLB filter" rule as the Value Screen.
-  function restDaysVisible() {
+  function teamCtxVisible() {
     return activeFilter === "all" || activeFilter === "baseball/mlb";
   }
 
-  function renderRestDays() {
-    const panel = $("#restDays");
+  function renderTeamContext() {
+    const panel = $("#teamContext");
     if (!panel) return;
-    const visible = restDaysVisible();
+    const visible = teamCtxVisible();
     panel.style.display = visible ? "" : "none";
     if (!visible) return;
 
-    $("#restDaysBody").innerHTML = restDaysRowsHtml();
-    const meta = $("#restDaysMeta");
-    const games = restDays && restDays.games;
-    if (!games) {
-      meta.textContent = restDaysLoading ? "Loading slate…" : "Slate unavailable";
+    const input = $("#teamCtxDate");
+    if (input && document.activeElement !== input) input.value = teamCtxDay();
+    $("#teamCtxBody").innerHTML = teamCtxRowsHtml();
+    $("#teamCtxFlags").innerHTML = teamCtxFlagsHtml();
+    const meta = $("#teamCtxMeta");
+    const rows = teamCtx && teamCtx.rows;
+    if (!rows) {
+      meta.textContent = teamCtxLoading ? "Loading slate…" : "Slate unavailable";
       return;
     }
-    const b2b = games.filter(g => g.awayRest === 0 || g.homeRest === 0).length;
-    meta.textContent = games.length + " games · " + b2b + " on a back-to-back";
+    const sides = rows.flatMap(r => [r.away.fatigue, r.home.fatigue]).filter(Boolean);
+    const b2b = sides.filter(f => f.offDays === 0).length;
+    const flags = rows.filter(r => r.flag).length;
+    meta.textContent = fmtDay(teamCtx.date, true) + " · " + rows.length + (rows.length === 1 ? " game · " : " games · ") +
+      b2b + " on a back-to-back · " + flags + (flags === 1 ? " flag" : " flags");
   }
 
-  async function loadRestDays() {
-    if (!$("#restDays")) return; // panel doesn't exist on this page (e.g. Games)
-    if (restDaysLoading || !restDaysVisible()) return;
-    restDaysLoading = true;
-    renderRestDays();
+  async function loadTeamContext() {
+    if (!$("#teamContext")) return; // panel doesn't exist on this page (e.g. Games)
+    if (!teamCtxVisible() || !window.TeamContext) return;
+    const date = teamCtxDay();
+    const seq = ++teamCtxSeq;
+    if (teamCtx && teamCtx.date !== date) teamCtx = null; // never show another day's slate under this date
+    teamCtxLoading = true;
+    renderTeamContext();
     try {
-      const games = await computeRestDays();
-      restDays = { games, fetchedAt: Date.now() };
+      const result = await computeTeamContext(date);
+      if (seq === teamCtxSeq) teamCtx = result;
     } catch (e) {
-      // Keep showing the last good slate rather than blanking the panel.
+      // Keep showing the last good slate for this date rather than blanking the panel.
     } finally {
-      restDaysLoading = false;
+      if (seq === teamCtxSeq) teamCtxLoading = false;
     }
-    renderRestDays();
+    if (seq === teamCtxSeq) renderTeamContext();
+  }
+
+  function setTeamCtxDate(date) {
+    teamCtxDate = !date || date === etTodayStr() ? null : date;
+    loadTeamContext();
+  }
+
+  function bindTeamContext() {
+    const panel = $("#teamContext");
+    if (!panel) return;
+    const input = $("#teamCtxDate");
+    input.addEventListener("change", () => { if (input.value) setTeamCtxDate(input.value); });
+    panel.addEventListener("click", e => {
+      const btn = e.target.closest("[data-ctx-date]");
+      if (!btn) return;
+      setTeamCtxDate(btn.dataset.ctxDate === "today" ? null : btn.dataset.ctxDate);
+    });
   }
 
   function callClass(call) {
@@ -2833,12 +2953,12 @@
   }
 
   // Odds and season stats move on the order of minutes, not seconds, so the
-  // betting panels (MLB Value Screen, Days Rest, NFL Odds) get their own slow
+  // betting panels (MLB Value Screen, Team Context, NFL Odds) get their own slow
   // timer rather than riding the score loops.
   function scheduleValueScreenRefresh() {
     if (valueTimer) clearInterval(valueTimer);
     valueTimer = setInterval(() => {
-      if (!document.hidden) { loadValueScreen(); loadRestDays(); loadNflOdds(); }
+      if (!document.hidden) { loadValueScreen(); loadTeamContext(); loadNflOdds(); }
     }, VALUE_REFRESH_MS);
   }
 
@@ -2861,13 +2981,14 @@
     buildFilters();
     const refreshBtn = $("#refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", async () => {
-      await Promise.all([render(), loadValueScreen(), loadRestDays(), loadNflOdds()]);
+      await Promise.all([render(), loadValueScreen(), loadTeamContext(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
     });
+    bindTeamContext();
     loadValueScreen();
-    loadRestDays();
+    loadTeamContext();
     render();
     scheduleRefresh();
     scheduleValueScreenRefresh();

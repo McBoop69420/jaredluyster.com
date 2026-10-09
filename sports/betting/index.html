@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Betting-adjacent tracking: MLB days of rest and other soft factors, plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
+<meta name="description" content="Betting-adjacent tracking: MLB team context (fatigue, rest, road trips, travel, lineup workload), plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
 <title>Sports — Betting</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=55">
+<link rel="stylesheet" href="/sports.css?v=56">
 </head>
 <body>
 <article class="paper">
@@ -35,30 +35,52 @@
     <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
   </div>
 
-  <section class="value-screen" id="restDays" aria-labelledby="restDaysTitle">
+  <section class="value-screen" id="teamContext" aria-labelledby="teamCtxTitle">
     <header class="value-screen-head">
       <div>
         <div class="value-screen-kicker">Soft factors</div>
-        <h2 id="restDaysTitle">Days Rest</h2>
+        <h2 id="teamCtxTitle">Team Context</h2>
       </div>
-      <div class="value-screen-meta" id="restDaysMeta">Loading slate&hellip;</div>
+      <div class="value-screen-meta" id="teamCtxMeta">Loading slate&hellip;</div>
     </header>
     <div class="value-explain">
-      <p>Days of rest for each team in today's slate &mdash; 0 means a true back-to-back (played
-        yesterday, no day off in between). Doesn't feed the MLB model on <a href="/models/">Models</a>;
-        it's tracked here on its own as a situational factor worth weighing alongside it.</p>
+      <p>How worn down each MLB team is going into a game: rest, recent workload, road trips,
+        when they next get a day off or travel, and how often today's starting lineup has played lately.
+        Ported from BettingEdge. Doesn't feed the MLB model on <a href="/models/">Models</a>; it's a
+        situational read to weigh alongside it.</p>
+      <p><strong>Fatigue</strong> scores schedule load from 0 to 100: no day off (+25, or +10 for one),
+        games in the last 3 days (up to +22) and 7 days (up to +22), a doubleheader today (+22),
+        playing yesterday (+10, +18 after a doubleheader), and 3+ or 6+ straight road games (+8 / +16).
+        <span class="tier tier--fresh">fresh</span> under 25,
+        <span class="tier tier--elevated">elevated</span> 25&ndash;44,
+        <span class="tier tier--stressed">stressed</span> 45&ndash;69,
+        <span class="tier tier--burnt">burnt</span> 70+.
+        A <span class="call call--value">Rest edge</span> flag marks a fresh team facing a burnt one with
+        at least 2 more days of rest.</p>
     </div>
+    <div class="ctx-controls">
+      <label for="teamCtxDate">Slate</label>
+      <input type="date" id="teamCtxDate">
+      <button type="button" class="ctx-btn" data-ctx-date="today">Today</button>
+    </div>
+    <div class="ctx-flags" id="teamCtxFlags"></div>
     <div class="value-slate-wrap">
-      <table class="value-slate">
+      <table class="value-slate ctx-slate">
         <thead>
-          <tr><th>Match (ET)</th><th>Away rest</th><th>Home rest</th></tr>
+          <tr><th>Match (ET)</th><th>Team</th><th>Fatigue</th><th>Days off</th><th>Games 3d / 7d / 10d</th>
+            <th>Road trip</th><th>Next off</th><th>Travels</th><th>Lineup starts (10d)</th></tr>
         </thead>
-        <tbody id="restDaysBody">
-          <tr><td colspan="3" class="value-empty">Loading live slate&hellip;</td></tr>
+        <tbody id="teamCtxBody">
+          <tr><td colspan="9" class="value-empty">Loading slate&hellip;</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="value-legend">days since each team's last game, MLB schedule via statsapi.mlb.com</p>
+    <p class="value-legend">
+      Days off: 0 is a back-to-back &middot; road trip: straight road games and the day of the trip
+      &middot; travels: when the team next plays at a different park &middot; lineup starts: average and
+      median starts over the previous 10 days for today's announced starting batters
+      &middot; MLB schedule, lineups and game logs via statsapi.mlb.com
+    </p>
   </section>
 
   <section class="value-screen" id="nflOdds" aria-labelledby="nflOddsTitle">
@@ -91,6 +113,7 @@
       Looking for scores and standings? See <a href="/">Games</a>.</p>
   </footer>
 </article>
-<script src="/sports.js?v=76"></script>
+<script src="/team-context.js?v=1"></script>
+<script src="/sports.js?v=77"></script>
 </body>
 </html>
