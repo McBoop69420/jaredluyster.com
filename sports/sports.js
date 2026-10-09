@@ -2797,8 +2797,9 @@
   // build one from, and BetExplorer (the MLB market source) has no NFL/
   // American football section at all. Odds instead come straight from ESPN's
   // own summary endpoint (site.api.espn.com, CORS-open, confirmed — the same
-  // host every other fetch on this page already uses), which carries a
-  // DraftKings moneyline via `pickcenter`. Games come from gamesByLeague
+  // host every other fetch on this page already uses), which carries
+  // DraftKings' moneyline, spread and total via `pickcenter`. `spread` is the
+  // home team's line (-7.5 = home favored by 7.5). Games come from gamesByLeague
   // (already fetched for the NFL board section) rather than a second
   // schedule call.
   function formatAmericanOdds(value) {
@@ -2812,6 +2813,15 @@
     return odds > 0 ? 100 / (odds + 100) * 100 : Math.abs(odds) / (Math.abs(odds) + 100) * 100;
   }
 
+  // The favorite and its line ("JAX -7.5"), "PK" for a pick'em; falls back to
+  // ESPN's own label when the number is missing.
+  function formatSpread(market, awayAbbr, homeAbbr) {
+    const spread = market.spread == null || market.spread === "" ? NaN : Number(market.spread);
+    if (!Number.isFinite(spread)) return market.details && market.details !== "EVEN" ? String(market.details) : null;
+    if (spread === 0) return "PK";
+    return (spread < 0 ? homeAbbr : awayAbbr) + " −" + Math.abs(spread);
+  }
+
   async function computeNflOdds() {
     const games = (gamesByLeague.get("football/nfl") || []).filter(g => g.state !== "post");
     const rows = await Promise.all(games.map(async g => {
@@ -2822,6 +2832,13 @@
       const summary = await fetchJSON(ESPN + "football/nfl/summary?event=" + g.eventId);
       const market = summary && summary.pickcenter && summary.pickcenter[0];
       if (!market) return row;
+      row.spread = formatSpread(market, g.away.abbr, g.home.abbr);
+      const total = Number(market.overUnder);
+      if (Number.isFinite(total) && total > 0) {
+        row.total = String(total);
+        row.overOdds = formatAmericanOdds(market.overOdds);
+        row.underOdds = formatAmericanOdds(market.underOdds);
+      }
       row.awayMl = formatAmericanOdds(market.awayTeamOdds && market.awayTeamOdds.moneyLine);
       row.homeMl = formatAmericanOdds(market.homeTeamOdds && market.homeTeamOdds.moneyLine);
       const aImp = americanImpliedPercent(row.awayMl);
@@ -2843,21 +2860,26 @@
   function nflOddsRowsHtml() {
     const games = nflOdds && nflOdds.games;
     if (!games) {
-      return '<tr><td colspan="3" class="value-empty">' +
+      return '<tr><td colspan="5" class="value-empty">' +
         (nflOddsLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
         "</td></tr>";
     }
     if (!games.length) {
-      return '<tr><td colspan="3" class="value-empty">No NFL games this week.</td></tr>';
+      return '<tr><td colspan="5" class="value-empty">No NFL games this week.</td></tr>';
     }
     return games.map(r => {
       const match = "<strong>" + esc(r.away) + " @ " + esc(r.home) + "</strong>" +
         (r.time ? ' <span class="value-note">' + esc(r.time) + "</span>" : "");
-      if (!r.awayMl) {
-        return "<tr><td>" + match + '</td><td colspan="2" class="value-note">no market line yet</td></tr>';
+      if (!r.awayMl && !r.spread && !r.total) {
+        return "<tr><td>" + match + '</td><td colspan="4" class="value-note">no market line yet</td></tr>';
       }
-      return "<tr><td>" + match + "</td><td>" + esc(r.awayMl) + "/" + esc(r.homeMl) + "</td><td>" +
-        (r.awayPct != null ? esc(r.awayPct) + "/" + esc(r.homePct) : "—") + "</td></tr>";
+      const total = r.total
+        ? "O/U " + esc(r.total) + (r.overOdds && r.underOdds
+          ? ' <span class="value-note">(' + esc(r.overOdds) + "/" + esc(r.underOdds) + ")</span>" : "")
+        : "—";
+      return "<tr><td>" + match + "</td><td>" + (r.awayMl ? esc(r.awayMl) + "/" + esc(r.homeMl) : "—") + "</td><td>" +
+        (r.awayPct != null ? esc(r.awayPct) + "/" + esc(r.homePct) : "—") + "</td><td>" +
+        (r.spread ? esc(r.spread) : "—") + "</td><td>" + total + "</td></tr>";
     }).join("");
   }
 
@@ -2880,7 +2902,7 @@
       meta.textContent = nflOddsLoading ? "Loading slate…" : "Slate unavailable";
       return;
     }
-    const priced = games.filter(g => g.awayMl).length;
+    const priced = games.filter(g => g.awayMl || g.spread || g.total).length;
     meta.textContent = games.length + " games · " + priced + " priced";
   }
 
