@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Betting-adjacent tracking: MLB team context (fatigue, rest, road trips, travel, lineup workload), plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
+<meta name="description" content="Betting-adjacent tracking: expert picks consensus from Action Network and CBS Sports, MLB team context (fatigue, rest, road trips, travel, lineup workload), plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
 <title>Sports — Betting</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=56">
+<link rel="stylesheet" href="/sports.css?v=57">
 </head>
 <body>
 <article class="paper">
@@ -34,6 +34,47 @@
   <div class="board-toolbar">
     <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
   </div>
+
+  <section class="value-screen" id="expertPicks" aria-labelledby="expertPicksTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Consensus</div>
+        <h2 id="expertPicksTitle">Expert Picks</h2>
+      </div>
+      <div class="value-screen-meta" id="expertPicksMeta">Loading picks&hellip;</div>
+    </header>
+    <div class="value-explain">
+      <p>Who the published handicappers are on for the day's games, gathered from
+        <a href="https://www.actionnetwork.com/nfl/picks" rel="noopener">Action Network</a> (40-odd bettors and
+        writers posting tracked picks) and
+        <a href="https://www.cbssports.com/nfl/picks/experts/" rel="noopener">CBS Sports</a> (its staff picking every
+        NFL and top college game against the spread and straight up). Each column counts the experts on each side;
+        <strong>Winner</strong> combines straight-up and moneyline picks. Open a game to see who picked what, the line
+        they took and their record. Props and quarter or half picks aren't counted.</p>
+    </div>
+    <div class="ctx-controls">
+      <label for="expertPicksDate">Day</label>
+      <input type="date" id="expertPicksDate">
+      <button type="button" class="ctx-btn" data-picks-date="today">Today</button>
+    </div>
+    <div class="ctx-flags" id="expertPicksFlags"></div>
+    <div class="value-slate-wrap">
+      <table class="value-slate picks-slate">
+        <thead>
+          <tr><th>Match (ET)</th><th>Spread</th><th>Winner</th><th>Total</th><th>Experts</th></tr>
+        </thead>
+        <tbody id="expertPicksBody">
+          <tr><td colspan="5" class="value-empty">Loading picks&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">
+      Counts are experts per side, majority first, with the line most of them took
+      &middot; <span class="call call--value">Strong lean</span> = 5+ experts on a spread or total with at least 75% on one side
+      &middot; &#10003;/&#10007; once the game is graded &middot; records: Action Network last 30 days (all sports, with ROI),
+      CBS season to date &middot; NFL, NCAAF, MLB and NCAAM; picks refresh every 10 minutes
+    </p>
+  </section>
 
   <section class="value-screen" id="teamContext" aria-labelledby="teamCtxTitle">
     <header class="value-screen-head">
@@ -115,6 +156,7 @@
   </footer>
 </article>
 <script src="/team-context.js?v=1"></script>
-<script src="/sports.js?v=78"></script>
+<script src="/expert-picks.js?v=1"></script>
+<script src="/sports.js?v=79"></script>
 </body>
 </html>

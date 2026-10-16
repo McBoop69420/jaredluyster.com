@@ -2216,6 +2216,8 @@
         activeFilter = key;
         try { localStorage.setItem(FILTER_STORAGE_KEY, key); } catch (e) { /* private mode, etc. */ }
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
+        renderExpertPicks();
+        loadExpertPicks();
         renderValueScreen();
         loadValueScreen();
         renderTeamContext();
@@ -2922,6 +2924,217 @@
     renderNflOdds();
   }
 
+  // ---- Expert Picks (consensus, no model) ---------------------------------
+  // Picks come from /api/picks (sports/_worker.js), which merges Action
+  // Network's expert feed with CBS Sports' staff picks server-side (CBS is HTML
+  // only and both payloads are far bigger than what the panel needs). The
+  // consensus maths is sports/expert-picks.js. One request per league; under
+  // "All" every supported league loads and gets its own block.
+  const PICKS_LEAGUES = [
+    { key: "football/nfl", api: "nfl", label: "NFL" },
+    { key: "football/college-football", api: "ncaaf", label: "NCAAF" },
+    { key: "baseball/mlb", api: "mlb", label: "MLB" },
+    { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM" },
+  ];
+  let expertPicks = null;          // { date, leagues: [{ league, data }] }
+  let expertPicksLoading = false;
+  let expertPicksDate = null;      // the date picker's value; null = today (ET)
+  let expertPicksSeq = 0;          // only the newest load may draw
+  const expertPicksOpen = new Set(); // game ids whose pick list is expanded
+
+  function expertPicksDay() { return expertPicksDate || etTodayStr(); }
+
+  function expertPicksLeagues() {
+    return activeFilter === "all" ? PICKS_LEAGUES : PICKS_LEAGUES.filter(l => l.key === activeFilter);
+  }
+
+  function expertPicksVisible() {
+    return expertPicksLeagues().length > 0;
+  }
+
+  const resultMark = r => r === "win" ? ' <span class="picks-win" title="won">&#10003;</span>'
+    : r === "loss" ? ' <span class="picks-loss" title="lost">&#10007;</span>'
+    : r === "push" ? ' <span class="value-note" title="push">push</span>' : "";
+
+  function picksConsensusCell(c) {
+    if (!c) return '<td class="value-note">—</td>';
+    const [a, b] = c.sides;
+    const score = a.count + "–" + b.count;
+    if (!c.leader) return '<td>Split <span class="value-note">' + score + "</span></td>";
+    const pct = Math.round(c.share * 100);
+    return "<td><strong>" + esc(c.leader.label) + "</strong> " + '<span class="value-note">' + score + "</span>" +
+      resultMark(c.leader.result) +
+      '<span class="picks-bar" title="' + pct + '% of experts"><i style="width:' + pct + '%"></i></span></td>';
+  }
+
+  function picksDetailHtml(s) {
+    const blocks = window.ExpertPicks.MARKETS.map(m => {
+      const c = s.markets[m];
+      if (!c) return "";
+      const sides = c.sides.filter(side => side.count).map(side => {
+        const names = side.picks.map(p => {
+          const bits = [];
+          if (p.market === "spread" && p.line != null && p.line !== side.line) bits.push(window.ExpertPicks.formatLine(p.line));
+          if (p.market === "total" && p.line != null && p.line !== side.line) bits.push(String(p.line));
+          if (p.odds != null) bits.push((p.odds > 0 ? "+" : "") + p.odds);
+          bits.push(p.src === "CBS Sports" ? "CBS" : "AN");
+          if (p.rec) bits.push(p.rec + (p.recLabel ? " " + p.recLabel : ""));
+          return "<li>" + esc(p.expert) + resultMark(p.result) +
+            ' <span class="value-note">' + esc(bits.join(" · ")) + "</span></li>";
+        }).join("");
+        return '<div class="picks-side"><strong>' + esc(side.label) + "</strong> " +
+          '<span class="value-note">(' + side.count + ")</span><ul>" + names + "</ul></div>";
+      }).join("");
+      return '<div class="picks-market"><h4>' + esc(c.label) + "</h4>" + sides + "</div>";
+    }).join("");
+    const props = s.game.props
+      ? '<p class="value-note">+' + s.game.props + " prop, team-total and partial-game " +
+        (s.game.props === 1 ? "pick" : "picks") + " on Action Network not counted.</p>"
+      : "";
+    return '<tr class="picks-detail"><td colspan="5"><div class="picks-detail-inner"><div class="picks-markets">' + blocks +
+      "</div>" + props + "</div></td></tr>";
+  }
+
+  function picksGameTime(g) {
+    if (g.status === "complete") return "Final";
+    if (g.status === "inprogress") return "Live";
+    return g.start ? fmtStartEt(g.start) : (g.time || "");
+  }
+
+  function expertPicksSummaries(entry) {
+    const games = (entry.data && entry.data.games) || [];
+    return games.filter(g => g.picks && g.picks.length).map(g => window.ExpertPicks.summarizeGame(g));
+  }
+
+  function expertPicksRowsHtml() {
+    const leagues = expertPicks && expertPicks.leagues;
+    if (!leagues) {
+      return '<tr><td colspan="5" class="value-empty">' +
+        (expertPicksLoading ? "Loading picks&hellip;" : "Picks unavailable right now.") + "</td></tr>";
+    }
+    const many = leagues.length > 1;
+    let html = "";
+    let shown = 0;
+    for (const entry of leagues) {
+      const games = (entry.data && entry.data.games) || [];
+      const summaries = expertPicksSummaries(entry);
+      if (many && !summaries.length) continue;
+      if (many) html += '<tr class="picks-league"><td colspan="5">' + esc(entry.league.label) + "</td></tr>";
+      if (!entry.data) {
+        html += '<tr><td colspan="5" class="value-empty">Couldn\'t load ' + esc(entry.league.label) + " picks.</td></tr>";
+        continue;
+      }
+      if (!summaries.length) {
+        html += '<tr><td colspan="5" class="value-empty">' + (games.length
+          ? "No expert picks posted yet for " + games.length + (games.length === 1 ? " game" : " games") + " on this day."
+          : "No " + esc(entry.league.label) + " games on this day.") + "</td></tr>";
+        continue;
+      }
+      for (const s of summaries) {
+        const g = s.game;
+        const open = expertPicksOpen.has(g.id);
+        const time = picksGameTime(g);
+        html += "<tr><td><strong>" + esc(g.away.abbr) + " @ " + esc(g.home.abbr) + "</strong>" +
+          (time ? ' <span class="value-note">' + esc(time) + "</span>" : "") + "</td>" +
+          picksConsensusCell(s.markets.spread) + picksConsensusCell(s.markets.ml) + picksConsensusCell(s.markets.total) +
+          '<td><button type="button" class="picks-toggle" data-picks-game="' + esc(g.id) + '" aria-expanded="' + open + '">' +
+          s.experts + (s.experts === 1 ? " expert" : " experts") + (open ? " ▾" : " ▸") + "</button></td></tr>";
+        if (open) html += picksDetailHtml(s);
+        shown++;
+      }
+      const quiet = games.length - summaries.length;
+      if (quiet > 0) {
+        html += '<tr><td colspan="5" class="value-note">+' + quiet + " more " + esc(entry.league.label) +
+          (quiet === 1 ? " game" : " games") + " with no expert picks</td></tr>";
+      }
+    }
+    if (!shown && many) {
+      return '<tr><td colspan="5" class="value-empty">No expert picks posted for this day yet.</td></tr>';
+    }
+    return html;
+  }
+
+  function expertPicksFlagsHtml() {
+    const leagues = (expertPicks && expertPicks.leagues) || [];
+    const leans = window.ExpertPicks.strongLeans(leagues.flatMap(expertPicksSummaries)).slice(0, 8);
+    return leans.map(({ game, consensus: c }) => {
+      const pct = Math.round(c.share * 100);
+      return '<p><span class="call call--value">' + esc(c.leader.label) + "</span> " +
+        esc(game.away.abbr) + " @ " + esc(game.home.abbr) + " &middot; " + c.leader.count + " of " + c.count +
+        " experts (" + pct + "%) &middot; " + esc(c.label.toLowerCase()) + resultMark(c.leader.result) + "</p>";
+    }).join("");
+  }
+
+  function renderExpertPicks() {
+    const panel = $("#expertPicks");
+    if (!panel) return;
+    const visible = expertPicksVisible();
+    panel.style.display = visible ? "" : "none";
+    if (!visible) return;
+
+    const input = $("#expertPicksDate");
+    if (input && document.activeElement !== input) input.value = expertPicksDay();
+    $("#expertPicksBody").innerHTML = expertPicksRowsHtml();
+    $("#expertPicksFlags").innerHTML = expertPicks ? expertPicksFlagsHtml() : "";
+    const meta = $("#expertPicksMeta");
+    if (!expertPicks) {
+      meta.textContent = expertPicksLoading ? "Loading picks…" : "Picks unavailable";
+      return;
+    }
+    const summaries = expertPicks.leagues.flatMap(expertPicksSummaries);
+    const picks = summaries.reduce((n, s) => n + s.picks, 0);
+    const down = expertPicks.leagues.flatMap(e => Object.entries((e.data && e.data.sources) || {}))
+      .filter(([, s]) => !s.ok).map(([k]) => k === "cbs" ? "CBS" : "Action Network");
+    meta.textContent = fmtDay(expertPicks.date, true) + " · " + summaries.length +
+      (summaries.length === 1 ? " game · " : " games · ") + picks + (picks === 1 ? " pick" : " picks") +
+      (down.length ? " · " + [...new Set(down)].join(", ") + " unavailable" : "");
+  }
+
+  async function loadExpertPicks() {
+    if (!$("#expertPicks")) return; // panel doesn't exist on this page (e.g. Games)
+    if (!expertPicksVisible() || !window.ExpertPicks) return;
+    const date = expertPicksDay();
+    const leagues = expertPicksLeagues();
+    const seq = ++expertPicksSeq;
+    // Never show another day's (or another filter's) picks under this one.
+    if (expertPicks && (expertPicks.date !== date || expertPicks.leagues.length !== leagues.length ||
+      expertPicks.leagues.some((e, i) => e.league !== leagues[i]))) expertPicks = null;
+    expertPicksLoading = true;
+    renderExpertPicks();
+    try {
+      const results = await Promise.all(leagues.map(league =>
+        fetchJSON("/api/picks?league=" + league.api + "&date=" + date)));
+      if (seq === expertPicksSeq && results.some(Boolean)) {
+        expertPicks = { date, leagues: leagues.map((league, i) => ({ league, data: results[i] })) };
+      }
+    } finally {
+      if (seq === expertPicksSeq) expertPicksLoading = false;
+    }
+    if (seq === expertPicksSeq) renderExpertPicks();
+  }
+
+  function setExpertPicksDate(date) {
+    expertPicksDate = !date || date === etTodayStr() ? null : date;
+    loadExpertPicks();
+  }
+
+  function bindExpertPicks() {
+    const panel = $("#expertPicks");
+    if (!panel) return;
+    const input = $("#expertPicksDate");
+    input.addEventListener("change", () => { if (input.value) setExpertPicksDate(input.value); });
+    panel.addEventListener("click", e => {
+      const day = e.target.closest("[data-picks-date]");
+      if (day) { setExpertPicksDate(day.dataset.picksDate === "today" ? null : day.dataset.picksDate); return; }
+      const toggle = e.target.closest("[data-picks-game]");
+      if (!toggle) return;
+      const id = toggle.dataset.picksGame;
+      if (expertPicksOpen.has(id)) expertPicksOpen.delete(id);
+      else expertPicksOpen.add(id);
+      renderExpertPicks();
+    });
+  }
+
   // ---- Adaptive score refresh -------------------------------------------
   function filteredLeagues() {
     return activeFilter === "all" ? LEAGUES : LEAGUES.filter(league => league.key === activeFilter);
@@ -2975,12 +3188,12 @@
   }
 
   // Odds and season stats move on the order of minutes, not seconds, so the
-  // betting panels (MLB Value Screen, Team Context, NFL Odds) get their own slow
+  // betting panels (Expert Picks, MLB Value Screen, Team Context, NFL Odds) get their own slow
   // timer rather than riding the score loops.
   function scheduleValueScreenRefresh() {
     if (valueTimer) clearInterval(valueTimer);
     valueTimer = setInterval(() => {
-      if (!document.hidden) { loadValueScreen(); loadTeamContext(); loadNflOdds(); }
+      if (!document.hidden) { loadExpertPicks(); loadValueScreen(); loadTeamContext(); loadNflOdds(); }
     }, VALUE_REFRESH_MS);
   }
 
@@ -3003,12 +3216,14 @@
     buildFilters();
     const refreshBtn = $("#refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", async () => {
-      await Promise.all([render(), loadValueScreen(), loadTeamContext(), loadNflOdds()]);
+      await Promise.all([render(), loadExpertPicks(), loadValueScreen(), loadTeamContext(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
     });
     bindTeamContext();
+    bindExpertPicks();
+    loadExpertPicks();
     loadValueScreen();
     loadTeamContext();
     render();

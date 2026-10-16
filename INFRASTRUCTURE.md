@@ -440,6 +440,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   whole site, not just `/api/odds`. Hence the blanket `try/catch` inside
   `handleOdds` and the unconditional ASSETS fallthrough at the bottom of the
   file. Smoke-test with `npx wrangler pages dev sports` before pushing.
+  A second route, `/api/picks`, was added 2026-10-16 for Expert Picks (below).
 - **Content:** pulls live scoreboards/standings **client-side from ESPN's public
   API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
   Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
@@ -480,6 +481,29 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   team-games score "burnt" (an everyday schedule alone scores 79), and the wave-1 flag
   fired 0 times in the 2026 season, so the flag is wired up but effectively silent until
   the thresholds change in BettingEdge.
+- **Expert Picks — added 2026-10-16.** The Betting page's first panel (`#expertPicks`):
+  for one day's games (date picker, ET), how many published experts are on each side of
+  the spread, the winner (straight-up and moneyline picks combined) and the total, with
+  a strong-lean callout (5+ experts on a spread or total, 75%+ on one side) and a
+  per-game list of who picked what, at what line, with their record. Leagues: NFL,
+  NCAAF, MLB, NCAAM, following the league filter (all four under "All").
+  `sports/_worker.js`'s `/api/picks?league=&date=` builds it server-side from two
+  sources: **Action Network** (`api.actionnetwork.com/web/v2/scoreboard/picks/<league>`,
+  the JSON behind actionnetwork.com/<league>/picks: ~40-50 bettors and writers, each
+  with a last-30-days record and ROI; weekly leagues need `week=&seasonType=`, looked
+  up from the response's own `calendar_info`) and **CBS Sports** (the HTML
+  `cbssports.com/{nfl,college-football}/picks/experts/` ATS table plus that week's
+  `straight-up/<week>/` page: the same 7-9 staff writers on every game). CBS rows are
+  matched to Action Network games by abbreviation or team slug (the two disagree on
+  JAX/JAC); an unmatched CBS row still shows as its own game. Only full-game picks
+  count; props, team totals and quarter/half picks are just tallied. Edge-cached 10
+  minutes (1 minute if both sources failed). Action Network's NCAAF payload is ~1.6 MB
+  even with `bookIds=15`, which is why this runs in the worker instead of the browser.
+  Consensus maths: [`sports/expert-picks.js`](sports/expert-picks.js) (DOM-free);
+  `tests/expert-picks.test.mjs` covers it plus the worker's parsers and merge.
+  **Rejected:** Pickwatch (nflpickwatch.com, the biggest aggregator) serves its picks
+  from a private API behind a paid subscription; ESPN's expert picks page answers
+  scripted requests with an empty 202.
 - **Paper-bet ledger freshness — fixed 2026-09-06:** `export_betting_tracker.py`
   used to write to `McBoop Newspaper/public/sports/fake-bets.json`, which only
   ever reached the *old, dead* `mcboop-daily` sports route — never this project.
@@ -722,12 +746,13 @@ jaredluyster.com/
 │   └── robots.txt
 ├── sports/                 # Sports site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com — split 2026-09-14 into Games (root) and Betting (/betting/) pages, sharing sports.css/sports.js
 │   ├── index.html          # Games: Spotlight + per-league scoreboards/standings
-│   ├── betting/index.html  # Betting: MLB Team Context (BettingEdge port) + NFL Odds
+│   ├── betting/index.html  # Betting: Expert Picks + MLB Team Context (BettingEdge port) + NFL Odds
 │   ├── models/index.html   # Models: MLB Value Screen (model vs market) + how it and NFL Odds work
 │   ├── sports.css
-│   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadValueScreen()/loadTeamContext()/loadNflOdds() each gate on which page's DOM elements are present
+│   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadExpertPicks()/loadValueScreen()/loadTeamContext()/loadNflOdds() each gate on which page's DOM elements are present
 │   ├── team-context.js     # Team Context maths (pure, unit-tested in tests/team-context.test.mjs), loaded by betting/ only
-│   ├── _worker.js          # Pages Worker (advanced mode): proxies /api/odds, else falls through to assets — see §4b
+│   ├── expert-picks.js     # Expert Picks consensus maths (pure, unit-tested in tests/expert-picks.test.mjs), loaded by betting/ only
+│   ├── _worker.js          # Pages Worker (advanced mode): /api/odds and /api/picks, else falls through to assets — see §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)
@@ -792,7 +817,7 @@ this repo.
 | `bcs.jaredluyster.com` | BCS marketing site staging | Cloudflare Pages, connected to `bcs-website` repo (separate project) |
 | `radio.jaredluyster.com` | Radio stream + player | Self-hosted (Cloudflare Tunnel) |
 | `news.jaredluyster.com` | McBoop newspaper (live weather, traffic & headlines) | Cloudflare Pages project `mcboop-daily` (source: `news/` in this repo) + Access |
-| `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: MLB value screen, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
+| `sports.jaredluyster.com` | McBoop Sports — Games (`/`) + Betting (`/betting/`: expert picks, MLB team context, NFL odds) | Separate Cloudflare Pages project `mcboop-sports`, Git-integrated to this repo (root dir `sports/`, auto-deploys on push to `main`) + Access |
 | `calendar.jaredluyster.com` | Calendar & Day Plan | Same Pages project `mcboop-daily`, routed via `news/_worker.js` (source: `calendar/` in this repo) + Access |
 | `bluegrasscybersecurity.com` | BCS website | Separate (Namecheap) |
 | `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |

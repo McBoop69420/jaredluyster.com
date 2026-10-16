@@ -2,14 +2,16 @@
 // Sports — Pages Worker (advanced mode)
 //
 // sports.jaredluyster.com is otherwise a plain static Pages project; this file
-// exists for exactly one reason: the value screen needs BetExplorer moneylines,
-// and the browser cannot fetch betexplorer.com (no CORS header). Everything
-// that isn't /api/odds falls straight through to the static assets, so a change
-// here can only affect that one route.
+// exists for two routes the browser can't do itself: /api/odds (the value
+// screen's BetExplorer moneylines; betexplorer.com has no CORS header) and
+// /api/picks (Expert Picks: CBS's picks are HTML-only, and Action Network's
+// JSON is megabytes per league before trimming). Everything else falls
+// straight through to the static assets, so a change here can only affect
+// those two routes.
 //
 // Be careful editing this: in advanced mode a worker that throws takes down the
-// WHOLE site, not just /api/odds — hence the blanket try/catch inside
-// handleOdds and the unconditional ASSETS fallthrough at the bottom.
+// WHOLE site, not just one route — hence the blanket try/catch around each
+// handler and the unconditional ASSETS fallthrough at the bottom.
 // `npx wrangler pages dev sports` is the cheap way to smoke-test it.
 // ---------------------------------------------------------------------------
 
@@ -193,6 +195,365 @@ async function handleOdds(request, url) {
   return response;
 }
 
+// ---------------------------------------------------------------------------
+// Expert picks — /api/picks
+// What published handicappers are picking on one day's games, from two
+// sources merged per game:
+//   - Action Network: api.actionnetwork.com/web/v2/scoreboard/picks/<league>,
+//     the JSON behind actionnetwork.com/<league>/picks. Every game with each
+//     expert's posted picks (~40-50 experts, mostly bettors/writers, each with
+//     a last-30-days record). Daily leagues take ?date=YYYYMMDD; weekly ones
+//     (NFL, NCAAF) return the current week unless given ?week=&seasonType=,
+//     which we look up in the response's own calendar_info.
+//   - CBS Sports: cbssports.com/<nfl|college-football>/picks/experts/, an HTML
+//     table where the same 7-9 staff writers pick every game of the week
+//     against the spread, plus a straight-up page for the same week.
+// Only full-game spread, moneyline/straight-up and total picks are kept; props,
+// team totals and quarter/half picks are just counted (`props`). Call:
+// /api/picks?league=nfl|ncaaf|mlb|ncaab&date=YYYY-MM-DD (ET; default today ET).
+// Returns { league, date, fetchedAt, sources, games: [{ id, start, status,
+// time, away, home, props, picks: [{ src, expert, market, side, line, odds,
+// result, rec, recLabel }] }] }. A source that fails is reported in `sources`
+// and the other still shows; nothing here may throw past handlePicks.
+// ---------------------------------------------------------------------------
+const PICKS_CACHE_SECONDS = 600;
+const PICKS_FAIL_CACHE_SECONDS = 60;
+const PICKS_LEAGUES = {
+  nfl: { an: "nfl", cbs: "nfl", weekly: true },
+  ncaaf: { an: "ncaaf", cbs: "college-football", weekly: true },
+  mlb: { an: "mlb" },
+  ncaab: { an: "ncaab" },
+};
+const AN_PICKS_URL = "https://api.actionnetwork.com/web/v2/scoreboard/picks/";
+const CBS_PICKS_URL = "https://www.cbssports.com/";
+
+const ET_DATE = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+});
+function etDateOf(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : ET_DATE.format(d);
+}
+
+function num(v) {
+  const n = typeof v === "number" ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+const AN_TYPES = {
+  spread_away: ["spread", "away"], spread_home: ["spread", "home"],
+  ml_away: ["ml", "away"], ml_home: ["ml", "home"],
+  over: ["total", "over"], under: ["total", "under"],
+};
+
+function anPick(p) {
+  const kind = p && p.period === "game" && AN_TYPES[p.type];
+  if (!kind) return null;
+  const [market, side] = kind;
+  return {
+    src: "Action Network", market, side,
+    line: market === "ml" ? null : num(p.value),
+    odds: num(p.odds),
+    result: p.result === "win" || p.result === "loss" || p.result === "push" ? p.result : null,
+  };
+}
+
+function anRecord(r) {
+  if (!r || !Number.isFinite(r.win) || !Number.isFinite(r.loss)) return null;
+  let rec = r.win + "-" + r.loss + (r.push ? "-" + r.push : "");
+  if (Number.isFinite(r.roi)) rec += " (" + (r.roi > 0 ? "+" : "") + Math.round(r.roi) + "% ROI)";
+  return rec;
+}
+
+function anTeam(t) {
+  return { abbr: t.abbr, name: t.full_name || t.display_name || t.abbr, slug: t.url_slug || null };
+}
+
+// Action Network scoreboard JSON -> games on `date` (ET) with their side picks.
+export function normalizeActionNetwork(data, date) {
+  const games = [];
+  for (const g of (data && data.games) || []) {
+    if (!g || !g.start_time || etDateOf(g.start_time) !== date) continue;
+    const teams = {};
+    for (const t of g.teams || []) teams[t.id] = t;
+    const away = teams[g.away_team_id], home = teams[g.home_team_id];
+    if (!away || !home) continue;
+    const game = {
+      id: "an" + g.id, start: g.start_time, status: g.status || null, time: null,
+      away: anTeam(away), home: anTeam(home), props: 0, picks: [],
+    };
+    const seen = new Set();
+    for (const e of g.experts || []) {
+      for (const p of e.picks || []) {
+        const pick = anPick(p);
+        if (!pick) { game.props++; continue; }
+        // One pick per expert per market and side (a re-post at a new line
+        // would otherwise count twice in the consensus).
+        const k = e.id + "|" + pick.market + "|" + pick.side;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        pick.expert = e.name;
+        pick.rec = anRecord(e.record);
+        pick.recLabel = pick.rec ? "last 30 days" : null;
+        game.picks.push(pick);
+      }
+    }
+    games.push(game);
+  }
+  return games;
+}
+
+// The calendar entry (week + season type) whose window holds `date`, so a
+// weekly league can be asked for a week other than the current one.
+export function anWeekFor(league, date) {
+  const cal = league && league.calendar_info;
+  if (!cal) return null;
+  const t = Date.parse(date + "T16:00:00Z"); // midday ET
+  for (const seasonType of ["reg", "post", "pre"]) {
+    for (const w of cal[seasonType] || []) {
+      const a = Date.parse(w.startDate), b = Date.parse(w.endDate);
+      if (t >= a && t <= b) return { week: w.week, seasonType };
+    }
+  }
+  return null;
+}
+
+function decodeEntities(s) {
+  return s.replace(/&amp;/g, "&").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, " ");
+}
+
+// One CBS expert-picks table (ATS or straight-up page) -> experts in column
+// order plus a row per game: { date, awayCode, homeCode, awayAbbr, homeAbbr,
+// time, picks: [{ expert, code, slug, text, line, result }] }. Codes are the
+// CBS ids in the gametracker link (JAC, NWEST); abbrs are the displayed ones.
+export function parseCbsPicks(html) {
+  const out = { experts: [], rows: [] };
+  const start = html.indexOf("TableExpertPicks");
+  if (start < 0) return out;
+  const end = html.indexOf("</table>", start);
+  const table = html.slice(start, end < 0 ? undefined : end);
+  const bodyAt = table.indexOf("<tbody");
+  const head = table.slice(0, bodyAt < 0 ? undefined : bodyAt);
+  const names = [...head.matchAll(/AuthorHeadshotAndName-firstName">([^<]*)<\/span>\s*<span class="AuthorHeadshotAndName-lastName">([^<]*)</g)];
+  const records = [...head.matchAll(/TableExpertPicks-overallRecords">\s*Overall:\s*([\d-]+)/g)];
+  out.experts = names.map((m, i) => ({
+    name: decodeEntities((m[1].trim() + " " + m[2].trim()).trim()),
+    record: records[i] ? records[i][1] : null,
+  }));
+  if (bodyAt < 0) return out;
+  for (const row of table.slice(bodyAt).split('<tr class="TableBase-bodyTr').slice(1)) {
+    const g = row.match(/\/gametracker\/[a-z]+\/[A-Z]+_(\d{4})(\d{2})(\d{2})_([^@/"]+)@([^/"]+)\//);
+    if (!g) continue;
+    const abbrs = [...row.matchAll(/GameMatchup-teamAbbr">\s*([^<]*?)\s*</g)].map(m => m[1]);
+    const status = row.match(/GameMatchup-gameStatus--status">\s*([^<]*?)\s*</);
+    const r = {
+      date: g[1] + "-" + g[2] + "-" + g[3], awayCode: g[4], homeCode: g[5],
+      awayAbbr: abbrs[0] || g[4], homeAbbr: abbrs[1] || g[5],
+      time: status && status[1] ? status[1] : null, picks: [],
+    };
+    const cells = row.split("<td ").slice(2); // [0] is the row's own tail, [1] the matchup
+    cells.forEach((cell, i) => {
+      const team = cell.match(/\/teams\/([^/"]+)\/([^/"]+)\//);
+      if (!team || !out.experts[i]) return;
+      const text = cell.match(/(?:BetButton-text|TableExpertPicks-pick)">\s*([^<]*?)\s*</);
+      const line = cell.match(/"line":"([^"]*)"/);
+      const badge = cell.match(/TableExpertPicks-badge--(win|loss|push)/);
+      r.picks.push({
+        expert: i, code: team[1], slug: team[2],
+        text: text ? decodeEntities(text[1]) : "",
+        line: line ? num(line[1]) : null,
+        result: badge ? badge[1] : null,
+      });
+    });
+    out.rows.push(r);
+  }
+  return out;
+}
+
+function slugTokens(s) {
+  return new Set(String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+}
+
+// How well a CBS row's team (abbr + any slug seen in a pick) fits an Action
+// Network team. CBS and Action Network share most abbreviations (not JAX/JAC)
+// and most team slugs, so either one agreeing is a match.
+function teamFit(abbr, slug, t) {
+  let s = 0;
+  if (abbr && t.abbr && abbr.toUpperCase() === t.abbr.toUpperCase()) s += 2;
+  if (slug && t.slug) {
+    if (slug === t.slug) s += 2;
+    else {
+      const a = slugTokens(slug), b = slugTokens(t.slug);
+      let shared = 0;
+      for (const x of a) if (b.has(x)) shared++;
+      if (shared >= 2) s += 1;
+    }
+  }
+  return s;
+}
+
+// Folds CBS's ATS and straight-up tables into `games` (Action Network's list
+// for the same date): matched rows add their picks to that game, unmatched
+// rows on `date` become games of their own. Returns the number of picks added.
+export function mergeCbs(games, date, tables) {
+  let added = 0;
+  const byKey = new Map();
+  for (const { market, parsed } of tables) {
+    for (const row of parsed.rows) {
+      if (row.date !== date) continue;
+      const key = row.awayCode + "@" + row.homeCode;
+      let entry = byKey.get(key);
+      if (!entry) {
+        entry = { row, slugs: {}, picks: [] };
+        byKey.set(key, entry);
+      }
+      for (const p of row.picks) {
+        const side = p.code === row.awayCode ? "away" : p.code === row.homeCode ? "home" : null;
+        if (!side) continue;
+        entry.slugs[side] = p.slug;
+        const expert = parsed.experts[p.expert];
+        let line = market === "spread" ? p.line : null;
+        if (market === "spread" && line == null) {
+          const m = p.text.match(/([+-]\d+(?:\.\d+)?)\s*$/);
+          line = m ? num(m[1]) : /\bPK\b|\bEVEN\b/i.test(p.text) ? 0 : null;
+        }
+        entry.picks.push({
+          src: "CBS Sports", market, side, line, odds: null, result: p.result,
+          expert: expert.name, rec: expert.record,
+          recLabel: expert.record ? (market === "spread" ? "season ATS" : "season straight up") : null,
+        });
+      }
+    }
+  }
+  for (const { row, slugs, picks } of byKey.values()) {
+    let best = null, bestScore = 0;
+    for (const g of games) {
+      const a = teamFit(row.awayAbbr, slugs.away, g.away);
+      const h = teamFit(row.homeAbbr, slugs.home, g.home);
+      if (!a || !h) continue;
+      if (a + h > bestScore) { best = g; bestScore = a + h; }
+    }
+    if (!best || bestScore < 3) {
+      best = {
+        id: "cbs" + row.date + row.awayCode + row.homeCode, start: null, status: null, time: row.time,
+        away: { abbr: row.awayAbbr, name: row.awayAbbr, slug: slugs.away || null },
+        home: { abbr: row.homeAbbr, name: row.homeAbbr, slug: slugs.home || null },
+        props: 0, picks: [],
+      };
+      games.push(best);
+    }
+    best.picks.push(...picks);
+    added += picks.length;
+  }
+  return added;
+}
+
+async function fetchWithTimeout(url, accept) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": ODDS_UA, Accept: accept },
+      signal: ctrl.signal,
+    });
+    return res.ok ? res : null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function fetchActionNetwork(cfg, date) {
+  const base = AN_PICKS_URL + cfg.an + "?bookIds=15";
+  let res = await fetchWithTimeout(base + "&date=" + date.replace(/-/g, ""), "application/json");
+  if (!res) return null;
+  let data = await res.json();
+  let games = normalizeActionNetwork(data, date);
+  if (cfg.weekly && !games.length) {
+    const wk = anWeekFor(data.league, date);
+    const current = data.league && data.league.current_week;
+    if (wk && wk.week !== current) {
+      res = await fetchWithTimeout(base + "&week=" + wk.week + "&seasonType=" + wk.seasonType, "application/json");
+      if (res) games = normalizeActionNetwork(await res.json(), date);
+    }
+  }
+  return games;
+}
+
+async function fetchCbs(cfg) {
+  const atsUrl = CBS_PICKS_URL + cfg.cbs + "/picks/experts/";
+  const atsRes = await fetchWithTimeout(atsUrl, "text/html");
+  if (!atsRes) return null;
+  const atsHtml = await atsRes.text();
+  const tables = [{ market: "spread", parsed: parseCbsPicks(atsHtml) }];
+  // The straight-up page only exists per week; the ATS page links this week's.
+  const su = atsHtml.match(new RegExp("/" + cfg.cbs + "/picks/experts/straight-up/(\\d+)/"));
+  if (su) {
+    const suRes = await fetchWithTimeout(atsUrl + "straight-up/" + su[1] + "/", "text/html");
+    if (suRes) tables.push({ market: "ml", parsed: parseCbsPicks(await suRes.text()) });
+  }
+  return tables;
+}
+
+function todayEt() {
+  return ET_DATE.format(new Date());
+}
+
+export async function buildPicks(leagueKey, date) {
+  const cfg = PICKS_LEAGUES[leagueKey];
+  const sources = {};
+  const [anGames, cbsTables] = await Promise.all([
+    fetchActionNetwork(cfg, date).catch(() => null),
+    cfg.cbs ? fetchCbs(cfg).catch(() => null) : Promise.resolve(undefined),
+  ]);
+  const games = anGames || [];
+  sources.actionNetwork = { ok: anGames != null, picks: games.reduce((n, g) => n + g.picks.length, 0) };
+  if (cbsTables !== undefined) {
+    sources.cbs = { ok: cbsTables != null, picks: cbsTables ? mergeCbs(games, date, cbsTables) : 0 };
+  }
+  games.sort((a, b) => (a.start ? Date.parse(a.start) : Infinity) - (b.start ? Date.parse(b.start) : Infinity));
+  for (const g of games) {
+    delete g.away.slug;
+    delete g.home.slug;
+  }
+  return { league: leagueKey, date, fetchedAt: new Date().toISOString(), sources, games };
+}
+
+async function handlePicks(request, url) {
+  const league = (url.searchParams.get("league") || "").trim().toLowerCase();
+  let date = (url.searchParams.get("date") || "").trim();
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+  };
+  if (!PICKS_LEAGUES[league]) {
+    return new Response(JSON.stringify({ error: "unknown league", leagues: Object.keys(PICKS_LEAGUES) }),
+      { status: 400, headers });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) date = todayEt();
+
+  const cacheKey = new Request("https://cache.internal/api/picks?" + league + "&" + date, { method: "GET" });
+  const cache = caches.default;
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  let body;
+  try {
+    body = await buildPicks(league, date);
+  } catch (e) {
+    body = { league, date, fetchedAt: new Date().toISOString(), sources: {}, games: [] };
+  }
+  const anyOk = Object.values(body.sources).some(s => s.ok);
+  const response = new Response(JSON.stringify(body), {
+    status: 200,
+    headers: {
+      ...headers,
+      "Cache-Control": "public, max-age=" + (anyOk ? PICKS_CACHE_SECONDS : PICKS_FAIL_CACHE_SECONDS),
+    },
+  });
+  await cache.put(cacheKey, response.clone());
+  return response;
+}
+
 function corsOptions() {
   return new Response(null, {
     headers: {
@@ -210,6 +571,18 @@ export default {
     if (url.pathname === "/api/odds") {
       if (request.method === "OPTIONS") return corsOptions();
       return handleOdds(request, url);
+    }
+
+    if (url.pathname === "/api/picks") {
+      if (request.method === "OPTIONS") return corsOptions();
+      try {
+        return await handlePicks(request, url);
+      } catch (e) {
+        return new Response(JSON.stringify({ games: [], sources: {} }), {
+          status: 200,
+          headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+        });
+      }
     }
 
     // Everything else is the static site, served exactly as Pages would.
