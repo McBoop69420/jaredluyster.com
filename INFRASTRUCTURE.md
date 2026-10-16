@@ -508,19 +508,19 @@ else here. It rebuilds and redeploys automatically on every push to `main`
 - **Expert Leaderboard (picks history) — added 2026-10-16.** The Betting page's second
   panel (`#picksBoard`): the site's own grading of the experts above, not their published
   records. Per expert (Action Network and CBS kept apart) and per league x market
-  (spread / winner / total): W-L-P, win rate with pushes left out, units at the posted
-  odds (-110 assumed for a CBS spread pick; CBS straight-up picks have no price, so no
-  ROI), ranked by win rate among experts with at least N graded picks in the current view
+  (spread / winner / total): W-L-P and win rate with pushes left out, ranked by win rate
+  among experts with at least N graded picks in the current view
   (10/25/50/100, default 25). Above it, how the consensus side did per market: every game
   with a majority side, and the strong leans (5+ experts, 75%+). League follows the page
   filter; period is everything logged or the last 30 days.
   - **Store: a JSON ledger committed to this repo**, `sports/picks-history/days/<date>.json`
-    (one file per ET day; every graded pick as `{src, expert, market, side, line, odds,
-    result}` per game, plus each market's consensus `{side, line, n, count, result}`) and
+    (one file per ET day; every graded pick as `{src, expert, market, side, line, result}`
+    per game, plus each market's consensus `{side, line, n, count, result}`) and
     `sports/picks-history/leaderboard.json` (those summed per expert x league x market and
     per league x market x tier, for `all` and `last30`), which the page fetches as a static
     file. Maths: [`sports/picks-ledger.js`](sports/picks-ledger.js) (DOM-free,
-    `tests/picks-ledger.test.mjs`).
+    `tests/picks-ledger.test.mjs`). Records and hit rates only: odds, units and ROI are
+    deliberately not kept, matching ROI's removal from Expert Picks (54af34c).
   - **Why not KV or D1 on `mcboop-sports`:** Pages has no cron triggers, so a binding would
     still need something outside Cloudflare to call it every day (or would depend on page
     visits to write), plus a binding configured on a Git-integrated project. Action Network

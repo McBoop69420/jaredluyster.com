@@ -44,7 +44,7 @@ test("ledgerGames keeps graded full-game picks, trims names, and grades the cons
   assert.equal(games.length, 1, "a game with nothing graded is dropped");
   const g = games[0];
   assert.deepEqual([g.id, g.away, g.home, g.picks.length], ["an1", "SEA", "DEN", 10]);
-  assert.deepEqual(Object.keys(g.picks[0]).sort(), ["expert", "line", "market", "odds", "result", "side", "src"]);
+  assert.deepEqual(Object.keys(g.picks[0]).sort(), ["expert", "line", "market", "result", "side", "src"], "no odds kept");
   assert.equal(g.picks[2].expert, "C");
   assert.deepEqual(g.consensus.spread, { side: "away", line: -2.5, n: 5, count: 6, result: "loss" });
   assert.equal(g.consensus.total, undefined, "a 2-2 split has no consensus");
@@ -63,15 +63,8 @@ test("mergeGames keeps picks a later run no longer sees and takes newer gradings
   assert.equal(g.picks.find(p => p.expert === "F").result, "push");
   assert.deepEqual(g.consensus.spread, { side: "away", line: -2.5, n: 5, count: 7, result: "loss" });
   assert.deepEqual(PL.mergeGames(first, []), first, "an empty re-run changes nothing");
-});
-
-test("units prices picks from their odds, -110 when a spread or total has none", () => {
-  assert.equal(PL.units({ market: "ml", odds: 150, result: "win" }), 1.5);
-  assert.equal(Math.round(PL.units({ market: "spread", odds: -120, result: "win" }) * 1000), 833);
-  assert.equal(Math.round(PL.units({ market: "total", odds: null, result: "win" }) * 1000), 909);
-  assert.equal(PL.units({ market: "spread", odds: -110, result: "loss" }), -1);
-  assert.equal(PL.units({ market: "ml", odds: null, result: "push" }), 0);
-  assert.equal(PL.units({ market: "ml", odds: null, result: "win" }), null);
+  const legacy = [{ ...first[0], picks: first[0].picks.map(p => ({ ...p, odds: -110 })) }];
+  assert.deepEqual(PL.mergeGames(legacy, []), first, "odds in older files are dropped");
 });
 
 function day(date, league, games) {
@@ -90,7 +83,7 @@ test("buildLeaderboard sums experts and consensus per league and market, with a 
   const a = board.windows.all.experts.filter(r => r.expert === "A");
   assert.deepEqual(a.map(r => [r.league, r.market, r.w, r.l, r.p]),
     [["mlb", "ml", 1, 0, 0], ["nfl", "spread", 0, 1, 0], ["nfl", "total", 0, 1, 0]]);
-  assert.equal(a[0].u, 0.67);
+  assert.deepEqual(Object.keys(a[0]).sort(), ["expert", "l", "league", "market", "p", "src", "w"], "records only");
   assert.ok(!board.windows.last30.experts.some(r => r.league === "mlb"), "September is outside the last 30 days");
   const cons = board.windows.all.consensus;
   assert.deepEqual(cons.find(r => r.league === "nfl" && r.market === "spread" && r.tier === "all"),
@@ -106,11 +99,11 @@ test("buildLeaderboard sums experts and consensus per league and market, with a 
 });
 
 const BOARD = [
-  { src: AN, expert: "A", league: "nfl", market: "spread", w: 6, l: 4, p: 1, u: 1.5, priced: 11 },
-  { src: AN, expert: "A", league: "mlb", market: "ml", w: 3, l: 1, p: 0, u: 1, priced: 4 },
-  { src: AN, expert: "B", league: "nfl", market: "spread", w: 9, l: 3, p: 0, u: 5.2, priced: 12 },
-  { src: CBS, expert: "C", league: "nfl", market: "ml", w: 10, l: 2, p: 0, u: 0, priced: 0 },
-  { src: AN, expert: "D", league: "nfl", market: "total", w: 2, l: 0, p: 0, u: 1.8, priced: 2 },
+  { src: AN, expert: "A", league: "nfl", market: "spread", w: 6, l: 4, p: 1 },
+  { src: AN, expert: "A", league: "mlb", market: "ml", w: 3, l: 1, p: 0 },
+  { src: AN, expert: "B", league: "nfl", market: "spread", w: 9, l: 3, p: 0 },
+  { src: CBS, expert: "C", league: "nfl", market: "ml", w: 10, l: 2, p: 0 },
+  { src: AN, expert: "D", league: "nfl", market: "total", w: 2, l: 0, p: 0 },
 ];
 
 test("rankExperts filters by league and market, hides small samples, ranks by win rate", () => {
@@ -120,8 +113,6 @@ test("rankExperts filters by league and market, hides small samples, ranks by wi
   const a = all.rows.find(r => r.expert === "A");
   assert.deepEqual([a.w, a.l, a.p, a.graded], [9, 5, 1, 15]);
   assert.equal(a.pct, 9 / 14, "pushes left out of the win rate");
-  assert.equal(a.roi, 2.5 / 15);
-  assert.equal(all.rows[0].roi, null, "unpriced CBS straight-up picks get no ROI");
   const spreadNfl = PL.rankExperts(BOARD, { leagues: ["nfl"], market: "spread", minPicks: 1 });
   assert.deepEqual(spreadNfl.rows.map(r => r.expert), ["B", "A"]);
   assert.deepEqual(PL.rankExperts(BOARD, { leagues: ["mlb"], minPicks: 5 }), { rows: [], hidden: 1 });

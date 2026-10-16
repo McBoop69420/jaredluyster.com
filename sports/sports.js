@@ -3170,24 +3170,22 @@
       leagues: picksBoardLeagues(), market: picksBoardOpts.market, minPicks,
     });
     if (!ranked.rows.length) {
-      return '<tr><td colspan="6" class="value-empty">No expert has ' + minPicks + "+ graded picks here yet" +
+      return '<tr><td colspan="5" class="value-empty">No expert has ' + minPicks + "+ graded picks here yet" +
         (ranked.hidden ? " (" + ranked.hidden + " below the threshold)" : "") + ".</td></tr>";
     }
     const shown = picksBoardOpts.showAll ? ranked.rows : ranked.rows.slice(0, PICKS_BOARD_TOP);
     let html = shown.map((r, i) => {
-      const units = r.priced ? (r.u > 0 ? "+" : "") + r.u.toFixed(1) + "u" : "—";
-      const roi = r.roi == null ? "" : ' <span class="value-note">' + (r.roi > 0 ? "+" : "") + Math.round(r.roi * 100) + "% ROI</span>";
       return "<tr><td>" + (i + 1) + "</td><td><strong>" + esc(r.expert) + '</strong> <span class="value-note">' +
         (r.src === "CBS Sports" ? "CBS" : "AN") + "</span></td><td><strong>" + pctText(r.pct) + "</strong></td><td>" +
-        recText(r) + "</td><td>" + units + roi + "</td><td>" + r.graded + "</td></tr>";
+        recText(r) + "</td><td>" + r.graded + "</td></tr>";
     }).join("");
     const more = ranked.rows.length - shown.length;
     if (more > 0 || picksBoardOpts.showAll && ranked.rows.length > PICKS_BOARD_TOP) {
-      html += '<tr><td colspan="6"><button type="button" class="picks-toggle" data-board-more>' +
+      html += '<tr><td colspan="5"><button type="button" class="picks-toggle" data-board-more>' +
         (more > 0 ? "Show all " + ranked.rows.length + " ▸" : "Top " + PICKS_BOARD_TOP + " only ▴") + "</button></td></tr>";
     }
     if (ranked.hidden) {
-      html += '<tr><td colspan="6" class="value-note">+' + ranked.hidden + (ranked.hidden === 1 ? " expert" : " experts") +
+      html += '<tr><td colspan="5" class="value-note">+' + ranked.hidden + (ranked.hidden === 1 ? " expert" : " experts") +
         " with fewer than " + minPicks + " graded picks not ranked</td></tr>";
     }
     return html;
@@ -3203,7 +3201,7 @@
     if (!picksBoard || !window.PicksLedger) {
       const msg = picksBoard === false ? "History unavailable right now." : "Loading history&hellip;";
       $("#picksBoardConsensus").innerHTML = '<tr><td colspan="3" class="value-empty">' + msg + "</td></tr>";
-      $("#picksBoardBody").innerHTML = '<tr><td colspan="6" class="value-empty">' + msg + "</td></tr>";
+      $("#picksBoardBody").innerHTML = '<tr><td colspan="5" class="value-empty">' + msg + "</td></tr>";
       meta.innerHTML = picksBoard === false ? "History unavailable" : "Loading history&hellip;";
       return;
     }

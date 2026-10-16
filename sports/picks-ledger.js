@@ -9,7 +9,7 @@
  *   day file:    { date, leagues: { nfl: [game], ... } }
  *   game:        { id, start, away, home, picks: [pick], consensus: { spread|ml|total:
  *                  { side, line, n, count, result } } }
- *   pick:        { src, expert, market, side, line, odds, result }   (graded only)
+ *   pick:        { src, expert, market, side, line, result }   (graded only)
  *   leaderboard: { from, to, days, windows: { all|last30: { experts: [row],
  *                  consensus: [row] } } }
  *
@@ -17,6 +17,9 @@
  * maths as the live panel (sports/expert-picks.js): the side most experts took, at
  * the line most of them took, graded by how most of those picks graded. A tied
  * market has no consensus and isn't counted.
+ *
+ * Records and hit rates only: win/loss/push, with the win rate leaving pushes out.
+ * No odds, units or ROI are kept (taken out of Expert Picks on 2026-10-16).
  *
  * DOM-free so tests/picks-ledger.test.mjs can run it in Node.
  */
@@ -30,12 +33,15 @@
   const MARKETS = ["spread", "ml", "total"];
   const RESULTS = { win: true, loss: true, push: true };
   const WINDOW_DAYS = 30;
-  // Assumed price for a spread or total pick posted without odds (CBS): the
-  // standard -110. Straight-up picks without odds can't be priced at all.
-  const DEFAULT_ODDS = -110;
 
   function cleanName(s) {
     return String(s || "").replace(/\s+/g, " ").trim();
+  }
+
+  // The fields the ledger keeps for a pick (older files and /api/picks carry more).
+  function cleanPick(p) {
+    return { src: p.src, expert: cleanName(p.expert), market: p.market, side: p.side,
+      line: p.line == null ? null : p.line, result: p.result };
   }
 
   function pickKey(p) {
@@ -65,10 +71,7 @@
   function ledgerGames(data) {
     const out = [];
     for (const g of (data && data.games) || []) {
-      const picks = (g.picks || []).filter(p => RESULTS[p.result] && MARKETS.includes(p.market)).map(p => ({
-        src: p.src, expert: cleanName(p.expert), market: p.market, side: p.side,
-        line: p.line == null ? null : p.line, odds: p.odds == null ? null : p.odds, result: p.result,
-      }));
+      const picks = (g.picks || []).filter(p => RESULTS[p.result] && MARKETS.includes(p.market)).map(cleanPick);
       if (!picks.length) continue;
       out.push(withConsensus({
         id: g.id, start: g.start || null,
@@ -89,7 +92,7 @@
   // pick seen again takes its newer grading.
   function mergeGames(oldGames, freshGames) {
     const games = new Map();
-    for (const g of oldGames || []) games.set(g.id, { ...g, picks: g.picks.slice() });
+    for (const g of oldGames || []) games.set(g.id, { ...g, picks: g.picks.map(cleanPick) });
     for (const g of freshGames || []) {
       const prev = games.get(g.id);
       if (!prev) { games.set(g.id, { ...g, picks: g.picks.slice() }); continue; }
@@ -101,23 +104,11 @@
     return [...games.values()].map(withConsensus).sort(byStart);
   }
 
-  // Profit in units on a 1-unit graded pick, or null if it can't be priced.
-  function units(p) {
-    if (p.result === "push") return 0;
-    let odds = p.odds;
-    if (odds == null && p.market !== "ml") odds = DEFAULT_ODDS;
-    if (odds == null || !Number.isFinite(odds) || odds === 0) return null;
-    if (p.result === "loss") return -1;
-    return odds > 0 ? odds / 100 : 100 / -odds;
-  }
-
   function addResult(row, result) {
     if (result === "win") row.w++;
     else if (result === "loss") row.l++;
     else if (result === "push") row.p++;
   }
-
-  function round2(x) { return Math.round(x * 100) / 100; }
 
   function shiftDate(date, days) {
     const d = new Date(Date.parse(date + "T12:00:00Z") + days * 86400000);
@@ -143,12 +134,10 @@
               const k = p.src + "|" + p.expert + "|" + league + "|" + p.market;
               let row = experts.get(k);
               if (!row) {
-                row = { src: p.src, expert: p.expert, league, market: p.market, w: 0, l: 0, p: 0, u: 0, priced: 0 };
+                row = { src: p.src, expert: p.expert, league, market: p.market, w: 0, l: 0, p: 0 };
                 experts.set(k, row);
               }
               addResult(row, p.result);
-              const u = units(p);
-              if (u != null) { row.u += u; row.priced++; }
             }
             for (const m of MARKETS) {
               const c = g.consensus && g.consensus[m];
@@ -167,7 +156,7 @@
       }
       const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
       windows[name] = {
-        experts: [...experts.values()].map(r => ({ ...r, u: round2(r.u) }))
+        experts: [...experts.values()]
           .sort((a, b) => cmp(a.src, b.src) || cmp(a.expert, b.expert) || cmp(a.league, b.league) || cmp(a.market, b.market)),
         consensus: [...consensus.values()]
           .sort((a, b) => cmp(a.league, b.league) || MARKETS.indexOf(a.market) - MARKETS.indexOf(b.market) || cmp(a.tier, b.tier)),
@@ -190,7 +179,7 @@
   // Leaderboard rows summed over the chosen leagues (null = all) and market
   // ("all" or one of MARKETS), keeping experts with at least `minPicks` graded
   // picks, best win rate (pushes left out) first, then most decided picks.
-  // ROI only where every pick could be priced. Returns { rows, hidden }, where
+  // Returns { rows, hidden }, where
   // hidden counts the experts below the threshold.
   function rankExperts(board, opts) {
     const minPicks = (opts && opts.minPicks) || 1;
@@ -199,15 +188,15 @@
       if (!matches(r, opts)) continue;
       const k = r.src + "|" + r.expert;
       let s = sums.get(k);
-      if (!s) { s = { src: r.src, expert: r.expert, w: 0, l: 0, p: 0, u: 0, priced: 0 }; sums.set(k, s); }
-      s.w += r.w; s.l += r.l; s.p += r.p; s.u += r.u; s.priced += r.priced;
+      if (!s) { s = { src: r.src, expert: r.expert, w: 0, l: 0, p: 0 }; sums.set(k, s); }
+      s.w += r.w; s.l += r.l; s.p += r.p;
     }
     const rows = [];
     let hidden = 0;
     for (const s of sums.values()) {
       const graded = s.w + s.l + s.p;
       if (graded < minPicks) { hidden++; continue; }
-      rows.push({ ...s, u: round2(s.u), graded, pct: rate(s), roi: s.priced === graded && graded ? s.u / graded : null });
+      rows.push({ ...s, graded, pct: rate(s) });
     }
     rows.sort((a, b) => (b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct) ||
       (b.w + b.l) - (a.w + a.l) || (a.expert < b.expert ? -1 : 1));
@@ -238,7 +227,7 @@
   }
 
   return {
-    LEAGUES, MARKETS, WINDOW_DAYS, DEFAULT_ODDS,
-    ledgerGames, mergeGames, units, buildLeaderboard, rankExperts, consensusRecord,
+    LEAGUES, MARKETS, WINDOW_DAYS,
+    ledgerGames, mergeGames, buildLeaderboard, rankExperts, consensusRecord,
   };
 });

@@ -89,7 +89,7 @@
         the previous days' graded picks are logged, one entry per expert per market, and so is each game's
         consensus side (the side most experts took). Win rates leave pushes out. A spread or total pick
         needs to win 52.4% at the usual &minus;110 to break even; a <strong>Winner</strong> pick's win rate
-        depends on how often the expert takes favorites, so read it with the units column. Experts need a
+        depends on how often the expert takes favorites, so compare those among themselves. Experts need a
         minimum number of graded picks in the current view to be ranked.</p>
     </div>
     <div class="ctx-controls">
@@ -126,19 +126,17 @@
     <div class="value-slate-wrap">
       <table class="value-slate board-slate">
         <thead>
-          <tr><th>#</th><th>Expert</th><th>Win %</th><th>W–L–P</th><th>Units</th><th>Graded</th></tr>
+          <tr><th>#</th><th>Expert</th><th>Win %</th><th>W–L–P</th><th>Graded</th></tr>
         </thead>
         <tbody id="picksBoardBody">
-          <tr><td colspan="6" class="value-empty">Loading history&hellip;</td></tr>
+          <tr><td colspan="5" class="value-empty">Loading history&hellip;</td></tr>
         </tbody>
       </table>
     </div>
     <p class="value-legend">
       Consensus: every game where one side had more experts than the other, graded at the line most of
       them took; strong leans as above (5+ experts, 75%+ on one side), Winner included &middot; a grey
-      win rate is below the minimum &middot; units: 1 unit a pick at the odds the expert posted
-      (&minus;110 for a CBS spread pick; CBS straight-up picks have no price) &middot; ROI only where every pick
-      is priced &middot; AN = Action Network, CBS = CBS Sports &middot; Action Network history from Aug 27, 2026;
+      win rate is below the minimum &middot; AN = Action Network, CBS = CBS Sports &middot; Action Network history from Aug 27, 2026;
       CBS from Oct 15, 2026 &middot; updated daily
     </p>
   </section>
@@ -224,7 +222,7 @@
 </article>
 <script src="/team-context.js?v=1"></script>
 <script src="/expert-picks.js?v=1"></script>
-<script src="/picks-ledger.js?v=1"></script>
-<script src="/sports.js?v=80"></script>
+<script src="/picks-ledger.js?v=2"></script>
+<script src="/sports.js?v=81"></script>
 </body>
 </html>
