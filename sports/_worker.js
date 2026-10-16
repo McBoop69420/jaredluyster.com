@@ -260,9 +260,7 @@ function anPick(p) {
 
 function anRecord(r) {
   if (!r || !Number.isFinite(r.win) || !Number.isFinite(r.loss)) return null;
-  let rec = r.win + "-" + r.loss + (r.push ? "-" + r.push : "");
-  if (Number.isFinite(r.roi)) rec += " (" + (r.roi > 0 ? "+" : "") + Math.round(r.roi) + "% ROI)";
-  return rec;
+  return r.win + "-" + r.loss + (r.push ? "-" + r.push : "");
 }
 
 function anTeam(t) {

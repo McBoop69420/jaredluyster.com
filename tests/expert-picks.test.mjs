@@ -143,7 +143,7 @@ test("normalizeActionNetwork keeps the ET day's games and full-game side picks o
     ["Sharp One", "total", "under", 43.5, -110, null],
     ["Square Two", "ml", "home", null, -135, "win"],
   ]);
-  assert.equal(g.picks[0].rec, "22-25-1 (+7% ROI)");
+  assert.equal(g.picks[0].rec, "22-25-1");
   assert.equal(g.picks[0].recLabel, "last 30 days");
   assert.equal(g.picks[2].rec, null);
 });

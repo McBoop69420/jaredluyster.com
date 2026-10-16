@@ -490,7 +490,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   `sports/_worker.js`'s `/api/picks?league=&date=` builds it server-side from two
   sources: **Action Network** (`api.actionnetwork.com/web/v2/scoreboard/picks/<league>`,
   the JSON behind actionnetwork.com/<league>/picks: ~40-50 bettors and writers, each
-  with a last-30-days record and ROI; weekly leagues need `week=&seasonType=`, looked
+  with a last-30-days record; weekly leagues need `week=&seasonType=`, looked
   up from the response's own `calendar_info`) and **CBS Sports** (the HTML
   `cbssports.com/{nfl,college-football}/picks/experts/` ATS table plus that week's
   `straight-up/<week>/` page: the same 7-9 staff writers on every game). CBS rows are
