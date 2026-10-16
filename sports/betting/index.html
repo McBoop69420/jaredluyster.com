@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=57">
+<link rel="stylesheet" href="/sports.css?v=58">
 </head>
 <body>
 <article class="paper">
@@ -73,6 +73,73 @@
       &middot; <span class="call call--value">Strong lean</span> = 5+ experts on a spread or total with at least 75% on one side
       &middot; &#10003;/&#10007; once the game is graded &middot; records: Action Network last 30 days (all sports),
       CBS season to date &middot; NFL, NCAAF, MLB and NCAAM; picks refresh every 10 minutes
+    </p>
+  </section>
+
+  <section class="value-screen" id="picksBoard" aria-labelledby="picksBoardTitle">
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Track record</div>
+        <h2 id="picksBoardTitle">Expert Leaderboard</h2>
+      </div>
+      <div class="value-screen-meta" id="picksBoardMeta">Loading history&hellip;</div>
+    </header>
+    <div class="value-explain">
+      <p>This site's own grading of the picks above, not the records the experts publish. Every morning
+        the previous days' graded picks are logged, one entry per expert per market, and so is each game's
+        consensus side (the side most experts took). Win rates leave pushes out. A spread or total pick
+        needs to win 52.4% at the usual &minus;110 to break even; a <strong>Winner</strong> pick's win rate
+        depends on how often the expert takes favorites, so read it with the units column. Experts need a
+        minimum number of graded picks in the current view to be ranked.</p>
+    </div>
+    <div class="ctx-controls">
+      <label for="picksBoardMarket">Market</label>
+      <select id="picksBoardMarket" data-board-opt="market">
+        <option value="all">All markets</option>
+        <option value="spread">Spread</option>
+        <option value="ml">Winner</option>
+        <option value="total">Total</option>
+      </select>
+      <label for="picksBoardWindow">Period</label>
+      <select id="picksBoardWindow" data-board-opt="window">
+        <option value="all">Everything logged</option>
+        <option value="last30">Last 30 days</option>
+      </select>
+      <label for="picksBoardMin">Min picks</label>
+      <select id="picksBoardMin" data-board-opt="minPicks">
+        <option value="10">10</option>
+        <option value="25" selected>25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    <div class="value-slate-wrap">
+      <table class="value-slate board-slate">
+        <thead>
+          <tr><th>Consensus side</th><th>Every game</th><th>Strong leans</th></tr>
+        </thead>
+        <tbody id="picksBoardConsensus">
+          <tr><td colspan="3" class="value-empty">Loading history&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="value-slate-wrap">
+      <table class="value-slate board-slate">
+        <thead>
+          <tr><th>#</th><th>Expert</th><th>Win %</th><th>W–L–P</th><th>Units</th><th>Graded</th></tr>
+        </thead>
+        <tbody id="picksBoardBody">
+          <tr><td colspan="6" class="value-empty">Loading history&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="value-legend">
+      Consensus: every game where one side had more experts than the other, graded at the line most of
+      them took; strong leans as above (5+ experts, 75%+ on one side), Winner included &middot; a grey
+      win rate is below the minimum &middot; units: 1 unit a pick at the odds the expert posted
+      (&minus;110 for a CBS spread pick; CBS straight-up picks have no price) &middot; ROI only where every pick
+      is priced &middot; AN = Action Network, CBS = CBS Sports &middot; Action Network history from Aug 27, 2026;
+      CBS from Oct 15, 2026 &middot; updated daily
     </p>
   </section>
 
@@ -157,6 +224,7 @@
 </article>
 <script src="/team-context.js?v=1"></script>
 <script src="/expert-picks.js?v=1"></script>
-<script src="/sports.js?v=79"></script>
+<script src="/picks-ledger.js?v=1"></script>
+<script src="/sports.js?v=80"></script>
 </body>
 </html>

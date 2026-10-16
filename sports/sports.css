@@ -338,7 +338,7 @@ table.value-slate tr.value-starters td{padding:0 10px 8px;border-bottom:1px dott
 .value-legend .call{margin-right:4px}
 /* Team Context (Betting page) */
 .ctx-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.ctx-controls input[type=date]{font-family:var(--font-body);font-size:.85rem;padding:4px 6px;border:2px solid var(--ink);background:var(--paper);color:var(--ink)}
+.ctx-controls input[type=date],.ctx-controls select{font-family:var(--font-body);font-size:.85rem;padding:4px 6px;border:2px solid var(--ink);background:var(--paper);color:var(--ink)}
 .ctx-btn{font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:5px 10px;border:2px solid var(--ink);background:var(--accent);color:var(--accent-ink);cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
 .ctx-btn:active{transform:translate(2px,2px);box-shadow:none}
 .value-empty .ctx-btn{margin-left:6px;font-style:normal}

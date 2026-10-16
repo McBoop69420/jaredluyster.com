@@ -1,0 +1,3 @@
+# Shell scripts run by Git Bash from Scheduled Tasks must keep LF endings even
+# in core.autocrlf=true checkouts (a CR breaks `set -euo pipefail`).
+*.sh text eol=lf

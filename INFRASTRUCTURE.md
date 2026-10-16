@@ -20,6 +20,7 @@ under `C:\Users\Jared Server\`.
 | News + calendar deploy (`mcboop-daily`) | JARED-SERVER | Scheduled Task `McBoop Daily Deploy`, S4U, every 15 min — §4 |
 | Radio origin (`node server.js`, :8080) | JARED-SERVER | Scheduled Task `Radio Service`, S4U, at startup — §3 |
 | Radio tunnel (`mcboop-news`) | JARED-SERVER | Scheduled Task `Radio Tunnel`, S4U, at startup — §3 |
+| Expert Picks ledger (`sports/picks-history/`) | JARED-SERVER | Scheduled Task `Sports Picks Ledger`, as the logged-on user, daily 6:00 AM — §4b |
 | Site repo checkout used by the deploy | JARED-SERVER | `C:\Users\Jared Server\jaredluyster.com`, fast-forwarded by every deploy run |
 | Kavita (:5000), media catalog (:8800), Hermes + local LLM | **Jared-PC** (deliberately) | They read the Buffalo LinkStation NAS (`\\192.168.68.62\Share`), which only speaks SMB1; JARED-SERVER keeps SMB1 off. The LLM also needs Jared-PC's RTX 2060. |
 
@@ -504,6 +505,51 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   **Rejected:** Pickwatch (nflpickwatch.com, the biggest aggregator) serves its picks
   from a private API behind a paid subscription; ESPN's expert picks page answers
   scripted requests with an empty 202.
+- **Expert Leaderboard (picks history) — added 2026-10-16.** The Betting page's second
+  panel (`#picksBoard`): the site's own grading of the experts above, not their published
+  records. Per expert (Action Network and CBS kept apart) and per league x market
+  (spread / winner / total): W-L-P, win rate with pushes left out, units at the posted
+  odds (-110 assumed for a CBS spread pick; CBS straight-up picks have no price, so no
+  ROI), ranked by win rate among experts with at least N graded picks in the current view
+  (10/25/50/100, default 25). Above it, how the consensus side did per market: every game
+  with a majority side, and the strong leans (5+ experts, 75%+). League follows the page
+  filter; period is everything logged or the last 30 days.
+  - **Store: a JSON ledger committed to this repo**, `sports/picks-history/days/<date>.json`
+    (one file per ET day; every graded pick as `{src, expert, market, side, line, odds,
+    result}` per game, plus each market's consensus `{side, line, n, count, result}`) and
+    `sports/picks-history/leaderboard.json` (those summed per expert x league x market and
+    per league x market x tier, for `all` and `last30`), which the page fetches as a static
+    file. Maths: [`sports/picks-ledger.js`](sports/picks-ledger.js) (DOM-free,
+    `tests/picks-ledger.test.mjs`).
+  - **Why not KV or D1 on `mcboop-sports`:** Pages has no cron triggers, so a binding would
+    still need something outside Cloudflare to call it every day (or would depend on page
+    visits to write), plus a binding configured on a Git-integrated project. Action Network
+    keeps graded picks for past days, so the job doesn't need to catch anything live; a
+    daily batch is enough, and a git ledger is versioned, diffable, testable offline and
+    needs no new Cloudflare resource. Cost: one commit and one Pages build a day.
+  - **Writer:** [`scripts/picks-ledger.mjs`](scripts/picks-ledger.mjs) imports
+    `buildPicks` from `sports/_worker.js` and runs it in Node (same code as `/api/picks`,
+    no Cloudflare Access in the way), for the 4 days before today by default
+    (`--days N`, or `--from/--to` to backfill), merging into the day files (nothing is ever
+    dropped; a pick seen again takes its newer grading) and only rewriting files whose
+    content changed. Nothing in the files depends on the clock, so a run with nothing new
+    leaves the tree clean. [`scripts/picks-ledger.sh`](scripts/picks-ledger.sh) pulls,
+    runs it, and commits + pushes `sports/picks-history/` only when it changed.
+  - **Scheduled Task `Sports Picks Ledger`** on JARED-SERVER, daily 6:00 AM ET, runs
+    `wscript.exe //B //Nologo "C:\Users\Jared Server\picks-ledger\jaredluyster.com\scripts\picks-ledger-hidden.vbs"`,
+    which runs `picks-ledger.sh` hidden and appends to
+    `C:\Users\Jared Server\picks-ledger\picks-ledger.log`. It works in **a clone kept only
+    for this job** (`C:\Users\Jared Server\picks-ledger\jaredluyster.com`), never the
+    checkout people edit in, so it can't commit or push anyone's unfinished work; the deploy
+    task's `pull --ff-only` brings the ledger commits into the main checkout. Like the old
+    ledger push it **runs as the logged-on user** (`LogonType=Interactive`): git pushes with
+    `credential.helper=manager`, which needs the logged-on user's credential store, so it
+    doesn't fire while logged out. The 4-day lookback makes up missed days for Action
+    Network; for longer gaps run `picks-ledger.sh --days N` by hand.
+  - **Coverage:** Action Network backfilled from 2026-08-27 (start of college football).
+    CBS only shows the current week and rolls over midweek, so CBS picks exist from
+    2026-10-15 on, and only for weeks a run caught before the rollover. Picks that never
+    get graded aren't logged, and consensus is computed from the graded picks only.
 - **Paper-bet ledger freshness — fixed 2026-09-06:** `export_betting_tracker.py`
   used to write to `McBoop Newspaper/public/sports/fake-bets.json`, which only
   ever reached the *old, dead* `mcboop-daily` sports route — never this project.
@@ -746,12 +792,14 @@ jaredluyster.com/
 │   └── robots.txt
 ├── sports/                 # Sports site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com — split 2026-09-14 into Games (root) and Betting (/betting/) pages, sharing sports.css/sports.js
 │   ├── index.html          # Games: Spotlight + per-league scoreboards/standings
-│   ├── betting/index.html  # Betting: Expert Picks + MLB Team Context (BettingEdge port) + NFL Odds
+│   ├── betting/index.html  # Betting: Expert Picks + Expert Leaderboard + MLB Team Context (BettingEdge port) + NFL Odds
 │   ├── models/index.html   # Models: MLB Value Screen (model vs market) + how it and NFL Odds work
 │   ├── sports.css
 │   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadExpertPicks()/loadValueScreen()/loadTeamContext()/loadNflOdds() each gate on which page's DOM elements are present
 │   ├── team-context.js     # Team Context maths (pure, unit-tested in tests/team-context.test.mjs), loaded by betting/ only
 │   ├── expert-picks.js     # Expert Picks consensus maths (pure, unit-tested in tests/expert-picks.test.mjs), loaded by betting/ only
+│   ├── picks-ledger.js     # Expert Leaderboard: graded-pick ledger + ranking maths (pure, tests/picks-ledger.test.mjs), loaded by betting/ only
+│   ├── picks-history/      # days/<date>.json graded-pick ledger + leaderboard.json, written daily by scripts/picks-ledger.sh — see §4b
 │   ├── _worker.js          # Pages Worker (advanced mode): /api/odds and /api/picks, else falls through to assets — see §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt

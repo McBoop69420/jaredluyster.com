@@ -2218,6 +2218,7 @@
         [...nav.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false"));
         renderExpertPicks();
         loadExpertPicks();
+        renderPicksBoard();
         renderValueScreen();
         loadValueScreen();
         renderTeamContext();
@@ -3135,6 +3136,113 @@
     });
   }
 
+  // ---- Expert Leaderboard (graded-pick history) ---------------------------
+  // /picks-history/leaderboard.json is written daily on Jared-Server by
+  // scripts/picks-ledger.mjs, which records every graded pick /api/picks
+  // returns. Ranking and filtering is sports/picks-ledger.js. Follows the same
+  // league filter as Expert Picks; "All" sums the four leagues.
+  let picksBoard = null;           // leaderboard.json, or false if it failed to load
+  const picksBoardOpts = { market: "all", window: "all", minPicks: 25, showAll: false };
+  const PICKS_BOARD_TOP = 20;
+
+  const pctText = x => x == null ? "—" : (Math.round(x * 1000) / 10).toFixed(1) + "%";
+  const recText = r => r.w + "–" + r.l + (r.p ? "–" + r.p : "");
+
+  function picksBoardLeagues() {
+    return expertPicksLeagues().map(l => l.api);
+  }
+
+  function picksBoardConsensusHtml(rows, minPicks) {
+    const rec = window.PicksLedger.consensusRecord(rows, { leagues: picksBoardLeagues() });
+    const cell = r => {
+      if (!r.graded) return '<td class="value-note">—</td>';
+      const small = r.graded < minPicks;
+      return "<td>" + (small ? '<span class="value-note" title="fewer than ' + minPicks + ' graded">' + pctText(r.pct) + "</span>"
+        : "<strong>" + pctText(r.pct) + "</strong>") + ' <span class="value-note">' + recText(r) + "</span></td>";
+    };
+    return ["spread", "ml", "total", "all"].map(m =>
+      "<tr><td><strong>" + (m === "all" ? "All markets" : esc(window.ExpertPicks.MARKET_LABEL[m])) + "</strong></td>" +
+      cell(rec[m].all) + cell(rec[m].strong) + "</tr>").join("");
+  }
+
+  function picksBoardExpertsHtml(rows, minPicks) {
+    const ranked = window.PicksLedger.rankExperts(rows, {
+      leagues: picksBoardLeagues(), market: picksBoardOpts.market, minPicks,
+    });
+    if (!ranked.rows.length) {
+      return '<tr><td colspan="6" class="value-empty">No expert has ' + minPicks + "+ graded picks here yet" +
+        (ranked.hidden ? " (" + ranked.hidden + " below the threshold)" : "") + ".</td></tr>";
+    }
+    const shown = picksBoardOpts.showAll ? ranked.rows : ranked.rows.slice(0, PICKS_BOARD_TOP);
+    let html = shown.map((r, i) => {
+      const units = r.priced ? (r.u > 0 ? "+" : "") + r.u.toFixed(1) + "u" : "—";
+      const roi = r.roi == null ? "" : ' <span class="value-note">' + (r.roi > 0 ? "+" : "") + Math.round(r.roi * 100) + "% ROI</span>";
+      return "<tr><td>" + (i + 1) + "</td><td><strong>" + esc(r.expert) + '</strong> <span class="value-note">' +
+        (r.src === "CBS Sports" ? "CBS" : "AN") + "</span></td><td><strong>" + pctText(r.pct) + "</strong></td><td>" +
+        recText(r) + "</td><td>" + units + roi + "</td><td>" + r.graded + "</td></tr>";
+    }).join("");
+    const more = ranked.rows.length - shown.length;
+    if (more > 0 || picksBoardOpts.showAll && ranked.rows.length > PICKS_BOARD_TOP) {
+      html += '<tr><td colspan="6"><button type="button" class="picks-toggle" data-board-more>' +
+        (more > 0 ? "Show all " + ranked.rows.length + " ▸" : "Top " + PICKS_BOARD_TOP + " only ▴") + "</button></td></tr>";
+    }
+    if (ranked.hidden) {
+      html += '<tr><td colspan="6" class="value-note">+' + ranked.hidden + (ranked.hidden === 1 ? " expert" : " experts") +
+        " with fewer than " + minPicks + " graded picks not ranked</td></tr>";
+    }
+    return html;
+  }
+
+  function renderPicksBoard() {
+    const panel = $("#picksBoard");
+    if (!panel) return;
+    const visible = expertPicksVisible();
+    panel.style.display = visible ? "" : "none";
+    if (!visible) return;
+    const meta = $("#picksBoardMeta");
+    if (!picksBoard || !window.PicksLedger) {
+      const msg = picksBoard === false ? "History unavailable right now." : "Loading history&hellip;";
+      $("#picksBoardConsensus").innerHTML = '<tr><td colspan="3" class="value-empty">' + msg + "</td></tr>";
+      $("#picksBoardBody").innerHTML = '<tr><td colspan="6" class="value-empty">' + msg + "</td></tr>";
+      meta.innerHTML = picksBoard === false ? "History unavailable" : "Loading history&hellip;";
+      return;
+    }
+    const w = picksBoard.windows[picksBoardOpts.window] || picksBoard.windows.all;
+    const minPicks = picksBoardOpts.minPicks;
+    $("#picksBoardConsensus").innerHTML = picksBoardConsensusHtml(w.consensus, minPicks);
+    $("#picksBoardBody").innerHTML = picksBoardExpertsHtml(w.experts, minPicks);
+    const since = picksBoardOpts.window === "last30"
+      ? "last " + picksBoard.windowDays + " days to " + fmtDay(picksBoard.to, false)
+      : fmtDay(picksBoard.from, false) + " – " + fmtDay(picksBoard.to, false);
+    meta.textContent = "Graded " + since + (picksBoardOpts.window === "last30" ? ""
+      : " · " + picksBoard.days + (picksBoard.days === 1 ? " day logged" : " days logged"));
+  }
+
+  async function loadPicksBoard() {
+    if (!$("#picksBoard")) return;
+    const data = await fetchJSON("/picks-history/leaderboard.json");
+    if (data && data.windows) picksBoard = data;
+    else if (!picksBoard) picksBoard = false;
+    renderPicksBoard();
+  }
+
+  function bindPicksBoard() {
+    const panel = $("#picksBoard");
+    if (!panel) return;
+    panel.addEventListener("change", e => {
+      const sel = e.target.closest("[data-board-opt]");
+      if (!sel) return;
+      const key = sel.dataset.boardOpt;
+      picksBoardOpts[key] = key === "minPicks" ? parseInt(sel.value, 10) : sel.value;
+      renderPicksBoard();
+    });
+    panel.addEventListener("click", e => {
+      if (!e.target.closest("[data-board-more]")) return;
+      picksBoardOpts.showAll = !picksBoardOpts.showAll;
+      renderPicksBoard();
+    });
+  }
+
   // ---- Adaptive score refresh -------------------------------------------
   function filteredLeagues() {
     return activeFilter === "all" ? LEAGUES : LEAGUES.filter(league => league.key === activeFilter);
@@ -3216,7 +3324,7 @@
     buildFilters();
     const refreshBtn = $("#refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", async () => {
-      await Promise.all([render(), loadExpertPicks(), loadValueScreen(), loadTeamContext(), loadNflOdds()]);
+      await Promise.all([render(), loadExpertPicks(), loadPicksBoard(), loadValueScreen(), loadTeamContext(), loadNflOdds()]);
     });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshAllScores();
@@ -3224,6 +3332,8 @@
     bindTeamContext();
     bindExpertPicks();
     loadExpertPicks();
+    bindPicksBoard();
+    loadPicksBoard();
     loadValueScreen();
     loadTeamContext();
     render();
