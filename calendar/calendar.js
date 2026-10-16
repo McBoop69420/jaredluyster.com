@@ -742,20 +742,27 @@
   }
 
   async function fetchTeamScheduleEvents(entry, minDate, maxDate) {
-    try {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 8000);
-      const url = ESPN + entry.key + "/teams/" + entry.id + "/schedule";
-      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-      clearTimeout(timeout);
-      if (!res.ok) return [];
-      const data = await res.json();
-      const events = Array.isArray(data.events) ? data.events : [];
-      return events.map(ev => parseGameEvent(ev, entry)).filter(Boolean)
-        .filter(g => g.date >= minDate && g.date <= maxDate);
-    } catch (e) {
-      return [];
+    async function fetchSchedule(query) {
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
+        const url = ESPN + entry.key + "/teams/" + entry.id + "/schedule" + query;
+        const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+        clearTimeout(timeout);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data.events) ? data.events : [];
+      } catch (e) {
+        return [];
+      }
     }
+    // Before tip-off ESPN defaults a team's schedule to the season's empty
+    // "Preseason" type (seen for UK men's basketball in October), so fall back
+    // to asking for the regular season explicitly when the default has nothing.
+    let events = await fetchSchedule("");
+    if (!events.length) events = await fetchSchedule("?seasontype=2");
+    return events.map(ev => parseGameEvent(ev, entry)).filter(Boolean)
+      .filter(g => g.date >= minDate && g.date <= maxDate);
   }
 
   // ESPN's scoreboard endpoint currently rejects the hyphenated range form
