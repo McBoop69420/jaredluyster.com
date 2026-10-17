@@ -101,8 +101,46 @@
     return out.sort((a, b) => b.consensus.share - a.consensus.share || b.consensus.count - a.consensus.count);
   }
 
+  // ---- Top 25 ----------------------------------------------------------------
+  // Ranks come from ESPN's /rankings feed (Action Network carries none) and are
+  // matched to /api/picks teams by full name, which both spell the same way
+  // once qualifiers are dropped: "Miami (FL) Hurricanes" vs "Miami Hurricanes".
+
+  function teamKey(name) {
+    return String(name || "").toLowerCase().replace(/\([^)]*\)/g, " ").replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  // The poll to show, from an ESPN rankings response: the College Football
+  // Playoff ranking once it exists, else the AP Top 25. null without either.
+  function pickPoll(rankings) {
+    const polls = (rankings && rankings.rankings) || [];
+    return polls.find(p => p.type === "cfp") || polls.find(p => p.type === "ap") || null;
+  }
+
+  // { name, byTeam: Map(teamKey -> rank) } for that poll.
+  function rankIndex(rankings) {
+    const poll = pickPoll(rankings);
+    if (!poll) return null;
+    const byTeam = new Map();
+    for (const r of poll.ranks || []) {
+      const t = r.team || {};
+      if (!Number.isFinite(r.current) || r.current < 1) continue;
+      for (const n of [t.location, t.nickname]) {
+        if (n && t.name) byTeam.set(teamKey(n + " " + t.name), r.current);
+      }
+    }
+    return { name: poll.name || poll.shortName || "Top 25", byTeam };
+  }
+
+  function rankOf(index, team) {
+    if (!index || !team) return null;
+    return index.byTeam.get(teamKey(team.name)) || null;
+  }
+
   return {
     MARKETS, MARKET_LABEL, STRONG_MIN_PICKS, STRONG_MIN_SHARE,
     formatLine, mode, marketConsensus, summarizeGame, strongLeans,
+    teamKey, pickPoll, rankIndex, rankOf,
   };
 });

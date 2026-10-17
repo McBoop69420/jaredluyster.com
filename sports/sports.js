@@ -2933,11 +2933,11 @@
   // "All" every supported league loads and gets its own block.
   const PICKS_LEAGUES = [
     { key: "football/nfl", api: "nfl", label: "NFL" },
-    { key: "football/college-football", api: "ncaaf", label: "NCAAF" },
+    { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football" },
     { key: "baseball/mlb", api: "mlb", label: "MLB" },
-    { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM" },
+    { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM", polls: "basketball/mens-college-basketball" },
   ];
-  let expertPicks = null;          // { date, leagues: [{ league, data }] }
+  let expertPicks = null;          // { date, leagues: [{ league, data, poll }] }
   let expertPicksLoading = false;
   let expertPicksDate = null;      // the date picker's value; null = today (ET)
   let expertPicksSeq = 0;          // only the newest load may draw
@@ -2996,6 +2996,15 @@
       "</div>" + props + "</div></td></tr>";
   }
 
+  // "#7 TEX" for a ranked team (rank set by loadExpertPicks), plain abbr otherwise.
+  function picksTeam(t) {
+    return (t.rank ? '<span class="team-rank">#' + t.rank + "</span> " : "") + esc(t.abbr);
+  }
+
+  function isTop25(g) {
+    return !!(g.away.rank || g.home.rank);
+  }
+
   function picksGameTime(g) {
     if (g.status === "complete") return "Final";
     if (g.status === "inprogress") return "Live";
@@ -3004,7 +3013,23 @@
 
   function expertPicksSummaries(entry) {
     const games = (entry.data && entry.data.games) || [];
-    return games.filter(g => g.picks && g.picks.length).map(g => window.ExpertPicks.summarizeGame(g));
+    // Every Top 25 game is listed, picked or not; other games only once an
+    // expert has picked them.
+    return games.filter(g => (g.picks && g.picks.length) || isTop25(g)).map(g => window.ExpertPicks.summarizeGame(g));
+  }
+
+  function picksGameRowHtml(s) {
+    const g = s.game;
+    const open = expertPicksOpen.has(g.id);
+    const time = picksGameTime(g);
+    return "<tr><td><strong>" + picksTeam(g.away) + " @ " + picksTeam(g.home) + "</strong>" +
+      (time ? ' <span class="value-note">' + esc(time) + "</span>" : "") + "</td>" +
+      picksConsensusCell(s.markets.spread) + picksConsensusCell(s.markets.ml) + picksConsensusCell(s.markets.total) +
+      (s.picks
+        ? '<td><button type="button" class="picks-toggle" data-picks-game="' + esc(g.id) + '" aria-expanded="' + open + '">' +
+          s.experts + (s.experts === 1 ? " expert" : " experts") + (open ? " ▾" : " ▸") + "</button></td></tr>"
+        : '<td class="value-note">no picks yet</td></tr>') +
+      (open && s.picks ? picksDetailHtml(s) : "");
   }
 
   function expertPicksRowsHtml() {
@@ -3031,17 +3056,20 @@
           : "No " + esc(entry.league.label) + " games on this day.") + "</td></tr>";
         continue;
       }
-      for (const s of summaries) {
-        const g = s.game;
-        const open = expertPicksOpen.has(g.id);
-        const time = picksGameTime(g);
-        html += "<tr><td><strong>" + esc(g.away.abbr) + " @ " + esc(g.home.abbr) + "</strong>" +
-          (time ? ' <span class="value-note">' + esc(time) + "</span>" : "") + "</td>" +
-          picksConsensusCell(s.markets.spread) + picksConsensusCell(s.markets.ml) + picksConsensusCell(s.markets.total) +
-          '<td><button type="button" class="picks-toggle" data-picks-game="' + esc(g.id) + '" aria-expanded="' + open + '">' +
-          s.experts + (s.experts === 1 ? " expert" : " experts") + (open ? " ▾" : " ▸") + "</button></td></tr>";
-        if (open) html += picksDetailHtml(s);
-        shown++;
+      // Top 25 games get their own block first, best-ranked team first; the
+      // rest follow in kickoff order.
+      const bestRank = g => Math.min(g.away.rank || 99, g.home.rank || 99);
+      const ranked = summaries.filter(s => isTop25(s.game)).sort((x, y) => bestRank(x.game) - bestRank(y.game));
+      const blocks = ranked.length
+        ? [[(entry.poll || "Top 25"), ranked], ["Other games", summaries.filter(s => !isTop25(s.game))]]
+        : [[null, summaries]];
+      for (const [title, list] of blocks) {
+        if (title && list.length) {
+          html += '<tr class="picks-group"><td colspan="5">' + esc(title) +
+            ' <span class="value-note">' + list.length + (list.length === 1 ? " game" : " games") + "</span></td></tr>";
+        }
+        html += list.map(picksGameRowHtml).join("");
+        shown += list.length;
       }
       const quiet = games.length - summaries.length;
       if (quiet > 0) {
@@ -3061,7 +3089,7 @@
     return leans.map(({ game, consensus: c }) => {
       const pct = Math.round(c.share * 100);
       return '<p><span class="call call--value">' + esc(c.leader.label) + "</span> " +
-        esc(game.away.abbr) + " @ " + esc(game.home.abbr) + " &middot; " + c.leader.count + " of " + c.count +
+        picksTeam(game.away) + " @ " + picksTeam(game.home) + " &middot; " + c.leader.count + " of " + c.count +
         " experts (" + pct + "%) &middot; " + esc(c.label.toLowerCase()) + resultMark(c.leader.result) + "</p>";
     }).join("");
   }
@@ -3084,10 +3112,12 @@
     }
     const summaries = expertPicks.leagues.flatMap(expertPicksSummaries);
     const picks = summaries.reduce((n, s) => n + s.picks, 0);
+    const top25 = summaries.filter(s => isTop25(s.game)).length;
     const down = expertPicks.leagues.flatMap(e => Object.entries((e.data && e.data.sources) || {}))
       .filter(([, s]) => !s.ok).map(([k]) => k === "cbs" ? "CBS" : "Action Network");
     meta.textContent = fmtDay(expertPicks.date, true) + " · " + summaries.length +
       (summaries.length === 1 ? " game · " : " games · ") + picks + (picks === 1 ? " pick" : " picks") +
+      (top25 ? " · " + top25 + " Top 25" : "") +
       (down.length ? " · " + [...new Set(down)].join(", ") + " unavailable" : "");
   }
 
@@ -3103,10 +3133,25 @@
     expertPicksLoading = true;
     renderExpertPicks();
     try {
-      const results = await Promise.all(leagues.map(league =>
-        fetchJSON("/api/picks?league=" + league.api + "&date=" + date)));
+      const [results, polls] = await Promise.all([
+        Promise.all(leagues.map(league => fetchJSON("/api/picks?league=" + league.api + "&date=" + date))),
+        // Current poll only: ESPN's feed is this week's ranking, which is also
+        // what a past or future day is shown with.
+        Promise.all(leagues.map(league => league.polls ? fetchJSON(ESPN + league.polls + "/rankings") : null)),
+      ]);
       if (seq === expertPicksSeq && results.some(Boolean)) {
-        expertPicks = { date, leagues: leagues.map((league, i) => ({ league, data: results[i] })) };
+        expertPicks = {
+          date,
+          leagues: leagues.map((league, i) => {
+            const data = results[i];
+            const poll = window.ExpertPicks.rankIndex(polls[i]);
+            for (const g of (data && data.games) || []) {
+              g.away.rank = window.ExpertPicks.rankOf(poll, g.away);
+              g.home.rank = window.ExpertPicks.rankOf(poll, g.home);
+            }
+            return { league, data, poll: poll && poll.name };
+          }),
+        };
       }
     } finally {
       if (seq === expertPicksSeq) expertPicksLoading = false;

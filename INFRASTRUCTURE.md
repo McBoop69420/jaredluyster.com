@@ -500,6 +500,12 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   count; props, team totals and quarter/half picks are just tallied. Edge-cached 10
   minutes (1 minute if both sources failed). Action Network's NCAAF payload is ~1.6 MB
   even with `bookIds=15`, which is why this runs in the worker instead of the browser.
+  **Top 25 (added 2026-10-17):** NCAAF and NCAAM games with a ranked team get their own
+  block first, ordered by best rank and listed even before anyone picks them, with
+  `#n` badges. Ranks come client-side from ESPN's `/rankings` feed (the CFP ranking once it
+  exists, else AP; Action Network carries no ranks), matched to teams by full name with
+  parenthesised qualifiers dropped ("Miami (FL) Hurricanes"). It's always the current
+  poll, even when the date picker is on a past or future day.
   Consensus maths: [`sports/expert-picks.js`](sports/expert-picks.js) (DOM-free);
   `tests/expert-picks.test.mjs` covers it plus the worker's parsers and merge.
   **Rejected:** Pickwatch (nflpickwatch.com, the biggest aggregator) serves its picks

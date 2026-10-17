@@ -252,3 +252,37 @@ test("strongLeans needs 5+ picks at 75%+, on spreads and totals only", () => {
   assert.deepEqual(leans.map(l => [l.consensus.market, l.consensus.leader.label]),
     [["total", "Over 51"], ["spread", "JAX −2.5"]]);
 });
+
+// ---- Top 25 --------------------------------------------------------------
+
+const rankEntry = (current, location, name, nickname) => ({ current, team: { location, name, nickname: nickname || location } });
+const RANKINGS = {
+  rankings: [
+    { name: "AP Top 25", type: "ap", ranks: [
+      rankEntry(3, "Miami", "Hurricanes"),
+      rankEntry(9, "Ole Miss", "Rebels"),
+      rankEntry(25, "Northwestern", "Wildcats"),
+    ] },
+    { name: "AFCA Coaches Poll", type: "usa", ranks: [rankEntry(1, "Georgia", "Bulldogs")] },
+  ],
+};
+
+test("rankIndex reads the AP poll and matches teams by full name", () => {
+  const idx = EP.rankIndex(RANKINGS);
+  assert.equal(idx.name, "AP Top 25");
+  assert.equal(EP.rankOf(idx, { abbr: "MIA", name: "Miami (FL) Hurricanes" }), 3);
+  assert.equal(EP.rankOf(idx, { abbr: "MISS", name: "Ole Miss Rebels" }), 9);
+  assert.equal(EP.rankOf(idx, { abbr: "NW", name: "Northwestern Wildcats" }), 25);
+  assert.equal(EP.rankOf(idx, { abbr: "UGA", name: "Georgia Bulldogs" }), null, "coaches poll is not used");
+  assert.equal(EP.rankOf(idx, { abbr: "UK", name: "Kentucky Wildcats" }), null);
+  assert.equal(EP.rankOf(null, { name: "Miami Hurricanes" }), null);
+});
+
+test("pickPoll prefers the College Football Playoff ranking once it exists", () => {
+  const withCfp = { rankings: [...RANKINGS.rankings, { name: "CFP Rankings", type: "cfp", ranks: [rankEntry(1, "Ole Miss", "Rebels")] }] };
+  const idx = EP.rankIndex(withCfp);
+  assert.equal(idx.name, "CFP Rankings");
+  assert.equal(EP.rankOf(idx, { name: "Ole Miss Rebels" }), 1);
+  assert.equal(EP.rankIndex({ rankings: [] }), null);
+  assert.equal(EP.rankIndex(null), null);
+});
