@@ -195,7 +195,9 @@ Tests: `node --test redzone/tests/api.test.mjs` (auth + endpoint) and
 
 ## Sports My Bets — private store setup (one-time, needs your Cloudflare login)
 
-The Betting page's **My Bets** panel (paper bets, `sports/my-bets.js`) saves to one private R2
+**Done 2026-10-17** (steps 1, 2, 3 and 5; `ACCESS_AUD` not set). Kept for a rebuild.
+
+**My Bets** (paper bets placed from the game cards' **+ Bet** button, `sports/my-bets.js`) saves to one private R2
 object through `/api/bets` in `sports/_worker.js`, never to git (this repo is public). It is the
 same layering as RedZone's store above: only answers on `sports.jaredluyster.com`, needs a signed
 Access JWT, and that JWT's email must be in the `BETS_ALLOWED_EMAILS` secret (the `Sports guest

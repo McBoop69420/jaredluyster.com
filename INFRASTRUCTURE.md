@@ -483,18 +483,23 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   team-games score "burnt" (an everyday schedule alone scores 79), and the wave-1 flag
   fired 0 times in the 2026 season, so the flag is wired up but effectively silent until
   the thresholds change in BettingEdge.
-- **My Bets (paper bets) — added 2026-10-17.** The Betting page's first panel (`#myBets`), the
-  owner's own paper-betting tracker. Pick a league (NFL, NCAAF, MLB, NBA, NHL, NCAAM, NCAAW, WNBA,
-  Premier League, MLS, La Liga, Champions League) and a day (football defaults to the whole current
-  week), click a DraftKings price from ESPN's scoreboard (`competitions[0].odds[0]`: spread,
-  moneyline incl. soccer's draw, total; current "close" prices, the older flat fields as fallback)
-  to put it on a slip, edit the line/odds if you got a different number, and place it as straight
-  bets or one parlay, staked in units. Only games that haven't started can be bet. Bets grade
-  client-side from ESPN scores, live (winning/losing) and final; once a game is final its score is
-  written onto the leg, so settled bets never re-fetch and can't drift. Parlays drop pushed/void legs;
-  postponed or canceled games are no action. Any bet can be settled or deleted by hand. Summary:
-  W-L-P, units, ROI (pushes left out), open exposure, by league and by market. Maths and DOM:
-  [`sports/my-bets.js`](sports/my-bets.js) (pure half tested in `tests/my-bets.test.mjs`).
+- **My Bets (paper bets) — added 2026-10-17.** The owner's own paper-betting tracker. Every
+  upcoming game card on Games (Spotlight and the league boards) gets a **+ Bet** button that opens
+  a one-game form: DraftKings' current spread, moneyline (soccer: incl. the draw) and total from
+  that game's ESPN summary (`pickcenter`), tap one, adjust the line/odds if yours differed, stake in
+  units, place. Only games that haven't started can be bet; with no posted line you type your own.
+  Cards with a bet on them show it and its status (winning/losing live, then won/lost). Bets grade
+  client-side from ESPN scores; once a game is final its score is written onto the leg, so settled
+  bets never re-fetch and can't drift. Postponed or canceled games are no action. The Betting
+  page's first panel (`#myBets`) is the record: W-L-P, units, ROI (pushes left out), open
+  exposure, by league and by market, and the bet list, where any bet can be settled or deleted by
+  hand. `sports.js`'s `gameCard()` only tags cards (`data-event-id`, `data-league` — the real ESPN
+  competition for International — `data-state`, `data-league-label`); `my-bets.js` adds the button
+  and status itself, re-applying through a MutationObserver because cards are rebuilt on every
+  refresh. (A first version that day had a league/day odds board with a bet slip on the Betting
+  page; replaced the same day by the card button.) Maths and DOM:
+  [`sports/my-bets.js`](sports/my-bets.js) (pure half tested in `tests/my-bets.test.mjs`), loaded
+  by Games and Betting.
   - **Store: private, NOT the repo.** `/api/bets` in `sports/_worker.js` keeps one R2 object
     (binding `SPORTS_BETS`, bucket `mcboop-sports-bets`, key `paper-bets.json`). GET returns
     `{ version, bets }`; PUT `{ version, bets }` replaces the list only if `version` (the R2 etag)
@@ -506,8 +511,9 @@ else here. It rebuilds and redeploys automatically on every push to `main`
     onto the hostname (they get 403, and the panel stays hidden). Writes must be JSON from the same
     origin, at most 1 MB, and are shape-checked. Fails closed (503 `not-configured`) until set up;
     **the `[[r2_buckets]]` block in `sports/wrangler.toml` stays commented out until the bucket
-    exists** because a missing bound bucket fails this Git-integrated project's build. Setup and
-    local dev: DEPLOY.md, "Sports My Bets — private store setup".
+    exists** because a missing bound bucket fails this Git-integrated project's build. **Set up
+    2026-10-17:** bucket created, `BETS_ALLOWED_EMAILS` set on `mcboop-sports`, binding live
+    (`ACCESS_AUD` not set). Setup and local dev: DEPLOY.md, "Sports My Bets — private store setup".
 - **Expert Picks — added 2026-10-16.** The Betting page's second panel (`#expertPicks`):
   for one day's games (date picker, ET), how many published experts are on each side of
   the spread, the winner (straight-up and moneyline picks combined) and the total, with
@@ -831,7 +837,7 @@ jaredluyster.com/
 │   ├── team-context.js     # Team Context maths (pure, unit-tested in tests/team-context.test.mjs), loaded by betting/ only
 │   ├── expert-picks.js     # Expert Picks consensus maths (pure, unit-tested in tests/expert-picks.test.mjs), loaded by betting/ only
 │   ├── picks-ledger.js     # Expert Leaderboard: graded-pick ledger + ranking maths (pure, tests/picks-ledger.test.mjs), loaded by betting/ only
-│   ├── my-bets.js          # My Bets: paper-bet slip, grading and summaries (pure half unit-tested in tests/my-bets.test.mjs); stored via /api/bets — see §4b
+│   ├── my-bets.js          # My Bets: + Bet on game cards, grading and summaries (pure half unit-tested in tests/my-bets.test.mjs); stored via /api/bets — see §4b
 │   ├── picks-history/      # days/<date>.json graded-pick ledger + leaderboard.json, written daily by scripts/picks-ledger.sh — see §4b
 │   ├── _worker.js          # Pages Worker (advanced mode): /api/odds, /api/picks and /api/bets (private, owner-only), else falls through to assets — see §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b

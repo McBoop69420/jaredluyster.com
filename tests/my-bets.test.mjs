@@ -90,6 +90,31 @@ test("the older flat odds fields are a fallback", () => {
   assert.equal(offer(g, "total", "under").odds, -110);
 });
 
+test("parseSummary reads a game summary: header for teams and status, pickcenter for odds", () => {
+  const ev = event({ state: "pre" });
+  const comp = ev.competitions[0];
+  const summary = {
+    header: { id: ev.id, competitions: [{ id: ev.id, date: ev.date, status: ev.status, competitors: comp.competitors }] },
+    pickcenter: [NFL_ODDS],
+  };
+  const g = PB.parseSummary(summary, "football/nfl");
+  assert.equal(g.id, "401872996");
+  assert.equal(g.away.abbr, "HOU");
+  assert.equal(g.state, "pre");
+  assert.deepEqual(offer(g, "spread", "home"), { kind: "spread", side: "home", odds: -120, line: -2.5 });
+  assert.equal(g.offers.length, 6);
+  assert.deepEqual(PB.parseSummary({ ...summary, pickcenter: [] }, "football/nfl").offers, []);
+  assert.equal(PB.parseSummary({}, "football/nfl"), null);
+});
+
+test("a leg keeps the card's league label, and summaries group by it", () => {
+  const g = { ...PB.parseEvent(event(), "soccer/fifa.worldq.uefa"), leagueLabel: "WC Qualifying · UEFA" };
+  const leg = PB.legFromOffer(g, { kind: "moneyline", side: "home", odds: 150, threeWay: true });
+  assert.equal(leg.leagueLabel, "WC Qualifying · UEFA");
+  const s = PB.summarize([{ id: "a", stake: 1, legs: [leg] }], new Map([["a", { tone: "won", final: true, profit: 1.5 }]]));
+  assert.deepEqual(s.byLeague.map(r => r.label), ["WC Qualifying · UEFA"]);
+});
+
 test("no odds -> no offers; postponed and canceled games are void", () => {
   assert.deepEqual(PB.parseEvent(event({ odds: null }), "football/nfl").offers, []);
   assert.equal(PB.parseEvent(event({ state: "post", name: "STATUS_POSTPONED" }), "football/nfl").voided, true);

@@ -695,6 +695,7 @@
     return {
       eventId: ev.id,
       leagueKey,
+      leagueLabel: label || null,
       boxScoreEventId: leagueKey === "baseball/mlb" && state === "post" ? ev.id : null,
       state,
       isPlayoff,
@@ -913,6 +914,11 @@
       card.target = "_blank";
       card.rel = "noopener";
     }
+    // For My Bets (my-bets.js), which adds its own "+ Bet" button to the card.
+    card.dataset.eventId = g.eventId;
+    card.dataset.league = g.competitionKey || g.leagueKey; // International: the real ESPN competition
+    card.dataset.state = g.state;
+    if (g.competition || g.leagueLabel) card.dataset.leagueLabel = g.competition || g.leagueLabel;
     if (leagueLabel) {
       const tag = g.stakes ? leagueLabel + " · " + g.stakes : leagueLabel;
       card.appendChild(el("div", "spotlight-league-tag", esc(tag)));

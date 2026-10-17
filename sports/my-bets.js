@@ -1,20 +1,24 @@
-/* My Bets — paper bets on the Betting page (sports.jaredluyster.com/betting/)
+/* My Bets — paper bets on sports.jaredluyster.com
  *
- * Pick a league and day, click a DraftKings price from ESPN's scoreboard to put
- * it on the slip, and place it as one or more straight bets or a parlay, staked
- * in units. Bets are graded here against ESPN's scores (live, then final).
+ * Every upcoming game card (Games page) gets a small "+ Bet" button. It opens a
+ * form for that one game with DraftKings' current lines from ESPN (spread,
+ * moneyline, total; soccer's draw too): pick a side, adjust the line or odds if
+ * you got a different number, set a stake in units, place it. Cards with a bet
+ * on them show it, with its live status. The Betting page's My Bets panel is
+ * the record: W-L-P, units, ROI, and every bet, graded from ESPN's scores
+ * (live, then final).
  *
  * Storage is private and synced across devices: GET/PUT /api/bets
  * (sports/_worker.js), one R2 object readable and writable only by the owner's
- * Access login. Nothing about the bets is in this public repo. Guests get a 403
- * and never see the panel.
+ * Access login. Nothing about the bets is in this public repo. Guests get a 403:
+ * no buttons, no panel.
  *
  * Once a game is final its score is written onto the leg (`final`), so a settled
  * bet never needs ESPN again and old results can't change under it.
  *
  *   Bet = { id, placedAt: ISO, stake: units, note?, legs: [Leg],
  *           result?: "won"|"lost"|"push"|"void" }      // set by hand, overrides grading
- *   Leg = { league: ESPN path ("football/nfl"), gameId: ESPN event id, start: ISO,
+ *   Leg = { league: ESPN path ("football/nfl"), leagueLabel?, gameId: ESPN event id, start: ISO,
  *           away: { id, abbr }, home: { id, abbr },
  *           kind: "moneyline"|"spread"|"total",
  *           side: "away"|"home"|"draw" (moneyline, spread) | "over"|"under" (total),
@@ -23,9 +27,10 @@
  *           final?: { away, home } | { void: true }   // written once the game is over
  *           result?: "won"|"lost"|"push"|"void" }     // set by hand
  *
- * A parlay pays the product of its winning legs' decimal odds; a pushed or void
- * leg drops out, and a parlay with no winning legs left is a push. A postponed or
- * canceled game is void (no action), as at most books.
+ * Bets are placed one game at a time (one leg). Grading still handles
+ * multi-leg bets (parlays): a parlay pays the product of its winning legs'
+ * decimal odds, a pushed or void leg drops out. A postponed or canceled game is
+ * void (no action), as at most books.
  *
  * The pure half (parsing, grading, summaries) is shared with
  * tests/my-bets.test.mjs; the DOM half only runs in a browser.
@@ -40,13 +45,12 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  // ESPN path, label, and the scoreboard query that returns the whole slate
-  // (college sports need `groups`, see LEAGUES in sports.js). weekly: football
-  // is bet by the week, so the board's default view is the current week's
-  // slate (ESPN's scoreboard without a date) rather than just today.
+  // Labels, and the scoreboard query grading needs for a whole day's slate
+  // (college sports need `groups`, see LEAGUES in sports.js). Any other ESPN
+  // league works too, with a plain scoreboard query.
   const LEAGUES = [
-    { key: "football/nfl", label: "NFL", weekly: true },
-    { key: "football/college-football", label: "NCAAF", query: "groups=80&limit=500", weekly: true },
+    { key: "football/nfl", label: "NFL" },
+    { key: "football/college-football", label: "NCAAF", query: "groups=80&limit=500" },
     { key: "baseball/mlb", label: "MLB" },
     { key: "basketball/nba", label: "NBA" },
     { key: "hockey/nhl", label: "NHL" },
@@ -147,7 +151,7 @@
     return out;
   }
 
-  // One ESPN scoreboard event (or a summary's header, same shape) -> game.
+  // One ESPN scoreboard event -> game.
   function parseEvent(ev, league) {
     const c = ev && ev.competitions && ev.competitions[0];
     if (!c || !Array.isArray(c.competitors)) return null;
@@ -171,6 +175,16 @@
     };
   }
 
+  // An ESPN game summary (summary?event=) -> game: its header has the teams and
+  // status, its pickcenter the same odds object the scoreboard carries.
+  function parseSummary(data, league) {
+    const h = data && data.header;
+    const c = h && h.competitions && h.competitions[0];
+    if (!c) return null;
+    const odds = Array.isArray(data.pickcenter) && data.pickcenter.length ? data.pickcenter : c.odds;
+    return parseEvent({ id: h.id || c.id, date: c.date, status: c.status, competitions: [Object.assign({}, c, { odds })] }, league);
+  }
+
   // What gets written onto a leg once its game can't change any more.
   function finalSnapshot(game) {
     if (!game) return null;
@@ -184,6 +198,7 @@
   function legFromOffer(game, offer) {
     const leg = {
       league: game.league, gameId: game.id, start: game.start,
+      ...(game.leagueLabel ? { leagueLabel: game.leagueLabel } : {}),
       away: { id: game.away.id, abbr: game.away.abbr }, home: { id: game.home.id, abbr: game.home.abbr },
       kind: offer.kind, side: offer.side, odds: offer.odds,
     };
@@ -280,7 +295,7 @@
     if (bet.legs.length > 1) return { league: "Parlays", market: "Parlay" };
     const leg = bet.legs[0];
     const league = LEAGUE_BY_KEY.get(leg.league);
-    return { league: league ? league.label : leg.league, market: KINDS[leg.kind] || leg.kind };
+    return { league: leg.leagueLabel || (league ? league.label : leg.league), market: KINDS[leg.kind] || leg.kind };
   }
 
   // results: Map bet id -> gradeBet(). Win rate and ROI leave pushes and voids out.
@@ -331,10 +346,11 @@
   return {
     LEAGUES, LEAGUE_BY_KEY, KINDS, TONES,
     parseAmerican, toDecimal, toAmerican, fmtOdds, fmtLine, fmtUnits, fmtNum,
-    parseOffers, parseEvent, finalSnapshot, legFromOffer, offerKey, legLabel, gameLabel,
+    parseOffers, parseEvent, parseSummary, finalSnapshot, legFromOffer, offerKey, legLabel, gameLabel,
     margin, gradeLeg, gradeBet, betDecimal, toWin, summarize, etDate,
   };
 });
+
 
 // ---- DOM ---------------------------------------------------------------------
 function mountMyBets(PB) {
@@ -343,38 +359,29 @@ function mountMyBets(PB) {
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const REFRESH_MS = 60 * 1000;
   const MAX_STAKE = 1000;
-  const LS = { league: "myBets.league", stake: "myBets.stake" };
+  const LS_STAKE = "myBets.stake";
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } };
+  // The International board merges a dozen tournaments; its cards carry the real
+  // ESPN competition (sports.js), but anything still keyed to the merged id
+  // can't be looked up, so it gets no button.
+  const UNBETTABLE = new Set(["soccer/international"]);
 
   const S = {
     status: "loading",      // loading | ready | not-configured | unauthenticated | error | hidden
     version: null,
     bets: [],
-    games: new Map(),       // ESPN event id -> parsed game (board + grading)
-    board: null,            // parsed games for the chosen league/day
-    boardLoading: false,
-    boardSeq: 0,
-    league: PB.LEAGUE_BY_KEY.has(lsGet(LS.league)) ? lsGet(LS.league) : "football/nfl",
-    date: null,             // null = today (ET)
-    filter: "",
-    slip: [],               // legs
-    mode: "straight",
-    stake: Number(lsGet(LS.stake)) > 0 ? Number(lsGet(LS.stake)) : 1,
-    note: "",
+    games: new Map(),       // ESPN event id -> parsed game, for grading
     view: "open",
-    open: new Set(),        // expanded bet ids
+    open: new Set(),        // expanded bet ids in the panel
     saving: false,
-    message: "",
+    stake: Number(lsGet(LS_STAKE)) > 0 ? Number(lsGet(LS_STAKE)) : 1,
+    form: null,             // the bet form for one game, while it's open
   };
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const day = () => S.date || PB.etDate();
-  const weekly = () => !S.date && !!PB.LEAGUE_BY_KEY.get(S.league).weekly;
-  // What the board shows: a chosen day, today, or (football) this week.
-  const boardKey = () => S.date || (weekly() ? "week" : PB.etDate());
   const fmtWhen = (iso) => iso ? new Date(iso).toLocaleString("en-US", {
     timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit",
   }) : "TBD";
@@ -405,7 +412,7 @@ function mountMyBets(PB) {
   }
 
   // fn(bets) -> new bets. On a 409 (another device saved first) reload and
-  // apply fn again to the newer list, once.
+  // apply fn again to the newer list, once. -> "" on success, else an error.
   async function mutate(fn) {
     S.saving = true;
     try {
@@ -420,18 +427,16 @@ function mountMyBets(PB) {
           const body = await res.json();
           S.bets = next;
           S.version = body.version;
-          return true;
+          return "";
         }
         if (res && res.status === 409) {
           await loadStore();
           if (S.status !== "ready") break;
           continue;
         }
-        S.message = "Couldn't save" + (res ? " (HTTP " + res.status + ")" : " (offline?)") + ". Try again.";
-        return false;
+        return "Couldn't save" + (res ? " (HTTP " + res.status + ")" : " (offline?)") + ". Try again.";
       }
-      S.message = "Couldn't save: the bet list changed on another device. Try again.";
-      return false;
+      return "Couldn't save: the bet list changed on another device. Try again.";
     } finally {
       S.saving = false;
     }
@@ -439,11 +444,10 @@ function mountMyBets(PB) {
 
   // ---- ESPN ----------------------------------------------------------------
 
-  // date null = ESPN's current slate (this week, for football).
   async function fetchScoreboard(leagueKey, date) {
     const league = PB.LEAGUE_BY_KEY.get(leagueKey);
     const url = ESPN + leagueKey + "/scoreboard?" + ((league && league.query) || "limit=1000") +
-      (date ? "&dates=" + date.replace(/-/g, "") : "") + "&_=" + Date.now();
+      "&dates=" + date.replace(/-/g, "") + "&_=" + Date.now();
     const res = await fetch(url);
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -453,29 +457,11 @@ function mountMyBets(PB) {
   }
 
   async function fetchSummaryGame(leagueKey, gameId) {
-    const res = await fetch(ESPN + leagueKey + "/summary?event=" + encodeURIComponent(gameId));
-    if (!res.ok) return null;
-    const data = await res.json();
-    const h = data && data.header;
-    const c = h && h.competitions && h.competitions[0];
-    if (!c) return null;
-    const g = PB.parseEvent({ id: h.id || gameId, date: c.date, status: c.status, competitions: [c] }, leagueKey);
+    const res = await fetch(ESPN + leagueKey + "/summary?event=" + encodeURIComponent(gameId) + "&_=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const g = PB.parseSummary(await res.json(), leagueKey);
     if (g) S.games.set(g.id, g);
     return g;
-  }
-
-  async function loadBoard() {
-    const seq = ++S.boardSeq;
-    S.boardLoading = true;
-    renderBoard();
-    let games = null;
-    try {
-      games = await fetchScoreboard(S.league, weekly() ? null : day());
-    } catch (e) { /* keep the last good board */ }
-    if (seq !== S.boardSeq) return;
-    S.boardLoading = false;
-    if (games) S.board = { league: S.league, key: boardKey(), games };
-    renderBoard();
   }
 
   // Scores for every leg that isn't settled yet: one scoreboard per league and
@@ -541,30 +527,259 @@ function mountMyBets(PB) {
     won: "call--value", winning: "call--value", lost: "call--fade", losing: "call--fade",
     push: "call--none", void: "call--none", pushing: "call--check", pending: "call--none", unknown: "call--none",
   };
-  const chip = (tone) => '<span class="call ' + (TONE_CLASS[tone] || "call--none") + '">' + esc(PB.TONES[tone] || tone) + "</span>";
+  const chip = (tone, text) => '<span class="call ' + (TONE_CLASS[tone] || "call--none") + '">' + esc(text || PB.TONES[tone] || tone) + "</span>";
 
-  // ---- Rendering -----------------------------------------------------------
+  // ---- Game cards: "+ Bet" and the bets already on the game ---------------
 
-  function render() {
+  function cardStripHtml(card) {
+    const id = card.dataset.eventId;
+    const canBet = card.dataset.state === "pre" && !UNBETTABLE.has(card.dataset.league);
+    const mine = S.bets.filter(b => b.legs.some(l => l.gameId === id));
+    if (!canBet && !mine.length) return "";
+    const tags = mine.map(bet => {
+      const g = grade(bet);
+      const leg = bet.legs.find(l => l.gameId === id);
+      const label = (bet.legs.length > 1 ? "Parlay: " : "") + PB.legLabel(leg) + " · " + PB.fmtUnits(bet.stake);
+      const shown = g.bet.final || g.bet.tone !== "pending";
+      return chip(shown ? g.bet.tone : "pending", label + (shown ? " · " + PB.TONES[g.bet.tone] : ""));
+    }).join("");
+    return tags + (canBet ? '<button type="button" class="bet-chip" data-bet-open>+ Bet</button>' : "");
+  }
+
+  // sports.js rebuilds cards on every refresh, so this runs after each change;
+  // a card whose strip is already current is left alone.
+  function decorateCards() {
+    if (S.status !== "ready") return;
+    document.querySelectorAll(".game[data-event-id]").forEach(card => {
+      const html = cardStripHtml(card);
+      let strip = card.querySelector(":scope > .bet-strip");
+      if (card.dataset.betStrip === html && (strip || !html)) return;
+      card.dataset.betStrip = html;
+      if (!html) { if (strip) strip.remove(); return; }
+      if (!strip) {
+        strip = document.createElement("div");
+        strip.className = "bet-strip";
+        card.appendChild(strip);
+      }
+      strip.innerHTML = html;
+    });
+  }
+
+  let decorateQueued = false;
+  function queueDecorate() {
+    if (decorateQueued) return;
+    decorateQueued = true;
+    // A timer, not requestAnimationFrame: that never fires in a background tab.
+    setTimeout(() => { decorateQueued = false; decorateCards(); }, 30);
+  }
+
+  // ---- The bet form (one game) --------------------------------------------
+
+  let dialog = null;
+  function ensureDialog() {
+    if (dialog) return dialog;
+    dialog = document.createElement("dialog");
+    dialog.className = "bet-dialog";
+    dialog.setAttribute("aria-label", "Place a paper bet");
+    document.body.appendChild(dialog);
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) return dialog.close(); // the backdrop
+      const t = e.target.closest("button");
+      if (!t) return;
+      if (t.hasAttribute("data-bet-close")) return dialog.close();
+      if (t.hasAttribute("data-pick")) return pick(t.getAttribute("data-pick"));
+      if (t.hasAttribute("data-bet-place")) return place();
+    });
+    dialog.addEventListener("input", (e) => {
+      const f = S.form;
+      const t = e.target;
+      if (!f) return;
+      if (t.name === "line") f.line = t.value === "" ? NaN : Number(t.value);
+      else if (t.name === "odds") f.odds = PB.parseAmerican(t.value.replace("−", "-"));
+      else if (t.name === "stake") f.stake = Number(t.value);
+      else if (t.name === "note") { f.note = t.value; return; }
+      f.message = "";
+      const totals = dialog.querySelector(".bet-form-totals");
+      if (totals) totals.innerHTML = formTotalsHtml();
+    });
+    dialog.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); place(); }
+    });
+    dialog.addEventListener("close", () => { S.form = null; });
+    return dialog;
+  }
+
+  function openForm(card) {
+    const id = card.dataset.eventId;
+    const league = card.dataset.league;
+    S.form = { id, league, leagueLabel: card.dataset.leagueLabel || null, game: null, loading: true, failed: false,
+      pick: null, line: NaN, odds: null, stake: S.stake, note: "", message: "" };
+    ensureDialog();
+    renderForm();
+    if (!dialog.open) dialog.showModal();
+    fetchSummaryGame(league, id).then(g => {
+      if (!S.form || S.form.id !== id) return;
+      S.form.game = g;
+      S.form.loading = false;
+      S.form.failed = !g;
+      renderForm();
+    }).catch(() => {
+      if (!S.form || S.form.id !== id) return;
+      S.form.loading = false;
+      S.form.failed = true;
+      renderForm();
+    });
+  }
+
+  const SIDES = { spread: ["away", "home"], moneyline: ["away", "draw", "home"], total: ["over", "under"] };
+
+  const offerFor = (g, kind, side) => g.offers.find(o => o.kind === kind && o.side === side) || null;
+  const threeWay = (g) => g.offers.some(o => o.threeWay) || /^soccer\//.test(g.league);
+
+  function sideLabel(g, kind, side, line) {
+    if (kind === "total") return (side === "over" ? "Over" : "Under") + (line != null ? " " + PB.fmtNum(line) : "");
+    if (side === "draw") return "Draw";
+    return g[side].abbr + (kind === "spread" && line != null ? " " + PB.fmtLine(line) : kind === "moneyline" ? " ML" : "");
+  }
+
+  function pick(key) {
+    const f = S.form;
+    if (!f || !f.game) return;
+    const [kind, side] = key.split("|");
+    const g = f.game;
+    const offer = offerFor(g, kind, side);
+    f.pick = { kind, side };
+    f.odds = offer ? offer.odds : null;
+    if (kind === "moneyline") f.line = NaN;
+    else if (offer) f.line = offer.line;
+    else {
+      // No price on this side: borrow the line from the other side if there is one.
+      const other = g.offers.find(o => o.kind === kind && o.side !== side);
+      f.line = other ? (kind === "spread" ? -other.line : other.line) : NaN;
+    }
+    f.message = "";
+    renderForm();
+    const focus = dialog.querySelector(f.odds == null ? 'input[name="odds"]' : 'input[name="stake"]');
+    if (focus) focus.focus();
+  }
+
+  function formCheck() {
+    const f = S.form;
+    if (!f || !f.pick) return { ok: false };
+    if (f.odds == null) return { ok: false, why: "Enter the odds you got, like −110 or +150." };
+    if (f.pick.kind !== "moneyline" && !Number.isFinite(f.line)) return { ok: false, why: "Enter the line." };
+    if (!(f.stake > 0 && f.stake <= MAX_STAKE)) return { ok: false, why: "Stake must be between 0 and " + MAX_STAKE + " units." };
+    return { ok: true };
+  }
+
+  function formTotalsHtml() {
+    const f = S.form;
+    const check = formCheck();
+    const win = check.ok ? Math.round(f.stake * (PB.toDecimal(f.odds) - 1) * 100) / 100 : null;
+    return (win != null ? "<p>Risk " + esc(PB.fmtUnits(f.stake)) + " to win <strong>" + esc(PB.fmtUnits(win)) + "</strong></p>" : "") +
+      (f.pick && check.why ? '<p class="picks-loss">' + esc(check.why) + "</p>" : "") +
+      (f.message ? '<p class="picks-loss">' + esc(f.message) + "</p>" : "");
+  }
+
+  function renderForm() {
+    const f = S.form;
+    if (!dialog || !f) return;
+    const close = '<button type="button" class="bet-dialog-close" data-bet-close aria-label="Close">&times;</button>';
+    if (f.loading || f.failed || !f.game) {
+      dialog.innerHTML = '<div class="bet-form">' + close + '<p class="value-empty">' +
+        (f.loading ? "Loading lines&hellip;" : "Couldn't load this game from ESPN. Try again in a minute.") + "</p></div>";
+      return;
+    }
+    const g = f.game;
+    const started = g.state !== "pre" || (g.start && Date.parse(g.start) <= Date.now());
+    const rows = Object.keys(SIDES).map(kind => {
+      const sides = SIDES[kind].filter(side => side !== "draw" || threeWay(g));
+      const buttons = sides.map(side => {
+        const offer = offerFor(g, kind, side);
+        const on = !!(f.pick && f.pick.kind === kind && f.pick.side === side);
+        return '<button type="button" class="bet-offer' + (on ? " bet-offer--on" : "") + '" data-pick="' + kind + "|" + side + '" aria-pressed="' + on + '"' +
+          (started ? " disabled" : "") + ">" + esc(sideLabel(g, kind, side, offer ? offer.line : null)) +
+          " <small>" + esc(offer ? PB.fmtOdds(offer.odds) : "—") + "</small></button>";
+      }).join("");
+      return '<div class="bet-market"><span class="bet-market-label">' + esc(PB.KINDS[kind]) + '</span><div class="bet-market-sides">' + buttons + "</div></div>";
+    }).join("");
+    let inputs = "";
+    if (f.pick && !started) {
+      const hasLine = f.pick.kind !== "moneyline";
+      inputs = '<div class="slip-inputs bet-form-inputs">' +
+        (hasLine ? '<label>Line <input name="line" type="number" step="0.5" inputmode="decimal" value="' + (Number.isFinite(f.line) ? esc(f.line) : "") + '"></label>' : "") +
+        '<label>Odds <input name="odds" type="text" inputmode="numeric" value="' + (f.odds != null ? esc(f.odds > 0 ? "+" + f.odds : f.odds) : "") + '"></label>' +
+        '<label>Stake <input name="stake" type="number" min="0.1" step="0.5" inputmode="decimal" value="' + esc(f.stake) + '"> units</label></div>' +
+        '<div class="slip-inputs"><input name="note" type="text" maxlength="200" placeholder="Note (optional)" value="' + esc(f.note) + '"></div>' +
+        '<div class="bet-form-totals">' + formTotalsHtml() + "</div>" +
+        '<div class="slip-actions"><button type="button" class="ctx-btn" data-bet-place' + (S.saving ? " disabled" : "") + ">Place bet</button>" +
+        '<button type="button" class="picks-toggle" data-bet-close>Cancel</button></div>';
+    }
+    const mine = S.bets.filter(b => b.legs.some(l => l.gameId === g.id));
+    const existing = mine.length
+      ? '<div class="bet-form-existing"><span class="bet-market-label">Your bets on this game</span>' + mine.map(bet => {
+        const gr = grade(bet);
+        const leg = bet.legs.find(l => l.gameId === g.id);
+        return "<div>" + esc((bet.legs.length > 1 ? "Parlay: " : "") + PB.legLabel(leg) + " " + PB.fmtOdds(leg.odds) + " · " + PB.fmtUnits(bet.stake)) + " " + chip(gr.bet.tone) + "</div>";
+      }).join("") + "</div>"
+      : "";
+    const hint = started ? "This game has started, so betting is closed."
+      : g.offers.length ? "Tap a line. Change the number if yours was different."
+        : "No line posted yet: tap a side and enter the line and odds you got.";
+    dialog.innerHTML = '<div class="bet-form">' + close +
+      '<div class="value-screen-kicker">Paper bet' + (f.leagueLabel ? " · " + esc(f.leagueLabel) : "") + "</div>" +
+      "<h3>" + esc(g.away.name || g.away.abbr) + " @ " + esc(g.home.name || g.home.abbr) + "</h3>" +
+      '<p class="value-note">' + esc(fmtWhen(g.start)) + " ET · " + esc(hint) + "</p>" +
+      '<div class="bet-markets">' + rows + "</div>" + inputs + existing + "</div>";
+  }
+
+  async function place() {
+    const f = S.form;
+    const check = formCheck();
+    if (!f || !check.ok || S.saving) return;
+    const g = f.game;
+    if (g.state !== "pre" || (g.start && Date.parse(g.start) <= Date.now())) {
+      f.message = "This game has already started.";
+      return renderForm();
+    }
+    const offer = { kind: f.pick.kind, side: f.pick.side, odds: f.odds };
+    if (f.pick.kind !== "moneyline") offer.line = f.line;
+    if (f.pick.kind === "moneyline" && threeWay(g)) offer.threeWay = true;
+    const leg = PB.legFromOffer(Object.assign({}, g, { leagueLabel: f.leagueLabel }), offer);
+    const bet = { id: newId(), placedAt: new Date().toISOString(), stake: f.stake, legs: [leg] };
+    const note = f.note.trim().slice(0, 200);
+    if (note) bet.note = note;
+    renderForm();
+    const err = await mutate(bets => bets.concat([bet]));
+    if (err) {
+      if (S.form) { S.form.message = err; renderForm(); }
+      return;
+    }
+    S.stake = f.stake;
+    lsSet(LS_STAKE, String(f.stake));
+    dialog.close();
+    decorateCards();
+    renderPanel();
+  }
+
+  // ---- The My Bets panel (Betting page) ------------------------------------
+
+  function renderPanel() {
     const panel = $("myBets");
     if (!panel) return;
     panel.hidden = S.status === "hidden" || S.status === "loading";
-    const status = $("myBetsStatus");
-    const body = $("myBetsBody");
     const note = {
       "not-configured": "The private bet store isn't set up yet, so bets can't be saved. Setup steps are in DEPLOY.md (\"Sports My Bets — private store setup\").",
       unauthenticated: "Couldn't confirm your login to the bet store (HTTP 401). Reload the page; if it persists, check the Access settings in DEPLOY.md.",
       error: "Couldn't reach the bet store. Hit Refresh to try again.",
     }[S.status];
-    status.innerHTML = note ? '<p class="value-empty">' + esc(note) + "</p>" : "";
-    body.hidden = S.status !== "ready";
+    $("myBetsStatus").innerHTML = note ? '<p class="value-empty">' + esc(note) + "</p>" : "";
+    $("myBetsBody").hidden = S.status !== "ready";
     if (S.status !== "ready") {
       $("myBetsMeta").textContent = S.status === "loading" ? "Loading bets…" : "Unavailable";
       return;
     }
     renderSummary();
-    renderBoard();
-    renderSlip();
     renderList();
   }
 
@@ -598,119 +813,6 @@ function mountMyBets(PB) {
     $("myBetsSummary").innerHTML = html;
   }
 
-  function offerButton(game, offer) {
-    const leg = PB.legFromOffer(game, offer);
-    const key = PB.offerKey(leg);
-    const on = S.slip.some(l => PB.offerKey(l) === key);
-    const label = offer.kind === "total" ? (offer.side === "over" ? "O " : "U ") + PB.fmtNum(offer.line)
-      : offer.side === "draw" ? "Draw"
-        : game[offer.side].abbr + (offer.kind === "spread" ? " " + PB.fmtLine(offer.line) : "");
-    return '<button type="button" class="bet-offer' + (on ? " bet-offer--on" : "") + '" data-offer="' + esc(key) + '"' +
-      (game.state !== "pre" ? " disabled" : "") + ' aria-pressed="' + on + '">' + esc(label) +
-      " <small>" + esc(PB.fmtOdds(offer.odds)) + "</small></button>";
-  }
-
-  function boardRowHtml(g) {
-    const cell = (kind) => {
-      const offers = g.offers.filter(o => o.kind === kind);
-      return offers.length ? '<td><div class="bet-offers">' + offers.map(o => offerButton(g, o)).join("") + "</div></td>"
-        : '<td class="value-note">—</td>';
-    };
-    const when = g.state === "in"
-      ? g.away.abbr + " " + g.away.score + "–" + g.home.score + " " + g.home.abbr + " · " + g.statusText
-      : weekly() ? fmtWhen(g.start) : fmtWhen(g.start).split(" ").slice(1).join(" ");
-    return "<tr><td><strong>" + esc(g.away.abbr + " @ " + g.home.abbr) + '</strong><div class="value-note">' + esc(when) +
-      "</div></td>" + cell("spread") + cell("moneyline") + cell("total") + "</tr>";
-  }
-
-  function renderBoard() {
-    const tbody = $("myBetsBoardBody");
-    if (!tbody || S.status !== "ready") return;
-    const board = S.board && S.board.league === S.league && S.board.key === boardKey() ? S.board : null;
-    if (!board) {
-      tbody.innerHTML = '<tr><td colspan="4" class="value-empty">' +
-        (S.boardLoading ? "Loading games&hellip;" : "Games unavailable right now.") + "</td></tr>";
-      return;
-    }
-    const q = S.filter.trim().toLowerCase();
-    const games = board.games
-      .filter(g => g.state !== "post")
-      .filter(g => !q || [g.away.abbr, g.away.name, g.home.abbr, g.home.name].some(s => String(s).toLowerCase().includes(q)))
-      .sort((a, b) => (a.state === "in") - (b.state === "in") || String(a.start).localeCompare(String(b.start)));
-    const label = PB.LEAGUE_BY_KEY.get(S.league).label;
-    if (!games.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="value-empty">' + (q ? "No games match “" + esc(S.filter) + "”."
-        : "No upcoming " + esc(label) + " games " + (weekly() ? "this week." : "on this day.")) + "</td></tr>";
-      return;
-    }
-    tbody.innerHTML = games.map(boardRowHtml).join("");
-  }
-
-  function slipCheck() {
-    const legs = S.slip;
-    if (!legs.length) return { ok: false };
-    for (const leg of legs) {
-      if (PB.parseAmerican(leg.odds) == null) return { ok: false, why: "Odds must be American odds, like −110 or +150." };
-      if ((leg.kind === "spread" || leg.kind === "total") && !Number.isFinite(leg.line)) return { ok: false, why: "Every spread and total needs a line." };
-    }
-    if (!(S.stake > 0 && S.stake <= MAX_STAKE)) return { ok: false, why: "Stake must be between 0 and " + MAX_STAKE + " units." };
-    if (S.mode === "parlay") {
-      if (legs.length < 2) return { ok: false, why: "A parlay needs at least two legs." };
-      if (new Set(legs.map(l => l.gameId)).size < legs.length) return { ok: false, why: "Parlay legs must come from different games." };
-    }
-    return { ok: true };
-  }
-
-  function slipTotalsHtml() {
-    const check = slipCheck();
-    if (!S.slip.length) return "";
-    let line;
-    if (S.mode === "parlay" && S.slip.length > 1) {
-      const dec = check.ok ? PB.betDecimal(S.slip) : null;
-      line = dec ? "Parlay at " + PB.fmtOdds(PB.toAmerican(dec)) + " · risk " + PB.fmtUnits(S.stake) + " to win " +
-        PB.fmtUnits(Math.round(S.stake * (dec - 1) * 100) / 100) : "";
-    } else {
-      const win = check.ok ? S.slip.reduce((s, l) => s + S.stake * (PB.toDecimal(l.odds) - 1), 0) : null;
-      line = win != null ? S.slip.length + (S.slip.length === 1 ? " bet" : " bets") + " · risk " +
-        PB.fmtUnits(S.stake * S.slip.length) + " to win " + PB.fmtUnits(Math.round(win * 100) / 100) : "";
-    }
-    return (line ? "<p>" + esc(line) + "</p>" : "") + (check.why ? '<p class="picks-loss">' + esc(check.why) + "</p>" : "") +
-      (S.message ? '<p class="picks-loss">' + esc(S.message) + "</p>" : "");
-  }
-
-  function renderSlip() {
-    const box = $("myBetsSlip");
-    if (!box) return;
-    box.classList.toggle("bets-slip--filled", S.slip.length > 0);
-    if (!S.slip.length) {
-      box.innerHTML = '<h3>Bet slip</h3><p class="value-note">Click a price to add it to the slip.</p>' +
-        (S.message ? '<p class="picks-loss">' + esc(S.message) + "</p>" : "");
-      return;
-    }
-    const legs = S.slip.map((leg, i) => {
-      const hasLine = leg.kind === "spread" || leg.kind === "total";
-      return '<div class="slip-leg"><div class="slip-leg-head"><div><strong>' + esc(PB.legLabel(leg)) +
-        '</strong><div class="value-note">' + esc(PB.gameLabel(leg) + " · " + fmtWhen(leg.start)) + "</div></div>" +
-        '<button type="button" class="slip-remove" data-slip-remove="' + i + '" aria-label="Remove">&times;</button></div>' +
-        '<div class="slip-inputs">' +
-        (hasLine ? '<label>Line <input type="number" step="0.5" inputmode="decimal" data-slip-line="' + i + '" value="' + esc(leg.line) + '"></label>' : "") +
-        '<label>Odds <input type="text" inputmode="numeric" data-slip-odds="' + i + '" value="' + esc(leg.odds > 0 ? "+" + leg.odds : leg.odds) + '"></label>' +
-        "</div></div>";
-    }).join("");
-    const modes = S.slip.length > 1
-      ? '<div class="slip-modes" role="radiogroup" aria-label="Bet type">' +
-        ["straight", "parlay"].map(m => '<button type="button" class="picks-toggle" data-slip-mode="' + m + '" aria-pressed="' + (S.mode === m) + '">' + (m === "straight" ? "Straight bets" : "Parlay") + "</button>").join("") + "</div>"
-      : "";
-    box.innerHTML = '<h3>Bet slip</h3>' + legs + modes +
-      '<div class="slip-inputs"><label>Stake' + (S.mode === "straight" && S.slip.length > 1 ? " (each)" : "") +
-      ' <input type="number" min="0.1" step="0.5" inputmode="decimal" id="myBetsStake" value="' + esc(S.stake) + '"> units</label></div>' +
-      '<div class="slip-inputs"><input type="text" id="myBetsNote" maxlength="200" placeholder="Note (optional)" value="' + esc(S.note) + '"></div>' +
-      '<div id="myBetsSlipTotals" class="slip-totals">' + slipTotalsHtml() + "</div>" +
-      '<div class="slip-actions"><button type="button" class="ctx-btn" id="myBetsPlace"' + (S.saving ? " disabled" : "") + ">" +
-      (S.mode === "parlay" && S.slip.length > 1 ? "Place parlay" : S.slip.length > 1 ? "Place " + S.slip.length + " bets" : "Place bet") +
-      '</button><button type="button" class="picks-toggle" id="myBetsClear">Clear</button></div>';
-  }
-
   // A leg's own status chip only on parlays: a straight bet's is the Status column.
   function legLineHtml(leg, g, parlay) {
     const detail = g.detail ? ' <span class="value-note">' + esc(g.detail) + "</span>" : "";
@@ -727,7 +829,7 @@ function mountMyBets(PB) {
       ? '<span class="' + (g.bet.profit > 0 ? "picks-win" : g.bet.profit < 0 ? "picks-loss" : "") + '">' + esc(PB.fmtUnits(g.bet.profit, true)) + "</span>"
       : '<span class="value-note">to win ' + esc(PB.fmtUnits(PB.toWin(bet))) + "</span>";
     const open = S.open.has(bet.id);
-    let html = "<tr><td>" + esc(fmtPlaced(bet.placedAt)) + "</td><td class=\"bet-cell\">" +
+    let html = "<tr><td>" + esc(fmtPlaced(bet.placedAt)) + '</td><td class="bet-cell">' +
       (parlay ? '<div class="bet-parlay">' + bet.legs.length + "-leg parlay</div>" : "") +
       bet.legs.map((leg, i) => legLineHtml(leg, g.legs[i], parlay)).join("") +
       (bet.note ? '<div class="value-note">' + esc(bet.note) + "</div>" : "") + "</td>" +
@@ -761,60 +863,9 @@ function mountMyBets(PB) {
         ? String(a.legs[0].start).localeCompare(String(b.legs[0].start))
         : String(b.placedAt).localeCompare(String(a.placedAt)));
     $("myBetsListBody").innerHTML = rows.length ? rows.map(betRowHtml).join("")
-      : '<tr><td colspan="7" class="value-empty">' + (S.view === "open" ? "No open bets." : S.view === "settled" ? "No settled bets yet." : "No bets yet.") + "</td></tr>";
-  }
-
-  // ---- Actions -------------------------------------------------------------
-
-  function toggleOffer(key) {
-    const i = S.slip.findIndex(l => PB.offerKey(l) === key);
-    S.message = "";
-    if (i >= 0) {
-      S.slip.splice(i, 1);
-    } else {
-      const [gameId] = key.split("|");
-      const game = S.games.get(gameId);
-      const offer = game && game.offers.find(o => PB.offerKey({ gameId, kind: o.kind, side: o.side }) === key);
-      if (!offer || game.state !== "pre") return;
-      // One side of a market per slip: picking the other side replaces it.
-      S.slip = S.slip.filter(l => !(l.gameId === gameId && l.kind === offer.kind));
-      S.slip.push(PB.legFromOffer(game, offer));
-    }
-    if (S.slip.length < 2) S.mode = "straight";
-    renderBoard();
-    renderSlip();
-  }
-
-  async function place() {
-    const check = slipCheck();
-    if (!check.ok || S.saving) return;
-    const started = S.slip.find(l => {
-      const g = S.games.get(l.gameId);
-      return (g && g.state !== "pre") || (l.start && Date.parse(l.start) <= Date.now());
-    });
-    if (started) {
-      S.message = PB.gameLabel(started) + " has already started; take it off the slip.";
-      renderSlip();
-      return;
-    }
-    const placedAt = new Date().toISOString();
-    const note = S.note.trim().slice(0, 200);
-    const legs = clone(S.slip);
-    const fresh = S.mode === "parlay" && legs.length > 1
-      ? [{ id: newId(), placedAt, stake: S.stake, legs }]
-      : legs.map(leg => ({ id: newId(), placedAt, stake: S.stake, legs: [leg] }));
-    if (note) fresh.forEach(b => { b.note = note; });
-    S.message = "";
-    renderSlip();
-    const ok = await mutate(bets => bets.concat(fresh));
-    if (ok) {
-      lsSet(LS.stake, String(S.stake));
-      S.slip = [];
-      S.note = "";
-      S.mode = "straight";
-      S.view = "open";
-    }
-    render();
+      : '<tr><td colspan="7" class="value-empty">' + (S.view === "open"
+        ? 'No open bets. Tap <strong>+ Bet</strong> on any upcoming game on <a href="/">Games</a>.'
+        : S.view === "settled" ? "No settled bets yet." : "No bets yet.") + "</td></tr>";
   }
 
   async function setResult(id, result) {
@@ -823,7 +874,8 @@ function mountMyBets(PB) {
       if (bet) { if (result) bet.result = result; else delete bet.result; }
       return bets;
     });
-    render();
+    renderPanel();
+    decorateCards();
   }
 
   async function remove(id) {
@@ -831,119 +883,65 @@ function mountMyBets(PB) {
     if (!bet || !confirm("Delete this bet (" + bet.legs.map(PB.legLabel).join(", ") + ")? This can't be undone.")) return;
     await mutate(bets => bets.filter(b => b.id !== id));
     S.open.delete(id);
-    render();
+    renderPanel();
+    decorateCards();
   }
 
+  // ---- Wiring --------------------------------------------------------------
+
   function bind() {
+    // Capture phase: a card is often a link to the broadcast, and the button
+    // must not follow it.
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest && e.target.closest("[data-bet-open]");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const card = btn.closest(".game[data-event-id]");
+      if (card && S.status === "ready") openForm(card);
+    }, true);
+
     const panel = $("myBets");
-    const leagueSel = $("myBetsLeague");
-    leagueSel.innerHTML = PB.LEAGUES.map(l => '<option value="' + esc(l.key) + '"' + (l.key === S.league ? " selected" : "") + ">" + esc(l.label) + "</option>").join("");
-    leagueSel.addEventListener("change", () => {
-      S.league = leagueSel.value;
-      lsSet(LS.league, S.league);
-      syncDay();
-      loadBoard();
-    });
-    const dateInput = $("myBetsDate");
-    const todayBtn = panel.querySelector("[data-bets-today]");
-    // Football's default is the whole week: the day box stays empty until a day is picked.
-    const syncDay = () => {
-      dateInput.value = weekly() ? "" : day();
-      todayBtn.textContent = PB.LEAGUE_BY_KEY.get(S.league).weekly ? "This week" : "Today";
-    };
-    syncDay();
-    dateInput.addEventListener("change", () => {
-      S.date = /^\d{4}-\d{2}-\d{2}$/.test(dateInput.value) ? dateInput.value : null;
-      syncDay();
-      loadBoard();
-    });
-    $("myBetsFilter").addEventListener("input", (e) => {
-      S.filter = e.target.value;
-      renderBoard();
-    });
+    if (panel) {
+      panel.addEventListener("click", (e) => {
+        const t = e.target.closest("button");
+        if (!t || !panel.contains(t)) return;
+        if (t.hasAttribute("data-bets-view")) {
+          S.view = t.getAttribute("data-bets-view");
+          return renderList();
+        }
+        if (t.hasAttribute("data-bet-toggle")) {
+          const id = t.getAttribute("data-bet-toggle");
+          if (S.open.has(id)) S.open.delete(id); else S.open.add(id);
+          return renderList();
+        }
+        if (t.hasAttribute("data-bet-grade")) return setResult(t.getAttribute("data-bet-grade"), t.getAttribute("data-grade"));
+        if (t.hasAttribute("data-bet-delete")) return remove(t.getAttribute("data-bet-delete"));
+      });
+    }
 
-    panel.addEventListener("click", (e) => {
-      const t = e.target.closest("button");
-      if (!t || !panel.contains(t)) return;
-      if (t.hasAttribute("data-offer")) return toggleOffer(t.getAttribute("data-offer"));
-      if (t.hasAttribute("data-slip-remove")) {
-        S.slip.splice(Number(t.getAttribute("data-slip-remove")), 1);
-        if (S.slip.length < 2) S.mode = "straight";
-        S.message = "";
-        renderBoard();
-        return renderSlip();
-      }
-      if (t.hasAttribute("data-slip-mode")) {
-        S.mode = t.getAttribute("data-slip-mode");
-        return renderSlip();
-      }
-      if (t.id === "myBetsPlace") return place();
-      if (t.id === "myBetsClear") {
-        S.slip = [];
-        S.mode = "straight";
-        S.message = "";
-        renderBoard();
-        return renderSlip();
-      }
-      if (t.hasAttribute("data-bets-today")) {
-        S.date = null;
-        syncDay();
-        return loadBoard();
-      }
-      if (t.hasAttribute("data-bets-view")) {
-        S.view = t.getAttribute("data-bets-view");
-        return renderList();
-      }
-      if (t.hasAttribute("data-bet-toggle")) {
-        const id = t.getAttribute("data-bet-toggle");
-        if (S.open.has(id)) S.open.delete(id); else S.open.add(id);
-        return renderList();
-      }
-      if (t.hasAttribute("data-bet-grade")) return setResult(t.getAttribute("data-bet-grade"), t.getAttribute("data-grade"));
-      if (t.hasAttribute("data-bet-delete")) return remove(t.getAttribute("data-bet-delete"));
-    });
-
-    // Typing into the slip updates the totals only, so the field keeps focus.
-    panel.addEventListener("input", (e) => {
-      const t = e.target;
-      if (t.hasAttribute("data-slip-odds")) {
-        const leg = S.slip[Number(t.getAttribute("data-slip-odds"))];
-        if (leg) leg.odds = PB.parseAmerican(t.value.replace("−", "-"));
-      } else if (t.hasAttribute("data-slip-line")) {
-        const leg = S.slip[Number(t.getAttribute("data-slip-line"))];
-        if (leg) leg.line = t.value === "" ? NaN : Number(t.value);
-      } else if (t.id === "myBetsStake") {
-        S.stake = Number(t.value);
-      } else if (t.id === "myBetsNote") {
-        S.note = t.value;
-        return;
-      } else return;
-      S.message = "";
-      const totals = $("myBetsSlipTotals");
-      if (totals) totals.innerHTML = slipTotalsHtml();
-    });
+    new MutationObserver(queueDecorate).observe(document.querySelector(".paper") || document.body, { childList: true, subtree: true });
 
     const refreshBtn = $("refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", start);
 
     setInterval(() => {
       if (document.hidden || S.status !== "ready") return;
-      refreshGrades().then(render);
-      if (!S.date || S.date === PB.etDate()) loadBoard();
+      refreshGrades().then(() => { renderPanel(); decorateCards(); });
     }, REFRESH_MS);
   }
 
   async function start() {
     await loadStore();
-    render();
+    renderPanel();
     if (S.status !== "ready") return;
-    loadBoard();
+    decorateCards();
     await refreshGrades();
-    render();
+    renderPanel();
+    decorateCards();
   }
 
   function init() {
-    if (!$("myBets")) return;
     bind();
     start();
   }

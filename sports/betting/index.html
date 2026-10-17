@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=60">
+<link rel="stylesheet" href="/sports.css?v=61">
 </head>
 <body>
 <article class="paper">
@@ -43,32 +43,15 @@
       </div>
       <div class="value-screen-meta" id="myBetsMeta">Loading bets&hellip;</div>
     </header>
+    <div class="value-explain">
+      <p>Your paper bets, in units. To bet a game, tap <strong>+ Bet</strong> on its card on
+        <a href="/">Games</a>: you get DraftKings' current spread, moneyline and total for that game, and
+        can change the number if yours was different. Bets grade themselves from ESPN's scores, and the card
+        shows how yours is doing.</p>
+    </div>
     <div id="myBetsStatus"></div>
     <div id="myBetsBody" hidden>
       <div id="myBetsSummary"></div>
-      <div class="bets-layout">
-        <div class="bets-board">
-          <div class="ctx-controls">
-            <label for="myBetsLeague">League</label>
-            <select id="myBetsLeague"></select>
-            <label for="myBetsDate">Day</label>
-            <input type="date" id="myBetsDate">
-            <button type="button" class="ctx-btn" data-bets-today>Today</button>
-            <input type="search" id="myBetsFilter" class="bets-filter" placeholder="Find a team" aria-label="Find a team">
-          </div>
-          <div class="value-slate-wrap">
-            <table class="value-slate bets-slate">
-              <thead>
-                <tr><th>Match (ET)</th><th>Spread</th><th>Moneyline</th><th>Total</th></tr>
-              </thead>
-              <tbody id="myBetsBoardBody">
-                <tr><td colspan="4" class="value-empty">Loading games&hellip;</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <aside class="bets-slip" id="myBetsSlip" aria-label="Bet slip"></aside>
-      </div>
       <div class="ctx-controls bets-views">
         <span>Show</span>
         <button type="button" class="picks-toggle" data-bets-view="open" aria-pressed="true">Open</button>
@@ -85,10 +68,9 @@
       </div>
     </div>
     <p class="value-legend">
-      Paper bets in units, no real money &middot; prices are DraftKings' current lines via ESPN, editable on the
-      slip &middot; only games that haven't started can be bet &middot; graded from ESPN scores, live and final;
-      a parlay drops pushed legs, a postponed or canceled game is no action &middot; win rate and ROI leave pushes
-      out &middot; saved privately to your login, so every device sees the same bets
+      Paper bets in units, no real money &middot; only games that haven't started can be bet &middot; graded
+      from ESPN scores, live and final; a postponed or canceled game is no action &middot; win rate and ROI leave
+      pushes out &middot; saved privately to your login, so every device sees the same bets
     </p>
   </section>
 
@@ -282,7 +264,7 @@
 <script src="/team-context.js?v=1"></script>
 <script src="/expert-picks.js?v=2"></script>
 <script src="/picks-ledger.js?v=2"></script>
-<script src="/sports.js?v=83"></script>
-<script src="/my-bets.js?v=1"></script>
+<script src="/sports.js?v=84"></script>
+<script src="/my-bets.js?v=2"></script>
 </body>
 </html>
