@@ -210,9 +210,11 @@ async function handleOdds(request, url) {
 //     against the spread, plus a straight-up page for the same week.
 // Only full-game spread, moneyline/straight-up and total picks are kept; props,
 // team totals and quarter/half picks are just counted (`props`). Call:
-// /api/picks?league=nfl|ncaaf|mlb|ncaab&date=YYYY-MM-DD (ET; default today ET).
-// Returns { league, date, fetchedAt, sources, games: [{ id, start, status,
-// time, away, home, props, picks: [{ src, expert, market, side, line, odds,
+// /api/picks?league=nfl|ncaaf|mlb|ncaab&date=YYYY-MM-DD (ET; default today ET)
+// [&through=YYYY-MM-DD: every day from date to through, at most a week; the
+// Betting page asks for the rest of the college football week this way].
+// Returns { league, date, through, fetchedAt, sources, games: [{ id, date,
+// start, status, time, away, home, props, picks: [{ src, expert, market, side, line, odds,
 // result, rec, recLabel }] }] }. A source that fails is reported in `sources`
 // and the other still shows; nothing here may throw past handlePicks.
 // ---------------------------------------------------------------------------
@@ -268,16 +270,17 @@ function anTeam(t) {
 }
 
 // Action Network scoreboard JSON -> games on `date` (ET) with their side picks.
-export function normalizeActionNetwork(data, date) {
+export function normalizeActionNetwork(data, date, through = date) {
   const games = [];
   for (const g of (data && data.games) || []) {
-    if (!g || !g.start_time || etDateOf(g.start_time) !== date) continue;
+    const day = g && g.start_time ? etDateOf(g.start_time) : null;
+    if (!day || day < date || day > through) continue;
     const teams = {};
     for (const t of g.teams || []) teams[t.id] = t;
     const away = teams[g.away_team_id], home = teams[g.home_team_id];
     if (!away || !home) continue;
     const game = {
-      id: "an" + g.id, start: g.start_time, status: g.status || null, time: null,
+      id: "an" + g.id, date: day, start: g.start_time, status: g.status || null, time: null,
       away: anTeam(away), home: anTeam(home), props: 0, picks: [],
     };
     const seen = new Set();
@@ -393,12 +396,12 @@ function teamFit(abbr, slug, t) {
 // Folds CBS's ATS and straight-up tables into `games` (Action Network's list
 // for the same date): matched rows add their picks to that game, unmatched
 // rows on `date` become games of their own. Returns the number of picks added.
-export function mergeCbs(games, date, tables) {
+export function mergeCbs(games, date, tables, through = date) {
   let added = 0;
   const byKey = new Map();
   for (const { market, parsed } of tables) {
     for (const row of parsed.rows) {
-      if (row.date !== date) continue;
+      if (row.date < date || row.date > through) continue;
       const key = row.awayCode + "@" + row.homeCode;
       let entry = byKey.get(key);
       if (!entry) {
@@ -433,7 +436,7 @@ export function mergeCbs(games, date, tables) {
     }
     if (!best || bestScore < 3) {
       best = {
-        id: "cbs" + row.date + row.awayCode + row.homeCode, start: null, status: null, time: row.time,
+        id: "cbs" + row.date + row.awayCode + row.homeCode, date: row.date, start: null, status: null, time: row.time,
         away: { abbr: row.awayAbbr, name: row.awayAbbr, slug: slugs.away || null },
         home: { abbr: row.homeAbbr, name: row.homeAbbr, slug: slugs.home || null },
         props: 0, picks: [],
@@ -460,18 +463,18 @@ async function fetchWithTimeout(url, accept) {
   }
 }
 
-async function fetchActionNetwork(cfg, date) {
+async function fetchActionNetwork(cfg, date, through) {
   const base = AN_PICKS_URL + cfg.an + "?bookIds=15";
   let res = await fetchWithTimeout(base + "&date=" + date.replace(/-/g, ""), "application/json");
   if (!res) return null;
   let data = await res.json();
-  let games = normalizeActionNetwork(data, date);
+  let games = normalizeActionNetwork(data, date, through);
   if (cfg.weekly && !games.length) {
     const wk = anWeekFor(data.league, date);
     const current = data.league && data.league.current_week;
     if (wk && wk.week !== current) {
       res = await fetchWithTimeout(base + "&week=" + wk.week + "&seasonType=" + wk.seasonType, "application/json");
-      if (res) games = normalizeActionNetwork(await res.json(), date);
+      if (res) games = normalizeActionNetwork(await res.json(), date, through);
     }
   }
   return games;
@@ -496,24 +499,24 @@ function todayEt() {
   return ET_DATE.format(new Date());
 }
 
-export async function buildPicks(leagueKey, date) {
+export async function buildPicks(leagueKey, date, through = date) {
   const cfg = PICKS_LEAGUES[leagueKey];
   const sources = {};
   const [anGames, cbsTables] = await Promise.all([
-    fetchActionNetwork(cfg, date).catch(() => null),
+    fetchActionNetwork(cfg, date, through).catch(() => null),
     cfg.cbs ? fetchCbs(cfg).catch(() => null) : Promise.resolve(undefined),
   ]);
   const games = anGames || [];
   sources.actionNetwork = { ok: anGames != null, picks: games.reduce((n, g) => n + g.picks.length, 0) };
   if (cbsTables !== undefined) {
-    sources.cbs = { ok: cbsTables != null, picks: cbsTables ? mergeCbs(games, date, cbsTables) : 0 };
+    sources.cbs = { ok: cbsTables != null, picks: cbsTables ? mergeCbs(games, date, cbsTables, through) : 0 };
   }
   games.sort((a, b) => (a.start ? Date.parse(a.start) : Infinity) - (b.start ? Date.parse(b.start) : Infinity));
   for (const g of games) {
     delete g.away.slug;
     delete g.home.slug;
   }
-  return { league: leagueKey, date, fetchedAt: new Date().toISOString(), sources, games };
+  return { league: leagueKey, date, through, fetchedAt: new Date().toISOString(), sources, games };
 }
 
 async function handlePicks(request, url) {
@@ -528,15 +531,18 @@ async function handlePicks(request, url) {
       { status: 400, headers });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) date = todayEt();
+  let through = (url.searchParams.get("through") || "").trim();
+  const span = (Date.parse(through) - Date.parse(date)) / 86400000;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(through) || !(span >= 0 && span <= 7)) through = date;
 
-  const cacheKey = new Request("https://cache.internal/api/picks?" + league + "&" + date, { method: "GET" });
+  const cacheKey = new Request("https://cache.internal/api/picks?" + league + "&" + date + "&" + through, { method: "GET" });
   const cache = caches.default;
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
   let body;
   try {
-    body = await buildPicks(league, date);
+    body = await buildPicks(league, date, through);
   } catch (e) {
     body = { league, date, fetchedAt: new Date().toISOString(), sources: {}, games: [] };
   }

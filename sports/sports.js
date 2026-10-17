@@ -2933,7 +2933,9 @@
   // "All" every supported league loads and gets its own block.
   const PICKS_LEAGUES = [
     { key: "football/nfl", api: "nfl", label: "NFL" },
-    { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football" },
+    // weekTop25: college football is a weekly slate, so its Top 25 block runs
+    // from the chosen day to that week's Saturday rather than the one day.
+    { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football", weekTop25: true },
     { key: "baseball/mlb", api: "mlb", label: "MLB" },
     { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM", polls: "basketball/mens-college-basketball" },
   ];
@@ -3005,17 +3007,32 @@
     return !!(g.away.rank || g.home.rank);
   }
 
+  // The Saturday on or after a "YYYY-MM-DD" day (the day itself on a Saturday).
+  function saturdayFrom(date) {
+    const d = new Date(date + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + (6 - d.getUTCDay()));
+    return d.toISOString().slice(0, 10);
+  }
+
+  // A game listed off its own day (a later Top 25 game in the week view).
+  function offDay(g) {
+    return !!(expertPicks && g.date && g.date !== expertPicks.date);
+  }
+
   function picksGameTime(g) {
     if (g.status === "complete") return "Final";
     if (g.status === "inprogress") return "Live";
-    return g.start ? fmtStartEt(g.start) : (g.time || "");
+    const time = g.start ? fmtStartEt(g.start) : (g.time || "");
+    return offDay(g) ? fmtDay(g.date, true).split(",")[0] + " " + time : time;
   }
 
   function expertPicksSummaries(entry) {
     const games = (entry.data && entry.data.games) || [];
     // Every Top 25 game is listed, picked or not; other games only once an
     // expert has picked them.
-    return games.filter(g => (g.picks && g.picks.length) || isTop25(g)).map(g => window.ExpertPicks.summarizeGame(g));
+    // A week-view league's later days only contribute their Top 25 games.
+    return games.filter(g => isTop25(g) || (!offDay(g) && g.picks && g.picks.length))
+      .map(g => window.ExpertPicks.summarizeGame(g));
   }
 
   function picksGameRowHtml(s) {
@@ -3042,7 +3059,7 @@
     let html = "";
     let shown = 0;
     for (const entry of leagues) {
-      const games = (entry.data && entry.data.games) || [];
+      const games = ((entry.data && entry.data.games) || []).filter(g => !offDay(g)); // the chosen day's
       const summaries = expertPicksSummaries(entry);
       if (many && !summaries.length) continue;
       if (many) html += '<tr class="picks-league"><td colspan="5">' + esc(entry.league.label) + "</td></tr>";
@@ -3060,8 +3077,9 @@
       // rest follow in kickoff order.
       const bestRank = g => Math.min(g.away.rank || 99, g.home.rank || 99);
       const ranked = summaries.filter(s => isTop25(s.game)).sort((x, y) => bestRank(x.game) - bestRank(y.game));
+      const week = entry.through && entry.through !== expertPicks.date ? " through " + fmtDay(entry.through, true) : "";
       const blocks = ranked.length
-        ? [[(entry.poll || "Top 25"), ranked], ["Other games", summaries.filter(s => !isTop25(s.game))]]
+        ? [[(entry.poll || "Top 25") + week, ranked], ["Other games", summaries.filter(s => !isTop25(s.game))]]
         : [[null, summaries]];
       for (const [title, list] of blocks) {
         if (title && list.length) {
@@ -3071,7 +3089,7 @@
         html += list.map(picksGameRowHtml).join("");
         shown += list.length;
       }
-      const quiet = games.length - summaries.length;
+      const quiet = games.length - summaries.filter(s => !offDay(s.game)).length;
       if (quiet > 0) {
         html += '<tr><td colspan="5" class="value-note">+' + quiet + " more " + esc(entry.league.label) +
           (quiet === 1 ? " game" : " games") + " with no expert picks</td></tr>";
@@ -3134,7 +3152,8 @@
     renderExpertPicks();
     try {
       const [results, polls] = await Promise.all([
-        Promise.all(leagues.map(league => fetchJSON("/api/picks?league=" + league.api + "&date=" + date))),
+        Promise.all(leagues.map(league => fetchJSON("/api/picks?league=" + league.api + "&date=" + date +
+          (league.weekTop25 ? "&through=" + saturdayFrom(date) : "")))),
         // Current poll only: ESPN's feed is this week's ranking, which is also
         // what a past or future day is shown with.
         Promise.all(leagues.map(league => league.polls ? fetchJSON(ESPN + league.polls + "/rankings") : null)),
@@ -3149,7 +3168,7 @@
               g.away.rank = window.ExpertPicks.rankOf(poll, g.away);
               g.home.rank = window.ExpertPicks.rankOf(poll, g.home);
             }
-            return { league, data, poll: poll && poll.name };
+            return { league, data, poll: poll && poll.name, through: data && data.through };
           }),
         };
       }

@@ -148,6 +148,18 @@ test("normalizeActionNetwork keeps the ET day's games and full-game side picks o
   assert.equal(g.picks[2].rec, null);
 });
 
+test("normalizeActionNetwork takes a date range and tags each game with its ET day", () => {
+  const games = W.normalizeActionNetwork(AN_DATA, "2026-10-15", "2026-10-18");
+  assert.deepEqual(games.map(g => [g.id, g.date]), [["an10", "2026-10-18"], ["an11", "2026-10-18"], ["an12", "2026-10-15"]]);
+  assert.deepEqual(W.normalizeActionNetwork(AN_DATA, "2026-10-16", "2026-10-17"), []);
+});
+
+test("mergeCbs takes a date range too", () => {
+  const games = [];
+  W.mergeCbs(games, "2026-10-15", [{ market: "spread", parsed: W.parseCbsPicks(ATS_HTML) }], "2026-10-18");
+  assert.deepEqual(games.map(g => g.date).sort(), ["2026-10-15", "2026-10-18"]);
+});
+
 test("anWeekFor finds the calendar week holding a date", () => {
   assert.deepEqual(W.anWeekFor(AN_DATA.league, "2026-10-18"), { week: 6, seasonType: "reg" });
   assert.deepEqual(W.anWeekFor(AN_DATA.league, "2026-10-25"), { week: 7, seasonType: "reg" });
