@@ -10,7 +10,9 @@ pages_build_output_dir = "."
 # "not-configured" (fails closed) and the panel says the store isn't set up, so shipping
 # without it is safe.
 #
-# ORDER MATTERS: create the bucket BEFORE uncommenting and pushing. This project is
+# Set up 2026-10-17: bucket created, BETS_ALLOWED_EMAILS set, binding live.
+#
+# ORDER MATTERS (for a rebuild elsewhere): create the bucket BEFORE uncommenting and pushing. This project is
 # Git-integrated, and a bound bucket that doesn't exist fails the build, so pushes stop
 # deploying (the live site keeps serving the last good build).
 #   1. wrangler r2 bucket create mcboop-sports-bets
@@ -20,6 +22,6 @@ pages_build_output_dir = "."
 #   3. optional hardening: wrangler pages secret put ACCESS_AUD --project-name mcboop-sports
 #        (the `sports` Access application's AUD tag)
 #   4. uncomment, then push:
-# [[r2_buckets]]
-# binding = "SPORTS_BETS"
-# bucket_name = "mcboop-sports-bets"
+[[r2_buckets]]
+binding = "SPORTS_BETS"
+bucket_name = "mcboop-sports-bets"
