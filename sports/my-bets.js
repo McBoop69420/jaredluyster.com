@@ -1,9 +1,11 @@
 /* My Bets — paper bets on sports.jaredluyster.com
  *
- * Every upcoming game card (Games page) gets a small "+ Bet" button. It opens a
- * form for that one game with DraftKings' current lines from ESPN (spread,
+ * Every upcoming or live game card (Games page) gets a small "+ Bet" button. It
+ * opens a form for that one game with DraftKings' lines from ESPN (spread,
  * moneyline, total; soccer's draw too): pick a side, adjust the line or odds if
- * you got a different number, set a stake in units, place it. Cards with a bet
+ * you got a different number, set a stake in units, place it. Once a game has
+ * started the lines shown are the pre-game ones (ESPN has no live odds), so an
+ * in-game bet is logged at whatever number you type. Cards with a bet
  * on them show it, with its live status. The Betting page's My Bets panel is
  * the record: W-L-P, units, ROI, and every bet, graded from ESPN's scores
  * (live, then final).
@@ -533,7 +535,8 @@ function mountMyBets(PB) {
 
   function cardStripHtml(card) {
     const id = card.dataset.eventId;
-    const canBet = card.dataset.state === "pre" && !UNBETTABLE.has(card.dataset.league);
+    // Upcoming and live games; a finished one only shows the bets on it.
+    const canBet = card.dataset.state !== "post" && !UNBETTABLE.has(card.dataset.league);
     const mine = S.bets.filter(b => b.legs.some(l => l.gameId === id));
     if (!canBet && !mine.length) return "";
     const tags = mine.map(bet => {
@@ -691,20 +694,20 @@ function mountMyBets(PB) {
       return;
     }
     const g = f.game;
-    const started = g.state !== "pre" || (g.start && Date.parse(g.start) <= Date.now());
+    const started = g.state !== "pre";
     const rows = Object.keys(SIDES).map(kind => {
       const sides = SIDES[kind].filter(side => side !== "draw" || threeWay(g));
       const buttons = sides.map(side => {
         const offer = offerFor(g, kind, side);
         const on = !!(f.pick && f.pick.kind === kind && f.pick.side === side);
         return '<button type="button" class="bet-offer' + (on ? " bet-offer--on" : "") + '" data-pick="' + kind + "|" + side + '" aria-pressed="' + on + '"' +
-          (started ? " disabled" : "") + ">" + esc(sideLabel(g, kind, side, offer ? offer.line : null)) +
+          ">" + esc(sideLabel(g, kind, side, offer ? offer.line : null)) +
           " <small>" + esc(offer ? PB.fmtOdds(offer.odds) : "—") + "</small></button>";
       }).join("");
       return '<div class="bet-market"><span class="bet-market-label">' + esc(PB.KINDS[kind]) + '</span><div class="bet-market-sides">' + buttons + "</div></div>";
     }).join("");
     let inputs = "";
-    if (f.pick && !started) {
+    if (f.pick) {
       const hasLine = f.pick.kind !== "moneyline";
       inputs = '<div class="slip-inputs bet-form-inputs">' +
         (hasLine ? '<label>Line <input name="line" type="number" step="0.5" inputmode="decimal" value="' + (Number.isFinite(f.line) ? esc(f.line) : "") + '"></label>' : "") +
@@ -723,7 +726,9 @@ function mountMyBets(PB) {
         return "<div>" + esc((bet.legs.length > 1 ? "Parlay: " : "") + PB.legLabel(leg) + " " + PB.fmtOdds(leg.odds) + " · " + PB.fmtUnits(bet.stake)) + " " + chip(gr.bet.tone) + "</div>";
       }).join("") + "</div>"
       : "";
-    const hint = started ? "This game has started, so betting is closed."
+    const hint = started
+      ? (g.state === "in" ? "In progress" + (g.statusText ? " (" + g.statusText + ")" : "") : "Started") +
+        ": the prices shown are pre-game. Tap a side and enter the line and odds you got."
       : g.offers.length ? "Tap a line. Change the number if yours was different."
         : "No line posted yet: tap a side and enter the line and odds you got.";
     dialog.innerHTML = '<div class="bet-form">' + close +
@@ -738,10 +743,6 @@ function mountMyBets(PB) {
     const check = formCheck();
     if (!f || !check.ok || S.saving) return;
     const g = f.game;
-    if (g.state !== "pre" || (g.start && Date.parse(g.start) <= Date.now())) {
-      f.message = "This game has already started.";
-      return renderForm();
-    }
     const offer = { kind: f.pick.kind, side: f.pick.side, odds: f.odds };
     if (f.pick.kind !== "moneyline") offer.line = f.line;
     if (f.pick.kind === "moneyline" && threeWay(g)) offer.threeWay = true;

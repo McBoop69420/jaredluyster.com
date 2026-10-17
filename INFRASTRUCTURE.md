@@ -484,10 +484,11 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   fired 0 times in the 2026 season, so the flag is wired up but effectively silent until
   the thresholds change in BettingEdge.
 - **My Bets (paper bets) — added 2026-10-17.** The owner's own paper-betting tracker. Every
-  upcoming game card on Games (Spotlight and the league boards) gets a **+ Bet** button that opens
+  upcoming or live game card on Games (Spotlight and the league boards) gets a **+ Bet** button that opens
   a one-game form: DraftKings' current spread, moneyline (soccer: incl. the draw) and total from
   that game's ESPN summary (`pickcenter`), tap one, adjust the line/odds if yours differed, stake in
-  units, place. Only games that haven't started can be bet; with no posted line you type your own.
+  units, place. Upcoming and live games can be bet (added the same day: a started game shows its
+  pre-game prices, so an in-game bet is logged at the number you type); with no line you type your own.
   Cards with a bet on them show it and its status (winning/losing live, then won/lost). Bets grade
   client-side from ESPN scores; once a game is final its score is written onto the leg, so settled
   bets never re-fetch and can't drift. Postponed or canceled games are no action. The Betting
