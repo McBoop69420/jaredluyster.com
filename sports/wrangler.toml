@@ -4,3 +4,22 @@
 name = "mcboop-sports"
 compatibility_date = "2026-08-17"
 pages_build_output_dir = "."
+
+# My Bets' PRIVATE store (sports/_worker.js, /api/bets). Paper bets live in this bucket, not in
+# the repo — the repo is public. Until the block below is uncommented /api/bets answers 503
+# "not-configured" (fails closed) and the panel says the store isn't set up, so shipping
+# without it is safe.
+#
+# ORDER MATTERS: create the bucket BEFORE uncommenting and pushing. This project is
+# Git-integrated, and a bound bucket that doesn't exist fails the build, so pushes stop
+# deploying (the live site keeps serving the last good build).
+#   1. wrangler r2 bucket create mcboop-sports-bets
+#   2. wrangler pages secret put BETS_ALLOWED_EMAILS --project-name mcboop-sports
+#        (the owner's email; comma-separate several. A SECRET, never a [vars] entry here.
+#         A guest on the `Sports guest access` policy reaches the hostname but is refused here.)
+#   3. optional hardening: wrangler pages secret put ACCESS_AUD --project-name mcboop-sports
+#        (the `sports` Access application's AUD tag)
+#   4. uncomment, then push:
+# [[r2_buckets]]
+# binding = "SPORTS_BETS"
+# bucket_name = "mcboop-sports-bets"

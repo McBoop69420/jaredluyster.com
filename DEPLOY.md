@@ -193,6 +193,47 @@ Tests: `node --test redzone/tests/api.test.mjs` (auth + endpoint) and
 `node --test redzone/tests/bets.test.js` (grading). Neither is ever served (`/tests/` is 404'd by
 `functions/_middleware.ts`).
 
+## Sports My Bets — private store setup (one-time, needs your Cloudflare login)
+
+The Betting page's **My Bets** panel (paper bets, `sports/my-bets.js`) saves to one private R2
+object through `/api/bets` in `sports/_worker.js`, never to git (this repo is public). It is the
+same layering as RedZone's store above: only answers on `sports.jaredluyster.com`, needs a signed
+Access JWT, and that JWT's email must be in the `BETS_ALLOWED_EMAILS` secret (the `Sports guest
+access` policy lets guests onto the hostname; they get `403` and never see the panel). Until the
+steps below are done the endpoint answers `503 not-configured` and the panel says the store isn't
+set up. Shipping the code first is safe.
+
+`mcboop-sports` is a **separate, Git-integrated** Pages project (INFRASTRUCTURE.md §4b): its
+bindings come from `sports/wrangler.toml`, and its secrets are set per project.
+
+**Order matters: create the bucket BEFORE uncommenting the binding.** A bound bucket that doesn't
+exist fails the build, and pushes silently stop deploying (the live site keeps the last good build).
+
+1. `wrangler login` (once per machine).
+2. Create the bucket: `wrangler r2 bucket create mcboop-sports-bets`
+3. Set the allowlist secret (the owner's Access login email; comma-separate several):
+   `wrangler pages secret put BETS_ALLOWED_EMAILS --project-name mcboop-sports`
+   A **secret**, never a `[vars]` entry: `wrangler.toml` is public.
+4. Optional hardening: `wrangler pages secret put ACCESS_AUD --project-name mcboop-sports` with the
+   `sports` Access application's AUD tag (Zero Trust → Access → Applications → sports → Overview).
+5. Uncomment the `[[r2_buckets]]` block for `SPORTS_BETS` at the bottom of `sports/wrangler.toml`
+   and push. The push is the deploy.
+6. Load `https://sports.jaredluyster.com/betting/` signed in as the owner: My Bets should show with
+   an empty record. If it says it couldn't confirm your login (HTTP 401), check `ACCESS_AUD` and the
+   team domain (`ACCESS_TEAM_DOMAIN` in `sports/_worker.js`); if the panel doesn't appear at all, the
+   console shows `HTTP 403` when the signed-in address isn't in `BETS_ALLOWED_EMAILS`.
+
+Backup / inspect: `wrangler r2 object get mcboop-sports-bets/paper-bets.json --remote --file bets-backup.json`
+(keep the file out of the repo).
+
+**Local dev:** the `sports-bets-dev` launch config runs
+`npx wrangler pages dev sports --port 8792 --r2 SPORTS_BETS --binding BETS_DEV_EMAIL=dev@localhost`:
+a local, throwaway bucket, and `BETS_DEV_EMAIL` skips the JWT check, but only when the request host
+is `localhost`/`127.0.0.1`, so it can never open the real store.
+
+Tests: `node --test tests/my-bets.test.mjs` (grading, ESPN parsing, and the endpoint's auth and
+writes with real RSA signatures; each guard was mutation-tested).
+
 ## QR Code Maker (qr.jaredluyster.com)
 
 Make, download (PNG/SVG) and print QR codes for links, text, Wi-Fi logins, contact cards,

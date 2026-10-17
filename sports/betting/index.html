@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Betting-adjacent tracking: expert picks consensus from Action Network and CBS Sports, MLB team context (fatigue, rest, road trips, travel, lineup workload), plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
+<meta name="description" content="Betting-adjacent tracking: my paper bets, expert picks consensus from Action Network and CBS Sports, MLB team context (fatigue, rest, road trips, travel, lineup workload), plus live NFL Odds, for the leagues I follow. The quantitative model lives under Models.">
 <title>Sports — Betting</title>
 <link rel="preconnect" href="https://site.api.espn.com">
 <link rel="preconnect" href="https://statsapi.mlb.com">
@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=59">
+<link rel="stylesheet" href="/sports.css?v=60">
 </head>
 <body>
 <article class="paper">
@@ -34,6 +34,63 @@
   <div class="board-toolbar">
     <button class="refresh-btn" id="refreshBtn" type="button">↻ Refresh now</button>
   </div>
+
+  <section class="value-screen" id="myBets" aria-labelledby="myBetsTitle" hidden>
+    <header class="value-screen-head">
+      <div>
+        <div class="value-screen-kicker">Paper bets</div>
+        <h2 id="myBetsTitle">My Bets</h2>
+      </div>
+      <div class="value-screen-meta" id="myBetsMeta">Loading bets&hellip;</div>
+    </header>
+    <div id="myBetsStatus"></div>
+    <div id="myBetsBody" hidden>
+      <div id="myBetsSummary"></div>
+      <div class="bets-layout">
+        <div class="bets-board">
+          <div class="ctx-controls">
+            <label for="myBetsLeague">League</label>
+            <select id="myBetsLeague"></select>
+            <label for="myBetsDate">Day</label>
+            <input type="date" id="myBetsDate">
+            <button type="button" class="ctx-btn" data-bets-today>Today</button>
+            <input type="search" id="myBetsFilter" class="bets-filter" placeholder="Find a team" aria-label="Find a team">
+          </div>
+          <div class="value-slate-wrap">
+            <table class="value-slate bets-slate">
+              <thead>
+                <tr><th>Match (ET)</th><th>Spread</th><th>Moneyline</th><th>Total</th></tr>
+              </thead>
+              <tbody id="myBetsBoardBody">
+                <tr><td colspan="4" class="value-empty">Loading games&hellip;</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="bets-slip" id="myBetsSlip" aria-label="Bet slip"></aside>
+      </div>
+      <div class="ctx-controls bets-views">
+        <span>Show</span>
+        <button type="button" class="picks-toggle" data-bets-view="open" aria-pressed="true">Open</button>
+        <button type="button" class="picks-toggle" data-bets-view="settled" aria-pressed="false">Settled</button>
+        <button type="button" class="picks-toggle" data-bets-view="all" aria-pressed="false">All</button>
+      </div>
+      <div class="value-slate-wrap">
+        <table class="value-slate bets-list">
+          <thead>
+            <tr><th>Placed</th><th>Bet</th><th>Stake</th><th>Odds</th><th>Status</th><th>P/L</th><th></th></tr>
+          </thead>
+          <tbody id="myBetsListBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="value-legend">
+      Paper bets in units, no real money &middot; prices are DraftKings' current lines via ESPN, editable on the
+      slip &middot; only games that haven't started can be bet &middot; graded from ESPN scores, live and final;
+      a parlay drops pushed legs, a postponed or canceled game is no action &middot; win rate and ROI leave pushes
+      out &middot; saved privately to your login, so every device sees the same bets
+    </p>
+  </section>
 
   <section class="value-screen" id="expertPicks" aria-labelledby="expertPicksTitle">
     <header class="value-screen-head">
@@ -226,5 +283,6 @@
 <script src="/expert-picks.js?v=2"></script>
 <script src="/picks-ledger.js?v=2"></script>
 <script src="/sports.js?v=83"></script>
+<script src="/my-bets.js?v=1"></script>
 </body>
 </html>

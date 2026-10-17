@@ -365,6 +365,55 @@ table.picks-slate tr.picks-detail td{white-space:normal;background:var(--card);p
 .picks-side ul{margin:2px 0 0;padding-left:16px}
 .picks-side li{margin:1px 0;line-height:1.4}
 .picks-detail p{margin:8px 0 0}
+.picks-toggle[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+/* My Bets (Betting page) */
+.bets-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.bets-tile{border:2px solid var(--ink);background:var(--card);padding:8px 10px}
+.bets-tile-label{font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.bets-tile-value{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.2}
+.bets-breakdown{margin-top:8px;font-size:.82rem;line-height:1.7}
+.bets-breakdown>div{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px}
+.bets-breakdown>div>span{white-space:nowrap}
+.bets-breakdown .bets-breakdown-label{font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.bets-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start;margin-top:4px}
+.bets-filter{font-family:var(--font-body);font-size:.85rem;padding:4px 6px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);min-width:0;width:140px}
+.bets-board .value-slate-wrap{max-height:560px;overflow-y:auto}
+table.bets-slate thead th{position:sticky;top:0;background:var(--paper);z-index:1}
+table.bets-slate td{vertical-align:middle}
+.bet-offers{display:flex;flex-direction:column;gap:4px}
+.bet-offer{font-family:var(--font-body);font-size:.82rem;font-weight:600;padding:3px 8px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;text-align:left;white-space:nowrap;min-width:92px}
+.bet-offer small{float:right;margin-left:8px;color:var(--muted);font-weight:500}
+.bet-offer:hover:not(:disabled){background:var(--highlight)}
+.bet-offer--on,.bet-offer--on:hover:not(:disabled){background:var(--accent);color:var(--accent-ink)}
+.bet-offer--on small{color:var(--accent-ink)}
+.bet-offer:disabled{cursor:not-allowed;opacity:.45}
+.bets-slip{position:sticky;top:10px;margin-top:10px;border:2px solid var(--ink);background:var(--card);padding:10px;font-size:.85rem;box-shadow:4px 4px 0 var(--ink)}
+.bets-slip h3{margin:0 0 6px;font-family:var(--font-display);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.bets-slip p{margin:6px 0 0}
+.slip-leg{border-bottom:1px dotted var(--ink);padding:6px 0}
+.slip-leg-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.slip-remove{border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;font-size:1rem;line-height:1;padding:1px 7px}
+.slip-inputs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;align-items:center}
+.slip-inputs label{display:flex;align-items:center;gap:4px;font-size:.78rem;font-weight:600}
+.slip-inputs input{font-family:var(--font-body);font-size:.85rem;padding:3px 5px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);width:72px}
+.slip-inputs input[type=text]#myBetsNote{width:100%}
+.slip-modes{display:flex;gap:6px;margin-top:8px}
+.slip-actions{display:flex;gap:8px;margin-top:10px;align-items:center}
+.slip-actions .ctx-btn:disabled{opacity:.6;cursor:wait}
+.bets-views{margin-top:16px}
+table.bets-list td.bet-cell{white-space:normal;min-width:240px}
+.bet-leg{line-height:1.5}
+.bet-leg .call{font-size:.68rem;padding:0 5px;margin-left:2px}
+.bet-parlay{font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.bet-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bet-actions .bet-delete{margin-left:auto;color:var(--live)}
+@media(max-width:800px){
+  .bets-layout{grid-template-columns:minmax(0,1fr)}
+  .bets-board .value-slate-wrap{max-height:none}
+  .bets-slip{position:static}
+  /* Once it has a pick, pinned to the bottom of the screen while the board scrolls past. */
+  .bets-slip.bets-slip--filled{position:sticky;top:auto;bottom:0;max-height:55vh;overflow-y:auto;box-shadow:0 -4px 0 var(--ink)}
+}
 .tier{display:inline-block;padding:1px 7px;border:1px solid var(--ink);font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 .tier--fresh{background:#e3f3ea;color:#1b8a3f}
 .tier--elevated{background:var(--card);color:var(--ink)}

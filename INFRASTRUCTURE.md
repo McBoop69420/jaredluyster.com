@@ -441,7 +441,8 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   whole site, not just `/api/odds`. Hence the blanket `try/catch` inside
   `handleOdds` and the unconditional ASSETS fallthrough at the bottom of the
   file. Smoke-test with `npx wrangler pages dev sports` before pushing.
-  A second route, `/api/picks`, was added 2026-10-16 for Expert Picks (below).
+  A second route, `/api/picks`, was added 2026-10-16 for Expert Picks (below), and a third,
+  `/api/bets`, on 2026-10-17 for My Bets (below).
 - **Content:** pulls live scoreboards/standings **client-side from ESPN's public
   API** (`site.api.espn.com`) for MLB, MLS, Liga MX, Premier League, La Liga,
   Bundesliga, Serie A, Ligue 1, UCL, UEL, Eredivisie, Primeira Liga, Scottish Prem,
@@ -482,7 +483,32 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   team-games score "burnt" (an everyday schedule alone scores 79), and the wave-1 flag
   fired 0 times in the 2026 season, so the flag is wired up but effectively silent until
   the thresholds change in BettingEdge.
-- **Expert Picks — added 2026-10-16.** The Betting page's first panel (`#expertPicks`):
+- **My Bets (paper bets) — added 2026-10-17.** The Betting page's first panel (`#myBets`), the
+  owner's own paper-betting tracker. Pick a league (NFL, NCAAF, MLB, NBA, NHL, NCAAM, NCAAW, WNBA,
+  Premier League, MLS, La Liga, Champions League) and a day (football defaults to the whole current
+  week), click a DraftKings price from ESPN's scoreboard (`competitions[0].odds[0]`: spread,
+  moneyline incl. soccer's draw, total; current "close" prices, the older flat fields as fallback)
+  to put it on a slip, edit the line/odds if you got a different number, and place it as straight
+  bets or one parlay, staked in units. Only games that haven't started can be bet. Bets grade
+  client-side from ESPN scores, live (winning/losing) and final; once a game is final its score is
+  written onto the leg, so settled bets never re-fetch and can't drift. Parlays drop pushed/void legs;
+  postponed or canceled games are no action. Any bet can be settled or deleted by hand. Summary:
+  W-L-P, units, ROI (pushes left out), open exposure, by league and by market. Maths and DOM:
+  [`sports/my-bets.js`](sports/my-bets.js) (pure half tested in `tests/my-bets.test.mjs`).
+  - **Store: private, NOT the repo.** `/api/bets` in `sports/_worker.js` keeps one R2 object
+    (binding `SPORTS_BETS`, bucket `mcboop-sports-bets`, key `paper-bets.json`). GET returns
+    `{ version, bets }`; PUT `{ version, bets }` replaces the list only if `version` (the R2 etag)
+    still matches, so two devices can't overwrite each other: a stale write gets 409 and the page
+    reloads and re-applies its change. Owner-only, same layering as RedZone's bet store (§6),
+    with the Access JWT check ported into the worker: only answers on `sports.jaredluyster.com` (the
+    ungated `mcboop-sports.pages.dev` gets 404), a valid signed Access JWT, and its email in the
+    `BETS_ALLOWED_EMAILS` **secret** on `mcboop-sports`, because `Sports guest access` lets guests
+    onto the hostname (they get 403, and the panel stays hidden). Writes must be JSON from the same
+    origin, at most 1 MB, and are shape-checked. Fails closed (503 `not-configured`) until set up;
+    **the `[[r2_buckets]]` block in `sports/wrangler.toml` stays commented out until the bucket
+    exists** because a missing bound bucket fails this Git-integrated project's build. Setup and
+    local dev: DEPLOY.md, "Sports My Bets — private store setup".
+- **Expert Picks — added 2026-10-16.** The Betting page's second panel (`#expertPicks`):
   for one day's games (date picker, ET), how many published experts are on each side of
   the spread, the winner (straight-up and moneyline picks combined) and the total, with
   a strong-lean callout (5+ experts on a spread or total, 75%+ on one side) and a
@@ -511,7 +537,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   **Rejected:** Pickwatch (nflpickwatch.com, the biggest aggregator) serves its picks
   from a private API behind a paid subscription; ESPN's expert picks page answers
   scripted requests with an empty 202.
-- **Expert Leaderboard (picks history) — added 2026-10-16.** The Betting page's second
+- **Expert Leaderboard (picks history) — added 2026-10-16.** The Betting page's third
   panel (`#picksBoard`): the site's own grading of the experts above, not their published
   records. Per expert (Action Network and CBS kept apart) and per league x market
   (spread / winner / total): W-L-P and win rate with pushes left out, ranked by win rate
@@ -798,15 +824,16 @@ jaredluyster.com/
 │   └── robots.txt
 ├── sports/                 # Sports site — a SEPARATE Pages project (mcboop-sports), Git-integrated to this repo's main branch, root dir "sports/": sports.jaredluyster.com — split 2026-09-14 into Games (root) and Betting (/betting/) pages, sharing sports.css/sports.js
 │   ├── index.html          # Games: Spotlight + per-league scoreboards/standings
-│   ├── betting/index.html  # Betting: Expert Picks + Expert Leaderboard + MLB Team Context (BettingEdge port) + NFL Odds
+│   ├── betting/index.html  # Betting: My Bets (paper bets) + Expert Picks + Expert Leaderboard + MLB Team Context (BettingEdge port) + NFL Odds
 │   ├── models/index.html   # Models: MLB Value Screen (model vs market) + how it and NFL Odds work
 │   ├── sports.css
 │   ├── sports.js           # ESPN API + the MLB value screen, both client-side; render()/loadExpertPicks()/loadValueScreen()/loadTeamContext()/loadNflOdds() each gate on which page's DOM elements are present
 │   ├── team-context.js     # Team Context maths (pure, unit-tested in tests/team-context.test.mjs), loaded by betting/ only
 │   ├── expert-picks.js     # Expert Picks consensus maths (pure, unit-tested in tests/expert-picks.test.mjs), loaded by betting/ only
 │   ├── picks-ledger.js     # Expert Leaderboard: graded-pick ledger + ranking maths (pure, tests/picks-ledger.test.mjs), loaded by betting/ only
+│   ├── my-bets.js          # My Bets: paper-bet slip, grading and summaries (pure half unit-tested in tests/my-bets.test.mjs); stored via /api/bets — see §4b
 │   ├── picks-history/      # days/<date>.json graded-pick ledger + leaderboard.json, written daily by scripts/picks-ledger.sh — see §4b
-│   ├── _worker.js          # Pages Worker (advanced mode): /api/odds and /api/picks, else falls through to assets — see §4b
+│   ├── _worker.js          # Pages Worker (advanced mode): /api/odds, /api/picks and /api/bets (private, owner-only), else falls through to assets — see §4b
 │   ├── wrangler.toml       # LOAD-BEARING — do not remove, see §4b
 │   └── robots.txt
 ├── calendar/               # Standalone calendar site (same Pages project as news, "mcboop-daily", routed via news/_worker.js: calendar.jaredluyster.com)

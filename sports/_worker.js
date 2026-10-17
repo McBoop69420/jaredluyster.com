@@ -5,9 +5,10 @@
 // exists for two routes the browser can't do itself: /api/odds (the value
 // screen's BetExplorer moneylines; betexplorer.com has no CORS header) and
 // /api/picks (Expert Picks: CBS's picks are HTML-only, and Action Network's
-// JSON is megabytes per league before trimming). Everything else falls
-// straight through to the static assets, so a change here can only affect
-// those two routes.
+// JSON is megabytes per league before trimming), plus /api/bets, the private
+// store behind the My Bets panel (static files can't hold anything private).
+// Everything else falls straight through to the static assets, so a change
+// here can only affect those routes.
 //
 // Be careful editing this: in advanced mode a worker that throws takes down the
 // WHOLE site, not just one route — hence the blanket try/catch around each
@@ -558,6 +559,234 @@ async function handlePicks(request, url) {
   return response;
 }
 
+// ---------------------------------------------------------------------------
+// My Bets (paper bets) — /api/bets
+// The Betting page's "My Bets" panel (sports/my-bets.js) keeps its bets in one
+// private R2 object (SPORTS_BETS, key paper-bets.json), never in this repo:
+// the repo is public. GET returns { version, bets }; PUT { version, bets }
+// replaces the list, but only if `version` (the object's etag, or null for "no
+// object yet") still matches, so two devices can't silently overwrite each
+// other: a stale write gets 409 and the page reloads and re-applies its change.
+//
+// Owner only, failing closed at every step, same layering as RedZone's bet
+// store (functions/redzone/api/[[path]].ts, _lib/access.ts — ported here
+// because this project is a _worker.js, not Functions):
+//   1. only answers on sports.jaredluyster.com, the hostname the `sports`
+//      Access app gates (mcboop-sports.pages.dev is not gated: 404 there);
+//   2. requires a valid, signed Access JWT;
+//   3. requires that JWT's email to be in the BETS_ALLOWED_EMAILS secret —
+//      the `Sports guest access` policy lets guests onto this hostname, and
+//      they must not see or touch the owner's bets (403; the panel hides).
+// Until the bucket is bound and the secret set this answers 503
+// "not-configured". Setup: DEPLOY.md, "Sports My Bets — private store setup".
+//
+// Local dev only: `wrangler pages dev sports` on localhost/127.0.0.1 with
+// BETS_DEV_EMAIL set (sports/.dev.vars, gitignored) skips the JWT check. The
+// production hostname is never localhost, so this can't open the real store.
+// ---------------------------------------------------------------------------
+const BETS_HOST = "sports.jaredluyster.com";
+const BETS_KEY = "paper-bets.json";
+const BETS_MAX_BYTES = 1024 * 1024;
+const BETS_MAX_COUNT = 5000;
+const BETS_MAX_LEGS = 12;
+const ACCESS_TEAM_DOMAIN = "quiet-frost-ed57.cloudflareaccess.com"; // the Zero Trust org, see DEPLOY.md
+const ACCESS_KEYS_TTL_MS = 10 * 60 * 1000;
+// A token naming an unknown key makes us refetch the key set; without a floor,
+// anyone able to send requests could turn that into a stream of fetches.
+const ACCESS_REFETCH_FLOOR_MS = 60 * 1000;
+const ACCESS_CLOCK_SKEW_S = 30;
+const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
+
+let accessKeyCache = null; // { team, at, keys: Map<kid, CryptoKey> }
+
+export function parseAllowlist(raw) {
+  return new Set(String(raw || "").split(/[\s,;]+/).map(e => e.trim().toLowerCase()).filter(Boolean));
+}
+
+function b64urlToBytes(s) {
+  const b64 = s.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(s.length / 4) * 4, "=");
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function parseJwtPart(part) {
+  try {
+    const v = JSON.parse(new TextDecoder().decode(b64urlToBytes(part)));
+    return v && typeof v === "object" && !Array.isArray(v) ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function loadAccessKeys(team, forceRefresh) {
+  const now = Date.now();
+  if (accessKeyCache && accessKeyCache.team === team) {
+    const age = now - accessKeyCache.at;
+    if (age < ACCESS_KEYS_TTL_MS && !forceRefresh) return accessKeyCache.keys;
+    if (forceRefresh && age < ACCESS_REFETCH_FLOOR_MS) return accessKeyCache.keys;
+  }
+  const res = await fetch("https://" + team + "/cdn-cgi/access/certs");
+  if (!res.ok) throw new Error("Access key fetch failed: HTTP " + res.status);
+  const body = await res.json();
+  const keys = new Map();
+  for (const jwk of (body && body.keys) || []) {
+    if (jwk.kty !== "RSA" || !jwk.kid) continue;
+    keys.set(jwk.kid, await crypto.subtle.importKey("jwk", jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]));
+  }
+  accessKeyCache = { team, at: now, keys };
+  return keys;
+}
+
+function accessTokenFrom(request) {
+  const header = request.headers.get("Cf-Access-Jwt-Assertion");
+  if (header) return header;
+  const m = /(?:^|;\s*)CF_Authorization=([^;]+)/.exec(request.headers.get("Cookie") || "");
+  return m ? m[1] : null;
+}
+
+// -> { status: "ok", email } | { status: "invalid" } | { status: "unavailable" }
+export async function verifyAccessJwt(token, env, nowMs = Date.now()) {
+  const parts = String(token).split(".");
+  if (parts.length !== 3) return { status: "invalid" };
+  const [h, p, s] = parts;
+  const header = parseJwtPart(h);
+  const claims = parseJwtPart(p);
+  // Pin the algorithm: never let the token choose "none" or an HMAC keyed by a public value.
+  if (!header || !claims || header.alg !== "RS256" || typeof header.kid !== "string") return { status: "invalid" };
+
+  const team = String(env.ACCESS_TEAM_DOMAIN || ACCESS_TEAM_DOMAIN).toLowerCase();
+  let signature;
+  try {
+    signature = b64urlToBytes(s);
+  } catch (e) {
+    return { status: "invalid" };
+  }
+  try {
+    let keys = await loadAccessKeys(team, false);
+    let key = keys.get(header.kid);
+    if (!key) {
+      keys = await loadAccessKeys(team, true); // key rotation: look again, at most once a minute
+      key = keys.get(header.kid);
+    }
+    if (!key) return { status: "invalid" };
+    const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, signature, new TextEncoder().encode(h + "." + p));
+    if (!valid) return { status: "invalid" };
+  } catch (e) {
+    return { status: "unavailable" };
+  }
+
+  const nowS = Math.floor(nowMs / 1000);
+  if (claims.iss !== "https://" + team) return { status: "invalid" };
+  if (typeof claims.exp !== "number" || claims.exp + ACCESS_CLOCK_SKEW_S < nowS) return { status: "invalid" };
+  if (typeof claims.nbf === "number" && claims.nbf - ACCESS_CLOCK_SKEW_S > nowS) return { status: "invalid" };
+  if (env.ACCESS_AUD) {
+    const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    if (!aud.includes(env.ACCESS_AUD)) return { status: "invalid" };
+  }
+  return { status: "ok", email: typeof claims.email === "string" ? claims.email.toLowerCase() : null };
+}
+
+// 401 = no valid Access identity; 403 = a valid identity that isn't on the
+// allowlist (a guest); 503 = can't tell (keys unreachable, no allowlist).
+export async function authenticateOwner(request, env) {
+  const allowed = parseAllowlist(env.BETS_ALLOWED_EMAILS);
+  if (!allowed.size) return { ok: false, status: 503, error: "not-configured" };
+  const token = accessTokenFrom(request);
+  if (!token) return { ok: false, status: 401, error: "unauthenticated" };
+  const v = await verifyAccessJwt(token, env);
+  if (v.status === "unavailable") return { ok: false, status: 503, error: "auth-unavailable" };
+  if (v.status !== "ok") return { ok: false, status: 401, error: "unauthenticated" };
+  // Service tokens carry no email; they were never granted this data.
+  if (!v.email || !allowed.has(v.email)) return { ok: false, status: 403, error: "forbidden" };
+  return { ok: true, email: v.email };
+}
+
+function betsJson(data, status = 200, extra = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "private, no-store", ...extra },
+  });
+}
+
+// Shape check only: the page owns the schema (sports/my-bets.js). This keeps a
+// bad client from storing something the page can't read back.
+export function validBets(bets) {
+  if (!Array.isArray(bets) || bets.length > BETS_MAX_COUNT) return false;
+  const ids = new Set();
+  for (const b of bets) {
+    if (!b || typeof b !== "object" || Array.isArray(b)) return false;
+    if (typeof b.id !== "string" || !b.id || b.id.length > 64 || ids.has(b.id)) return false;
+    ids.add(b.id);
+    if (typeof b.stake !== "number" || !(b.stake > 0) || b.stake > 1e6) return false;
+    if (!Array.isArray(b.legs) || !b.legs.length || b.legs.length > BETS_MAX_LEGS) return false;
+    if (b.legs.some(l => !l || typeof l !== "object" || typeof l.gameId !== "string" || typeof l.kind !== "string")) return false;
+  }
+  return true;
+}
+
+export async function handleBets(request, env) {
+  const url = new URL(request.url);
+  const dev = DEV_HOSTS.has(url.hostname) && !!env.BETS_DEV_EMAIL;
+  if (url.hostname !== BETS_HOST && !dev) return betsJson({ error: "not-found" }, 404);
+
+  const bucket = env.SPORTS_BETS;
+  if (!bucket || (!dev && parseAllowlist(env.BETS_ALLOWED_EMAILS).size === 0)) {
+    return betsJson({ error: "not-configured" }, 503);
+  }
+  if (!dev) {
+    const auth = await authenticateOwner(request, env);
+    if (!auth.ok) return betsJson({ error: auth.error }, auth.status);
+  }
+
+  if (request.method === "GET" || request.method === "HEAD") {
+    const object = await bucket.get(BETS_KEY);
+    let bets = [];
+    if (object) {
+      try {
+        const doc = JSON.parse(await object.text());
+        if (doc && Array.isArray(doc.bets)) bets = doc.bets;
+      } catch (e) { /* unreadable object: show it as empty, the next save replaces it */ }
+    }
+    return betsJson({ version: object ? object.etag : null, bets });
+  }
+
+  if (request.method !== "PUT") {
+    return betsJson({ error: "method-not-allowed" }, 405, { Allow: "GET, HEAD, PUT" });
+  }
+  // Writes must come from the page itself: a JSON body (cross-site forms can't
+  // send one without a CORS preflight, which this never answers) and, when the
+  // browser says where it came from, this very origin.
+  const origin = request.headers.get("Origin");
+  if (origin && origin !== url.origin) return betsJson({ error: "bad-origin" }, 403);
+  if (!/^application\/json\b/i.test(request.headers.get("Content-Type") || "")) {
+    return betsJson({ error: "json-only" }, 415);
+  }
+  const text = await request.text();
+  if (text.length > BETS_MAX_BYTES) return betsJson({ error: "too-large" }, 413);
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch (e) {
+    return betsJson({ error: "bad-json" }, 400);
+  }
+  if (!body || !validBets(body.bets)) return betsJson({ error: "bad-bets" }, 400);
+  const version = typeof body.version === "string" ? body.version : null;
+
+  const doc = JSON.stringify({ updatedAt: new Date().toISOString(), bets: body.bets });
+  const options = { httpMetadata: { contentType: "application/json" } };
+  if (version) {
+    options.onlyIf = { etagMatches: version };
+  } else if (await bucket.head(BETS_KEY)) {
+    return betsJson({ error: "conflict" }, 409); // someone created it since this page loaded
+  }
+  const written = await bucket.put(BETS_KEY, doc, options);
+  if (!written) return betsJson({ error: "conflict" }, 409); // etag moved on: a newer save exists
+  return betsJson({ version: written.etag });
+}
+
 function corsOptions() {
   return new Response(null, {
     headers: {
@@ -586,6 +815,14 @@ export default {
           status: 200,
           headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
         });
+      }
+    }
+
+    if (url.pathname === "/api/bets") {
+      try {
+        return await handleBets(request, env);
+      } catch (e) {
+        return betsJson({ error: "server-error" }, 500);
       }
     }
 
