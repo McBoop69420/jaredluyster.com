@@ -652,25 +652,35 @@ function mountMyBets(PB) {
     const g = f.game;
     const offer = offerFor(g, kind, side);
     f.pick = { kind, side };
-    f.odds = offer ? offer.odds : null;
-    if (kind === "moneyline") f.line = NaN;
-    else if (offer) f.line = offer.line;
-    else {
-      // No price on this side: borrow the line from the other side if there is one.
-      const other = g.offers.find(o => o.kind === kind && o.side !== side);
-      f.line = other ? (kind === "spread" ? -other.line : other.line) : NaN;
+    let line = NaN;
+    if (kind !== "moneyline") {
+      if (offer) line = offer.line;
+      else {
+        // No price on this side: borrow the line from the other side if there is one.
+        const other = g.offers.find(o => o.kind === kind && o.side !== side);
+        if (other) line = kind === "spread" ? -other.line : other.line;
+      }
     }
+    // Before kickoff the posted price is the one you'd get, so it's filled in. Once
+    // the game has started it's stale (ESPN only has pre-game lines): the boxes
+    // start empty, with the pre-game number as a placeholder, so a live bet is
+    // always logged at the number actually taken.
+    f.pre = { line, odds: offer ? offer.odds : null };
+    const live = g.state !== "pre";
+    f.odds = live ? null : f.pre.odds;
+    f.line = live ? NaN : line;
     f.message = "";
     renderForm();
-    const focus = dialog.querySelector(f.odds == null ? 'input[name="odds"]' : 'input[name="stake"]');
-    if (focus) focus.focus();
+    const first = dialog.querySelector(kind !== "moneyline" && !Number.isFinite(f.line) ? 'input[name="line"]'
+      : f.odds == null ? 'input[name="odds"]' : 'input[name="stake"]');
+    if (first) first.focus();
   }
 
   function formCheck() {
     const f = S.form;
     if (!f || !f.pick) return { ok: false };
+    if (f.pick.kind !== "moneyline" && !Number.isFinite(f.line)) return { ok: false, why: "Enter the line you got." };
     if (f.odds == null) return { ok: false, why: "Enter the odds you got, like −110 or +150." };
-    if (f.pick.kind !== "moneyline" && !Number.isFinite(f.line)) return { ok: false, why: "Enter the line." };
     if (!(f.stake > 0 && f.stake <= MAX_STAKE)) return { ok: false, why: "Stake must be between 0 and " + MAX_STAKE + " units." };
     return { ok: true };
   }
@@ -710,8 +720,10 @@ function mountMyBets(PB) {
     if (f.pick) {
       const hasLine = f.pick.kind !== "moneyline";
       inputs = '<div class="slip-inputs bet-form-inputs">' +
-        (hasLine ? '<label>Line <input name="line" type="number" step="0.5" inputmode="decimal" value="' + (Number.isFinite(f.line) ? esc(f.line) : "") + '"></label>' : "") +
-        '<label>Odds <input name="odds" type="text" inputmode="numeric" value="' + (f.odds != null ? esc(f.odds > 0 ? "+" + f.odds : f.odds) : "") + '"></label>' +
+        (hasLine ? '<label>Line <input name="line" type="number" step="0.5" inputmode="decimal" value="' + (Number.isFinite(f.line) ? esc(f.line) : "") + '"' +
+          (f.pre && Number.isFinite(f.pre.line) ? ' placeholder="' + esc(f.pre.line) + '"' : "") + "></label>" : "") +
+        '<label>Odds <input name="odds" type="text" inputmode="numeric" value="' + (f.odds != null ? esc(f.odds > 0 ? "+" + f.odds : f.odds) : "") + '"' +
+          (f.pre && f.pre.odds != null ? ' placeholder="' + esc(f.pre.odds > 0 ? "+" + f.pre.odds : f.pre.odds) + '"' : "") + "></label>" +
         '<label>Stake <input name="stake" type="number" min="0.1" step="0.5" inputmode="decimal" value="' + esc(f.stake) + '"> units</label></div>' +
         '<div class="slip-inputs"><input name="note" type="text" maxlength="200" placeholder="Note (optional)" value="' + esc(f.note) + '"></div>' +
         '<div class="bet-form-totals">' + formTotalsHtml() + "</div>" +
@@ -728,7 +740,7 @@ function mountMyBets(PB) {
       : "";
     const hint = started
       ? (g.state === "in" ? "In progress" + (g.statusText ? " (" + g.statusText + ")" : "") : "Started") +
-        ": the prices shown are pre-game. Tap a side and enter the line and odds you got."
+        ": the prices shown are pre-game. Tap the side you bet, then type the line and odds you got."
       : g.offers.length ? "Tap a line. Change the number if yours was different."
         : "No line posted yet: tap a side and enter the line and odds you got.";
     dialog.innerHTML = '<div class="bet-form">' + close +
