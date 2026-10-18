@@ -933,7 +933,13 @@ function mountMyBets(PB) {
       });
     }
 
-    new MutationObserver(queueDecorate).observe(document.querySelector(".paper") || document.body, { childList: true, subtree: true });
+    // Freshly rebuilt cards get their strip in the observer callback itself (a
+    // microtask, so before the next paint); waiting on the timer let every
+    // live refresh draw the cards strip-less for a frame, so they jumped.
+    const addsCard = r => [...r.addedNodes].some(n => n.nodeType === 1 && (n.matches(".game") || n.querySelector(".game")));
+    new MutationObserver(records => {
+      if (records.some(addsCard)) decorateCards(); else queueDecorate();
+    }).observe(document.querySelector(".paper") || document.body, { childList: true, subtree: true });
 
     const refreshBtn = $("refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", start);

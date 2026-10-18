@@ -942,9 +942,12 @@
     if (g.state === "in") st.innerHTML = '<span class="live-dot"></span>' + esc(g.statusText);
     else st.textContent = g.statusText;
     card.appendChild(st);
-    if (g.footballSituation) {
-      card.appendChild(el("div", "football-situation" + (g.footballSituation.redZone ? " football-situation--redzone" : ""),
-        esc(g.footballSituation.text)));
+    // A live football card always keeps the situation line, blank between
+    // plays, so the card doesn't shrink and grow as ESPN's feed comes and goes.
+    if (g.footballSituation || (g.state === "in" && g.leagueKey.indexOf("football/") === 0)) {
+      const fs = g.footballSituation;
+      card.appendChild(el("div", "football-situation" + (fs && fs.redZone ? " football-situation--redzone" : ""),
+        fs ? esc(fs.text) : "&nbsp;"));
     }
     if (g.broadcast && g.state !== "post") {
       card.appendChild(el("div", "broadcast", esc(g.broadcast)));
