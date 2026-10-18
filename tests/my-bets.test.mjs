@@ -201,6 +201,38 @@ test("no game data: pending before the start, unknown after", () => {
   assert.equal(PB.gradeLeg(leg, null, Date.parse("2026-10-18T20:00Z")).tone, "unknown");
 });
 
+test("progress: spread bar is centred on the line, measured from our side", () => {
+  const lac = { ...legOf("spread", "away"), line: 9.5 }; // HOU (away) +9.5
+  assert.equal(PB.progress(lac, pre), null);
+  assert.deepEqual(PB.progress(lac, live(3, 19)), { kind: "margin", value: -16, target: -9.5, margin: -6.5, half: 14 });
+  const jax = legOf("spread", "home"); // JAX -2.5
+  assert.deepEqual(PB.progress(jax, live(7, 14)), { kind: "margin", value: 7, target: 2.5, margin: 4.5, half: 14 });
+  // a blowout widens the bar rather than pinning the dot to the end
+  assert.equal(PB.progress(jax, live(0, 40)).half, 47);
+});
+
+test("progress: moneyline is centred on a tie; a draw pick has no bar", () => {
+  assert.deepEqual(PB.progress(legOf("moneyline", "away"), live(10, 13)), { kind: "margin", value: -3, target: 0, margin: -3, half: 14 });
+  const soccer = PB.parseEvent(event({ odds: SOCCER_ODDS }), "soccer/eng.1");
+  const home = PB.legFromOffer(soccer, offer(soccer, "moneyline", "home"));
+  assert.equal(PB.progress(home, { ...soccer, state: "in", away: { ...soccer.away, score: 0 }, home: { ...soccer.home, score: 1 } }).half, 3);
+  assert.equal(PB.progress(PB.legFromOffer(soccer, offer(soccer, "moneyline", "draw")), live(1, 1)), null);
+});
+
+test("progress: totals run toward the line as a finish line", () => {
+  const over = legOf("total", "over"); // 42.5
+  const under = legOf("total", "under");
+  assert.deepEqual(PB.progress(over, live(10, 14)), { kind: "total", value: 24, target: 42.5, side: "over", margin: -18.5, max: 51 });
+  assert.equal(PB.progress(under, live(10, 14)).margin, 18.5);
+  assert.equal(PB.progress(over, live(30, 30)).max, 63);
+});
+
+test("progress: a settled leg uses its stored final score; a void one has no bar", () => {
+  const leg = { ...legOf("spread", "home"), final: { away: 10, home: 20 } };
+  assert.equal(PB.progress(leg, live(0, 0)).margin, 7.5);
+  assert.equal(PB.progress({ ...leg, final: { void: true } }, null), null);
+});
+
 test("finalSnapshot only once the game is over", () => {
   assert.equal(PB.finalSnapshot(pre), null);
   assert.equal(PB.finalSnapshot(live(3, 0)), null);

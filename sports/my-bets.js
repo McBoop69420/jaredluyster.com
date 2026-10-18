@@ -268,6 +268,39 @@
     return { tone: "unknown", final: false, detail: game.statusText || "" };
   }
 
+  // How wide a margin bar is, either side of the line, before it rescales:
+  // about two scores in each sport.
+  const BAR_HALF = { football: 14, basketball: 12 };
+  const barHalf = (league) => BAR_HALF[String(league).split("/")[0]] || 3;
+
+  // Where a leg stands, for the bet's progress bar; null with no score yet (or
+  // for a draw pick, which has no line to measure against).
+  //   spread / moneyline -> { kind: "margin", value: our margin (us - them),
+  //     target: the margin that pushes (-line; 0 for a moneyline), margin: value - target,
+  //     half: how far either side of the target the bar reaches }
+  //   total -> { kind: "total", value: combined score, target: the line, side,
+  //     margin: > 0 the bet is ahead, max: the bar's full scale }
+  function progress(leg, game) {
+    let snap = null;
+    if (leg.final) snap = leg.final.void ? null : leg.final;
+    else if (game && game.state !== "pre" && game.away.score != null && game.home.score != null) {
+      snap = { away: game.away.score, home: game.home.score };
+    }
+    if (!snap || leg.side === "draw") return null;
+    if (leg.kind === "total") {
+      const value = snap.away + snap.home;
+      return {
+        kind: "total", value, target: leg.line, side: leg.side, margin: margin(leg, snap.away, snap.home),
+        max: Math.max(leg.line * 1.2, value * 1.05, 1),
+      };
+    }
+    const value = leg.side === "away" ? snap.away - snap.home : snap.home - snap.away;
+    const target = leg.kind === "spread" ? -leg.line : 0;
+    const m = value - target;
+    const base = barHalf(leg.league);
+    return { kind: "margin", value, target, margin: m, half: Math.max(base, Math.ceil(Math.abs(m) * 1.25)) };
+  }
+
   const betDecimal = (legs) => legs.reduce((d, l) => d * toDecimal(l.odds), 1);
   const toWin = (bet) => round2(bet.stake * (betDecimal(bet.legs) - 1));
 
@@ -349,7 +382,7 @@
     LEAGUES, LEAGUE_BY_KEY, KINDS, TONES,
     parseAmerican, toDecimal, toAmerican, fmtOdds, fmtLine, fmtUnits, fmtNum,
     parseOffers, parseEvent, parseSummary, finalSnapshot, legFromOffer, offerKey, legLabel, gameLabel,
-    margin, gradeLeg, gradeBet, betDecimal, toWin, summarize, etDate,
+    margin, progress, gradeLeg, gradeBet, betDecimal, toWin, summarize, etDate,
   };
 });
 
@@ -537,6 +570,50 @@ function mountMyBets(PB) {
 
   // ---- Game cards: "+ Bet" and the bets already on the game ---------------
 
+  // The bet's progress bar (see PB.progress). A spread or moneyline bar is
+  // centred on the line: it fills right (green) while the bet covers and left
+  // (red) while it doesn't, with a dot at the current margin. A total fills
+  // with the combined score toward a finish line at the total.
+  const pctOf = (x) => Math.max(0, Math.min(100, x));
+  const fmtSigned = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + PB.fmtNum(Math.abs(n));
+  function barHtml(leg, game) {
+    const p = PB.progress(leg, game);
+    if (!p) return "";
+    const tone = p.margin > 0 ? "good" : p.margin < 0 ? "bad" : "even";
+    let track;
+    let caption;
+    let target;
+    if (p.kind === "margin") {
+      const at = pctOf(50 + (p.margin / p.half) * 50);
+      const abbr = (leg[leg.side] || {}).abbr || "";
+      const m = Math.abs(p.margin);
+      const state = leg.kind === "moneyline"
+        ? (p.margin > 0 ? "up " + PB.fmtNum(m) : p.margin < 0 ? "down " + PB.fmtNum(m) : "tied")
+        : (p.margin > 0 ? "covering by " + PB.fmtNum(m) : p.margin < 0 ? PB.fmtNum(m) + " short" : "on the number");
+      track = '<i class="bet-bar-fill bet-bar-fill--' + tone + '" style="left:' + Math.min(50, at) + "%;width:" + Math.abs(at - 50) + '%"></i>' +
+        '<b class="bet-bar-mark" style="left:50%"></b><b class="bet-bar-dot bet-bar-dot--' + tone + '" style="left:' + at + '%"></b>';
+      target = { at: 50, text: leg.kind === "moneyline" ? "tie" : abbr + " " + PB.fmtLine(leg.line) };
+      caption = "<span>" + esc(abbr + " " + (p.value === 0 ? "even" : fmtSigned(p.value))) + "</span>" +
+        "<span>" + esc(state) + "</span>";
+    } else {
+      const fill = pctOf((p.value / p.max) * 100);
+      const finish = pctOf((p.target / p.max) * 100);
+      const gap = PB.fmtNum(Math.abs(p.value - p.target));
+      const state = p.side === "over"
+        ? (p.value > p.target ? "over by " + gap : p.value < p.target ? gap + " to go" : "on the number")
+        : (p.value < p.target ? gap + " to spare" : p.value > p.target ? "over by " + gap : "on the number");
+      // A live over still climbing isn't losing, just not there yet.
+      const fillTone = p.side === "over" && p.value < p.target && !leg.final && !(game && game.state === "post") ? "climb" : tone;
+      track = '<i class="bet-bar-fill bet-bar-fill--' + fillTone + '" style="left:0;width:' + fill + '%"></i>' +
+        '<b class="bet-bar-mark bet-bar-mark--finish" style="left:' + finish + '%"></b>';
+      target = { at: finish, text: (p.side === "over" ? "Over " : "Under ") + PB.fmtNum(p.target) };
+      caption = "<span>" + esc(PB.fmtNum(p.value) + " total") + "</span><span>" + esc(state) + "</span>";
+    }
+    // The line's own label sits right over its mark (kept off the very edges).
+    const label = '<div class="bet-bar-target"><span style="left:' + Math.max(12, Math.min(88, target.at)) + '%">' + esc(target.text) + "</span></div>";
+    return '<div class="bet-bar bet-bar--' + p.kind + '">' + label + '<div class="bet-bar-track">' + track + '</div><div class="bet-bar-caption">' + caption + "</div></div>";
+  }
+
   function cardStripHtml(card) {
     const id = card.dataset.eventId;
     // Upcoming and live games; a finished one only shows the bets on it.
@@ -548,7 +625,8 @@ function mountMyBets(PB) {
       const leg = bet.legs.find(l => l.gameId === id);
       const label = (bet.legs.length > 1 ? "Parlay: " : "") + PB.legLabel(leg) + " · " + PB.fmtUnits(bet.stake);
       const shown = g.bet.final || g.bet.tone !== "pending";
-      return chip(shown ? g.bet.tone : "pending", label + (shown ? " · " + PB.TONES[g.bet.tone] : ""));
+      return '<div class="bet-track">' + chip(shown ? g.bet.tone : "pending", label + (shown ? " · " + PB.TONES[g.bet.tone] : "")) +
+        barHtml(leg, S.games.get(leg.gameId)) + "</div>";
     }).join("");
     return tags + (canBet ? '<button type="button" class="bet-chip" data-bet-open>+ Bet</button>' : "");
   }
@@ -835,7 +913,7 @@ function mountMyBets(PB) {
     const detail = g.detail ? ' <span class="value-note">' + esc(g.detail) + "</span>" : "";
     return '<div class="bet-leg"><strong>' + esc(PB.legLabel(leg)) + '</strong> <span class="value-note">' +
       esc(PB.fmtOdds(leg.odds)) + " · " + esc(PB.gameLabel(leg)) + (leg.final ? "" : " · " + esc(fmtWhen(leg.start))) +
-      "</span>" + (parlay && g.tone !== "pending" ? " " + chip(g.tone) : "") + detail + "</div>";
+      "</span>" + (parlay && g.tone !== "pending" ? " " + chip(g.tone) : "") + detail + barHtml(leg, S.games.get(leg.gameId)) + "</div>";
   }
 
   function betRowHtml(bet) {

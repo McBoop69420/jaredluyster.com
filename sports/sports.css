@@ -390,6 +390,23 @@ table.value-slate tr.picks-detail td{white-space:normal;background:var(--card);p
 /* "+ Bet" and your bets, on game cards (Games page) */
 .bet-strip{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;justify-content:center;margin-top:8px;padding-top:6px;border-top:1px dotted currentColor}
 .bet-strip .call{font-size:.68rem;padding:1px 6px;text-transform:none}
+.bet-track{flex:1 1 100%;display:flex;flex-direction:column;align-items:center;gap:3px}
+/* A bet's progress bar: spread/ML centred on the line, totals with a finish line */
+.bet-bar{width:100%;max-width:280px}
+.bet-bar-track{position:relative;height:8px;background:var(--paper);border:1px solid var(--ink)}
+.bet-bar-fill{position:absolute;top:0;bottom:0}
+.bet-bar-fill--good{background:#1b8a3f}
+.bet-bar-fill--bad{background:var(--live)}
+.bet-bar-fill--even,.bet-bar-fill--climb{background:var(--accent)}
+.bet-bar-mark{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--ink)}
+.bet-bar-mark--finish{width:3px;margin-left:-1.5px;background:repeating-linear-gradient(var(--ink) 0 3px,var(--paper) 3px 6px)}
+.bet-bar-dot{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border:2px solid var(--ink);border-radius:50%;background:var(--paper)}
+.bet-bar-dot--good{background:#1b8a3f}
+.bet-bar-dot--bad{background:var(--live)}
+.bet-bar-caption{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-size:.66rem;line-height:1.3;color:var(--muted);white-space:nowrap}
+.bet-bar-target{position:relative;height:13px;margin-bottom:3px}
+.bet-bar-target span{position:absolute;bottom:0;transform:translateX(-50%);font-size:.66rem;font-weight:700;line-height:1.2;white-space:nowrap;color:var(--ink)}
+.bet-leg .bet-bar{margin:3px 0 4px}
 .bet-chip{font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border:1px solid var(--ink);background:var(--accent);color:var(--accent-ink);cursor:pointer}
 .bet-chip:hover{background:var(--highlight)}
 /* The one-game bet form */
