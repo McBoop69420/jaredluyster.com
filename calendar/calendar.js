@@ -176,17 +176,49 @@
       if (!res.ok) throw new Error("todos.json " + res.status);
       const j = await res.json();
       if (!j || !Array.isArray(j.todos)) throw new Error("todos.json has no todos array");
-      todoList = j.todos.filter(t => t && typeof t.title === "string" && t.title.trim()).map(t => {
-        const title = t.title.trim();
-        const date = /^\d{4}-\d{2}-\d{2}$/.test(t.date || "") ? t.date : "";
-        return { key: date + "|" + title, title: title, date: date };
-      });
+      todoList = readTodoArray(j.todos, "");
+      todosLoaded = true;
+      pruneTodoDone();
+    } catch (e) { /* keep the last good list */ }
+  }
+
+  // { title, date } entries -> { key, title, date }. `prefix` keeps keys from
+  // different files apart.
+  function readTodoArray(arr, prefix) {
+    return arr.filter(t => t && typeof t.title === "string" && t.title.trim()).map(t => {
+      const title = t.title.trim();
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(t.date || "") ? t.date : "";
+      return { key: prefix + date + "|" + title, title: title, date: date };
+    });
+  }
+
+  // ---- Comics -----------------------------------------------------------
+  // Read from /comics.json, same { "todos": [...] } shape as todos.json: one todo
+  // per release day for new issues of my comic reading orders that still need
+  // getting and adding to their Kavita reading list. Generated on the comic server
+  // by make-comic-reminders.py from its "Missing Issues" checklists, so an issue
+  // drops out of the file once it's filed there. Until then it's a normal todo:
+  // drawn on its release day, carried to today if that passes, and tickable.
+  let comicList = [];
+  let todosLoaded = false, comicsLoaded = false;
+
+  async function loadComics() {
+    try {
+      const res = await fetch("/comics.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("comics.json " + res.status);
+      const j = await res.json();
+      if (!j || !Array.isArray(j.todos)) throw new Error("comics.json has no todos array");
+      comicList = readTodoArray(j.todos, "C:");
+      comicsLoaded = true;
       pruneTodoDone();
     } catch (e) { /* keep the last good list */ }
   }
 
   function pruneTodoDone() {
-    const live = new Set(todoList.map(t => t.key));
+    // Ticks for both files share one store, so only prune once both have loaded;
+    // otherwise whichever arrives first would forget the other's ticks.
+    if (!todosLoaded || !comicsLoaded) return;
+    const live = new Set(todoList.concat(comicList).map(t => t.key));
     let changed = false;
     Object.keys(todoDone).forEach(k => {
       if (!live.has(k)) { delete todoDone[k]; changed = true; }
@@ -315,7 +347,7 @@
   // undated one gets no date, which renderCalendar's byDate pass skips, so only
   // the strip shows it.
   function todoEvents(todayStr) {
-    const fromFile = todoList.filter(t => !todoDone[t.key]).map(t => ({
+    const fromFile = todoList.concat(comicList).filter(t => !todoDone[t.key]).map(t => ({
       type: "todo", title: t.title, todoKey: t.key,
       date: t.date && t.date < todayStr ? todayStr : t.date,
       overdue: !!t.date && t.date < todayStr,
@@ -435,7 +467,7 @@
       if (!result) return;
     } else {
       if (todoDone[key]) return;
-      const t = todoList.find(x => x.key === key);
+      const t = todoList.concat(comicList).find(x => x.key === key);
       todoDone[key] = Date.now();
       saveTodoDone();
       result = { title: t ? t.title : "Todo", restore() { delete todoDone[key]; saveTodoDone(); } };
@@ -1313,7 +1345,7 @@
     // Fetch fresh /calendar.json so new commitments appear, but keep the
     // current grid on screen meanwhile and only redraw once it arrives.
     try {
-      await Promise.all([loadCalendar(), loadTodos(), loadMovies()]);
+      await Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies()]);
       renderCalendar();
       stampUpdated();
     } finally {
