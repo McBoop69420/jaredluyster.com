@@ -360,6 +360,10 @@ function mountMyBets(PB) {
 
   const ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
   const REFRESH_MS = 60 * 1000;
+  // While a bet's game is live, its status keeps up with the card's score:
+  // sports.js redraws live cards every few seconds (and as soon as the tab is
+  // visible again), and each redraw may re-grade, at most this often.
+  const LIVE_REFRESH_MS = 15 * 1000;
   const MAX_STAKE = 1000;
   const LS_STAKE = "myBets.stake";
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -939,15 +943,44 @@ function mountMyBets(PB) {
     const addsCard = r => [...r.addedNodes].some(n => n.nodeType === 1 && (n.matches(".game") || n.querySelector(".game")));
     new MutationObserver(records => {
       if (records.some(addsCard)) decorateCards(); else queueDecorate();
+      maybeRegrade();
     }).observe(document.querySelector(".paper") || document.body, { childList: true, subtree: true });
 
     const refreshBtn = $("refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", start);
 
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) regrade();
+    });
+
     setInterval(() => {
-      if (document.hidden || S.status !== "ready") return;
-      refreshGrades().then(() => { renderPanel(); decorateCards(); });
-    }, REFRESH_MS);
+      if (document.hidden) return;
+      if (hasLiveLegs() || Date.now() - gradedAt >= REFRESH_MS) regrade();
+    }, LIVE_REFRESH_MS);
+  }
+
+  // One grading pass at a time; callers share the one in flight.
+  let grading = null;
+  let gradedAt = 0;
+  function regrade() {
+    if (S.status !== "ready") return Promise.resolve();
+    if (!grading) {
+      grading = refreshGrades()
+        .catch(() => { /* keep the last grades */ })
+        .then(() => { gradedAt = Date.now(); renderPanel(); decorateCards(); })
+        .finally(() => { grading = null; });
+    }
+    return grading;
+  }
+
+  // An unsettled bet on a game that has started (or should have).
+  function hasLiveLegs() {
+    const now = Date.now();
+    return S.bets.some(b => !b.result && b.legs.some(l => !l.final && !l.result && l.start && Date.parse(l.start) <= now));
+  }
+
+  function maybeRegrade() {
+    if (!document.hidden && hasLiveLegs() && Date.now() - gradedAt >= LIVE_REFRESH_MS) regrade();
   }
 
   async function start() {
@@ -955,9 +988,7 @@ function mountMyBets(PB) {
     renderPanel();
     if (S.status !== "ready") return;
     decorateCards();
-    await refreshGrades();
-    renderPanel();
-    decorateCards();
+    await regrade();
   }
 
   function init() {
