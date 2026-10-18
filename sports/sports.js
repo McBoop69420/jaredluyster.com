@@ -247,6 +247,8 @@
   let valueScreenLoading = false;
   let nflOdds = null;               // { games: [...], fetchedAt } — market only, no model
   let nflOddsLoading = false;
+  let nflOddsPicks = null;          // Map "AWAY@HOME" (ESPN abbrs) -> Expert Picks summary for that game
+  const nflOddsOpen = new Set();    // NFL Odds rows whose expert list is expanded
   let teamCtx = null;               // { date, rows, nextDate } — soft-factor tracker, no model
   let teamCtxLoading = false;
   // The Spotlight "more from your teams" cycling card: followed-team games
@@ -2866,21 +2868,38 @@
     return rows.sort((a, b) => (a.kickoffMs || 0) - (b.kickoffMs || 0));
   }
 
+  // The Experts cell: the spread consensus and a button that opens the game's
+  // full expert-by-expert list (the same one Expert Picks shows).
+  function nflOddsExpertsCell(key, s) {
+    if (!s || !s.picks) return '<td class="value-note">' + (nflOddsPicks ? "no picks yet" : "—") + "</td>";
+    const c = s.markets.spread;
+    const lean = c && c.leader
+      ? "<strong>" + esc(c.leader.label) + '</strong> <span class="value-note">' + c.sides[0].count + "–" + c.sides[1].count + "</span> "
+      : c ? 'Split <span class="value-note">' + c.sides[0].count + "–" + c.sides[1].count + "</span> " : "";
+    const open = nflOddsOpen.has(key);
+    return "<td>" + lean + '<button type="button" class="picks-toggle" data-odds-picks="' + esc(key) +
+      '" aria-expanded="' + open + '">' + s.experts + (open ? " ▾" : " ▸") + "</button></td>";
+  }
+
   function nflOddsRowsHtml() {
     const games = nflOdds && nflOdds.games;
     if (!games) {
-      return '<tr><td colspan="5" class="value-empty">' +
+      return '<tr><td colspan="6" class="value-empty">' +
         (nflOddsLoading ? "Loading live slate&hellip;" : "Live slate unavailable right now.") +
         "</td></tr>";
     }
     if (!games.length) {
-      return '<tr><td colspan="5" class="value-empty">No NFL games this week.</td></tr>';
+      return '<tr><td colspan="6" class="value-empty">No NFL games this week.</td></tr>';
     }
     return games.map(r => {
+      const key = r.away + "@" + r.home;
+      const s = nflOddsPicks && nflOddsPicks.get(key);
+      const experts = nflOddsExpertsCell(key, s) +
+        "</tr>" + (s && s.picks && nflOddsOpen.has(key) ? picksDetailHtml(s, 6) : "");
       const match = "<strong>" + esc(r.away) + " @ " + esc(r.home) + "</strong>" +
         (r.time ? ' <span class="value-note">' + esc(r.time) + "</span>" : "");
       if (!r.awayMl && !r.spread && !r.total) {
-        return "<tr><td>" + match + '</td><td colspan="4" class="value-note">no market line yet</td></tr>';
+        return "<tr><td>" + match + '</td><td colspan="4" class="value-note">no market line yet</td>' + experts;
       }
       const total = r.total
         ? "O/U " + esc(r.total) + (r.overOdds && r.underOdds
@@ -2888,7 +2907,7 @@
         : "—";
       return "<tr><td>" + match + "</td><td>" + (r.awayMl ? esc(r.awayMl) + "/" + esc(r.homeMl) : "—") + "</td><td>" +
         (r.awayPct != null ? esc(r.awayPct) + "/" + esc(r.homePct) : "—") + "</td><td>" +
-        (r.spread ? esc(r.spread) : "—") + "</td><td>" + total + "</td></tr>";
+        (r.spread ? esc(r.spread) : "—") + "</td><td>" + total + "</td>" + experts;
     }).join("");
   }
 
@@ -2915,14 +2934,44 @@
     meta.textContent = games.length + " games · " + priced + " priced";
   }
 
+  // Action Network spells three NFL teams differently from ESPN.
+  const AN_TO_ESPN_NFL = { JAC: "JAX", LA: "LAR", WAS: "WSH" };
+
+  // /api/picks NFL games keyed the way NFL Odds rows are ("AWAY@HOME" in
+  // ESPN's abbreviations), with the abbreviations rewritten so the expert list
+  // reads JAX, not JAC.
+  function nflOddsPicksByGame(data) {
+    const byGame = new Map();
+    for (const g of (data && data.games) || []) {
+      for (const t of [g.away, g.home]) t.abbr = AN_TO_ESPN_NFL[t.abbr] || t.abbr;
+      byGame.set(g.away.abbr + "@" + g.home.abbr, window.ExpertPicks.summarizeGame(g));
+    }
+    return byGame;
+  }
+
+  function bindNflOdds() {
+    const panel = $("#nflOdds");
+    if (!panel) return;
+    panel.addEventListener("click", e => {
+      const toggle = e.target.closest("[data-odds-picks]");
+      if (!toggle) return;
+      const key = toggle.dataset.oddsPicks;
+      if (nflOddsOpen.has(key)) nflOddsOpen.delete(key);
+      else nflOddsOpen.add(key);
+      renderNflOdds();
+    });
+  }
+
   async function loadNflOdds() {
     if (!$("#nflOdds")) return; // panel doesn't exist on this page (e.g. Games)
     if (nflOddsLoading || !nflOddsVisible()) return;
     nflOddsLoading = true;
     renderNflOdds();
     try {
-      const games = await computeNflOdds();
+      const nfl = PICKS_LEAGUES.find(l => l.api === "nfl");
+      const [games, picks] = await Promise.all([computeNflOdds(), fetchJSON(picksQuery(nfl, etTodayStr()))]);
       nflOdds = { games, fetchedAt: Date.now() };
+      if (picks && window.ExpertPicks) nflOddsPicks = nflOddsPicksByGame(picks);
     } catch (e) {
       // Keep showing the last good slate rather than blanking the panel.
     } finally {
@@ -2938,10 +2987,12 @@
   // consensus maths is sports/expert-picks.js. One request per league; under
   // "All" every supported league loads and gets its own block.
   const PICKS_LEAGUES = [
-    { key: "football/nfl", api: "nfl", label: "NFL" },
-    // weekTop25: college football is a weekly slate, so its Top 25 block runs
-    // from the chosen day to that week's Saturday rather than the one day.
-    { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football", weekTop25: true },
+    // Football is a weekly slate. weekEnd is the weekday (0 = Sunday) its week
+    // runs to from the chosen day: the NFL lists every game through Monday
+    // night (weekAll); college football extends only its Top 25 block to
+    // Saturday, since a full week of college games would bury the day.
+    { key: "football/nfl", api: "nfl", label: "NFL", weekEnd: 1, weekAll: true },
+    { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football", weekEnd: 6 },
     { key: "baseball/mlb", api: "mlb", label: "MLB" },
     { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM", polls: "basketball/mens-college-basketball" },
   ];
@@ -2976,7 +3027,7 @@
       '<span class="picks-bar" title="' + pct + '% of experts"><i style="width:' + pct + '%"></i></span></td>';
   }
 
-  function picksDetailHtml(s) {
+  function picksDetailHtml(s, cols) {
     const blocks = window.ExpertPicks.MARKETS.map(m => {
       const c = s.markets[m];
       if (!c) return "";
@@ -3000,7 +3051,7 @@
       ? '<p class="value-note">+' + s.game.props + " prop, team-total and partial-game " +
         (s.game.props === 1 ? "pick" : "picks") + " on Action Network not counted.</p>"
       : "";
-    return '<tr class="picks-detail"><td colspan="5"><div class="picks-detail-inner"><div class="picks-markets">' + blocks +
+    return '<tr class="picks-detail"><td colspan="' + (cols || 5) + '"><div class="picks-detail-inner"><div class="picks-markets">' + blocks +
       "</div>" + props + "</div></td></tr>";
   }
 
@@ -3013,14 +3064,20 @@
     return !!(g.away.rank || g.home.rank);
   }
 
-  // The Saturday on or after a "YYYY-MM-DD" day (the day itself on a Saturday).
-  function saturdayFrom(date) {
+  // The first `weekday` (0 = Sunday) on or after a "YYYY-MM-DD" day, the day
+  // itself if it already is one.
+  function weekdayFrom(date, weekday) {
     const d = new Date(date + "T12:00:00Z");
-    d.setUTCDate(d.getUTCDate() + (6 - d.getUTCDay()));
+    d.setUTCDate(d.getUTCDate() + (weekday - d.getUTCDay() + 7) % 7);
     return d.toISOString().slice(0, 10);
   }
 
-  // A game listed off its own day (a later Top 25 game in the week view).
+  function picksQuery(league, date) {
+    return "/api/picks?league=" + league.api + "&date=" + date +
+      (league.weekEnd != null ? "&through=" + weekdayFrom(date, league.weekEnd) : "");
+  }
+
+  // A game listed off the chosen day (a later game in a week view).
   function offDay(g) {
     return !!(expertPicks && g.date && g.date !== expertPicks.date);
   }
@@ -3035,9 +3092,10 @@
   function expertPicksSummaries(entry) {
     const games = (entry.data && entry.data.games) || [];
     // Every Top 25 game is listed, picked or not; other games only once an
-    // expert has picked them.
-    // A week-view league's later days only contribute their Top 25 games.
-    return games.filter(g => isTop25(g) || (!offDay(g) && g.picks && g.picks.length))
+    // expert has picked them. Later days of a week view count in full for a
+    // weekAll league and only for their Top 25 games otherwise.
+    const inView = g => entry.league.weekAll || !offDay(g);
+    return games.filter(g => isTop25(g) || (inView(g) && g.picks && g.picks.length))
       .map(g => window.ExpertPicks.summarizeGame(g));
   }
 
@@ -3065,7 +3123,8 @@
     let html = "";
     let shown = 0;
     for (const entry of leagues) {
-      const games = ((entry.data && entry.data.games) || []).filter(g => !offDay(g)); // the chosen day's
+      const games = ((entry.data && entry.data.games) || [])
+        .filter(g => entry.league.weekAll || !offDay(g)); // the games this view covers
       const summaries = expertPicksSummaries(entry);
       if (many && !summaries.length) continue;
       if (many) html += '<tr class="picks-league"><td colspan="5">' + esc(entry.league.label) + "</td></tr>";
@@ -3076,7 +3135,7 @@
       if (!summaries.length) {
         html += '<tr><td colspan="5" class="value-empty">' + (games.length
           ? "No expert picks posted yet for " + games.length + (games.length === 1 ? " game" : " games") + " on this day."
-          : "No " + esc(entry.league.label) + " games on this day.") + "</td></tr>";
+          : "No " + esc(entry.league.label) + " games " + (entry.league.weekAll ? "this week." : "on this day.")) + "</td></tr>";
         continue;
       }
       // Top 25 games get their own block first, best-ranked team first; the
@@ -3086,7 +3145,7 @@
       const week = entry.through && entry.through !== expertPicks.date ? " through " + fmtDay(entry.through, true) : "";
       const blocks = ranked.length
         ? [[(entry.poll || "Top 25") + week, ranked], ["Other games", summaries.filter(s => !isTop25(s.game))]]
-        : [[null, summaries]];
+        : [[entry.league.weekAll && week ? "This week" + week : null, summaries]];
       for (const [title, list] of blocks) {
         if (title && list.length) {
           html += '<tr class="picks-group"><td colspan="5">' + esc(title) +
@@ -3095,7 +3154,7 @@
         html += list.map(picksGameRowHtml).join("");
         shown += list.length;
       }
-      const quiet = games.length - summaries.filter(s => !offDay(s.game)).length;
+      const quiet = games.length - summaries.filter(s => entry.league.weekAll || !offDay(s.game)).length;
       if (quiet > 0) {
         html += '<tr><td colspan="5" class="value-note">+' + quiet + " more " + esc(entry.league.label) +
           (quiet === 1 ? " game" : " games") + " with no expert picks</td></tr>";
@@ -3158,8 +3217,7 @@
     renderExpertPicks();
     try {
       const [results, polls] = await Promise.all([
-        Promise.all(leagues.map(league => fetchJSON("/api/picks?league=" + league.api + "&date=" + date +
-          (league.weekTop25 ? "&through=" + saturdayFrom(date) : "")))),
+        Promise.all(leagues.map(league => fetchJSON(picksQuery(league, date)))),
         // Current poll only: ESPN's feed is this week's ranking, which is also
         // what a past or future day is shown with.
         Promise.all(leagues.map(league => league.polls ? fetchJSON(ESPN + league.polls + "/rankings") : null)),
@@ -3171,6 +3229,9 @@
             const data = results[i];
             const poll = window.ExpertPicks.rankIndex(polls[i]);
             for (const g of (data && data.games) || []) {
+              if (league.api === "nfl") {
+                for (const t of [g.away, g.home]) t.abbr = AN_TO_ESPN_NFL[t.abbr] || t.abbr;
+              }
               g.away.rank = window.ExpertPicks.rankOf(poll, g.away);
               g.home.rank = window.ExpertPicks.rankOf(poll, g.home);
             }
@@ -3399,6 +3460,7 @@
     });
     bindTeamContext();
     bindExpertPicks();
+    bindNflOdds();
     loadExpertPicks();
     bindPicksBoard();
     loadPicksBoard();

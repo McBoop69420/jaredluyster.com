@@ -358,7 +358,7 @@ table.picks-slate tr.picks-group td{padding:10px 10px 4px;border-bottom:1px soli
 .picks-loss{color:var(--live);font-weight:700}
 .picks-toggle{font-family:var(--font-body);font-size:.82rem;font-weight:600;padding:2px 8px;border:1px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
 .picks-toggle[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
-table.picks-slate tr.picks-detail td{white-space:normal;background:var(--card);padding:10px 12px}
+table.value-slate tr.picks-detail td{white-space:normal;background:var(--card);padding:10px 12px}
 .picks-markets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .picks-market h4{margin:0 0 4px;font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 .picks-side{margin-bottom:6px;font-size:.85rem}

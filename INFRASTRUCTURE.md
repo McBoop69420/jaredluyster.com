@@ -539,6 +539,10 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   exists, else AP; Action Network carries no ranks), matched to teams by full name with
   parenthesised qualifiers dropped ("Miami (FL) Hurricanes"). It's always the current
   poll, even when the date picker is on a past or future day.
+  **NFL week (added 2026-10-18):** NFL Expert Picks lists every game from the chosen day
+  through Monday night (`&through=` on `/api/picks`), and NFL Odds has an Experts column
+  with each game's spread consensus and the same expert-by-expert list, joined on
+  ESPN abbreviations (Action Network's JAC/LA/WAS are rewritten to JAX/LAR/WSH).
   Consensus maths: [`sports/expert-picks.js`](sports/expert-picks.js) (DOM-free);
   `tests/expert-picks.test.mjs` covers it plus the worker's parsers and merge.
   **Rejected:** Pickwatch (nflpickwatch.com, the biggest aggregator) serves its picks
