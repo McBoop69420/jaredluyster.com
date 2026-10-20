@@ -189,6 +189,26 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
 /* --cal-live is too dark to read on the chips' dark-green fill; use a lighter tint. */
 .cal-ev-match--live .cal-ev-pts,.cal-ev-match--live .cal-ev-state{color:#ffb199;opacity:1;}
 
+/* League-wide games (national NBA, top-25 vs top-25, the UCL matchday card):
+   outlined instead of filled, so my own teams' solid cards stay the loudest
+   thing on a day. On the paper fill the regular --cal-live red reads fine. */
+.cal-ev--featured,.cal-ev--slate{background:var(--cal-paper);color:var(--cal-accent);
+  box-shadow:inset 0 0 0 1.5px var(--cal-accent);}
+.cal-ev--featured .cal-ev-match--live .cal-ev-pts,.cal-ev--featured .cal-ev-match--live .cal-ev-state,
+.cal-ev--slate .cal-ev-score--live{color:var(--cal-live);}
+.cal-dot.cal-ev--featured,.cal-dot.cal-ev--slate{background:none;box-shadow:inset 0 0 0 1.5px var(--cal-accent);}
+/* The matchday card takes a whole row of the sports grid: its list needs the room. */
+.cal-ev-grid .cal-ev--slate{flex-basis:100%;max-width:100%;padding:4px 5px;}
+.cal-slate-sum{cursor:pointer;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  list-style:none;}
+.cal-slate-sum::-webkit-details-marker{display:none;}
+.cal-slate-sum::after{content:" \25B8";}
+.cal-slate[open] > .cal-slate-sum::after{content:" \25BE";}
+.cal-slate-list{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;}
+.cal-slate-list li{display:flex;justify-content:center;}
+.cal-agenda-title .cal-slate-list li{justify-content:flex-start;}
+.cal-agenda-title .cal-slate-sum{font-size:inherit;text-transform:none;letter-spacing:0;}
+
 /* Todos (from /todos.json). Light chips with a tick circle, against the events'
    solid dark fill. The whole chip is the tap target: ticking fills the circle,
    then fades the chip out before calendar.js redraws without it. */

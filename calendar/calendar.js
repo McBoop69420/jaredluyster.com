@@ -69,13 +69,36 @@
     // domestic-only scoreboard misses (Champions/Europa League matchdays,
     // domestic cup rounds, Leagues Cup/US Open Cup ties). No `logo` here: the
     // matchup chip only ever shows team logos now, never the league mark.
-    { key: "soccer/uefa.champions", label: "Champions League", order: "home-away", patterns: ["liverpool", "arsenal"] },
+    // slate: every other match in the competition is shown too, folded into
+    // one expandable matchday card per day (see groupSlates()).
+    { key: "soccer/uefa.champions", label: "Champions League", short: "UCL", order: "home-away",
+      patterns: ["liverpool", "arsenal"], slate: true },
     { key: "soccer/uefa.europa", label: "Europa League", order: "home-away", patterns: ["athletic club"] },
     { key: "soccer/eng.fa", label: "FA Cup", order: "home-away", patterns: ["liverpool", "arsenal"] },
     { key: "soccer/eng.league_cup", label: "Carabao Cup", order: "home-away", patterns: ["liverpool", "arsenal"] },
     { key: "soccer/esp.copa_del_rey", label: "Copa del Rey", order: "home-away", patterns: ["athletic club"] },
     { key: "soccer/usa.open", label: "US Open Cup", order: "home-away", patterns: ["fc cincinnati", "lexington"] },
     { key: "soccer/concacaf.leagues.cup", label: "Leagues Cup", order: "home-away", patterns: ["fc cincinnati"] },
+  ];
+  // League-wide games beyond my own teams. These come back marked `featured`
+  // and render as quieter cards listed after my teams' games.
+  //   - NBA: nationally televised games only. NBA TV is left out on purpose:
+  //     it carries a couple of games most nights and would swamp the grid.
+  //   - College: games where both teams are in the top 25. ESPN's default
+  //     scoreboard (no `groups`) is already limited to games with a ranked
+  //     team, so the filter only has to check that both sides are ranked.
+  const NBA_NATIONAL = { key: "basketball/nba", label: "NBA", order: "away-home",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" };
+  const NBA_NATIONAL_NETWORKS = new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]);
+  // weekly: college football's scoreboard ignores a month in `dates` (it
+  // returns just the first week), so it's fetched week by week instead.
+  const RANKED_MATCHUP_LEAGUES = [
+    { key: "football/college-football", label: "NCAAF", order: "away-home", weekly: true,
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },
+    { key: "basketball/mens-college-basketball", label: "NCAAM", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
+    { key: "basketball/womens-college-basketball", label: "NCAAW", order: "away-home",
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
   ];
   const CALENDAR_WEEKS = 3;               // rows shown in the rolling grid
   const MAX_DOTS = 4;                     // per day in the phone grid, then "+N"
@@ -814,30 +837,120 @@
     return months;
   }
 
-  async function fetchSoccerLeagueEvents(entry, minDate, maxDate) {
-    async function fetchMonth(ym) {
-      try {
-        const ctrl = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort(), 8000);
-        const url = ESPN + entry.key + "/scoreboard?dates=" + ym;
-        const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-        clearTimeout(timeout);
-        if (!res.ok) return [];
-        const data = await res.json();
-        return Array.isArray(data.events) ? data.events : [];
-      } catch (e) {
-        return [];
-      }
+  async function fetchJson(url) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      return res.ok ? await res.json() : null;
+    } catch (e) {
+      return null;
     }
-    const monthJobs = monthsBetween(minDate, maxDate).map(fetchMonth);
-    const events = (await Promise.all(monthJobs)).flat();
-    return events.filter(ev => {
+  }
+
+  function eventsOf(data) {
+    return data && Array.isArray(data.events) ? data.events : [];
+  }
+
+  // `limit` matters here: without it a busy month (NBA) is cut off at 100.
+  async function fetchScoreboardMonths(key, minDate, maxDate) {
+    const pages = await Promise.all(monthsBetween(minDate, maxDate).map(ym =>
+      fetchJson(ESPN + key + "/scoreboard?limit=1000&dates=" + ym)));
+    return pages.flatMap(eventsOf);
+  }
+
+  // The current scoreboard carries the season's week calendar
+  // (leagues[0].calendar: season types, each with dated week entries); fetch
+  // every week that overlaps the window.
+  async function fetchScoreboardWeeks(key, minDate, maxDate) {
+    const cur = await fetchJson(ESPN + key + "/scoreboard");
+    const cal = (cur && cur.leagues && cur.leagues[0] && cur.leagues[0].calendar) || [];
+    const queries = [];
+    cal.forEach(section => (section.entries || []).forEach(w => {
+      if (!w || typeof w !== "object" || !w.startDate || !w.endDate) return;
+      if (toET(w.endDate).date < minDate || toET(w.startDate).date > maxDate) return;
+      queries.push("?limit=1000&seasontype=" + encodeURIComponent(section.value) +
+        "&week=" + encodeURIComponent(w.value));
+    }));
+    const pages = await Promise.all(queries.map(q => fetchJson(ESPN + key + "/scoreboard" + q)));
+    return pages.flatMap(eventsOf);
+  }
+
+  function inWindow(minDate, maxDate) {
+    return g => g && g.date >= minDate && g.date <= maxDate;
+  }
+
+  // My teams' matches in the league. For a `slate` league, every other match
+  // comes back too, flagged `slate` for groupSlates() to fold together.
+  async function fetchSoccerLeagueEvents(entry, minDate, maxDate) {
+    const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
+    const games = [];
+    events.forEach(ev => {
       const comp = ev.competitions && ev.competitions[0];
       const names = ((comp && comp.competitors) || []).map(c =>
         ((c.team && c.team.displayName) || "").toLowerCase());
-      return entry.patterns.some(p => names.some(n => n.includes(p)));
-    }).map(ev => parseGameEvent(ev, entry)).filter(Boolean)
-      .filter(g => g.date >= minDate && g.date <= maxDate);
+      const mine = entry.patterns.some(p => names.some(n => n.includes(p)));
+      if (!mine && !entry.slate) return;
+      const g = parseGameEvent(ev, entry);
+      if (!inWindow(minDate, maxDate)(g)) return;
+      if (!mine) g.slate = true;
+      games.push(g);
+    });
+    return games;
+  }
+
+  async function fetchNationalNbaEvents(minDate, maxDate) {
+    const events = await fetchScoreboardMonths(NBA_NATIONAL.key, minDate, maxDate);
+    return events.filter(ev => {
+      const comp = ev.competitions && ev.competitions[0];
+      return ((comp && comp.broadcasts) || []).some(b => b.market === "national" &&
+        (b.names || []).some(n => NBA_NATIONAL_NETWORKS.has(String(n).trim().toUpperCase())));
+    }).map(ev => parseGameEvent(ev, NBA_NATIONAL)).filter(inWindow(minDate, maxDate))
+      .map(g => Object.assign(g, { featured: true }));
+  }
+
+  function bothTop25(ev) {
+    const comp = ev.competitions && ev.competitions[0];
+    const cs = (comp && comp.competitors) || [];
+    return cs.length === 2 && cs.every(c => {
+      const r = c.curatedRank && c.curatedRank.current;
+      return r >= 1 && r <= 25;   // ESPN uses 99 for unranked
+    });
+  }
+
+  async function fetchRankedMatchups(entry, minDate, maxDate) {
+    const events = entry.weekly
+      ? await fetchScoreboardWeeks(entry.key, minDate, maxDate)
+      : await fetchScoreboardMonths(entry.key, minDate, maxDate);
+    return events.filter(bothTop25).map(ev => parseGameEvent(ev, entry))
+      .filter(inWindow(minDate, maxDate)).map(g => Object.assign(g, { featured: true }));
+  }
+
+  // Folds a league's `slate` matches into one card per day. `mine` counts my
+  // own teams' matches in that league that day, which keep their own cards.
+  function groupSlates(games) {
+    const groups = new Map();
+    games.forEach(g => {
+      if (!g.slate) return;
+      const k = g.srcKey + "|" + g.date;
+      if (!groups.has(k)) groups.set(k, { type: "sports", slate: true, slateKey: k, date: g.date,
+        league: g.league, srcKey: g.srcKey, games: [], mine: 0 });
+      groups.get(k).games.push(g);
+    });
+    games.forEach(g => {
+      const grp = !g.slate && !g.featured && groups.get(g.srcKey + "|" + g.date);
+      if (grp) grp.mine++;
+    });
+    return Array.from(groups.values()).map(grp => {
+      grp.games.sort((a, b) => (a.start || "99").localeCompare(b.start || "99"));
+      grp.start = grp.games[0].start;
+      const entry = SOCCER_LEAGUES.find(l => l.key === grp.srcKey);
+      grp.short = (entry && entry.short) || grp.league;
+      const n = grp.games.length;
+      grp.title = grp.short + " · " + (grp.mine ? n + " more" : n + (n === 1 ? " match" : " matches"));
+      return grp;
+    });
   }
 
   const MLB_STATS_TEAM_ID = 113; // Cincinnati Reds — MLB Stats API's own id, distinct from ESPN's "17"
@@ -871,13 +984,19 @@
     const minDate = addDaysToDateStr(todayStr, -SPORTS_WINDOW_DAYS_BEHIND);
     const maxDate = addDaysToDateStr(todayStr, SPORTS_WINDOW_DAYS_AHEAD);
     const jobs = TEAM_SCHEDULE_TEAMS.map(t => fetchTeamScheduleEvents(t, minDate, maxDate))
-      .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)));
+      .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)))
+      .concat([fetchNationalNbaEvents(minDate, maxDate)])
+      .concat(RANKED_MATCHUP_LEAGUES.map(l => fetchRankedMatchups(l, minDate, maxDate)));
     const [results, mlbGamePks] = await Promise.all([
       Promise.all(jobs), fetchMlbGamePks(minDate, maxDate),
     ]);
     const prevLive = new Map(sportsEvents.filter(e => e.id && e.state === "in" && e.leftScore != null)
       .map(e => [e.id, e]));
-    sportsEvents = results.flat();
+    // A ranked matchup involving one of my teams already has its own card.
+    const all = results.flat();
+    const mineIds = new Set(all.filter(g => !g.featured && !g.slate).map(g => g.srcKey + "|" + g.id));
+    const games = all.filter(g => !g.featured || !mineIds.has(g.srcKey + "|" + g.id));
+    sportsEvents = games.filter(g => !g.slate).concat(groupSlates(games));
     sportsEvents.forEach(ev => {
       if (ev.league === "MLB" && mlbGamePks[ev.date]) {
         ev.gameLink = "https://www.mlb.com/tv/g" + mlbGamePks[ev.date] + "/";
@@ -957,16 +1076,30 @@
     return true;
   }
 
+  // A matchday card's games are polled with one scoreboard request for the
+  // whole day rather than one summary request per match.
+  async function refreshSlate(grp) {
+    const data = await fetchJson(ESPN + grp.srcKey + "/scoreboard?dates=" + grp.date.replace(/-/g, ""));
+    const byId = new Map(eventsOf(data).map(ev => [String(ev.id), ev.competitions && ev.competitions[0]]));
+    let changed = false;
+    grp.games.forEach(g => {
+      const comp = byId.get(String(g.id));
+      if (comp && applyLiveComp(g, comp)) changed = true;
+    });
+    return changed;
+  }
+
   async function refreshLiveGames() {
     if (liveInFlight || document.hidden) return;
     const targets = sportsEvents.filter(needsLivePoll);
-    if (!targets.length) return;
+    const slates = sportsEvents.filter(ev => ev.slate && ev.games.some(needsLivePoll));
+    if (!targets.length && !slates.length) return;
     liveInFlight = true;
     try {
       const changed = await Promise.all(targets.map(async ev => {
         const comp = await fetchLiveComp(ev);
         return comp ? applyLiveComp(ev, comp) : false;
-      }));
+      }).concat(slates.map(refreshSlate)));
       // renderCalendar() skips the DOM swap when the markup is identical, so
       // this only redraws when a score/state actually moved.
       if (changed.some(Boolean)) renderCalendar();
@@ -1007,7 +1140,25 @@
     const kind = String(ev.type || ev.kind || ev.category || "").toLowerCase();
     if (!kind) return "";
     const safe = kind.replace(/[^a-z0-9_-]/g, "");
-    return safe ? " cal-ev--" + safe : "";
+    if (!safe) return "";
+    return " cal-ev--" + safe + (ev.featured ? " cal-ev--featured" : "") + (ev.slate ? " cal-ev--slate" : "");
+  }
+
+  // League-wide games (featured cards, matchday cards) rather than my own.
+  function isLeagueWide(ev) {
+    return !!(ev.featured || ev.slate);
+  }
+
+  // Matchday card: "UCL · 8 more" that opens to every other match that day.
+  // Which cards are open survives a redraw (see the toggle listener).
+  const openSlates = new Set();
+  function slateHtml(ev, size) {
+    return '<details class="cal-slate" data-slate="' + esc(ev.slateKey) + '"' +
+      (openSlates.has(ev.slateKey) ? " open" : "") + '>' +
+      '<summary class="cal-slate-sum">' + esc(ev.title) + '</summary>' +
+      '<ul class="cal-slate-list">' + ev.games.map(g =>
+        '<li>' + (sportsMatchHtml(g, size === "lg" ? "md" : "slate") || esc(g.title)) + '</li>').join("") +
+      '</ul></details>';
   }
 
   // TEAMLOGO TIME TEAMLOGO, in each sport's own home/away fixture order (see
@@ -1122,8 +1273,12 @@
     // would otherwise sort first, but a TBD college football game is far
     // more likely to kick off in the afternoon/evening than a soccer match
     // that already has a confirmed 7:30a start.
+    // League-wide games always come after my own teams' games and everything
+    // else, then by time.
     Object.keys(byDate).forEach(k =>
       byDate[k].sort((a, b) => {
+        const lw = isLeagueWide(a) - isLeagueWide(b);
+        if (lw) return lw;
         const as = a.start || "", bs = b.start || "";
         if (!as && !bs) return 0;
         if (!as) return 1;
@@ -1146,8 +1301,8 @@
     const featuredEvents = [];
     [todayStr, tomorrowStr].forEach(ds => {
       (byDate[ds] || []).forEach(ev => {
-        // Todos have their own strip below.
-        if (!isWorkEvent(ev) && ev.type !== "todo") featuredEvents.push(Object.assign({}, ev, { _dateLabel: featuredLabel(ds) }));
+        // Todos have their own strip below; league-wide games stay in the grid.
+        if (!isWorkEvent(ev) && ev.type !== "todo" && !isLeagueWide(ev)) featuredEvents.push(Object.assign({}, ev, { _dateLabel: featuredLabel(ds) }));
       });
     });
 
@@ -1223,6 +1378,7 @@
         if (ev.type === "todo") {
           return '<div class="cal-ev cal-ev--todo">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</div>';
         }
+        if (ev.slate) return '<div class="cal-ev' + eventClass(ev) + '">' + slateHtml(ev) + '</div>';
         const rng = fmtRange(ev);
         const clock = fmtTime(ev.start);   // real HH:MM only — never freetext
         const start = clock || rng;
@@ -1263,6 +1419,11 @@
       if (ev.type === "todo") {
         return '<li class="cal-agenda-item">' + dateHtml +
           '<span class="cal-agenda-title">' + todoChipHtml(ev, ev.overdue ? "overdue" : "") + '</span></li>';
+      }
+      if (ev.slate) {
+        return '<li class="cal-agenda-item">' + dateHtml +
+          '<span class="cal-dot' + eventClass(ev) + '" aria-hidden="true"></span>' +
+          '<span class="cal-agenda-title">' + slateHtml(ev, "lg") + '</span></li>';
       }
       const rng = fmtRange(ev);
       const matchHtml = sportsMatchHtml(ev, "lg"); // already carries the time/score, so skip the plain-text rng below
@@ -1362,6 +1523,12 @@
     if (btn) btn.addEventListener("click", refresh);
     // The grid is rebuilt on every redraw, so listen once on the stable parents.
     const calRoot = $("calRoot");
+    // toggle doesn't bubble, hence the capture-phase listener.
+    if (calRoot) calRoot.addEventListener("toggle", e => {
+      const key = e.target.dataset && e.target.dataset.slate;
+      if (!key) return;
+      if (e.target.open) openSlates.add(key); else openSlates.delete(key);
+    }, true);
     if (calRoot) calRoot.addEventListener("click", e => {
       if (e.target.closest && e.target.closest("[data-add-todo]")) { openTodoSheet(); return; }
       const x = e.target.closest && e.target.closest("[data-dismiss-movie]");
