@@ -305,14 +305,15 @@ Function, `functions/comic/api/[[path]].ts`, over the `COMIC` R2 bucket
 1. ~~Create the bucket~~ — done 2026-10-20: `wrangler r2 bucket create jaredluyster-comic`. Must exist **before**
    the `[[r2_buckets]]` block for `COMIC` in `wrangler.toml` is pushed (a missing bound bucket
    fails the whole site's deploy).
-2. Custom domain: `jaredluyster-com` Pages project → Custom domains → `comic.jaredluyster.com`.
-3. Cloudflare Access: a self-hosted application named `comic` with the "Only Me" policy
+2. ~~Custom domain~~ — done 2026-10-20: `comic.jaredluyster.com` on the `jaredluyster-com` Pages
+   project (CNAME `comic` → `jaredluyster-com.pages.dev`, overriding the `*` wildcard).
+3. ~~Cloudflare Access~~ — done 2026-10-20: a self-hosted application named `comic` with the "Only Me" policy
    (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) and **path-scoped** destinations, so the reader stays
    public:
-   - `comic.jaredluyster.com/plan` and `comic.jaredluyster.com/plan/*`
-   - `comic.jaredluyster.com/comic/api/private/*`
-   - `comic.jaredluyster.com/comic/plan/*` (the same planner page by its folder path)
-4. Owner allowlist (a **secret**; the repo is public):
+   - `comic.jaredluyster.com/plan` (an Access path also covers everything under it)
+   - `comic.jaredluyster.com/comic/api/private`
+   - `comic.jaredluyster.com/comic/plan` (the same planner page by its folder path)
+4. ~~Owner allowlist~~ — done 2026-10-20 (a **secret**; the repo is public):
    `wrangler pages secret put COMIC_OWNER_EMAILS --project-name jaredluyster-com` with your Access
    login email. Until it's set the planner shows "not set up yet" and every private route answers
    503. Optional hardening: `COMIC_ACCESS_AUD` = the `comic` Access app's AUD tag.
