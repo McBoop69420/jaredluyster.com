@@ -257,7 +257,6 @@
       return;
     }
     document.getElementById("brandTitle").textContent = comicTitle();
-    if (site.settings.tagline.trim()) document.getElementById("brandTag").textContent = site.settings.tagline;
     route();
   }
 

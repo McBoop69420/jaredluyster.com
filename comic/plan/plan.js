@@ -634,8 +634,8 @@
         <input class="f-input" id="set-title" data-setting="title" value="${esc(st.title)}" placeholder="Untitled Comic" />
       </div>
       <div class="field">
-        <label class="f-label" for="set-tag">Tagline <em>(top of the site)</em></label>
-        <input class="f-input" id="set-tag" data-setting="tagline" value="${esc(st.tagline)}" placeholder="a comic strip by Jared Luyster" />
+        <label class="f-label" for="set-tag">Tagline <em>(on the About page)</em></label>
+        <input class="f-input" id="set-tag" data-setting="tagline" value="${esc(st.tagline)}" placeholder="optional" />
       </div>
       <div class="field">
         <label class="f-label" for="set-about">About page <em>(blank line = new paragraph)</em></label>
