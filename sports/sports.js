@@ -83,7 +83,13 @@
   // teams play across a dozen ESPN competitions that each run a few weeks a
   // year, and a chip per competition would mostly be empty.
   // Labels go on each game card, so they have to stand on their own.
-  const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, WNBA: 40, MLB: 50 };
+  // standings "conference": one table per conference (NBA), no division
+  // layer — seeding and the play-in run on the conference table alone.
+  // standingsCurrentSeason: ask ESPN for its current season (no `season`
+  // param) before falling back to SEASON. The NBA names a season by the year
+  // it ends (2026-27 is 2027), so `season=<this year>` would show last
+  // season's final table all autumn.
+  const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, NBA: 40, WNBA: 40, MLB: 50 };
   // Order below is deliberate, not declaration-convenience: leagues with a
   // followed team come first (roughly by prominence — MLB/NFL, then
   // international/domestic pro, then college, then the smaller domestic
@@ -161,6 +167,10 @@
       playoffPoolMode: null, implicationZones: [], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["09-22", "05-21"]] },
     { key: "soccer/ned.1",    label: "Eredivisie",       myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-08", "05-25"]] },
+    // Two cutoffs per conference: 6th (straight into the playoffs) and 10th
+    // (into the play-in).
+    { key: "basketball/nba",  label: "NBA",              myTeams: [],                           standings: "conference", standingsCurrentSeason: true,
+      playoffPoolMode: "confDirect", implicationZones: [{ count: 6, fromTop: true }, { count: 10, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NBA, bracket: true, season: [["10-20", "06-20"]] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true, season: [["05-15", "10-25"]] },
   ];
@@ -671,7 +681,11 @@
     // Playoff Quarterfinal at the Rose Bowl") and leaves it empty for every
     // ordinary game, even marquee rivalries — a ranking-independent "this game
     // has real stakes" signal Spotlight can use alongside isMyGame/isRanked.
-    const stakes = (comp.notes && comp.notes[0] && comp.notes[0].headline) || null;
+    // The exception is the NBA Cup's group stage ("NBA Cup - Group Play"):
+    // a full slate of ordinary regular-season games two nights a week, so its
+    // note tags the card but isn't stakes. The knockout rounds still are.
+    const note = (comp.notes && comp.notes[0] && comp.notes[0].headline) || null;
+    const stakes = note && !/\bgroup play\b/i.test(note) ? note : null;
     // ESPN lists one broadcasts[] entry per market (national/home/away), each
     // with a names[] (TV network or streaming service, indistinguishable in
     // this field — e.g. "FOX" vs "Peacock" vs "MLB.TV"). National is what's
@@ -715,6 +729,7 @@
       ranked: isRanked(away) || isRanked(home),
       marqueeCount: (isMarqueeClub(away.team.displayName) ? 1 : 0) + (isMarqueeClub(home.team.displayName) ? 1 : 0),
       stakes,
+      note,
       broadcast,
       gameLink: watchLinkFor(label, comp) || gameLinkUrl(ev),
     };
@@ -922,7 +937,7 @@
     card.dataset.state = g.state;
     if (g.competition || g.leagueLabel) card.dataset.leagueLabel = g.competition || g.leagueLabel;
     if (leagueLabel) {
-      const tag = g.stakes ? leagueLabel + " · " + g.stakes : leagueLabel;
+      const tag = g.note ? leagueLabel + " · " + g.note : leagueLabel;
       card.appendChild(el("div", "spotlight-league-tag", esc(tag)));
     }
     const m = el("div", "matchup");
@@ -1254,6 +1269,8 @@
       return blocks.filter(b => b.depth === deepest);
     }
 
+    if (league.standings === "conference" && blocks.length > 1) return blocks;
+
     // Soccer and other overall tables remain one deduplicated league table.
     const seen = new Set();
     const merged = [];
@@ -1380,6 +1397,19 @@
           divisionBox.appendChild(standingsRowsTable(block, league));
           conferenceBox.appendChild(divisionBox);
         });
+        wrap.appendChild(conferenceBox);
+      });
+      return wrap;
+    }
+
+    if (league.standings === "conference" && blocks.length > 1) {
+      const wrap = el("div", "standings-conferences");
+      blocks.forEach(block => {
+        const conferenceBox = el("section", "standings-conference");
+        conferenceBox.appendChild(el("div", "conference-head", esc(block.name)));
+        const tableBox = el("div", "standings-division");
+        tableBox.appendChild(standingsRowsTable(block, league));
+        conferenceBox.appendChild(tableBox);
         wrap.appendChild(conferenceBox);
       });
       return wrap;
@@ -1528,6 +1558,7 @@
     // per-team records) still shows. Try current season, then previous.
     const detailLevel = league.standings === "division" ? "&level=3" : "";
     const paths = [
+      ...(league.standingsCurrentSeason ? [ESPN_STAND + league.key + "/standings" + detailLevel.replace("&", "?")] : []),
       ESPN_STAND + league.key + "/standings?season=" + SEASON + detailLevel,
       ESPN_STAND + league.key + "/standings?season=" + (SEASON - 1) + detailLevel,
     ];
@@ -1578,17 +1609,27 @@
   }
   const MLB_ROUNDS = { WC: "Wild Card", DS: "Division Series", CS: "Championship Series" };
   // { conf, round } for a postseason game. conf is the bracket half it
-  // belongs to (AL/NL, AFC/NFC, Eastern/Western; null for the final and for
+  // belongs to (AL/NL, AFC/NFC, East/West, Eastern/Western; null for the final and for
   // single-table leagues) and round is its name with the conference
   // stripped, so both halves' games share one bracket column.
+  // The NBA play-in is its own season type (5, "play-in-season"), with the
+  // conference in the headline: "NBA Play-In - East - 7th Place vs 8th
+  // Place", "NBA Play-In - West - 8th Seed Game".
+  const NBA_PLAY_IN = /^NBA Play-In\s+-\s+(East|West)\b/i;
   function postseasonRound(ev) {
     const season = ev.season || {};
+    const playIn = eventHeadline(ev).match(NBA_PLAY_IN);
+    if (playIn) return { conf: playIn[1], round: "Play-In" };
     if (season.type === 3) {
       const label = eventHeadline(ev).replace(/\s+-\s+Game\s+\d+.*$/i, "").trim() || "Playoffs";
       const mlb = label.match(/^(AL|NL)(WC|DS|CS)$/i);
       if (mlb) return { conf: mlb[1].toUpperCase(), round: MLB_ROUNDS[mlb[2].toUpperCase()] };
       const nfl = label.match(/^(AFC|NFC)\s+(.+?)(\s+Playoffs)?$/i);
       if (nfl) return { conf: nfl[1].toUpperCase(), round: nfl[2] };
+      // NBA: "East 1st Round", "West Semifinals", "East Finals"; the last
+      // round is "NBA Finals".
+      const nba = label.match(/^(East|West)\s+(.+)$/i);
+      if (nba) return { conf: nba[1], round: nba[2] };
       return { conf: null, round: label };
     }
     const [stage, round] = (season.slug || "").split("---");
@@ -1634,7 +1675,7 @@
         const roundKey = (conf ? "conf:" : "") + round.toLowerCase();
         if (!rounds.has(roundKey)) {
           rounds.set(roundKey, {
-            name: conf && /^(final|championship)$/i.test(round) ? "Conference " + round : round,
+            name: conf && /^(finals?|championship)$/i.test(round) ? "Conference " + round : round,
             matchups: new Map(),
             bestOf: 0,
             legs: false,
@@ -1699,7 +1740,8 @@
     const next = m.games.find(g => stateOf(g) === "pre");
     const latest = started[started.length - 1];
     const sideIn = (g, team) => (g.comp.competitors || []).find(c => bracketTeam(c).key === team.key) || {};
-    const isSoccer = m.games.some(g => (g.ev.season || {}).type !== 3);
+    const playIn = m.games.some(g => NBA_PLAY_IN.test(eventHeadline(g.ev)));
+    const isSoccer = !playIn && m.games.some(g => (g.ev.season || {}).type !== 3);
     let scores = ["", ""];
     let winner = -1;
     let summary = "";
@@ -1735,6 +1777,8 @@
       // US headlines here are just the round name; soccer's say who advanced
       // and how ("… advance 4-3 on penalties").
       if (isSoccer) summary = eventHeadline(latest.ev);
+      // Which play-in game this is ("7th Place vs 8th Place", "8th Seed Game").
+      if (playIn) summary = eventHeadline(latest.ev).replace(/^.*?-\s+(East|West)\s+-\s+/i, "");
     }
 
     let status;
@@ -2998,6 +3042,7 @@
     { key: "football/college-football", api: "ncaaf", label: "NCAAF", polls: "football/college-football", weekEnd: 6 },
     { key: "baseball/mlb", api: "mlb", label: "MLB" },
     { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM", polls: "basketball/mens-college-basketball" },
+    { key: "basketball/nba", api: "nba", label: "NBA" },
   ];
   let expertPicks = null;          // { date, leagues: [{ league, data, poll }] }
   let expertPicksLoading = false;
@@ -3274,7 +3319,7 @@
   // /picks-history/leaderboard.json is written daily on Jared-Server by
   // scripts/picks-ledger.mjs, which records every graded pick /api/picks
   // returns. Ranking and filtering is sports/picks-ledger.js. Follows the same
-  // league filter as Expert Picks; "All" sums the four leagues.
+  // league filter as Expert Picks; "All" sums every league.
   let picksBoard = null;           // leaderboard.json, or false if it failed to load
   const picksBoardOpts = { market: "all", window: "all", minPicks: 25, showAll: false };
   const PICKS_BOARD_TOP = 20;

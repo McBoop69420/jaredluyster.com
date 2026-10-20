@@ -520,7 +520,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   the spread, the winner (straight-up and moneyline picks combined) and the total, with
   a strong-lean callout (5+ experts on a spread or total, 75%+ on one side) and a
   per-game list of who picked what, at what line, with their record. Leagues: NFL,
-  NCAAF, MLB, NCAAM, following the league filter (all four under "All").
+  NCAAF, MLB, NCAAM, NBA (added 2026-10-20), following the league filter (all of them under "All").
   `sports/_worker.js`'s `/api/picks?league=&date=` builds it server-side from two
   sources: **Action Network** (`api.actionnetwork.com/web/v2/scoreboard/picks/<league>`,
   the JSON behind actionnetwork.com/<league>/picks: ~40-50 bettors and writers, each

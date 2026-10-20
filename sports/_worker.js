@@ -211,7 +211,7 @@ async function handleOdds(request, url) {
 //     against the spread, plus a straight-up page for the same week.
 // Only full-game spread, moneyline/straight-up and total picks are kept; props,
 // team totals and quarter/half picks are just counted (`props`). Call:
-// /api/picks?league=nfl|ncaaf|mlb|ncaab&date=YYYY-MM-DD (ET; default today ET)
+// /api/picks?league=nfl|ncaaf|mlb|ncaab|nba&date=YYYY-MM-DD (ET; default today ET)
 // [&through=YYYY-MM-DD: every day from date to through, at most a week; the
 // Betting page asks for the rest of the college football week this way].
 // Returns { league, date, through, fetchedAt, sources, games: [{ id, date,
@@ -226,6 +226,7 @@ const PICKS_LEAGUES = {
   ncaaf: { an: "ncaaf", cbs: "college-football", weekly: true },
   mlb: { an: "mlb" },
   ncaab: { an: "ncaab" },
+  nba: { an: "nba" },
 };
 const AN_PICKS_URL = "https://api.actionnetwork.com/web/v2/scoreboard/picks/";
 const CBS_PICKS_URL = "https://www.cbssports.com/";
