@@ -130,8 +130,14 @@ export async function verifyAccessJwt(token: string, env: AccessEnv, nowMs = Dat
 
 // 401 = no valid Access identity; 403 = a valid identity that isn't on the allowlist (a guest);
 // 503 = we can't tell (Access keys unreachable, or no allowlist configured) — always fail closed.
-export async function authenticate(request: Request, env: AccessEnv): Promise<AuthResult> {
-  const allowed = parseAllowlist(env.BETS_ALLOWED_EMAILS);
+// `allowlist` defaults to the bet store's secret; other private stores pass their own (the comic
+// planner passes COMIC_OWNER_EMAILS) so one app's guests never inherit another app's access.
+export async function authenticate(
+  request: Request,
+  env: AccessEnv,
+  allowlist: string | undefined = env.BETS_ALLOWED_EMAILS,
+): Promise<AuthResult> {
+  const allowed = parseAllowlist(allowlist);
   if (!allowed.size) return { ok: false, status: 503, error: "not-configured" };
   const token = tokenFrom(request);
   if (!token) return { ok: false, status: 401, error: "unauthenticated" };

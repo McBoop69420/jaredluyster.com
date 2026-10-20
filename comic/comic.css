@@ -1,0 +1,411 @@
+/* Comic — layered on shared-theme.css's zine tokens.
+ *
+ * Two layers on purpose. The chrome (top bar, nav, labels, buttons) is the zine: ink, one
+ * orange accent, square borders, hard offset shadows. What's *on the desk* is a middle
+ * schooler's loose-leaf: ruled lines, a red margin, binder holes, ballpoint handwriting,
+ * marker titles, tape and margin doodles. The orange accent crosses over as highlighter and
+ * as the sheet's offset shadow, which is what ties the two together.
+ *
+ * Hand-drawn wobble (the irregular border-radius on .scribble) is allowed only on the
+ * paper layer, where it reads as a pen line. Chrome stays square.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap');
+
+:root {
+    --sheet: #fdfbf3;
+    --rule-blue: #a8c5e8;
+    --margin-red: #e98a8c;
+    --pen: #22389a;
+    --pencil: #6b6b70;
+    --red-pen: #cf3b36;
+    --highlight: rgba(242, 151, 29, 0.5);
+    --tape: rgba(234, 222, 184, 0.82);
+    --rule: 28px;
+    --margin-x: 78px;
+
+    --font-hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+    --font-marker: "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
+}
+
+[hidden] { display: none !important; }
+
+/* ---- Zine chrome ------------------------------------------------------- */
+
+.brand-sticker {
+    display: inline-block;
+    padding: 4px 12px 2px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--paper);
+    font-family: var(--font-marker);
+    font-size: 1.15rem;
+    line-height: 1.3;
+    transform: rotate(-2deg);
+    white-space: nowrap;
+    max-width: 62vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.brand-tag {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.label {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.desk {
+    padding: 36px 16px 56px;
+}
+
+.footer a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- The notebook sheet ------------------------------------------------ */
+
+.sheet {
+    position: relative;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: calc(var(--rule) * 3) 40px calc(var(--rule) * 2) calc(var(--margin-x) + 22px);
+    color: var(--pen);
+    background-color: var(--sheet);
+    background-image:
+        /* the red margin: a heavy line and a thin one beside it */
+        linear-gradient(90deg,
+            transparent calc(var(--margin-x) - 1px),
+            var(--margin-red) calc(var(--margin-x) - 1px) calc(var(--margin-x) + 1px),
+            transparent calc(var(--margin-x) + 1px) calc(var(--margin-x) + 4px),
+            var(--margin-red) calc(var(--margin-x) + 4px) calc(var(--margin-x) + 5px),
+            transparent calc(var(--margin-x) + 5px)),
+        /* the blank band at the top of the page */
+        linear-gradient(var(--sheet), var(--sheet)),
+        /* college rule */
+        repeating-linear-gradient(to bottom,
+            transparent 0 calc(var(--rule) - 1px),
+            var(--rule-blue) calc(var(--rule) - 1px) var(--rule));
+    background-size: 100% 100%, 100% calc(var(--rule) * 3 - 6px), 100% 100%;
+    background-repeat: no-repeat, no-repeat, repeat;
+    /* nudged up so handwriting sits on the lines instead of floating between them */
+    background-position: 0 0, 0 0, 0 -6px;
+    font-family: var(--font-hand);
+    font-size: 1.28rem;
+    line-height: var(--rule);
+    box-shadow: 8px 8px 0 var(--accent);
+}
+
+/* Binder holes, punched through to the desk. */
+.sheet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 24px;
+    width: 24px;
+    background:
+        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 10% / 24px 24px no-repeat,
+        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 50% / 24px 24px no-repeat,
+        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 90% / 24px 24px no-repeat;
+    pointer-events: none;
+}
+
+.sheet p { margin: 0 0 var(--rule); }
+
+.sheet a { color: inherit; }
+
+/* "Name / Date / #" in pencil, top right, the way every assignment starts. */
+.school-head {
+    position: absolute;
+    top: calc(var(--rule) * 1.2);
+    right: 40px;
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    color: var(--pencil);
+    font-size: 1.12rem;
+    line-height: 1;
+}
+
+.school-head span { white-space: nowrap; }
+
+.school-head b {
+    font-weight: 400;
+    color: var(--pen);
+    padding: 0 6px 1px;
+    border-bottom: 1.5px solid var(--pencil);
+}
+
+.marker-title {
+    margin: 0 0 var(--rule);
+    color: var(--ink);
+    font-family: var(--font-marker);
+    font-weight: 400;
+    font-size: clamp(1.7rem, 4.6vw, 2.7rem);
+    line-height: calc(var(--rule) * 2);
+    letter-spacing: 0.01em;
+    overflow-wrap: anywhere;
+}
+
+.marker-title.small { font-size: clamp(1.4rem, 3.4vw, 1.9rem); line-height: calc(var(--rule) * 1.5); }
+
+.hl {
+    padding: 0 0.2em;
+    background: linear-gradient(100deg, transparent 0.15em, var(--highlight) 0.15em calc(100% - 0.1em), transparent calc(100% - 0.1em));
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.red-pen { color: var(--red-pen); }
+.pencil { color: var(--pencil); }
+
+/* A hand-drawn box: an irregular radius reads as a wobbly pen line, not a rounded corner. */
+.scribble {
+    border: 2px solid currentColor;
+    border-radius: 255px 14px 225px 14px / 14px 225px 14px 255px;
+}
+
+/* ---- Tape -------------------------------------------------------------- */
+
+.tape {
+    position: absolute;
+    z-index: 2;
+    width: 104px;
+    height: 30px;
+    background: var(--tape);
+    clip-path: polygon(0 8%, 4% 0, 7% 12%, 3% 30%, 6% 50%, 2% 70%, 6% 88%, 3% 100%, 96% 100%, 100% 86%, 95% 68%, 99% 50%, 94% 30%, 98% 12%, 95% 0, 100% 6%, 100% 0, 0 0);
+    pointer-events: none;
+}
+
+.tape.tl { top: -13px; left: -30px; transform: rotate(-36deg); }
+.tape.tr { top: -13px; right: -30px; transform: rotate(38deg); }
+.tape.top { top: -15px; left: calc(50% - 52px); transform: rotate(-3deg); }
+
+/* ---- Doodles ----------------------------------------------------------- */
+
+.doodle {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    color: var(--pen);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.doodle.red { color: var(--red-pen); }
+.doodle.pencil { color: var(--pencil); }
+
+/* ---- The strip --------------------------------------------------------- */
+
+.strip {
+    position: relative;
+    margin: 6px 0 calc(var(--rule) + 4px);
+    padding: 10px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    transform: rotate(-0.5deg);
+}
+
+.strip img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fff;
+}
+
+.strip.no-art {
+    display: grid;
+    place-items: center;
+    min-height: 220px;
+    color: var(--pencil);
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+/* ---- Flip-through controls -------------------------------------------- */
+
+.flip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 14px;
+    margin: 0 0 var(--rule);
+}
+
+.flip a,
+.flip button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 2px 14px 0;
+    background: transparent;
+    color: var(--pen);
+    font-family: var(--font-hand);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 120ms, transform 120ms;
+}
+
+.flip a:hover,
+.flip button:hover:not(:disabled) {
+    background: var(--highlight);
+    transform: rotate(-1.5deg);
+}
+
+.flip .is-off,
+.flip button:disabled {
+    color: #b8b8bf;
+    pointer-events: none;
+}
+
+.flip a:focus-visible,
+.flip button:focus-visible,
+.toc a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ---- Artist's note ----------------------------------------------------- */
+
+.artist-note {
+    position: relative;
+    margin: 0 0 var(--rule);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.artist-note .who {
+    display: block;
+    color: var(--red-pen);
+}
+
+/* ---- Archive (a table of contents on the ruled lines) ------------------ */
+
+.toc {
+    list-style: none;
+    margin: 0 0 var(--rule);
+    padding: 0;
+}
+
+.toc li { margin: 0; }
+
+.toc a {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 4px;
+    line-height: var(--rule);
+}
+
+.toc a:hover { background: var(--highlight); }
+
+.toc .num { color: var(--red-pen); min-width: 2.6em; }
+
+.toc .t {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.toc .dots {
+    flex: 1;
+    min-width: 20px;
+    border-bottom: 2px dotted var(--pencil);
+    transform: translateY(-6px);
+}
+
+.toc .d { color: var(--pencil); white-space: nowrap; }
+
+/* ---- Cast (snapshots taped to the page) -------------------------------- */
+
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 34px 26px;
+    margin: 10px 0 var(--rule);
+}
+
+.snap {
+    position: relative;
+    padding: 10px 10px 14px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    line-height: 1.25;
+}
+
+.snap:nth-child(3n + 1) { transform: rotate(-1.4deg); }
+.snap:nth-child(3n + 2) { transform: rotate(1deg); }
+.snap:nth-child(3n) { transform: rotate(-0.4deg); }
+
+.snap-pic {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    background: var(--sheet);
+    border: 1.5px solid #d9d4c6;
+    overflow: hidden;
+}
+
+.snap-pic img { width: 100%; height: 100%; object-fit: contain; }
+
+.snap-pic .doodle { position: static; width: 64%; height: 64%; opacity: 0.5; }
+
+.snap h3 {
+    margin: 10px 0 2px;
+    color: var(--ink);
+    font-family: var(--font-marker);
+    font-weight: 400;
+    font-size: 1.4rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.snap .role { display: inline; color: var(--pen); font-size: 1.1rem; }
+
+.snap .bio {
+    margin: 8px 0 0;
+    color: var(--pen);
+    font-size: 1.08rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* ---- Phones ------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+    :root { --margin-x: 42px; }
+    .desk { padding: 24px 10px 44px; }
+    .sheet { padding-right: 16px; padding-left: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--accent); }
+    .sheet::before { left: 9px; width: 18px; background-size: 18px 18px; }
+    .sheet::before {
+        background:
+            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 10% / 18px 18px no-repeat,
+            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 50% / 18px 18px no-repeat,
+            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 90% / 18px 18px no-repeat;
+    }
+    .school-head { right: 16px; gap: 12px; font-size: 1rem; }
+    .strip { padding: 6px; box-shadow: 4px 4px 0 var(--ink); }
+    .tape { width: 78px; height: 24px; }
+    .tape.tl { left: -22px; }
+    .tape.tr { right: -22px; }
+    .doodle.hide-sm { display: none; }
+    .flip a, .flip button { padding: 2px 9px 0; font-size: 1.12rem; }
+    .toc .dots { display: none; }
+    .toc a { flex-wrap: wrap; }
+    .toc .t { flex: 1; }
+}

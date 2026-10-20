@@ -276,6 +276,61 @@ geometry, and center logos decoded with jsQR at the size cap across versions 3�
 type was also round-trip decoded with an independent decoder (jsQR) at all four
 error-correction levels when this was built.
 
+## Comic (comic.jaredluyster.com)
+
+A comic strip drawn on notebook paper, and the private planner it's made in. Static frontend in
+`comic/` following the tool-subdomain pattern above (`comic` is in `SUBDOMAIN_ROOTS`), plus one
+Function, `functions/comic/api/[[path]].ts`, over the `COMIC` R2 bucket
+(`jaredluyster-comic`).
+
+- **Reader** (`comic/index.html`, public, no login): newest strip, `#/12` permalinks, archive,
+  cast, about. Reads `/comic/api/public/site`.
+- **Planner** (`comic/plan/`, owner only): strip board (Idea → Scripted → Penciled → Inked →
+  Posted), panel-by-panel script editor, scan upload, scheduling, cast, ideas, settings, JSON
+  backup. Autosaves `plan.json`; every save also rewrites `published.json`, the only thing the
+  public routes read. Private notes, scripts and unposted scans never leave `plan.json` / the
+  bucket, and a public image URL 404s unless a visible strip or public character uses it. A
+  posted strip with a future date is scheduled: it appears (and gets its number) on that day,
+  Eastern time.
+- **Two devices:** saves send the ETag they loaded (`If-Match`), so a stale tab gets a 412 and a
+  "load theirs / keep mine" banner instead of silently overwriting newer work.
+- **API paths are absolute (`/comic/api/...`) even on the subdomain.** Pages only runs a Function
+  for the path as requested; a subdomain-relative `/api/...` gets rewritten by the middleware
+  into a static miss that falls through to the homepage HTML with a 200.
+- **Uploads** are re-encoded in the browser (≤3000px, EXIF/GPS dropped). PNG, JPEG, WebP, GIF only
+  (no SVG: it could carry script), ≤15 MB.
+
+**One-time setup:**
+
+1. ~~Create the bucket~~ — done 2026-10-20: `wrangler r2 bucket create jaredluyster-comic`. Must exist **before**
+   the `[[r2_buckets]]` block for `COMIC` in `wrangler.toml` is pushed (a missing bound bucket
+   fails the whole site's deploy).
+2. Custom domain: `jaredluyster-com` Pages project → Custom domains → `comic.jaredluyster.com`.
+3. Cloudflare Access: a self-hosted application named `comic` with the "Only Me" policy
+   (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) and **path-scoped** destinations, so the reader stays
+   public:
+   - `comic.jaredluyster.com/plan` and `comic.jaredluyster.com/plan/*`
+   - `comic.jaredluyster.com/comic/api/private/*`
+   - `comic.jaredluyster.com/comic/plan/*` (the same planner page by its folder path)
+4. Owner allowlist (a **secret**; the repo is public):
+   `wrangler pages secret put COMIC_OWNER_EMAILS --project-name jaredluyster-com` with your Access
+   login email. Until it's set the planner shows "not set up yet" and every private route answers
+   503. Optional hardening: `COMIC_ACCESS_AUD` = the `comic` Access app's AUD tag.
+
+**Local dev:** the `comic-pages-dev` launch config runs
+`npx wrangler pages dev . --port 8793 --binding COMIC_DEV_EMAIL=dev@localhost` and opens
+`http://comic.localhost:8793`. Local, throwaway bucket; `COMIC_DEV_EMAIL` skips the JWT check
+only when the host is `localhost`/`127.0.0.1`/`comic.localhost`.
+
+Backup: the planner's Settings → Download backup, or
+`wrangler r2 object get jaredluyster-comic/plan.json --remote --file comic-plan.json` (keep it out
+of the repo).
+
+Tests: `node --test comic/tests/api.test.mjs` (what's public vs private, scheduling, the ETag
+guard, upload types, host and auth gates; the key guards were mutation-tested). Access JWT
+verification is the shared `functions/redzone/_lib/access.ts`, covered by
+`redzone/tests/api.test.mjs`.
+
 ## Roto multiplayer (the DraftRoom Durable Object)
 
 Roto's "draft with friends" mode is served by a Durable Object. Solo drafting is

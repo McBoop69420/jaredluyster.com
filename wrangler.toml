@@ -35,6 +35,14 @@ script_name = "roto-draft-room"
 binding = "SOCIAL_ASSETS"
 bucket_name = "jaredluyster-social-assets"
 
+# comic.jaredluyster.com's store (functions/comic/api/[[path]].ts): the planner's private
+# plan.json, the public published.json derived from it, and every uploaded scan under img/.
+# Unposted work never leaves the bucket — the public routes only serve what's posted. The bucket
+# was created before this block was pushed (a missing bound bucket fails the whole site's deploy).
+[[r2_buckets]]
+binding = "COMIC"
+bucket_name = "jaredluyster-comic"
+
 # RedZone's PRIVATE bet store (functions/redzone/api/[[path]].ts). Picks live in this bucket, not
 # in the repo — the repo is public. Until the block below is uncommented the endpoint answers
 # 503 "not-configured" (fails closed), so shipping without it is safe.

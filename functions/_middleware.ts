@@ -21,6 +21,7 @@ const SUBDOMAIN_ROOTS: Record<string, string> = {
   social: "/social",
   redzone: "/redzone",
   qr: "/qr",
+  comic: "/comic",
 };
 
 // Assets that live at the repo root and are shared by the tools. A tool page links these

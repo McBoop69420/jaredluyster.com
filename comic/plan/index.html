@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#131113" />
+<title>Planner — Comic</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2971d'/%3E%3Crect x='5' y='6' width='22' height='20' fill='%23fdfbf3' stroke='%23131113' stroke-width='2'/%3E%3Cpath d='M5 12h22M12 12v14M20 12v14' stroke='%23131113' stroke-width='2'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/shared-theme.css" />
+<link rel="stylesheet" href="../comic.css?v=1" />
+<link rel="stylesheet" href="plan.css?v=1" />
+</head>
+<body>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand" href="#strips">
+      <span class="brand-sticker">Planner</span>
+      <span class="brand-tag" id="comicName">Untitled Comic</span>
+    </a>
+    <div class="top-right">
+      <nav class="nav" aria-label="Planner">
+        <a href="#strips" data-nav="strips">Strips</a>
+        <a href="#cast" data-nav="cast">Cast</a>
+        <a href="#ideas" data-nav="ideas">Ideas</a>
+        <a href="#settings" data-nav="settings">Settings</a>
+        <a href="../" target="_blank" rel="noopener">Site ↗</a>
+      </nav>
+      <span class="save-pill" id="saveState" role="status" aria-live="polite">Loading</span>
+    </div>
+  </div>
+</header>
+
+<div class="banner" id="banner" role="alert" hidden></div>
+
+<main class="desk" id="app">
+  <article class="sheet"><p class="pencil">Opening the binder…</p></article>
+</main>
+
+<datalist id="castNames"></datalist>
+<input id="filePick" type="file" accept="image/*" hidden />
+
+<script src="../doodles.js?v=1"></script>
+<script src="plan.js?v=1"></script>
+</body>
+</html>

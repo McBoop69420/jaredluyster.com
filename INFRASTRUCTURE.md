@@ -762,6 +762,23 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   printed below ~0.5 mm per module.
 - Tests: `node --test qr/tests/qr.test.js`, under `/tests/`, which `functions/_middleware.ts` 404s.
 
+### 8. Comic — Cloudflare Pages (folder, this repo) + R2 + Access on the planner
+
+- **Purpose:** a comic strip drawn on notebook paper (public reader) and the private planner
+  it's made in. Added 2026-10-20.
+- **Subdomain:** `comic.jaredluyster.com` — added to `SUBDOMAIN_ROOTS` in
+  `functions/_middleware.ts`, same tool-subdomain pattern as `qr`/`social`.
+- **Files served from:** [`comic/`](comic/index.html) (`index.html`, `comic.css`, `comic.js`,
+  `doodles.js`, `plan/`, `robots.txt`) and `functions/comic/` (API + `_lib/plan.ts`).
+- **Storage:** R2 bucket `jaredluyster-comic` (binding `COMIC`): `plan.json` (private),
+  `published.json` (public slice, rewritten on every save), `img/<id>` (scans).
+- **Access:** the reader is public; a path-scoped `comic` Access app covers `/plan*` and
+  `/comic/api/private/*`, and the Function also checks the Access JWT against the
+  `COMIC_OWNER_EMAILS` secret. Setup and details in DEPLOY.md's "Comic" section.
+- **Look:** the zine chrome from `shared-theme.css` around loose-leaf notebook paper (ruled
+  lines, red margin, binder holes, Patrick Hand / Permanent Marker, tape, margin doodles).
+- Tests: `node --test comic/tests/api.test.mjs`, under `/tests/`, which the middleware 404s.
+
 ## Cloudflare Tunnel Configuration
 
 Tunnel configs live on JARED-SERVER (`C:\Users\Jared Server\.cloudflared\`); only one runs:
@@ -879,6 +896,14 @@ jaredluyster.com/
 │   ├── vendor/jsQR.js      # jsQR 1.4.0 (Apache-2.0, license alongside) — the page's scan check + the tests' decoder
 │   ├── tests/              # qr.test.js — never served (middleware 404s /tests/)
 │   └── robots.txt
+├── comic/                  # Comic (comic.jaredluyster.com) — notebook-paper strip + private planner
+│   ├── index.html          # Reader: newest strip, #/n permalinks, archive, cast, about
+│   ├── comic.css           # Zine chrome + notebook sheet (rules, margin, holes, tape, doodles)
+│   ├── comic.js
+│   ├── doodles.js          # Margin doodle SVGs, shared with the planner
+│   ├── plan/               # Planner (Access-gated): board, script editor, uploads, cast, ideas, settings
+│   ├── tests/              # api.test.mjs — never served (middleware 404s /tests/)
+│   └── robots.txt
 ├── card-designer/          # Card designer tool
 ├── Colors/                 # Color assets
 ├── Sumpthin/               # Sumpthin project
@@ -915,6 +940,7 @@ this repo.
 | `social.jaredluyster.com` | Social Asset Studio — craft & store social graphics per project | This repo (`social/` + `functions/social/api/`), R2-backed + Access |
 | `redzone.jaredluyster.com` | RedZone NCAAF board — live games ranked by closeness/urgency, network badges only (no video) | This repo (`redzone/`) + Access |
 | `qr.jaredluyster.com` | QR Code Maker — static codes that never expire; download PNG/SVG or print | This repo (`qr/`), public (no Access) |
+| `comic.jaredluyster.com` | Comic strip on notebook paper (public) + its planner at `/plan/` | This repo (`comic/` + `functions/comic/api/`), R2-backed; Access on the planner only |
 
 ## How to Work With This Repo
 
