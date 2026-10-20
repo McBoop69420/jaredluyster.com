@@ -84,17 +84,13 @@
   // and render as quieter cards listed after my teams' games.
   //   - NBA: nationally televised games only. NBA TV is left out on purpose:
   //     it carries a couple of games most nights and would swamp the grid.
-  //   - College: games where both teams are in the top 25. ESPN's default
+  //   - College basketball: games where both teams are in the top 25. ESPN's default
   //     scoreboard (no `groups`) is already limited to games with a ranked
   //     team, so the filter only has to check that both sides are ranked.
   const NBA_NATIONAL = { key: "basketball/nba", label: "NBA", order: "away-home",
     logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" };
   const NBA_NATIONAL_NETWORKS = new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]);
-  // weekly: college football's scoreboard ignores a month in `dates` (it
-  // returns just the first week), so it's fetched week by week instead.
   const RANKED_MATCHUP_LEAGUES = [
-    { key: "football/college-football", label: "NCAAF", order: "away-home", weekly: true,
-      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },
     { key: "basketball/mens-college-basketball", label: "NCAAM", order: "away-home",
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
     { key: "basketball/womens-college-basketball", label: "NCAAW", order: "away-home",
@@ -860,23 +856,6 @@
     return pages.flatMap(eventsOf);
   }
 
-  // The current scoreboard carries the season's week calendar
-  // (leagues[0].calendar: season types, each with dated week entries); fetch
-  // every week that overlaps the window.
-  async function fetchScoreboardWeeks(key, minDate, maxDate) {
-    const cur = await fetchJson(ESPN + key + "/scoreboard");
-    const cal = (cur && cur.leagues && cur.leagues[0] && cur.leagues[0].calendar) || [];
-    const queries = [];
-    cal.forEach(section => (section.entries || []).forEach(w => {
-      if (!w || typeof w !== "object" || !w.startDate || !w.endDate) return;
-      if (toET(w.endDate).date < minDate || toET(w.startDate).date > maxDate) return;
-      queries.push("?limit=1000&seasontype=" + encodeURIComponent(section.value) +
-        "&week=" + encodeURIComponent(w.value));
-    }));
-    const pages = await Promise.all(queries.map(q => fetchJson(ESPN + key + "/scoreboard" + q)));
-    return pages.flatMap(eventsOf);
-  }
-
   function inWindow(minDate, maxDate) {
     return g => g && g.date >= minDate && g.date <= maxDate;
   }
@@ -920,9 +899,7 @@
   }
 
   async function fetchRankedMatchups(entry, minDate, maxDate) {
-    const events = entry.weekly
-      ? await fetchScoreboardWeeks(entry.key, minDate, maxDate)
-      : await fetchScoreboardMonths(entry.key, minDate, maxDate);
+    const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
     return events.filter(bothTop25).map(ev => parseGameEvent(ev, entry))
       .filter(inWindow(minDate, maxDate)).map(g => Object.assign(g, { featured: true }));
   }
