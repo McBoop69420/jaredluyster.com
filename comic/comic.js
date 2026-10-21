@@ -95,7 +95,7 @@
   function renderComingSoon() {
     sheet.innerHTML = `
       ${schoolHead(null, null)}
-      <h1 class="marker-title">coming soon!!!</h1>
+      <h1 class="marker-title">Coming soon!!!</h1>
       <p>The first strip is still in pencil.</p>
       <p>Check back soon <span class="hl">(seriously, it's going to be good)</span>.</p>
       <p class="red-pen">— J</p>

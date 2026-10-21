@@ -29,6 +29,13 @@
     font-weight: 700;
     font-display: swap;
 }
+/* The same bold handwriting under its own name, for --font-marker (the logo, page titles, cast
+ * names): those rules stay at weight 400, so a fallback font is never faked bold. */
+@font-face {
+    font-family: "Handwriting Marker";
+    src: url("fonts/Handwriting-Bold.woff2?v=2") format("woff2");
+    font-display: swap;
+}
 
 :root {
     --sheet: #fdfbf3;
@@ -43,7 +50,7 @@
     --margin-x: 78px;
 
     --font-hand: "Handwriting", "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
-    --font-marker: "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
+    --font-marker: "Handwriting Marker", "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
 }
 
 [hidden] { display: none !important; }

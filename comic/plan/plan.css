@@ -3,9 +3,10 @@
  * are index cards, script panels are drawn as comic panels, and the editor is a sheet. */
 
 :root {
-    /* The planner keeps the stock handwriting font; Jared's own (comic.css) is for the
-       public pages only, for now. */
+    /* The planner keeps the stock handwriting and marker fonts; Jared's own (comic.css) are
+       for the public pages only, for now. */
     --font-hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+    --font-marker: "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
 }
 
 .top-right {
