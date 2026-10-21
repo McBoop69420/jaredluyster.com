@@ -2,6 +2,12 @@
  * Same two layers as the reader: zine chrome around paper you write on. The board's cards
  * are index cards, script panels are drawn as comic panels, and the editor is a sheet. */
 
+:root {
+    /* The planner keeps the stock handwriting font; Jared's own (comic.css) is for the
+       public pages only, for now. */
+    --font-hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+}
+
 .top-right {
     display: flex;
     align-items: center;
@@ -368,7 +374,7 @@
     align-items: end;
 }
 
-.line-row .who { color: var(--red-pen); font-size: 1.02rem; }
+.line-row .who { color: var(--red-pen); text-transform: uppercase; font-size: 1.02rem; }
 
 .icon-btn {
     display: inline-grid;
