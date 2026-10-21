@@ -212,6 +212,16 @@
     });
   }
 
+  // Pages are 8½×11 sheets at this width (the binder holes in comic.css follow the same size).
+  // When the writing stops partway down a sheet, the rest was torn off: ragged bottom edge.
+  const LETTER = 11 / 8.5;
+  const markTorn = () => {
+    const full = sheet.offsetWidth * LETTER;
+    const left = sheet.offsetHeight % full;
+    sheet.classList.toggle("torn", left > 1 && full - left > 1);
+  };
+  if (window.ResizeObserver) new ResizeObserver(markTorn).observe(sheet);
+
   let resizeTimer = null;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);

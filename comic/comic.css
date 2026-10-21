@@ -96,10 +96,14 @@
 /* ---- The notebook sheet ------------------------------------------------ */
 
 .sheet {
+    --pad-r: 40px;
+    --pad-l: calc(var(--margin-x) + 22px);
     position: relative;
     max-width: 960px;
     margin: 0 auto;
-    padding: calc(var(--rule) * 3) 40px calc(var(--rule) * 2) calc(var(--margin-x) + 22px);
+    padding: calc(var(--rule) * 3) var(--pad-r) calc(var(--rule) * 2) var(--pad-l);
+    /* lets the binder holes below measure the page's width (cqw) */
+    container-type: inline-size;
     color: var(--pen);
     background-color: var(--sheet);
     background-image:
@@ -126,8 +130,13 @@
     box-shadow: 8px 8px 0 var(--accent);
 }
 
-/* Binder holes, punched through to the desk. */
+/* Binder holes, punched through to the desk, where a real three-hole punch puts them: 1¼",
+ * 5½" and 9¾" down an 11" letter sheet, scaled to this page's width. A page taller than one
+ * sheet carries on with the next sheet's holes; a shorter one only shows the holes above the
+ * point where it was torn off (.sheet.torn, below). */
 .sheet::before {
+    --page-h: calc((100cqw + var(--pad-l) + var(--pad-r)) * 11 / 8.5);
+    --hole: radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px);
     content: "";
     position: absolute;
     top: 0;
@@ -135,10 +144,34 @@
     left: 24px;
     width: 24px;
     background:
-        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 10% / 24px 24px no-repeat,
-        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 50% / 24px 24px no-repeat,
-        radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px) 0 90% / 24px 24px no-repeat;
+        var(--hole) 0 calc(var(--page-h) * 1.25 / 11 - 12px) / 24px 24px no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 5.5 / 11 - 12px) / 24px 24px no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 9.75 / 11 - 12px) / 24px 24px no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 12.25 / 11 - 12px) / 24px 24px no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 16.5 / 11 - 12px) / 24px 24px no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 20.75 / 11 - 12px) / 24px 24px no-repeat;
     pointer-events: none;
+}
+
+/* Writing that stops partway down a sheet means the rest was torn off: ragged bottom edge.
+ * comic.js sets .torn. The reader's sheet sits in .sheet-wrap, which draws the offset shadow
+ * with drop-shadow() so the shadow follows the tear (a box-shadow would be masked away). */
+.sheet-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    filter: drop-shadow(8px 8px 0 var(--accent));
+}
+
+.sheet-wrap > .sheet { box-shadow: none; }
+
+.sheet.torn {
+    --tear: 16px;
+    -webkit-mask:
+        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px) no-repeat,
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='16'%3E%3Cpath d='M0 0H360L360 6L354.9 13.1L351.7 3.6L346.1 9.1L337.8 13L333.7 12.8L326.2 4.6L321.7 11.5L313.3 4.2L309.2 12L302.7 7.8L294 7.5L288.8 9.1L284.3 8.9L280.8 3.3L276 6.1L268.3 5.3L264.1 13.4L260.5 9.6L252.3 6.8L248.1 12.2L243.2 11.3L234.4 5.5L230.1 7.1L226.4 9.6L222.7 10.6L218.5 7.4L212.2 4.5L204.4 3.2L200.8 5.2L197.1 10.8L188.3 6.2L184.8 5.5L177.1 9.4L173.6 6.9L164.8 7.7L156.3 4.8L153.3 11.8L144.5 6.8L136.5 6.9L128.9 3.3L124.1 5L119.2 10.3L111.2 13.5L102.2 5.6L96.5 9.8L90.5 9.5L84.4 11.8L78.7 7.6L75.5 5.2L71.4 3.2L65.2 2.7L61.3 9.3L54.4 13.1L45.5 3L38.3 11.4L34.8 5.8L31.2 11.2L24.4 8.1L20.3 9L14.3 7.6L5.7 8.7L0 6Z'/%3E%3C/svg%3E") left bottom / 360px var(--tear) repeat-x;
+    mask:
+        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear) + 1px) no-repeat,
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='16'%3E%3Cpath d='M0 0H360L360 6L354.9 13.1L351.7 3.6L346.1 9.1L337.8 13L333.7 12.8L326.2 4.6L321.7 11.5L313.3 4.2L309.2 12L302.7 7.8L294 7.5L288.8 9.1L284.3 8.9L280.8 3.3L276 6.1L268.3 5.3L264.1 13.4L260.5 9.6L252.3 6.8L248.1 12.2L243.2 11.3L234.4 5.5L230.1 7.1L226.4 9.6L222.7 10.6L218.5 7.4L212.2 4.5L204.4 3.2L200.8 5.2L197.1 10.8L188.3 6.2L184.8 5.5L177.1 9.4L173.6 6.9L164.8 7.7L156.3 4.8L153.3 11.8L144.5 6.8L136.5 6.9L128.9 3.3L124.1 5L119.2 10.3L111.2 13.5L102.2 5.6L96.5 9.8L90.5 9.5L84.4 11.8L78.7 7.6L75.5 5.2L71.4 3.2L65.2 2.7L61.3 9.3L54.4 13.1L45.5 3L38.3 11.4L34.8 5.8L31.2 11.2L24.4 8.1L20.3 9L14.3 7.6L5.7 8.7L0 6Z'/%3E%3C/svg%3E") left bottom / 360px var(--tear) repeat-x;
 }
 
 .sheet p { margin: 0 0 var(--rule); }
@@ -415,13 +448,13 @@
 @media (max-width: 640px) {
     :root { --margin-x: 42px; }
     .desk { padding: 24px 10px 44px; }
-    .sheet { padding-right: 16px; padding-left: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--accent); }
-    .sheet::before { left: 9px; width: 18px; background-size: 18px 18px; }
+    .sheet { --pad-r: 16px; --pad-l: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--accent); }
+    .sheet-wrap { filter: drop-shadow(5px 5px 0 var(--accent)); }
     .sheet::before {
-        background:
-            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 10% / 18px 18px no-repeat,
-            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 50% / 18px 18px no-repeat,
-            radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px) 0 90% / 18px 18px no-repeat;
+        --hole: radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px);
+        left: 9px;
+        width: 18px;
+        background-size: 18px 18px;
     }
     .school-head { right: 16px; gap: 12px; font-size: 1rem; }
     .strip { padding: 6px; box-shadow: 4px 4px 0 var(--ink); }
