@@ -166,16 +166,17 @@
   function renderAbout() {
     setNav("about");
     const { tagline, about } = site.settings;
-    const paras = (about.trim() || "A comic strip, drawn by hand on notebook paper. New strips go up here as they're finished.")
+    const paras = about
+      .trim()
       .split(/\n\s*\n/)
+      .filter(Boolean)
       .map((p) => `<p>${esc(p.trim())}</p>`)
       .join("");
     sheet.innerHTML = `
       ${schoolHead(null, null)}
       <h1 class="marker-title">About ${esc(comicTitle())}</h1>
       ${tagline.trim() ? `<p><span class="hl">${esc(tagline)}</span></p>` : ""}
-      <div class="artist-note">${paras}</div>
-      <p class="red-pen">— Jared</p>
+      ${paras ? `<div class="artist-note">${paras}</div><p class="red-pen">— Jared</p>` : ""}
       ${marginDoodles(41)}
     `;
     setTitle("About");
