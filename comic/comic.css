@@ -45,6 +45,7 @@
     --pencil: #6b6b70;
     --red-pen: #cf3b36;
     --highlight: rgba(242, 151, 29, 0.5);
+    --sheet-shadow: var(--accent);
     --tape: rgba(234, 222, 184, 0.82);
     --rule: 28px;
     --margin-x: 78px;
@@ -93,6 +94,51 @@
 
 .footer a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
 
+/* ---- Reader palette: a light kraft-paper desk ------------------------- */
+/* The public pages (body.reader) put the notebook on a light desk instead of the zine's ink:
+ * black ink rules and type, black offset shadows, the comic's name on a sticky note, yellow
+ * highlighter. Same square borders and hard shadows, lighter ground. The planner keeps the
+ * dark zine palette. Binder holes use --bg, so they show the desk through them either way. */
+.reader {
+    --bg: #e3d2af;
+    --text: var(--ink);
+    --muted: #6e624d;
+    --sticky: #ffe066;
+    --highlight: rgba(255, 214, 51, 0.62);
+    --sheet-shadow: var(--ink);
+}
+
+.reader .topbar {
+    background: var(--bg);
+    border-bottom-color: var(--ink);
+}
+
+.reader .nav a { border-color: var(--ink); color: var(--ink); }
+
+.reader .nav a:hover,
+.reader .nav a.active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.reader .brand-sticker {
+    background: var(--sticky);
+    color: var(--ink);
+    border-color: var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+}
+
+.reader .footer { border-top-color: var(--ink); }
+.reader .footer a { color: var(--ink); }
+
+.reader .flip a:focus-visible,
+.reader .flip button:focus-visible,
+.reader .toc a:focus-visible,
+.reader .nav a:focus-visible {
+    outline: 2px solid var(--pen);
+    outline-offset: 2px;
+}
+
 /* ---- The notebook sheet ------------------------------------------------ */
 
 .sheet {
@@ -127,7 +173,7 @@
     font-family: var(--font-hand);
     font-size: 1.28rem;
     line-height: var(--rule);
-    box-shadow: 8px 8px 0 var(--accent);
+    box-shadow: 8px 8px 0 var(--sheet-shadow);
 }
 
 /* Binder holes, punched through to the desk, where a real three-hole punch puts them: 1¼",
@@ -159,7 +205,7 @@
 .sheet-wrap {
     max-width: 960px;
     margin: 0 auto;
-    filter: drop-shadow(8px 8px 0 var(--accent));
+    filter: drop-shadow(8px 8px 0 var(--sheet-shadow));
 }
 
 .sheet-wrap > .sheet { box-shadow: none; }
@@ -448,8 +494,8 @@
 @media (max-width: 640px) {
     :root { --margin-x: 42px; }
     .desk { padding: 24px 10px 44px; }
-    .sheet { --pad-r: 16px; --pad-l: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--accent); }
-    .sheet-wrap { filter: drop-shadow(5px 5px 0 var(--accent)); }
+    .sheet { --pad-r: 16px; --pad-l: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--sheet-shadow); }
+    .sheet-wrap { filter: drop-shadow(5px 5px 0 var(--sheet-shadow)); }
     .sheet::before {
         --hole: radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px);
         left: 9px;
