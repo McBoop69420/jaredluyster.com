@@ -15,15 +15,19 @@
 /* Jared's own handwriting: block capitals, with lowercase drawn as smaller capitals, so type in
  * normal mixed case and never text-transform it. Each letter has three versions that rotate on
  * their own (calt). It covers A-Z, 0-9 and basic punctuation; anything else (@ $ % + =) falls
- * through to Patrick Hand in --font-hand.
- *
- * unicode-range leaves out "!" (U+0021): all three of the file's versions of it came out as
- * scribbles, so it falls through to Patrick Hand too until the font is re-exported. */
+ * through to Patrick Hand in --font-hand. Bold text uses the bold one, written with a thick pen.
+ * Bump ?v= when the fonts are re-exported, so browsers don't keep the old ones. */
 @font-face {
     font-family: "Handwriting";
-    src: url("fonts/Handwriting.woff2") format("woff2");
+    src: url("fonts/Handwriting.woff2?v=2") format("woff2");
+    font-weight: 400;
     font-display: swap;
-    unicode-range: U+0020, U+0022-007E;
+}
+@font-face {
+    font-family: "Handwriting";
+    src: url("fonts/Handwriting-Bold.woff2?v=2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
 }
 
 :root {
