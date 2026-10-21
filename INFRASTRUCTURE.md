@@ -201,16 +201,34 @@ Sports has its own project and its own deploy mechanism; see §4b.
     `jaredluyster.com/calendar/todos.json` (git-deployed, no Access), and on
     `mcboop-daily.pages.dev` too; the Access sign-in only covers
     `calendar.jaredluyster.com`. Nothing sensitive goes in it. A web page can't
-    write to git, so ticking a todo is remembered per device in `localStorage`
-    (key `calendar.todos.done`), not written back to the file — delete finished
-    todos from the file by hand. A deploy that doesn't copy `todos.json` shows up as
+    write to git, so ticking a todo is not written back to the file — delete finished
+    todos from the file by hand.
+    **Ticks are shared across devices (2026-10-21):** ticked todos (from `todos.json`
+    and `comics.json`) and dismissed movies live in `ticks.json` in the R2 bucket
+    `jaredluyster-calendar`, bound to `mcboop-daily` as `CALENDAR_TICKS` (set on the
+    project's production config via the Pages API, since this project has no
+    wrangler.toml). `/api/ticks` in `news/_worker.js` serves it on
+    `calendar.jaredluyster.com` only (404 on the `pages.dev` hosts), and checks the
+    Access JWT against the `CALENDAR_OWNER_EMAILS` secret (`wrangler pages secret put
+    ... --project-name mcboop-daily`), with a plain-JS copy of
+    `functions/redzone/_lib/access.ts`; optional `CALENDAR_ACCESS_AUD`. The page sends
+    each change as an op (tick/untick/dismiss/undismiss) and adopts the merged state
+    the server answers with, on load, on every change and on each 5-minute refresh.
+    `localStorage` (`calendar.todos.done`, `calendar.movies.dismissed`) stays as the
+    device's copy, with unsent ops in `calendar.sync.pending`, so the page still works
+    offline and on `jaredluyster.com/calendar/`, which has no API. A device's first
+    contact uploads the ticks it made before syncing existed. Tests:
+    `tests/calendar-ticks.test.mjs`. Local dev: the `calendar-ticks-dev` launch config
+    (`wrangler pages dev` on a staging copy of `calendar/` plus `_worker.js`, with
+    `--r2 CALENDAR_TICKS --binding CALENDAR_DEV_EMAIL=dev@localhost`).
+    A deploy that doesn't copy `todos.json` shows up as
     the site's HTML fallback (200, `text/html`) at `/calendar/todos.json`, which the
     page treats as "no todos"; check it returns JSON after the first deploy.
     **Todos added on the page itself** (the "+ Add todo" button; added 2026-09-21)
     are a separate, private list: they live only in that browser's `localStorage`
     (key `calendar.todos.local`), so they are not in the repo but also are NOT shared
-    between devices (the wall iPad and a phone each have their own). A shared list
-    would need a private store (KV/R2) behind Access, like the RedZone bet tracker.
+    between devices (the wall iPad and a phone each have their own). Sharing them
+    could reuse the ticks store above.
     They can repeat (daily, weekly on chosen days, monthly, yearly); a repeating todo
     is one live item that jumps to its next date when ticked, never a pile of overdue
     copies. The recurrence maths is in `calendar/todo-repeat.js`, unit-tested in

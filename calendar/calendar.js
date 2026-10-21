@@ -240,7 +240,12 @@
     const live = new Set(todoList.concat(comicList).map(t => t.key));
     let changed = false;
     Object.keys(todoDone).forEach(k => {
-      if (!live.has(k)) { delete todoDone[k]; changed = true; }
+      if (live.has(k)) return;
+      // The shared store forgets it too, but only once the tick is a while old: a
+      // device still holding last deploy's files mustn't untick a todo just added.
+      if (Date.now() - todoDone[k] > PRUNE_SHARED_AFTER_MS) queueTickOp("untick", k, { send: false });
+      delete todoDone[k];
+      changed = true;
     });
     if (changed) saveTodoDone();
   }
@@ -303,7 +308,119 @@
   function dismissMovie(key, title) {
     movieDismissed.add(key);
     saveMovieDismissed();
-    return { title: title, restore() { movieDismissed.delete(key); saveMovieDismissed(); } };
+    queueTickOp("dismiss", key);
+    return { title: title, restore() {
+      movieDismissed.delete(key);
+      saveMovieDismissed();
+      queueTickOp("undismiss", key);
+    } };
+  }
+
+  // ---- Shared ticks -----------------------------------------------------
+  // Ticked todos and dismissed movies are also kept in one private store,
+  // /api/ticks (news/_worker.js: an R2 file behind calendar.jaredluyster.com's
+  // Access login), so a tick on the phone clears the wall display at its next
+  // refresh. localStorage stays as this device's copy: the page draws from it
+  // straight away, keeps working offline, and it's all there is where the API
+  // isn't (jaredluyster.com/calendar/, local previews), which is just how it
+  // worked before. Each change is queued as an op and sent in order; the server
+  // applies the ops to what it holds and answers with the whole merged state,
+  // which becomes this device's copy (with anything still unsent laid on top).
+  // Page-made todos are not shared; they stay in this browser only.
+  const TICKS_API = "/api/ticks";
+  const SYNC_PENDING_KEY = "calendar.sync.pending";
+  const SYNC_SEEDED_KEY = "calendar.sync.seeded";
+  const SYNC_MAX_PENDING = 500;
+  const PRUNE_SHARED_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
+  let syncPending = readSyncPending();   // [{ op, key, at }] not yet accepted by the server
+  let syncRunning = null;
+  let syncAgain = false;
+
+  function readSyncPending() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SYNC_PENDING_KEY) || "[]");
+      return Array.isArray(raw) ? raw.filter(o => o && typeof o.op === "string" && typeof o.key === "string") : [];
+    } catch (e) { return []; }
+  }
+  function saveSyncPending() {
+    try { localStorage.setItem(SYNC_PENDING_KEY, JSON.stringify(syncPending)); } catch (e) { /* in-memory only */ }
+  }
+  function syncSeeded() {
+    try { return localStorage.getItem(SYNC_SEEDED_KEY) === "1"; } catch (e) { return false; }
+  }
+
+  // `send: false` just queues it for the next sync (pruning happens mid-load).
+  function queueTickOp(op, key, opts) {
+    syncPending.push({ op: op, key: key, at: Date.now() });
+    // Where there's no API the queue never drains; keep only the newest.
+    if (syncPending.length > SYNC_MAX_PENDING) syncPending.splice(0, syncPending.length - SYNC_MAX_PENDING);
+    saveSyncPending();
+    if (!opts || opts.send !== false) syncTicks().then(changed => { if (changed) renderCalendar(); });
+  }
+
+  function applyTickOpLocally(o) {
+    if (o.op === "tick") { if (!todoDone[o.key]) todoDone[o.key] = o.at || Date.now(); }
+    else if (o.op === "untick") delete todoDone[o.key];
+    else if (o.op === "dismiss") movieDismissed.add(o.key);
+    else if (o.op === "undismiss") movieDismissed.delete(o.key);
+  }
+
+  // Resolves true if what's ticked or dismissed changed, so the caller redraws.
+  // One sync at a time; a change made meanwhile runs one more round after it.
+  function syncTicks() {
+    if (syncRunning) { syncAgain = true; return syncRunning; }
+    syncRunning = (async () => {
+      let changed = false;
+      try {
+        do {
+          syncAgain = false;
+          if (await syncOnce()) changed = true;
+        } while (syncAgain);
+      } finally {
+        syncRunning = null;
+      }
+      return changed;
+    })();
+    return syncRunning;
+  }
+
+  async function syncOnce() {
+    const sent = syncPending.slice();
+    let state;
+    try {
+      const res = await fetch(TICKS_API, sent.length
+        ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ops: sent }), cache: "no-store" }
+        : { cache: "no-store" });
+      if (!res.ok) return false;
+      // No API here: the site's HTML fallback page fails this parse.
+      state = await res.json();
+    } catch (e) {
+      return false;   // offline, signed out of Access, or no API: keep the local copy and the queue
+    }
+    if (!state || !state.done || typeof state.done !== "object" || !state.dismissed || typeof state.dismissed !== "object") return false;
+    const sentSet = new Set(sent);
+    syncPending = syncPending.filter(o => !sentSet.has(o));
+    if (!syncSeeded()) {
+      // This device's first contact: share the ticks it made before syncing existed.
+      Object.keys(todoDone).forEach(k => {
+        if (!(k in state.done)) syncPending.push({ op: "tick", key: k, at: todoDone[k] });
+      });
+      movieDismissed.forEach(k => {
+        if (!(k in state.dismissed)) syncPending.push({ op: "dismiss", key: k, at: Date.now() });
+      });
+      try { localStorage.setItem(SYNC_SEEDED_KEY, "1"); } catch (e) { /* tries again next load */ }
+      if (syncPending.length) syncAgain = true;
+    }
+    saveSyncPending();
+
+    const before = JSON.stringify([todoDone, Array.from(movieDismissed).sort()]);
+    todoDone = {};
+    Object.keys(state.done).forEach(k => { if (typeof state.done[k] === "number") todoDone[k] = state.done[k]; });
+    movieDismissed = new Set(Object.keys(state.dismissed));
+    syncPending.forEach(applyTickOpLocally);
+    saveTodoDone();
+    saveMovieDismissed();
+    return JSON.stringify([todoDone, Array.from(movieDismissed).sort()]) !== before;
   }
   function dismissButtonHtml(ev) {
     return '<button type="button" class="cal-dismiss" data-dismiss-movie="' + esc(ev.movieKey) +
@@ -489,7 +606,12 @@
       const t = todoList.concat(comicList).find(x => x.key === key);
       todoDone[key] = Date.now();
       saveTodoDone();
-      result = { title: t ? t.title : "Todo", restore() { delete todoDone[key]; saveTodoDone(); } };
+      queueTickOp("tick", key);
+      result = { title: t ? t.title : "Todo", restore() {
+        delete todoDone[key];
+        saveTodoDone();
+        queueTickOp("untick", key);
+      } };
     }
     // Every copy on screen (strip, grid, agenda) fades out together; the redraw
     // then drops it. The tick is already saved, so an interrupted animation is fine.
@@ -1195,7 +1317,7 @@
       // already-drawn calendar stays up while new data is fetched.
       root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
       lastCalendarHtml = null;
-      Promise.all([loadCalendar(), loadTodos(), loadMovies()]).then(() => { renderCalendar(); stampUpdated(); });
+      Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies(), syncTicks()]).then(() => { renderCalendar(); stampUpdated(); });
       return;
     }
 
@@ -1483,7 +1605,7 @@
     // Fetch fresh /calendar.json so new commitments appear, but keep the
     // current grid on screen meanwhile and only redraw once it arrives.
     try {
-      await Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies()]);
+      await Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies(), syncTicks()]);
       renderCalendar();
       stampUpdated();
     } finally {

@@ -265,6 +265,221 @@ function isPrivatePath(pathname) {
   return p.startsWith("/calendar.json") || p === "/archive" || p.startsWith("/archive/");
 }
 
+// ---------------------------------------------------------------------------
+// Calendar ticks, shared across devices: /api/ticks on calendar.jaredluyster.com.
+// Which todos are ticked off and which movies are dismissed used to live only in
+// each browser's localStorage, so a tick on the phone never reached the wall
+// display. They now live in one file, ticks.json, in the CALENDAR_TICKS R2 bucket
+// (jaredluyster-calendar):
+//   { "done": { "<todo key>": tickedAtMs }, "dismissed": { "<movie key>": atMs } }
+// The page sends its changes as a list of ops; each is applied to whatever is stored
+// (not a whole-file replace), so two devices ticking different things never undo
+// each other. Every answer is the whole merged state.
+//   GET  /api/ticks                         -> the state
+//   POST /api/ticks  { "ops": [ { "op", "key", "at" } ] }
+//        op: "tick" | "untick" (todos), "dismiss" | "undismiss" (movies)
+//
+// Gated twice, like the RedZone bet store: Access covers all of
+// calendar.jaredluyster.com, and this checks the signed Access JWT itself against
+// the CALENDAR_OWNER_EMAILS secret. Any other host (the ungated *.pages.dev copies)
+// gets a 404; until the secret and the bucket binding exist it answers 503.
+// localhost only works with a CALENDAR_DEV_EMAIL binding (`wrangler pages dev`).
+const TICKS_HOST = "calendar.jaredluyster.com";
+const TICKS_DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
+const TICKS_FILE = "ticks.json";
+const TICKS_OPS = new Set(["tick", "untick", "dismiss", "undismiss"]);
+const TICKS_MAX_BODY = 256 * 1024;
+const TICKS_MAX_OPS = 500;
+const TICKS_MAX_KEY = 400;
+const TICKS_MAX_ENTRIES = 5000;   // per map; the oldest go first, far beyond normal use
+
+async function handleTicks(request, env, url) {
+  const host = url.hostname.toLowerCase();
+  const isDev = TICKS_DEV_HOSTS.has(host);
+  if (host !== TICKS_HOST && !isDev) return ticksJson({ error: "not-found" }, 404);
+  if (isDev) {
+    if (!env.CALENDAR_DEV_EMAIL) return ticksJson({ error: "not-found" }, 404);
+  } else {
+    const auth = await accessAuthenticate(request, env, env.CALENDAR_OWNER_EMAILS);
+    if (!auth.ok) return ticksJson({ error: auth.error }, auth.status);
+  }
+  const bucket = env.CALENDAR_TICKS;
+  if (!bucket) return ticksJson({ error: "not-configured" }, 503);
+
+  if (request.method === "GET") return ticksJson((await readTicks(bucket)).state);
+  if (request.method !== "POST") return ticksJson({ error: "method-not-allowed" }, 405, { Allow: "GET, POST" });
+
+  const text = await request.text();
+  if (text.length > TICKS_MAX_BODY) return ticksJson({ error: "too-large" }, 413);
+  let body;
+  try { body = JSON.parse(text); } catch (e) { return ticksJson({ error: "bad-json" }, 400); }
+  if (!body || !Array.isArray(body.ops) || body.ops.length > TICKS_MAX_OPS) return ticksJson({ error: "bad-ops" }, 400);
+  const ops = body.ops.filter(validTickOp);
+  if (!ops.length) return ticksJson((await readTicks(bucket)).state);
+
+  // Read, apply, write only if nobody else wrote in between; otherwise go again
+  // on top of what they wrote.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { state, etag } = await readTicks(bucket);
+    applyTickOps(state, ops, Date.now());
+    const opts = { httpMetadata: { contentType: "application/json" } };
+    if (etag) opts.onlyIf = { etagMatches: etag };
+    const written = await bucket.put(TICKS_FILE, JSON.stringify(state), opts);
+    if (written) return ticksJson(state);
+  }
+  return ticksJson({ error: "conflict" }, 409);
+}
+
+async function readTicks(bucket) {
+  const obj = await bucket.get(TICKS_FILE);
+  if (!obj) return { state: { done: {}, dismissed: {} }, etag: null };
+  let raw = null;
+  try { raw = JSON.parse(await obj.text()); } catch (e) { /* a damaged file starts over */ }
+  return {
+    state: { done: cleanTickMap(raw && raw.done), dismissed: cleanTickMap(raw && raw.dismissed) },
+    etag: obj.etag,
+  };
+}
+
+function cleanTickMap(m) {
+  const out = {};
+  if (!m || typeof m !== "object" || Array.isArray(m)) return out;
+  for (const [k, v] of Object.entries(m)) {
+    if (k && k.length <= TICKS_MAX_KEY && typeof v === "number" && Number.isFinite(v)) out[k] = v;
+  }
+  return out;
+}
+
+function validTickOp(o) {
+  return !!o && TICKS_OPS.has(o.op) && typeof o.key === "string" && o.key.length > 0 &&
+    o.key.length <= TICKS_MAX_KEY && (o.at === undefined || (typeof o.at === "number" && Number.isFinite(o.at)));
+}
+
+// Ops apply in order. Ticking something already ticked keeps the first time.
+function applyTickOps(state, ops, now) {
+  for (const o of ops) {
+    const map = o.op === "tick" || o.op === "untick" ? state.done : state.dismissed;
+    if (o.op === "untick" || o.op === "undismiss") delete map[o.key];
+    else if (!(o.key in map)) map[o.key] = Math.min(o.at || now, now);
+  }
+  for (const map of [state.done, state.dismissed]) {
+    const keys = Object.keys(map);
+    if (keys.length <= TICKS_MAX_ENTRIES) continue;
+    keys.sort((a, b) => map[a] - map[b]).slice(0, keys.length - TICKS_MAX_ENTRIES).forEach(k => delete map[k]);
+  }
+}
+
+function ticksJson(data, status = 200, extra = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "private, no-store", ...extra },
+  });
+}
+
+// ---- Cloudflare Access JWT check ------------------------------------------
+// A plain-JS copy of functions/redzone/_lib/access.ts in this repo (that file
+// belongs to the jaredluyster-com project, and deploy-pages.sh ships only news/
+// and calendar/ here). Keep the two in step. Verifies the signed token Access
+// attaches to every request it let through (header Cf-Access-Jwt-Assertion, or
+// the CF_Authorization cookie), then that its email is on the allowlist.
+// 401 = no valid identity; 403 = valid but not allowed; 503 = can't tell (keys
+// unreachable, or no allowlist configured). Always fails closed.
+const ACCESS_TEAM_DOMAIN = "quiet-frost-ed57.cloudflareaccess.com";
+const ACCESS_KEYS_TTL_MS = 10 * 60 * 1000;
+const ACCESS_REFETCH_FLOOR_MS = 60 * 1000;   // an unknown kid can't turn into a stream of fetches
+const ACCESS_CLOCK_SKEW_S = 30;
+let accessKeyCache = null;   // { team, at, keys: Map<kid, CryptoKey> }
+
+async function accessAuthenticate(request, env, allowlist) {
+  const allowed = new Set(String(allowlist || "").split(/[\s,;]+/).map(e => e.trim().toLowerCase()).filter(Boolean));
+  if (!allowed.size) return { ok: false, status: 503, error: "not-configured" };
+  const token = accessTokenFrom(request);
+  if (!token) return { ok: false, status: 401, error: "unauthenticated" };
+  const v = await accessVerify(token, env);
+  if (v.status === "unavailable") return { ok: false, status: 503, error: "auth-unavailable" };
+  if (v.status !== "ok") return { ok: false, status: 401, error: "unauthenticated" };
+  // Service tokens carry no email; they were never granted this data.
+  if (!v.email || !allowed.has(v.email)) return { ok: false, status: 403, error: "forbidden" };
+  return { ok: true, email: v.email };
+}
+
+function accessTokenFrom(request) {
+  const header = request.headers.get("Cf-Access-Jwt-Assertion");
+  if (header) return header;
+  const m = /(?:^|;\s*)CF_Authorization=([^;]+)/.exec(request.headers.get("Cookie") || "");
+  return m ? m[1] : null;
+}
+
+function accessB64(s) {
+  const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(s.length / 4) * 4, "="));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function accessJsonPart(part) {
+  try {
+    const v = JSON.parse(new TextDecoder().decode(accessB64(part)));
+    return v && typeof v === "object" && !Array.isArray(v) ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function accessKeys(team, forceRefresh) {
+  const now = Date.now();
+  if (accessKeyCache && accessKeyCache.team === team) {
+    const age = now - accessKeyCache.at;
+    if (age < ACCESS_KEYS_TTL_MS && !forceRefresh) return accessKeyCache.keys;
+    if (forceRefresh && age < ACCESS_REFETCH_FLOOR_MS) return accessKeyCache.keys;
+  }
+  const res = await fetch("https://" + team + "/cdn-cgi/access/certs");
+  if (!res.ok) throw new Error("Access key fetch failed: HTTP " + res.status);
+  const body = await res.json();
+  const keys = new Map();
+  for (const jwk of (body && body.keys) || []) {
+    if (jwk.kty !== "RSA" || !jwk.kid) continue;
+    keys.set(jwk.kid, await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]));
+  }
+  accessKeyCache = { team, at: now, keys };
+  return keys;
+}
+
+async function accessVerify(token, env) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return { status: "invalid" };
+  const [h, p, s] = parts;
+  const header = accessJsonPart(h);
+  const claims = accessJsonPart(p);
+  // Pin the algorithm: never let the token choose "none" or an HMAC keyed by a public value.
+  if (!header || !claims || header.alg !== "RS256" || typeof header.kid !== "string") return { status: "invalid" };
+  const team = String(env.ACCESS_TEAM_DOMAIN || ACCESS_TEAM_DOMAIN).toLowerCase();
+  let signature;
+  try { signature = accessB64(s); } catch (e) { return { status: "invalid" }; }
+  try {
+    let keys = await accessKeys(team, false);
+    let key = keys.get(header.kid);
+    if (!key) {
+      keys = await accessKeys(team, true);   // key rotation: look again, at most once a minute
+      key = keys.get(header.kid);
+    }
+    if (!key) return { status: "invalid" };
+    const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, signature, new TextEncoder().encode(h + "." + p));
+    if (!valid) return { status: "invalid" };
+  } catch (e) {
+    return { status: "unavailable" };
+  }
+  const nowS = Math.floor(Date.now() / 1000);
+  if (claims.iss !== "https://" + team) return { status: "invalid" };
+  if (typeof claims.exp !== "number" || claims.exp + ACCESS_CLOCK_SKEW_S < nowS) return { status: "invalid" };
+  if (typeof claims.nbf === "number" && claims.nbf - ACCESS_CLOCK_SKEW_S > nowS) return { status: "invalid" };
+  if (env.CALENDAR_ACCESS_AUD) {
+    const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    if (!aud.includes(env.CALENDAR_ACCESS_AUD)) return { status: "invalid" };
+  }
+  return { status: "ok", email: typeof claims.email === "string" ? claims.email.toLowerCase() : null };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -272,6 +487,8 @@ export default {
     if (isPrivatePath(url.pathname) && !GATED_HOSTS.has(url.hostname)) {
       return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
     }
+
+    if (url.pathname === "/api/ticks") return handleTicks(request, env, url);
 
     // Calendar data is no-cache so newly added commitments show immediately,
     // regardless of which (gated) hostname/subsite is asking for it — the file
