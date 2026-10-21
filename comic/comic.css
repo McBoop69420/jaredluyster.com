@@ -12,6 +12,20 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap');
 
+/* Jared's own handwriting: block capitals, with lowercase drawn as smaller capitals, so type in
+ * normal mixed case and never text-transform it. Each letter has three versions that rotate on
+ * their own (calt). It covers A-Z, 0-9 and basic punctuation; anything else (@ $ % + =) falls
+ * through to Patrick Hand in --font-hand.
+ *
+ * unicode-range leaves out "!" (U+0021): all three of the file's versions of it came out as
+ * scribbles, so it falls through to Patrick Hand too until the font is re-exported. */
+@font-face {
+    font-family: "Handwriting";
+    src: url("fonts/Handwriting.woff2") format("woff2");
+    font-display: swap;
+    unicode-range: U+0020, U+0022-007E;
+}
+
 :root {
     --sheet: #fdfbf3;
     --rule-blue: #a8c5e8;
@@ -24,7 +38,7 @@
     --rule: 28px;
     --margin-x: 78px;
 
-    --font-hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+    --font-hand: "Handwriting", "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
     --font-marker: "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
 }
 

@@ -368,7 +368,7 @@
     align-items: end;
 }
 
-.line-row .who { color: var(--red-pen); text-transform: uppercase; font-size: 1.02rem; }
+.line-row .who { color: var(--red-pen); font-size: 1.02rem; }
 
 .icon-btn {
     display: inline-grid;
