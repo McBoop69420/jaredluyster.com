@@ -229,34 +229,6 @@
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => site && snapToRules());
 
-  // ---- The desk -------------------------------------------------------------
-
-  // What earlier kids left on the desk beside the paper. Fixed, like the desk itself; comic.css
-  // only shows it where there's room around the sheet.
-  function carveDesk() {
-    const spot = (side, top, x, turn, w, h) =>
-      `class="carve ${side}" style="top:${top}px;--x:${x}px;transform:rotate(${turn}deg);${w ? `width:${w}px;height:${h}px` : ""}"`;
-    const tally = (n) =>
-      `<svg viewBox="0 0 ${n * 9 + 6} 30" fill="none" stroke="currentColor" stroke-linecap="round">${Array.from(
-        { length: n },
-        (_, i) => (i % 5 === 4 ? `<path d="M${i * 9 - 34} 22 L${i * 9 + 4} 8"/>` : `<path d="M${i * 9 + 6 + (i % 2)} 4 L${i * 9 + 5} 27"/>`)
-      ).join("")}</svg>`;
-    const ticTacToe = `<svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-linecap="round">
-      <path d="M21 4 L19 57 M40 3 L41 56 M3 21 L57 19 M4 40 L56 41"/>
-      <path d="M6 6 L15 15 M15 6 L6 15 M26 26 L35 35 M35 25 L25 35 M46 46 L54 54 M54 45 L45 54"/>
-      <circle cx="50" cy="11" r="5"/><circle cx="10" cy="50" r="5"/></svg>`;
-    document.getElementById("carvings").innerHTML = `
-      <div ${spot("l", 120, 34, -7)}>J.L.<br>was here</div>
-      <div ${spot("l", 300, 70, 8, 70, 70)}>${doodle("heart")}</div>
-      <div ${spot("l ballpoint", 560, 50, -3, 120, 30)}>${tally(13)}</div>
-      <div ${spot("l", 760, 80, 12, 56, 56)}>${doodle("bolt")}</div>
-      <div ${spot("r", 170, 54, 5, 70, 70)}>${doodle("star")}</div>
-      <div ${spot("r", 380, 40, -6)}>4th period</div>
-      <div ${spot("r ballpoint", 560, 70, 4, 64, 64)}>${ticTacToe}</div>
-      <div ${spot("r", 800, 50, -10, 60, 60)}>${doodle("coolS")}</div>`;
-  }
-  carveDesk();
-
   // ---- Router ---------------------------------------------------------------
 
   function route() {
