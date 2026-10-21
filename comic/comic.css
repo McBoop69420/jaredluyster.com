@@ -96,17 +96,19 @@
 
 /* ---- Reader palette: a light kraft-paper desk ------------------------- */
 /* The public pages (body.reader) put the notebook on a light desk instead of the zine's ink:
- * black ink rules and type, black offset shadows, the comic's name on a sticky note, yellow
- * highlighter. Same square borders and hard shadows, lighter ground. The planner keeps the
- * dark zine palette. Binder holes use --bg, so they show the desk through them either way. */
+ * black ink rules and type, the comic's name on a sticky note, yellow highlighter, and the
+ * paper lying flat on the desk with no shadow. The planner keeps the dark zine palette.
+ * Binder holes use --bg, so they show the desk through them either way. */
 .reader {
     --bg: #e3d2af;
     --text: var(--ink);
     --muted: #6e624d;
     --sticky: #ffe066;
     --highlight: rgba(255, 214, 51, 0.62);
-    --sheet-shadow: var(--ink);
 }
+
+.reader .sheet { box-shadow: none; }
+.reader .sheet-wrap { filter: none; }
 
 .reader .topbar {
     background: var(--bg);
