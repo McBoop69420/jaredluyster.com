@@ -213,8 +213,8 @@
 
   // ---- Comics -----------------------------------------------------------
   // Read from /comics.json, same { "todos": [...] } shape as todos.json: one todo
-  // per release day for new issues of my comic reading orders that still need
-  // getting and adding to their Kavita reading list. Generated on the comic server
+  // per new issue of my comic reading orders that still needs getting and adding
+  // to its Kavita reading list, on its release day, so each ticks off on its own. Generated on the comic server
   // by make-comic-reminders.py from its "Missing Issues" checklists, so an issue
   // drops out of the file once it's filed there. Until then it's a normal todo:
   // drawn on its release day, carried to today if that passes, and tickable.
