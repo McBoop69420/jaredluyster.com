@@ -94,26 +94,89 @@
 
 .footer a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---- Reader palette: a light kraft-paper desk ------------------------- */
-/* The public pages (body.reader) put the notebook on a light desk instead of the zine's ink:
- * black ink rules and type, the comic's name on a sticky note, yellow highlighter, and the
- * paper lying flat on the desk with no shadow. The planner keeps the dark zine palette.
- * Binder holes use --bg, so they show the desk through them either way. */
+/* ---- Reader palette: a school desk ------------------------------------ */
+/* The public pages (body.reader) put the notebook on a classroom desk instead of the zine's ink:
+ * a light wood-grain laminate top, the top bar as the desk's back rim with a pencil lying in its
+ * groove, the footer as the dark edge banding along the front, and things carved and written
+ * into the desk around the paper (.carvings, filled in by comic.js). Black ink rules and type,
+ * the comic's name on a sticky note, yellow highlighter, and the paper lying flat with no
+ * shadow. The planner keeps the dark zine palette. --bg is the laminate's average tone, for the
+ * places that need one flat color. */
 .reader {
-    --bg: #e3d2af;
+    --bg: #d5b07c;
     --text: var(--ink);
-    --muted: #6e624d;
+    --muted: #6b5233;
     --sticky: #ffe066;
     --highlight: rgba(255, 214, 51, 0.62);
+    /* Grain: long streaks of darker and lighter wood, stretched sideways, tiled seamlessly. */
+    --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='960' height='480'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0012 0.035' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.26 0 0 0 0 0.09 1.5 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0025 0.28' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.22 0 0 0 0 0.07 0 0 1.4 0 -0.6'/%3E%3C/filter%3E%3Cfilter id='l' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0016 0.03' numOctaves='3' seed='29' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.94 0 0 0 0 0.8 0 1.3 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E");
+    --desk: var(--desk-grain) 0 0 / 960px 480px, var(--bg);
+    background: var(--desk);
 }
 
 .reader .sheet { box-shadow: none; }
 .reader .sheet-wrap { filter: none; }
 
-.reader .topbar {
-    background: var(--bg);
-    border-bottom-color: var(--ink);
+/* Binder holes show the desk's grain through them, not a flat color. */
+.reader .sheet::before {
+    --hole-fill: #000;
+    background: var(--desk);
+    -webkit-mask: var(--holes);
+    mask: var(--holes);
 }
+
+/* The back rim, with a pencil groove molded along it. The bar stays stuck to the top of the
+ * screen, so the pencil is always within reach. */
+.reader .topbar {
+    --groove-x: max(16px, calc((100% - 1180px) / 2));
+    padding-bottom: 22px;
+    background: var(--desk);
+    border-bottom: 0;
+    box-shadow: 0 1px 0 rgba(255, 244, 222, 0.55), 0 2px 0 rgba(84, 52, 22, 0.28);
+}
+
+.reader .topbar::after,
+.reader .topbar::before {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+}
+
+.reader .topbar::after {
+    left: var(--groove-x);
+    right: var(--groove-x);
+    bottom: 7px;
+    height: 16px;
+    border-radius: 8px;
+    background: linear-gradient(rgba(70, 40, 12, 0.42), rgba(70, 40, 12, 0.16) 60%, rgba(70, 40, 12, 0.24));
+    box-shadow:
+        inset 0 3px 3px rgba(55, 30, 8, 0.45),
+        inset 0 -1px 1px rgba(255, 244, 222, 0.35),
+        0 1px 0 rgba(255, 244, 222, 0.6);
+}
+
+/* A yellow No. 2, eraser end to the left. */
+.reader .topbar::before {
+    z-index: 1;
+    right: calc(var(--groove-x) + 70px);
+    bottom: 9px;
+    width: 236px;
+    height: 13px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 236 13'%3E%3Cpath d='M5 0.5H22V12.5H5A4.5 4.5 0 0 1 0.5 8V5A4.5 4.5 0 0 1 5 0.5Z' fill='%23ec9aa2'/%3E%3Cpath d='M3 2.5H22' stroke='%23f6c3c7' stroke-width='1.4'/%3E%3Crect x='22' y='0.5' width='17' height='12' fill='%23b9b7b0'/%3E%3Cpath d='M22 2.5H39M26 0.5V12.5M30.5 0.5V12.5M35 0.5V12.5' stroke='%23e4e2dc' stroke-width='1'/%3E%3Cpath d='M22 10.5H39' stroke='%23858279' stroke-width='1.4'/%3E%3Crect x='39' y='0.5' width='163' height='12' fill='%23f3bb1f'/%3E%3Crect x='39' y='0.5' width='163' height='4' fill='%23fbd65c'/%3E%3Crect x='39' y='8.5' width='163' height='4' fill='%23d8980f'/%3E%3Cpath d='M39 4.5H202M39 8.5H202' stroke='%23c88a0c' stroke-width='0.6'/%3E%3Ctext x='60' y='8.1' font-family='Arial,sans-serif' font-size='4.2' font-weight='700' fill='%232f5d2a' letter-spacing='0.6'%3ENo. 2 HB%3C/text%3E%3Cpath d='M202 0.5Q205 2.5 202 4.5Q205 6.5 202 8.5Q205 10.5 202 12.5L226 7.6V5.4Z' fill='%23e9c48f'/%3E%3Cpath d='M202 8.5Q205 10.5 202 12.5L226 7.6Z' fill='%23d3a46b'/%3E%3Cpath d='M220 4.6L235.5 6.5L220 8.4Z' fill='%23353438'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    transform: rotate(-0.6deg);
+    filter: drop-shadow(0 2px 1px rgba(45, 25, 5, 0.35));
+}
+
+/* The front edge: dark edge banding over the shadow under the desk. */
+.reader .footer {
+    padding-top: 40px;
+    border-top: 0;
+    background:
+        linear-gradient(#6a5747, #3b2f26 5px, #211a15 11px, #2d241e 13px, #17120f 16px) top / 100% 16px no-repeat,
+        #1c1714;
+}
+
+.reader .footer .footer-copy { color: #cdbfa6; }
 
 .reader .nav a { border-color: var(--ink); color: var(--ink); }
 
@@ -130,8 +193,7 @@
     box-shadow: 4px 4px 0 var(--ink);
 }
 
-.reader .footer { border-top-color: var(--ink); }
-.reader .footer a { color: var(--ink); }
+.reader .footer a { color: #f1e6d0; }
 
 .reader .flip a:focus-visible,
 .reader .flip button:focus-visible,
@@ -184,20 +246,24 @@
  * point where it was torn off (.sheet.torn, below). */
 .sheet::before {
     --page-h: calc((100cqw + var(--pad-l) + var(--pad-r)) * 11 / 8.5);
-    --hole: radial-gradient(circle, var(--bg) 0 10px, transparent 10.5px);
+    --hole-fill: var(--bg);
+    --hole-r: 10px;
+    --hole-box: 24px;
+    --hole: radial-gradient(circle, var(--hole-fill) 0 var(--hole-r), transparent calc(var(--hole-r) + 0.5px));
+    --holes:
+        var(--hole) 0 calc(var(--page-h) * 1.25 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 5.5 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 9.75 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 12.25 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 16.5 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat,
+        var(--hole) 0 calc(var(--page-h) * 20.75 / 11 - var(--hole-box) / 2) / var(--hole-box) var(--hole-box) no-repeat;
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
     left: 24px;
-    width: 24px;
-    background:
-        var(--hole) 0 calc(var(--page-h) * 1.25 / 11 - 12px) / 24px 24px no-repeat,
-        var(--hole) 0 calc(var(--page-h) * 5.5 / 11 - 12px) / 24px 24px no-repeat,
-        var(--hole) 0 calc(var(--page-h) * 9.75 / 11 - 12px) / 24px 24px no-repeat,
-        var(--hole) 0 calc(var(--page-h) * 12.25 / 11 - 12px) / 24px 24px no-repeat,
-        var(--hole) 0 calc(var(--page-h) * 16.5 / 11 - 12px) / 24px 24px no-repeat,
-        var(--hole) 0 calc(var(--page-h) * 20.75 / 11 - 12px) / 24px 24px no-repeat;
+    width: var(--hole-box);
+    background: var(--holes);
     pointer-events: none;
 }
 
@@ -312,6 +378,58 @@
 
 .doodle.red { color: var(--red-pen); }
 .doodle.pencil { color: var(--pencil); }
+
+/* ---- Carved into the desk ---------------------------------------------- */
+/* Scratched in with a compass point beside the paper: a dark groove with a light lip under it.
+ * A couple are in ballpoint instead. Placed off the sheet's edges, only where the desk shows. */
+
+.carvings {
+    display: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.desk { position: relative; }
+
+.carve {
+    position: absolute;
+    color: rgba(88, 50, 18, 0.55);
+    font-family: var(--font-marker);
+    font-size: 1.5rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-shadow: 0 1px 0 rgba(255, 244, 222, 0.6), 0 -1px 0 rgba(60, 32, 8, 0.22);
+}
+
+.carve .doodle,
+.carve svg {
+    position: static;
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    stroke-width: 2.6;
+    opacity: 1;
+    filter: drop-shadow(0 1px 0 rgba(255, 244, 222, 0.6));
+}
+
+.carve.ballpoint {
+    color: rgba(34, 56, 154, 0.62);
+    font-family: var(--font-hand);
+    text-shadow: none;
+}
+
+.carve.ballpoint .doodle,
+.carve.ballpoint svg { stroke-width: 1.8; filter: none; }
+
+.carve.l { right: calc(50% + 480px + var(--x, 40px)); }
+.carve.r { left: calc(50% + 480px + var(--x, 40px)); }
+
+@media (min-width: 1180px) {
+    .carvings { display: block; }
+}
 
 /* ---- The strip --------------------------------------------------------- */
 
@@ -499,11 +617,13 @@
     .sheet { --pad-r: 16px; --pad-l: calc(var(--margin-x) + 12px); font-size: 1.18rem; box-shadow: 5px 5px 0 var(--sheet-shadow); }
     .sheet-wrap { filter: drop-shadow(5px 5px 0 var(--sheet-shadow)); }
     .sheet::before {
-        --hole: radial-gradient(circle, var(--bg) 0 7px, transparent 7.5px);
+        --hole-r: 7px;
+        --hole-box: 18px;
         left: 9px;
-        width: 18px;
-        background-size: 18px 18px;
     }
+    .reader .topbar { padding-bottom: 20px; }
+    .reader .topbar::before { width: 176px; height: 10px; right: calc(var(--groove-x) + 24px); bottom: 9px; }
+    .reader .topbar::after { height: 14px; }
     .school-head { right: 16px; gap: 12px; font-size: 1rem; }
     .strip { padding: 6px; box-shadow: 4px 4px 0 var(--ink); }
     .tape { width: 78px; height: 24px; }
