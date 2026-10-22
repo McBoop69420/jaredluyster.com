@@ -431,7 +431,8 @@
     return movieList.filter(m => !movieDismissed.has(movieKey(m))).map(m => {
       const release = String(m.kind || "").toLowerCase() === "release";
       const year = m.year ? " (" + m.year + ")" : "";
-      const venue = !release && m.venue ? " \u00b7 " + m.venue : "";
+      const where = movieVenue(m);
+      const venue = !release && where ? " \u00b7 " + where : "";
       const run = m.end && m.end > m.date ? "thru " + shortDate(m.end) : "";
       const url = movieTicketUrl(m);
       return {
@@ -453,6 +454,18 @@
         ],
       };
     });
+  }
+
+  // "Fathom" is the distributor, not a theatre. Its events play at the chains,
+  // and the tracker only writes regal_url / cinemark_url once it has checked
+  // that the film is on that theatre's schedule, so name the theatre(s) from those.
+  function movieVenue(m) {
+    const v = String(m.venue || "").trim();
+    if (!/^fathom\b/i.test(v)) return v;
+    const at = [];
+    if (m.regal_url) at.push("Regal Hamburg");
+    if (m.cinemark_url) at.push(at.length ? "Cinemark" : "Cinemark Fayette Mall");
+    return at.length ? at.join(" & ") : "Fathom, theater TBA";
   }
 
   // Where a movie chip sends you. A screening keeps the link the tracker found
