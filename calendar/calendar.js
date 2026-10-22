@@ -53,7 +53,8 @@
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Louisville Cardinals
   ];
   const SOCCER_LEAGUES = [
-    { key: "soccer/usa.1", label: "MLS", order: "home-away", patterns: ["fc cincinnati"],
+    // postseason: the rest of the MLS Cup playoffs come back as featured cards.
+    { key: "soccer/usa.1", label: "MLS", order: "home-away", patterns: ["fc cincinnati"], postseason: true,
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/19.png" },
     { key: "soccer/usa.nwsl", label: "NWSL", order: "home-away", patterns: ["racing louisville"],
       logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2323.png" },
@@ -87,13 +88,16 @@
   //   - College basketball: games where both teams are in the top 25. ESPN's default
   //     scoreboard (no `groups`) is already limited to games with a ranked
   //     team, so the filter only has to check that both sides are ranked.
+  //     It also carries every NCAA tournament game, which `postseason` picks
+  //     out by ESPN's game note (leaving out the NIT, WBIT and CBC).
   const NBA_NATIONAL = { key: "basketball/nba", label: "NBA", order: "away-home",
     logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" };
   const NBA_NATIONAL_NETWORKS = new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]);
   //   - Postseason: every playoff game in these leagues (ESPN's season type 3),
   //     e.g. the whole World Series. College football's postseason is ~40
-  //     bowls, so `only` keeps it to the Playoff by ESPN's game note. The NBA
-  //     is handled by the national-games fetch above, which adds its playoffs.
+  //     bowls, so `only` keeps it to the Playoff by ESPN's game note. The NBA,
+  //     March Madness and the MLS Cup playoffs ride along with the fetches
+  //     that already pull those leagues (national NBA, ranked matchups, MLS).
   const POSTSEASON_LEAGUES = [
     { key: "baseball/mlb", label: "MLB", order: "away-home",
       logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },
@@ -106,8 +110,10 @@
   ];
   const RANKED_MATCHUP_LEAGUES = [
     { key: "basketball/mens-college-basketball", label: "NCAAM", order: "away-home",
+      postseason: /^NCAA Men's Basketball Championship/i,
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
     { key: "basketball/womens-college-basketball", label: "NCAAW", order: "away-home",
+      postseason: /^NCAA Women's Basketball Championship/i,
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
   ];
   const CALENDAR_WEEKS = 3;               // rows shown in the rolling grid
@@ -1019,17 +1025,28 @@
       const names = ((comp && comp.competitors) || []).map(c =>
         ((c.team && c.team.displayName) || "").toLowerCase());
       const mine = entry.patterns.some(p => names.some(n => n.includes(p)));
-      if (!mine && !entry.slate) return;
+      const playoff = !mine && entry.postseason && isPostseason(ev);
+      if (!mine && !entry.slate && !playoff) return;
       const g = parseGameEvent(ev, entry);
       if (!inWindow(minDate, maxDate)(g)) return;
-      if (!mine) g.slate = true;
+      if (playoff) g.featured = true;
+      else if (!mine) g.slate = true;
       games.push(g);
     });
     return games;
   }
 
+  // ESPN's season type 3 for US leagues. MLS instead gives each playoff round
+  // its own season type, so it's recognised by the round's slug
+  // ("eastern-conference-playoffs---round-one", "mls-cup").
   function isPostseason(ev) {
-    return !!(ev && ev.season && ev.season.type === 3);
+    const s = ev && ev.season;
+    return !!s && (s.type === 3 || /playoffs|mls-cup/.test(s.slug || ""));
+  }
+
+  function hasNote(ev, re) {
+    const comp = ev.competitions && ev.competitions[0];
+    return ((comp && comp.notes) || []).some(n => re.test(n.headline || ""));
   }
 
   async function fetchNationalNbaEvents(minDate, maxDate) {
@@ -1044,8 +1061,7 @@
 
   async function fetchPostseasonEvents(entry, minDate, maxDate) {
     const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
-    return events.filter(ev => isPostseason(ev) && (!entry.only ||
-      ((ev.competitions && ev.competitions[0] && ev.competitions[0].notes) || []).some(n => entry.only.test(n.headline || ""))))
+    return events.filter(ev => isPostseason(ev) && (!entry.only || hasNote(ev, entry.only)))
       .map(ev => parseGameEvent(ev, entry)).filter(inWindow(minDate, maxDate))
       .map(g => Object.assign(g, { featured: true }));
   }
@@ -1061,7 +1077,8 @@
 
   async function fetchRankedMatchups(entry, minDate, maxDate) {
     const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
-    return events.filter(bothTop25).map(ev => parseGameEvent(ev, entry))
+    return events.filter(ev => bothTop25(ev) || (isPostseason(ev) && hasNote(ev, entry.postseason)))
+      .map(ev => parseGameEvent(ev, entry))
       .filter(inWindow(minDate, maxDate)).map(g => Object.assign(g, { featured: true }));
   }
 
