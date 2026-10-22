@@ -93,9 +93,9 @@
   // Order below is deliberate, not declaration-convenience: leagues with a
   // followed team come first (roughly by prominence — MLB/NFL, then
   // international/domestic pro, then college, then the smaller domestic
-  // leagues), then every other league grouped by sport. This same array
-  // order drives both the filter button row and the per-league section
-  // order on the "All" view, so reordering here reorders both.
+  // leagues), then every other league grouped by sport. The filter button
+  // row and the "All" board are both ordered by what's on right now (see
+  // relevanceScore); this order only breaks ties.
   const LEAGUES = [
     { key: "baseball/mlb",    label: "MLB",              myTeams: ["Cincinnati Reds"],          standings: "division",
       playoffPoolMode: "confFromDiv", implicationZones: [{ count: 6, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.MLB, bracket: true, season: [["03-26", "11-01"]] },
@@ -277,6 +277,13 @@
   const SPOTLIGHT_CYCLE_INTERVAL_MS = 5000;
   const SPOTLIGHT_CYCLE_FADE_MS = 220; // must match .spotlight-cycle's transition-duration in sports.css
   const gamesByLeague = new Map();
+  // league key -> when its games were last fetched. A league the board isn't
+  // showing stops refreshing, so its games soon say nothing about right now.
+  const gamesFetchedAt = new Map();
+  function storeGames(key, games) {
+    gamesByLeague.set(key, games);
+    gamesFetchedAt.set(key, Date.now());
+  }
   // Raw ESPN events from each league's latest scoreboard fetch — the bracket
   // overlays these on its (slower-refreshing) month-by-month postseason
   // fetch so a game that just went final updates its series right away.
@@ -2056,7 +2063,7 @@
     // A failed fetch falls back to the last good slate rather than blanking the
     // league to "No games scheduled" until the next refresh.
     const games = fetchedGames == null ? (gamesByLeague.get(league.key) || []) : fetchedGames;
-    if (fetchedGames != null) gamesByLeague.set(league.key, fetchedGames);
+    if (fetchedGames != null) storeGames(league.key, fetchedGames);
 
     const grid = el("div", "games-grid");
     grid.dataset.leagueKey = league.key;
@@ -2114,7 +2121,7 @@
   async function refreshNflGamesForOdds() {
     const nfl = LEAGUES.find(l => l.key === "football/nfl");
     const games = await fetchGames(nfl);
-    if (games != null) gamesByLeague.set(nfl.key, games);
+    if (games != null) storeGames(nfl.key, games);
   }
 
   // ---- Board order: how far along each league's season is ---------------
@@ -2126,8 +2133,7 @@
   // fades from 1 to 0 over OFFSEASON_FADE_MS, then goes negative — below
   // every league still playing — sinking further the longer it's been off
   // (see `season` on LEAGUES).
-  function seasonProgress(league, todayMs) {
-    if (!league.season) return 0;
+  function seasonSpans(league, todayMs) {
     const year = new Date(todayMs).getUTCFullYear();
     const at = (y, md) => Date.UTC(y, +md.slice(0, 2) - 1, +md.slice(3, 5));
     // Every occurrence of every window from last year through next year.
@@ -2140,6 +2146,14 @@
         spans.push([s, e]);
       });
     });
+    return spans;
+  }
+  function inSeason(league, todayMs) {
+    return !league.season || seasonSpans(league, todayMs).some(([s, e]) => s <= todayMs && todayMs <= e);
+  }
+  function seasonProgress(league, todayMs) {
+    if (!league.season) return 0;
+    const spans = seasonSpans(league, todayMs);
     const current = spans.find(([s, e]) => s <= todayMs && todayMs <= e);
     if (current) return (todayMs - current[0]) / Math.max(DAY_MS, current[1] - current[0]);
     const lastEnd = Math.max(...spans.map(([, e]) => e).filter(e => e < todayMs));
@@ -2214,6 +2228,74 @@
     return seasonProgress(league, todayMs);
   }
 
+  // When each league usually has games on (Eastern, first kickoff less an
+  // hour through the last final; `to` past 24 runs into the next morning).
+  // Only a stand-in for leagues whose scoreboard isn't loaded: the Betting
+  // page, or every league but the picked one on a filtered board. Rough is
+  // fine, it only orders the filter chips and the board.
+  const EVERY_DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const WEEKEND = ["Sat", "Sun"];
+  const EURO_WEEKEND = [{ days: WEEKEND, from: 6, to: 17 }, { days: ["Fri", "Mon"], from: 14, to: 17 }];
+  const EURO_MIDWEEK = [{ days: ["Tue", "Wed", "Thu"], from: 11, to: 17 }];
+  const EVENING_PRO = [{ days: EVERY_DAY, from: 18, to: 25 }, { days: WEEKEND, from: 12, to: 18 }];
+  const COLLEGE_HOOPS = [{ days: EVERY_DAY, from: 18, to: 24 }, { days: WEEKEND, from: 11, to: 18 }];
+  const GAME_WINDOWS = {
+    "baseball/mlb": [{ days: EVERY_DAY, from: 12, to: 25 }],
+    "football/nfl": [{ days: ["Sun"], from: 12, to: 24 }, { days: ["Mon", "Thu"], from: 19, to: 24 }],
+    "football/college-football": [{ days: ["Sat"], from: 11, to: 25 }, { days: ["Tue", "Wed", "Thu", "Fri"], from: 18, to: 24 }],
+    "basketball/mens-college-basketball": COLLEGE_HOOPS,
+    "basketball/womens-college-basketball": COLLEGE_HOOPS,
+    "soccer/eng.1": EURO_WEEKEND,
+    "soccer/esp.1": EURO_WEEKEND,
+    "soccer/ger.1": EURO_WEEKEND,
+    "soccer/ita.1": EURO_WEEKEND,
+    "soccer/fra.1": EURO_WEEKEND,
+    "soccer/ned.1": EURO_WEEKEND,
+    "soccer/uefa.champions": EURO_MIDWEEK,
+    "soccer/uefa.europa": EURO_MIDWEEK,
+    "soccer/usa.1": [{ days: ["Wed", "Sat"], from: 18, to: 25 }, { days: ["Sun"], from: 14, to: 23 }],
+    "soccer/usa.nwsl": [{ days: ["Fri", "Sat", "Sun"], from: 12, to: 25 }],
+    "soccer/usa.usl.1": [{ days: ["Wed", "Sat"], from: 18, to: 25 }],
+    "soccer/usa.w.usl.1": [{ days: WEEKEND, from: 11, to: 22 }, { days: ["Wed"], from: 18, to: 22 }],
+    "soccer/mex.1": [{ days: ["Fri", "Sat", "Sun"], from: 17, to: 25 }, { days: ["Tue", "Wed"], from: 19, to: 25 }],
+    "basketball/nba": EVENING_PRO,
+    "basketball/wnba": EVENING_PRO,
+    "hockey/nhl": EVENING_PRO,
+  };
+  function inGameWindow(league, now) {
+    const windows = GAME_WINDOWS[league.key] || [];
+    const yesterday = EVERY_DAY[(EVERY_DAY.indexOf(now.day) + 6) % 7];
+    return windows.some(w => (w.days.includes(now.day) && now.hour >= w.from && now.hour < w.to)
+      || (w.days.includes(yesterday) && now.hour + 24 >= w.from && now.hour + 24 < w.to));
+  }
+
+  // How much a league is on right now: 4 in its weekend slot (see
+  // WEEKEND_SLOTS), 3 a game live, 2 a game starting within
+  // STARTING_SOON_MS, 1 games later today, 0 nothing left today. A league
+  // with no scoreboard fetched in the last FRESH_GAMES_MS is guessed from
+  // GAME_WINDOWS: 2 inside one.
+  const STARTING_SOON_MS = 2 * 60 * 60 * 1000;
+  const FRESH_GAMES_MS = 10 * 60 * 1000;
+  function liveTier(league, todayMs, now) {
+    if (inWeekendSlot(league, now)) return 4;
+    const fresh = Date.now() - (gamesFetchedAt.get(league.key) || 0) < FRESH_GAMES_MS;
+    const games = fresh && gamesByLeague.get(league.key);
+    if (!games) return inSeason(league, todayMs) && inGameWindow(league, now) ? 2 : 0;
+    if (games.some(g => g.state === "in")) return 3;
+    const today = etToday();
+    const upcoming = games.filter(g => g.state === "pre" && g.dateET === today && g.kickoffMs != null);
+    if (upcoming.some(g => g.kickoffMs - Date.now() <= STARTING_SOON_MS)) return 2;
+    return upcoming.length ? 1 : 0;
+  }
+
+  // Board and filter-chip order: what's on now first, then boardScore
+  // (season progress) within each tier.
+  function relevanceOrder() {
+    const todayMs = Date.parse(etToday() + "T00:00:00Z");
+    const now = etWeekdayHour();
+    return new Map(LEAGUES.map(l => [l.key, liveTier(l, todayMs, now) * 100 + boardScore(l, todayMs, now)]));
+  }
+
   // ---- Master render ----------------------------------------------------
   let renderedFilter = null; // filter the board was last built for (see render)
   async function render() {
@@ -2236,11 +2318,9 @@
       const results = await Promise.allSettled(list.map(loadLeague));
       await fifaReady;
       const fresh = results.filter(r => r.status === "fulfilled" && r.value).map(r => r.value);
-      // Farthest-along season first (see boardScore); ties keep LEAGUES order
-      // (the sort is stable). The filter chips keep their fixed order.
-      const todayMs = Date.parse(etToday() + "T00:00:00Z");
-      const now = etWeekdayHour();
-      const scoreOf = new Map(LEAGUES.map(l => [l.key, boardScore(l, todayMs, now)]));
+      // What's on now first (see relevanceOrder); ties keep LEAGUES order
+      // (the sort is stable). The filter chips follow the same order.
+      const scoreOf = relevanceOrder();
       fresh.sort((a, b) => scoreOf.get(b.dataset.leagueKey) - scoreOf.get(a.dataset.leagueKey));
       if (fresh.length) {
         board.replaceChildren(...fresh);
@@ -2253,6 +2333,7 @@
     } else if ($("#nflOdds")) {
       await refreshNflGamesForOdds();
     }
+    orderFilters();
     renderValueScreen();
     renderTeamContext();
     renderNflOdds();
@@ -2279,6 +2360,7 @@
     const mk = (key, label) => {
       const b = el("button", "chip", label);
       b.type = "button";
+      b.dataset.league = key;
       b.setAttribute("aria-pressed", key === activeFilter ? "true" : "false");
       b.addEventListener("click", () => {
         activeFilter = key;
@@ -2299,6 +2381,20 @@
     };
     nav.appendChild(mk("all", "All"));
     LEAGUES.forEach(l => nav.appendChild(mk(l.key, l.label)));
+    orderFilters();
+  }
+
+  // "All" first, then the leagues by relevanceOrder. Re-run as scores come
+  // in, so the row follows the day, but never while the pointer (or a tap's
+  // lingering :hover) is on it, so a chip can't slide out from under a click.
+  function orderFilters() {
+    const nav = $("#filters");
+    if (!nav || nav.matches(":hover")) return;
+    const scoreOf = relevanceOrder();
+    const chips = [...nav.children];
+    const rank = c => (c.dataset.league === "all" ? Infinity : scoreOf.get(c.dataset.league));
+    const sorted = chips.slice().sort((a, b) => rank(b) - rank(a));
+    if (sorted.some((c, i) => c !== chips[i])) nav.replaceChildren(...sorted);
   }
 
   // ---- MLB Value Screen (model vs market) -------------------------------
@@ -3453,7 +3549,7 @@
         if (!grid) return false;
         const games = await fetchGames(league, liveOnly);
         if (games == null) return false;
-        gamesByLeague.set(league.key, games);
+        storeGames(league.key, games);
         fillGameGrid(grid, games);
         // Re-draw an existing bracket from the fresh scoreboard (no refetch)
         // so a series score moves the moment a game goes final.
@@ -3465,6 +3561,7 @@
       }));
       if (results.some(result => result.status === "fulfilled" && result.value)) {
         renderSpotlight();
+        orderFilters();
         stamp();
       }
     } finally {
