@@ -145,9 +145,15 @@ embed slots using official embed codes from services you're personally authentic
    host `302`s to a login page that only links to Google, and a real Google sign-in loaded
    all six with `idp: google` in `/cdn-cgi/access/get-identity`, with `/api/ticks`,
    `/api/bets` and `/comic/api/private/plan` answering `200`. Every guest now needs to be a
-   Google test user. `lebronwall6@gmail.com` (on `Sports guest access`) was not
-   confirmed on the test-user list. The OAuth client's project (number `205430663206`) isn't
-   visible to the Google account used for the check.
+   Google test user.
+
+   **Where the Google OAuth client lives:** it belongs to **the owner's other Google
+   account**, not `doctormcboop@gmail.com`. It's in that account's "My First Project", project
+   ID `prefab-pride-461709-i0`, number `205430663206` (the client ID prefix). Manage test users
+   at Google Auth Platform → Audience while signed in as that account. `doctormcboop`
+   can't open the project and isn't a test user, yet its Google sign-in to Access works
+   (seen 2026-10-22). Test users as of 2026-10-22: `mohara350376@gmail.com` and
+   `lebronwall6@gmail.com` (added that day, for `Sports guest access`).
 
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
