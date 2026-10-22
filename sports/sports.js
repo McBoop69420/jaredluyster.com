@@ -13,7 +13,7 @@
   // (division for baseball/football, overall for soccer). null = skip.
   // playoffPoolMode + implicationZones drive the Spotlight "playoff/qualification
   // implications" boost (see playoffImplicationDistance below):
-  //   confFromDiv = MLB/NFL: wild-card races span every division in a
+  //   confFromDiv = MLB/NFL/NHL: wild-card races span every division in a
   //     conference, so the pool is AL/NL or AFC/NFC, not each division alone.
   //   confDirect  = MLS/USL: conference is the top level already (no division
   //     layer beneath it).
@@ -88,8 +88,8 @@
   // standingsCurrentSeason: ask ESPN for its current season (no `season`
   // param) before falling back to SEASON. The NBA names a season by the year
   // it ends (2026-27 is 2027), so `season=<this year>` would show last
-  // season's final table all autumn.
-  const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, NBA: 40, WNBA: 40, MLB: 50 };
+  // season's final table all autumn. The NHL does the same.
+  const SPOTLIGHT_RANK = { NFL: 10, COLLEGE: 20, SOCCER: 30, NBA: 40, WNBA: 40, NHL: 40, MLB: 50 };
   // Order below is deliberate, not declaration-convenience: leagues with a
   // followed team come first (roughly by prominence — MLB/NFL, then
   // international/domestic pro, then college, then the smaller domestic
@@ -173,6 +173,10 @@
       playoffPoolMode: "confDirect", implicationZones: [{ count: 6, fromTop: true }, { count: 10, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NBA, bracket: true, season: [["10-20", "06-20"]] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true, season: [["05-15", "10-25"]] },
+    // Eight per conference make it: the top three in each division plus two
+    // wild cards, pooled by conference the way MLB's are.
+    { key: "hockey/nhl",      label: "NHL",              myTeams: [],                           standings: "division", standingsCurrentSeason: true,
+      playoffPoolMode: "confFromDiv", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NHL, bracket: true, season: [["10-07", "06-20"]] },
   ];
 
   // Substring patterns (lowercased) marking "my" teams, so we catch
@@ -367,6 +371,9 @@
       return type.shortDetail || type.detail
         || (status.period ? inningOrdinal(status.period) + " Inning" : "In Progress");
     }
+    // Hockey: ESPN's own detail names intermissions, OT and the shootout,
+    // which a bare "0:00 • P2" or "P4" can't.
+    if (leagueKey === "hockey/nhl" && type.shortDetail) return type.shortDetail;
 
     const clock = status.displayClock || "";
     const period = status.period || 0;
@@ -1289,6 +1296,7 @@
       wins: ["wins", "win"],
       losses: ["losses", "loss", "defeats"],
       ties: ["ties", "tie", "draws", "draw"],
+      otl: ["otLosses"],
       points: ["points", "pts"],
       pct: ["winPercent", "winpct", "pct", "winningPercentage"],
     };
@@ -1306,20 +1314,26 @@
     return g;
   }
 
+  // Some non-soccer leagues (confirmed on WNBA) carry their own internal
+  // stat literally named "points" that has nothing to do with a standings
+  // points table — it's a wins/losses-derived value ESPN uses for seeding
+  // math, and showing or sorting by it produces a nonsense "Pts" column
+  // (including negative values for teams under .500). Real points tables
+  // only exist for soccer and hockey (2 per win, 1 per overtime/shootout
+  // loss), so gate on that rather than trusting the name.
+  function isPointsTable(league) {
+    return !!league && (league.key.indexOf("soccer/") === 0 || league.key.indexOf("hockey/") === 0);
+  }
+
   function standingsRowsTable(block, league) {
     const g = statGetter(block);
     const sample = block.entries[0];
     const has = k => g[k](sample) !== "";
-    // Some non-soccer leagues (confirmed on WNBA) carry their own internal
-    // stat literally named "points" that has nothing to do with a standings
-    // points table — it's a wins/losses-derived value ESPN uses for seeding
-    // math, and showing or sorting by it produces a nonsense "Pts" column
-    // (including negative values for teams under .500). Real points tables
-    // only exist for soccer, so gate on that rather than trusting the name.
-    const isSoccer = league && league.key.indexOf("soccer/") === 0;
-    const usePts = isSoccer && has("points");
+    const usePts = isPointsTable(league) && has("points");
     const useTies = has("ties");
-    const hasWL = has("wins") && has("losses");
+    const useOtl = has("otl");
+    // Games behind means nothing in a table ranked by points.
+    const hasWL = has("wins") && has("losses") && !usePts;
 
     const entries = block.entries.slice().sort((a, b) => {
       const pa = parseInt(g.points(a) || "0", 10), pb = parseInt(g.points(b) || "0", 10);
@@ -1350,6 +1364,7 @@
     if (has("wins")) headCols.push("W");
     if (has("losses")) headCols.push("L");
     if (useTies) headCols.push("T");
+    if (useOtl) headCols.push("OTL");
     if (usePts) headCols.push("Pts");
     if (has("pct")) headCols.push("Pct");
     if (hasWL) headCols.push("GB");
@@ -1365,6 +1380,7 @@
       if (has("wins")) tr.appendChild(el("td", "", g.wins(e)));
       if (has("losses")) tr.appendChild(el("td", "", g.losses(e)));
       if (useTies) tr.appendChild(el("td", "", g.ties(e)));
+      if (useOtl) tr.appendChild(el("td", "", g.otl(e)));
       if (usePts) tr.appendChild(el("td", "", g.points(e)));
       if (has("pct")) tr.appendChild(el("td", "", g.pct(e)));
       if (hasWL) tr.appendChild(el("td", "", gb(e)));
@@ -1440,11 +1456,8 @@
   function sortedPool(entries, league) {
     if (!entries.length) return [];
     const g = statGetter({ entries });
-    // Same "points" caveat as standingsRowsTable: only soccer's points stat
-    // is a real standings points table — some other sports (confirmed WNBA)
-    // carry their own unrelated stat also named "points".
-    const isSoccer = league && league.key.indexOf("soccer/") === 0;
-    const usePts = isSoccer && g.points(entries[0]) !== "";
+    // Same "points" caveat as standingsRowsTable (see isPointsTable).
+    const usePts = isPointsTable(league) && g.points(entries[0]) !== "";
     return entries.slice().sort((a, b) => {
       if (usePts) {
         const pa = parseInt(g.points(a) || "0", 10), pb = parseInt(g.points(b) || "0", 10);
@@ -1520,7 +1533,7 @@
       if (idx < 0) continue;
       const g = statGetter({ entries: list });
       const e = list[idx];
-      const gamesPlayed = parseInt(g.wins(e) || "0", 10) + parseInt(g.losses(e) || "0", 10) + parseInt(g.ties(e) || "0", 10);
+      const gamesPlayed = ["wins", "losses", "ties", "otl"].reduce((n, k) => n + (parseInt(g[k](e) || "0", 10)), 0);
       return { rank: idx + 1, poolSize: list.length, gamesPlayed };
     }
     return null;
@@ -3043,6 +3056,7 @@
     { key: "baseball/mlb", api: "mlb", label: "MLB" },
     { key: "basketball/mens-college-basketball", api: "ncaab", label: "NCAAM", polls: "basketball/mens-college-basketball" },
     { key: "basketball/nba", api: "nba", label: "NBA" },
+    { key: "hockey/nhl", api: "nhl", label: "NHL" },
   ];
   let expertPicks = null;          // { date, leagues: [{ league, data, poll }] }
   let expertPicksLoading = false;

@@ -29,7 +29,7 @@
 })(typeof self !== "undefined" ? self : this, function (EP) {
   "use strict";
 
-  const LEAGUES = ["nfl", "ncaaf", "mlb", "ncaab", "nba"];
+  const LEAGUES = ["nfl", "ncaaf", "mlb", "ncaab", "nba", "nhl"];
   const MARKETS = ["spread", "ml", "total"];
   const RESULTS = { win: true, loss: true, push: true };
   const WINDOW_DAYS = 30;
