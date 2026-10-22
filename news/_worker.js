@@ -200,6 +200,154 @@ function cleanText(s) {
   return t.trim();
 }
 
+// ---------------------------------------------------------------------------
+// College basketball exhibitions for the calendar (/api/exhibitions). ESPN,
+// which the calendar reads for every other game, leaves exhibitions out
+// entirely, so they come from the schools' own sites, which mark them "(EXH)":
+//   - UK: each schedule page's schema.org Event JSON-LD (startDate in local ET).
+//   - Louisville: its Sidearm iCal feeds (DTSTART in UTC).
+// Opponents are matched to ESPN's team list for their logos, like other games.
+// Public schedules, so no Access check; the hour-long edge cache keeps the
+// four upstream sites from being hit on every calendar load.
+// ---------------------------------------------------------------------------
+const EXHIBITION_SOURCES = [
+  { team: "Kentucky", espnId: "96", league: "NCAAM", sport: "mens-college-basketball", kind: "uk",
+    url: "https://ukathletics.com/sports/mbball/schedule/" },
+  { team: "Kentucky", espnId: "96", league: "NCAAW", sport: "womens-college-basketball", kind: "uk",
+    url: "https://ukathletics.com/sports/wbball/schedule/" },
+  { team: "Louisville", espnId: "97", league: "NCAAM", sport: "mens-college-basketball", kind: "sidearm",
+    url: "https://gocards.com/calendar.ashx/calendar.ics?sport_id=5",
+    page: "https://gocards.com/sports/mens-basketball/schedule" },
+  { team: "Louisville", espnId: "97", league: "NCAAW", sport: "womens-college-basketball", kind: "sidearm",
+    url: "https://gocards.com/calendar.ashx/calendar.ics?sport_id=13",
+    page: "https://gocards.com/sports/womens-basketball/schedule" },
+];
+const EXHIBITION_CACHE_SECONDS = 3600;
+// Intrasquad showcases are marked (EXH) too, but there's no opponent to show.
+const NOT_A_GAME = /madness|scrimmage|blue[- ]white|red[- ]white/i;
+
+async function handleExhibitions() {
+  const cache = caches.default;
+  const cacheKey = new Request("https://cache.internal/api/exhibitions", { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  const sports = [...new Set(EXHIBITION_SOURCES.map((s) => s.sport))];
+  const teamLists = Object.fromEntries(await Promise.all(sports.map(async (sport) =>
+    [sport, await fetchEspnTeams(sport)])));
+  const lists = await Promise.all(EXHIBITION_SOURCES.map(async (src) => {
+    const text = await fetchText(src.url);
+    if (!text) return [];
+    const raw = src.kind === "uk" ? parseUkExhibitions(text) : parseSidearmExhibitions(text);
+    return raw.filter((g) => !NOT_A_GAME.test(g.opponent)).map((g) => ({
+      league: src.league, date: g.date, start: g.start, home: g.home,
+      team: src.team, teamLogo: "https://a.espncdn.com/i/teamlogos/ncaa/500/" + src.espnId + ".png",
+      opponent: g.opponent, opponentLogo: matchEspnLogo(teamLists[src.sport], g.opponent) || g.logo || null,
+      url: src.page || src.url,
+    }));
+  }));
+  const games = lists.flat().sort((a, b) => (a.date + (a.start || "")).localeCompare(b.date + (b.start || "")));
+
+  const response = new Response(JSON.stringify({ games, fetchedAt: new Date().toISOString() }), {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "public, max-age=" + EXHIBITION_CACHE_SECONDS,
+    },
+  });
+  // A failed upstream shouldn't be pinned for an hour.
+  if (lists.some((l) => l.length)) await cache.put(cacheKey, response.clone());
+  return response;
+}
+
+async function fetchText(url) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), FEED_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (" + FEED_UA + ")" }, signal: ctrl.signal });
+    return res.ok ? await res.text() : "";
+  } catch (e) {
+    return "";
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// "vs. Texas Tech (EXH)" / "at Kansas (EXH) - Theme Night" -> { home, opponent }
+function exhibitionOpponent(name) {
+  const m = String(name).match(/^\s*(vs\.?|at)\s+(.+?)\s*\(EXH\)/i);
+  return m ? { home: !/^at$/i.test(m[1]), opponent: decodeEntities(m[2]).trim() } : null;
+}
+
+function parseUkExhibitions(html) {
+  const out = [];
+  for (const m of html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)) {
+    let ev;
+    try { ev = JSON.parse(m[1]); } catch (e) { continue; }
+    if (!ev || ev["@type"] !== "Event") continue;
+    const who = exhibitionOpponent(ev.name || "");
+    const when = String(ev.startDate || "").match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
+    if (!who || !when) continue;
+    // UK's JSON-LD prefixes its own origin onto already-absolute image URLs.
+    const img = Array.isArray(ev.image) ? ev.image[0] : ev.image;
+    const logo = typeof img === "string" ? img.replace(/^https:\/\/ukathletics\.com\/(?=https?:)/, "") : null;
+    out.push({ ...who, date: when[1], start: when[2] || null, logo });
+  }
+  return out;
+}
+
+function parseSidearmExhibitions(ics) {
+  const text = ics.replace(/\r/g, "").replace(/\n[ \t]/g, "");   // unfold continuation lines
+  const out = [];
+  for (const block of text.split("BEGIN:VEVENT").slice(1)) {
+    const summary = (block.match(/^SUMMARY[^:\n]*:(.*)$/m) || [])[1] || "";
+    const dt = (block.match(/^DTSTART[^:\n]*:(\d{8})(?:T(\d{6})(Z?))?/m) || []);
+    // "[W] University of Louisville Men's Basketball vs Mercyhurst (EXH)"
+    const who = exhibitionOpponent(summary.replace(/^\[[A-Z]\]\s*/, "").replace(/^.*?Basketball\s+/, ""));
+    if (!who || !dt[1]) continue;
+    let date = dt[1].slice(0, 4) + "-" + dt[1].slice(4, 6) + "-" + dt[1].slice(6, 8);
+    let start = null;
+    if (dt[2]) {
+      const iso = date + "T" + dt[2].slice(0, 2) + ":" + dt[2].slice(2, 4) + ":00" + (dt[3] ? "Z" : "");
+      const et = etDateTime(new Date(iso));
+      if (dt[3]) date = et.date;
+      start = dt[3] ? et.time : iso.slice(11, 16);
+    }
+    out.push({ ...who, date, start, logo: null });
+  }
+  return out;
+}
+
+function etDateTime(d) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(d).map((x) => [x.type, x.value]));
+  return { date: p.year + "-" + p.month + "-" + p.day, time: p.hour + ":" + p.minute };
+}
+
+async function fetchEspnTeams(sport) {
+  const text = await fetchText("https://site.api.espn.com/apis/site/v2/sports/basketball/" + sport + "/teams?limit=1000");
+  try {
+    const j = JSON.parse(text);
+    return ((j.sports || [])[0]?.leagues?.[0]?.teams || []).map((t) => t.team).filter(Boolean);
+  } catch (e) {
+    return [];
+  }
+}
+
+function teamKey(s) {
+  return String(s || "").toLowerCase().replace(/\bst\.?(?=\s|$)/g, "state").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function matchEspnLogo(teams, name) {
+  const k = teamKey(name);
+  const t = (teams || []).find((t) => [t.location, t.shortDisplayName, t.displayName, t.abbreviation]
+    .some((n) => n && teamKey(n) === k));
+  const logos = (t && t.logos) || [];
+  const def = logos.find((l) => Array.isArray(l.rel) && l.rel.includes("default") && !l.rel.includes("dark"));
+  return (def || logos[0] || {}).href || null;
+}
+
 function corsOptions() {
   return new Response(null, {
     headers: {
@@ -489,6 +637,7 @@ export default {
     }
 
     if (url.pathname === "/api/ticks") return handleTicks(request, env, url);
+    if (url.pathname === "/api/exhibitions") return handleExhibitions();
 
     // Calendar data is no-cache so newly added commitments show immediately,
     // regardless of which (gated) hostname/subsite is asking for it — the file

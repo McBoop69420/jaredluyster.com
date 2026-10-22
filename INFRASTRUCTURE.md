@@ -221,6 +221,16 @@ Sports has its own project and its own deploy mechanism; see §4b.
     `tests/calendar-ticks.test.mjs`. Local dev: the `calendar-ticks-dev` launch config
     (`wrangler pages dev` on a staging copy of `calendar/` plus `_worker.js`, with
     `--r2 CALENDAR_TICKS --binding CALENDAR_DEV_EMAIL=dev@localhost`).
+    **Basketball exhibitions (2026-10-22):** ESPN, the calendar's source for every
+    other game, doesn't list college exhibitions, so `/api/exhibitions` in
+    `news/_worker.js` scrapes UK's and Louisville's men's and women's basketball
+    schedules from the schools' own sites (UK: `ukathletics.com/sports/{mbball,wbball}/schedule/`
+    JSON-LD; Louisville: Sidearm iCal `gocards.com/calendar.ashx/calendar.ics?sport_id=5`
+    men / `13` women), keeps the "(EXH)" games, matches opponents to ESPN's team list for
+    logos, and edge-caches the result for an hour. Public data, so it answers on every
+    host, but only the `mcboop-daily` deploy has the Worker: on `jaredluyster.com/calendar/`
+    the fetch 404s and exhibitions are simply absent. If a school redesigns its site the
+    route returns no games for it rather than failing. Tests: `tests/calendar-exhibitions.test.mjs`.
     A deploy that doesn't copy `todos.json` shows up as
     the site's HTML fallback (200, `text/html`) at `/calendar/todos.json`, which the
     page treats as "no todos"; check it returns JSON after the first deploy.

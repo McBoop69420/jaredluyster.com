@@ -1108,6 +1108,29 @@
     });
   }
 
+  // UK and Louisville basketball exhibitions, which ESPN doesn't list. The
+  // calendar's Worker scrapes them from the schools' own sites (see
+  // /api/exhibitions in news/_worker.js); jaredluyster.com/calendar/ has no
+  // Worker, so there the fetch just fails and they're left out.
+  async function fetchExhibitionEvents(minDate, maxDate) {
+    const data = await fetchJson("/api/exhibitions");
+    const games = (data && Array.isArray(data.games)) ? data.games : [];
+    return games.filter(inWindow(minDate, maxDate)).map(x => {
+      const entry = TEAM_SCHEDULE_TEAMS.find(t => t.label === x.league) || {};
+      const away = x.home ? x.opponent : x.team, home = x.home ? x.team : x.opponent;
+      return {
+        date: x.date, start: x.start || null, timeLabel: x.start ? null : "TBD",
+        title: gameTitle(x.league, away, null, home, null, "pre") + " (Exhibition)",
+        type: "sports", league: x.league, leagueLogo: entry.logo, state: "pre",
+        homeFirst: false, gameLink: x.url || null,
+        leftName: away, rightName: home,
+        leftLogo: x.home ? x.opponentLogo : x.teamLogo,
+        rightLogo: x.home ? x.teamLogo : x.opponentLogo,
+        leftScore: null, rightScore: null,
+      };
+    });
+  }
+
   const MLB_STATS_TEAM_ID = 113; // Cincinnati Reds — MLB Stats API's own id, distinct from ESPN's "17"
 
   // MLB.tv is the actual place to watch regardless of the (often regional/
@@ -1142,7 +1165,8 @@
       .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)))
       .concat([fetchNationalNbaEvents(minDate, maxDate)])
       .concat(RANKED_MATCHUP_LEAGUES.map(l => fetchRankedMatchups(l, minDate, maxDate)))
-      .concat(POSTSEASON_LEAGUES.map(l => fetchPostseasonEvents(l, minDate, maxDate)));
+      .concat(POSTSEASON_LEAGUES.map(l => fetchPostseasonEvents(l, minDate, maxDate)))
+      .concat([fetchExhibitionEvents(minDate, maxDate)]);
     const [results, mlbGamePks] = await Promise.all([
       Promise.all(jobs), fetchMlbGamePks(minDate, maxDate),
     ]);
