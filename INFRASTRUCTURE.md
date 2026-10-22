@@ -400,6 +400,10 @@ Sports has its own project and its own deploy mechanism; see §4b.
   reusable "Only Me" policy (`doctormcboop@gmail.com`, uid
   `e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) that news's and sports's Access apps
   already reference — same allow-list, independently editable per-app.
+- **Sign-in for every Access app (2026-10-22):** Google only with Instant Auth (no
+  identity-provider picker), 1-month app sessions and a 1-month org global session, so one
+  Google sign-in covers all the gated subdomains for a month. Details and how to undo:
+  DEPLOY.md, RedZone "Google only, no picker, 1-month sessions".
 - **Verified via HTTP headers (2026-09-06):** `news.jaredluyster.com` and
   `calendar.jaredluyster.com` both `302 Found` → `.../cdn-cgi/access/login/<host>`,
   `Www-Authenticate: Cloudflare-Access`, `Set-Cookie: CF_AppSession=...`.

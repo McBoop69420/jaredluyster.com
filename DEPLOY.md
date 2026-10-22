@@ -132,6 +132,23 @@ embed slots using official embed codes from services you're personally authentic
    emailed code removed, a guest who isn't a test user and has no Cloudflare account has no
    way to sign in.
 
+   **Google only, no picker, 1-month sessions (2026-10-22):** every Access app (`news`,
+   `calendar`, `sports`, `social`, `redzone`, `comic`) now allows only the `Google` identity
+   provider with **Instant Auth** on (`allowed_idps` = Google, `auto_redirect_to_identity`),
+   so the login page forwards straight to Google with no Cloudflare/Google choice. Each app's
+   session duration and the org's global session timeout (Settings → Authentication) are
+   **1 month** (`730h`; were 24h). With a valid global session, opening another gated
+   subdomain signs in silently through the team domain. The `Cloudflare` identity provider
+   still exists in the org but no app accepts it; to undo, set an app back to "accept all
+   identity providers" and turn Instant Auth off. Set through the dashboard's API from a
+   signed-in browser (the Pages token has no Access scope). Verified the same day: every gated
+   host `302`s to a login page that only links to Google, and a real Google sign-in loaded
+   all six with `idp: google` in `/cdn-cgi/access/get-identity`, with `/api/ticks`,
+   `/api/bets` and `/comic/api/private/plan` answering `200`. Every guest now needs to be a
+   Google test user. `lebronwall6@gmail.com` (on `Sports guest access`) was not
+   confirmed on the test-user list. The OAuth client's project (number `205430663206`) isn't
+   visible to the Google account used for the check.
+
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
 with `Www-Authenticate: Cloudflare-Access`. Not yet verified: a real signed-in load of the
