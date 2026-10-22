@@ -90,6 +90,20 @@
   const NBA_NATIONAL = { key: "basketball/nba", label: "NBA", order: "away-home",
     logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" };
   const NBA_NATIONAL_NETWORKS = new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]);
+  //   - Postseason: every playoff game in these leagues (ESPN's season type 3),
+  //     e.g. the whole World Series. College football's postseason is ~40
+  //     bowls, so `only` keeps it to the Playoff by ESPN's game note. The NBA
+  //     is handled by the national-games fetch above, which adds its playoffs.
+  const POSTSEASON_LEAGUES = [
+    { key: "baseball/mlb", label: "MLB", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },
+    { key: "football/nfl", label: "NFL", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
+    { key: "hockey/nhl", label: "NHL", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
+    { key: "football/college-football", label: "NCAAF", order: "away-home", only: /college football playoff/i,
+      logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },
+  ];
   const RANKED_MATCHUP_LEAGUES = [
     { key: "basketball/mens-college-basketball", label: "NCAAM", order: "away-home",
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },
@@ -1014,13 +1028,25 @@
     return games;
   }
 
+  function isPostseason(ev) {
+    return !!(ev && ev.season && ev.season.type === 3);
+  }
+
   async function fetchNationalNbaEvents(minDate, maxDate) {
     const events = await fetchScoreboardMonths(NBA_NATIONAL.key, minDate, maxDate);
     return events.filter(ev => {
       const comp = ev.competitions && ev.competitions[0];
-      return ((comp && comp.broadcasts) || []).some(b => b.market === "national" &&
+      return isPostseason(ev) || ((comp && comp.broadcasts) || []).some(b => b.market === "national" &&
         (b.names || []).some(n => NBA_NATIONAL_NETWORKS.has(String(n).trim().toUpperCase())));
     }).map(ev => parseGameEvent(ev, NBA_NATIONAL)).filter(inWindow(minDate, maxDate))
+      .map(g => Object.assign(g, { featured: true }));
+  }
+
+  async function fetchPostseasonEvents(entry, minDate, maxDate) {
+    const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
+    return events.filter(ev => isPostseason(ev) && (!entry.only ||
+      ((ev.competitions && ev.competitions[0] && ev.competitions[0].notes) || []).some(n => entry.only.test(n.headline || ""))))
+      .map(ev => parseGameEvent(ev, entry)).filter(inWindow(minDate, maxDate))
       .map(g => Object.assign(g, { featured: true }));
   }
 
@@ -1098,7 +1124,8 @@
     const jobs = TEAM_SCHEDULE_TEAMS.map(t => fetchTeamScheduleEvents(t, minDate, maxDate))
       .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)))
       .concat([fetchNationalNbaEvents(minDate, maxDate)])
-      .concat(RANKED_MATCHUP_LEAGUES.map(l => fetchRankedMatchups(l, minDate, maxDate)));
+      .concat(RANKED_MATCHUP_LEAGUES.map(l => fetchRankedMatchups(l, minDate, maxDate)))
+      .concat(POSTSEASON_LEAGUES.map(l => fetchPostseasonEvents(l, minDate, maxDate)));
     const [results, mlbGamePks] = await Promise.all([
       Promise.all(jobs), fetchMlbGamePks(minDate, maxDate),
     ]);
@@ -1110,7 +1137,7 @@
     const games = all.filter(g => !g.featured || !mineIds.has(g.srcKey + "|" + g.id));
     sportsEvents = games.filter(g => !g.slate).concat(groupSlates(games));
     sportsEvents.forEach(ev => {
-      if (ev.league === "MLB" && mlbGamePks[ev.date]) {
+      if (ev.league === "MLB" && !ev.featured && mlbGamePks[ev.date]) {   // the Reds' game that day, not a league-wide one
         ev.gameLink = "https://www.mlb.com/tv/g" + mlbGamePks[ev.date] + "/";
       }
       // The schedule feed has no live score; keep the last one we polled so a
