@@ -192,12 +192,19 @@
     filter: drop-shadow(0 2px 1px rgba(20, 8, 0, 0.45));
 }
 
-/* Nav as index cards laid along the rim: cream on the wood, the open page in ink. */
+/* Nav as index cards laid along the rim: cream on the wood, the open page in ink, labelled in
+ * Jared's bold handwriting (mixed case, never uppercased; see the @font-face note). */
 .reader .nav a {
+    padding: 6px 13px 4px;
     background: var(--cream);
     border-color: var(--ink);
     color: var(--ink);
     box-shadow: 2px 2px 0 rgba(20, 8, 0, 0.55);
+    font-family: var(--font-marker);
+    font-size: 1.08rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: none;
 }
 
 .reader .nav a:hover,
@@ -602,6 +609,8 @@
         left: 9px;
     }
     .reader .topbar { padding-bottom: 20px; }
+    .reader .nav { gap: 6px; }
+    .reader .nav a { padding: 5px 9px 3px; font-size: 0.98rem; }
     .reader .topbar::before { width: 176px; height: 10px; right: calc(var(--groove-x) + 24px); bottom: 9px; }
     .reader .topbar::after { height: 14px; }
     .school-head { right: 16px; gap: 12px; font-size: 1rem; }
