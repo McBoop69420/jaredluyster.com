@@ -94,26 +94,42 @@
 
 .footer a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---- Reader palette: a school desk ------------------------------------ */
-/* The public pages (body.reader) put the notebook on a classroom desk instead of the zine's ink:
- * a light wood-grain laminate top, the top bar as the desk's back rim with a pencil lying in its
- * groove, and the footer as the dark edge banding along the front. Black ink rules and type,
- * the comic's name on a sticky note, yellow highlighter, and the paper lying flat with no
- * shadow. The planner keeps the dark zine palette. --bg is the laminate's average tone, for the
- * places that need one flat color. */
+/* ---- Reader palette: an old wooden school desk ------------------------ */
+/* The public pages (body.reader) put the notebook on an old classroom desk instead of the zine's
+ * ink: varnished oak boards glued edge to edge, darker toward the corners where the light falls
+ * off, with a pencil lying in the groove along the back. The top bar is that back rim; the footer
+ * is the rounded front edge and the dark under the desk. Black ink rules and type, the comic's
+ * name on a sticky note, yellow highlighter, and the paper lying flat with no shadow. The planner
+ * keeps the dark zine palette. --bg is the wood's average tone, for the places that need one flat
+ * color. */
 .reader {
-    --bg: #d5b07c;
+    --bg: #93602f;
     --text: var(--ink);
-    --muted: #6b5233;
+    --muted: #f0dcbc;
     --sticky: #ffe066;
     --highlight: rgba(255, 214, 51, 0.62);
-    /* Grain: long streaks of darker and lighter wood, stretched sideways, tiled seamlessly. */
-    --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='960' height='480'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0012 0.035' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.26 0 0 0 0 0.09 1.5 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0025 0.28' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.22 0 0 0 0 0.07 0 0 1.4 0 -0.6'/%3E%3C/filter%3E%3Cfilter id='l' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0016 0.03' numOctaves='3' seed='29' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.94 0 0 0 0 0.8 0 1.3 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E");
-    --desk: var(--desk-grain) 0 0 / 960px 480px, var(--bg);
+    --cream: #f6eedd;
+    /* Three oak boards, 230px wide, each with its own grain (arched figure, pores and light
+     * drifts from SVG noise) and a glue seam above it. Tiles seamlessly at 1200 × 690. */
+    --desk-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='690'%3E%3Cdefs%3E%3Cfilter id='g0' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0009 0.007' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='discrete' tableValues='0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.11 0 0 0 0 0.03 0.55 0 0 0 0'/%3E%3CfeGaussianBlur stdDeviation='1.2 0.5'/%3E%3C/filter%3E%3Cfilter id='p0' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.42' numOctaves='2' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 0 0.04 1.5 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='t0' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0018 0.02' numOctaves='2' seed='12' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.86 0 0 0 0 0.58 0 0 0 0 0.3 0.9 0 0 0 -0.4'/%3E%3C/filter%3E%3CclipPath id='c0'%3E%3Crect y='0' width='1200' height='230'/%3E%3C/clipPath%3E%3Cfilter id='g1' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0012 0.008' numOctaves='3' seed='17' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='discrete' tableValues='0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.11 0 0 0 0 0.03 0.55 0 0 0 0'/%3E%3CfeGaussianBlur stdDeviation='1.2 0.5'/%3E%3C/filter%3E%3Cfilter id='p1' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.42' numOctaves='2' seed='20' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 0 0.04 1.5 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='t1' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0018 0.02' numOctaves='2' seed='24' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.86 0 0 0 0 0.58 0 0 0 0 0.3 0.9 0 0 0 -0.4'/%3E%3C/filter%3E%3CclipPath id='c1'%3E%3Crect y='230' width='1200' height='230'/%3E%3C/clipPath%3E%3Cfilter id='g2' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0008 0.0065' numOctaves='3' seed='31' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='discrete' tableValues='0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.11 0 0 0 0 0.03 0.55 0 0 0 0'/%3E%3CfeGaussianBlur stdDeviation='1.2 0.5'/%3E%3C/filter%3E%3Cfilter id='p2' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.42' numOctaves='2' seed='34' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 0 0.04 1.5 0 0 0 -0.62'/%3E%3C/filter%3E%3Cfilter id='t2' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0018 0.02' numOctaves='2' seed='38' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.86 0 0 0 0 0.58 0 0 0 0 0.3 0.9 0 0 0 -0.4'/%3E%3C/filter%3E%3CclipPath id='c2'%3E%3Crect y='460' width='1200' height='230'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23c0)'%3E%3Crect y='0' width='1200' height='230' fill='%2397602f'/%3E%3Crect y='0' width='1200' height='230' filter='url(%23t0)'/%3E%3Crect y='0' width='1200' height='230' filter='url(%23g0)'/%3E%3Crect y='0' width='1200' height='230' filter='url(%23p0)'/%3E%3C/g%3E%3Crect y='0' width='1200' height='1.5' fill='%233a200d' fill-opacity='0.55'/%3E%3Crect y='1.5' width='1200' height='1' fill='%23f0c58f' fill-opacity='0.22'/%3E%3Cg clip-path='url(%23c1)'%3E%3Crect y='230' width='1200' height='230' fill='%238c5529'/%3E%3Crect y='230' width='1200' height='230' filter='url(%23t1)'/%3E%3Crect y='230' width='1200' height='230' filter='url(%23g1)'/%3E%3Crect y='230' width='1200' height='230' filter='url(%23p1)'/%3E%3C/g%3E%3Crect y='230' width='1200' height='1.5' fill='%233a200d' fill-opacity='0.55'/%3E%3Crect y='231.5' width='1200' height='1' fill='%23f0c58f' fill-opacity='0.22'/%3E%3Cg clip-path='url(%23c2)'%3E%3Crect y='460' width='1200' height='230' fill='%239c6532'/%3E%3Crect y='460' width='1200' height='230' filter='url(%23t2)'/%3E%3Crect y='460' width='1200' height='230' filter='url(%23g2)'/%3E%3Crect y='460' width='1200' height='230' filter='url(%23p2)'/%3E%3C/g%3E%3Crect y='460' width='1200' height='1.5' fill='%233a200d' fill-opacity='0.55'/%3E%3Crect y='461.5' width='1200' height='1' fill='%23f0c58f' fill-opacity='0.22'/%3E%3C/svg%3E");
+    --desk: var(--desk-grain) 0 0 / 1200px 690px, var(--bg);
     background: var(--desk);
     /* the front edge stays at the bottom of the screen on a short page, not partway up the desk */
     display: flex;
     flex-direction: column;
+}
+
+/* Varnish: a soft sheen from the window side, and the wood falling into shade at the corners.
+ * Fixed to the screen, under everything on the desk. */
+.reader::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(118deg, rgba(255, 228, 184, 0.16), rgba(255, 228, 184, 0) 38%),
+        radial-gradient(ellipse 120% 90% at 50% 40%, rgba(30, 14, 4, 0) 55%, rgba(30, 14, 4, 0.34));
 }
 
 .reader .desk { flex: 1 0 auto; }
@@ -129,14 +145,17 @@
     mask: var(--holes);
 }
 
-/* The back rim, with a pencil groove molded along it. The bar stays stuck to the top of the
- * screen, so the pencil is always within reach. */
+/* The back rim, a shade darker from years of hands, with a pencil groove cut along it. The bar
+ * stays stuck to the top of the screen, so the pencil is always within reach. */
 .reader .topbar {
     --groove-x: max(16px, calc((100% - 1180px) / 2));
-    padding-bottom: 22px;
-    background: var(--desk);
+    padding-bottom: 24px;
+    background: linear-gradient(rgba(36, 16, 4, 0.2), rgba(36, 16, 4, 0.1)), var(--desk);
     border-bottom: 0;
-    box-shadow: 0 1px 0 rgba(255, 244, 222, 0.55), 0 2px 0 rgba(84, 52, 22, 0.28);
+    box-shadow:
+        inset 0 -1px 0 rgba(255, 222, 176, 0.28),
+        0 1px 0 rgba(36, 16, 4, 0.55),
+        0 3px 6px rgba(36, 16, 4, 0.28);
 }
 
 .reader .topbar::after,
@@ -146,58 +165,67 @@
     pointer-events: none;
 }
 
+/* The groove: rounded at both ends, shadowed along its top lip, worn pale along the bottom. */
 .reader .topbar::after {
     left: var(--groove-x);
     right: var(--groove-x);
-    bottom: 7px;
+    bottom: 8px;
     height: 16px;
     border-radius: 8px;
-    background: linear-gradient(rgba(70, 40, 12, 0.42), rgba(70, 40, 12, 0.16) 60%, rgba(70, 40, 12, 0.24));
+    background: linear-gradient(rgba(32, 14, 3, 0.55), rgba(32, 14, 3, 0.3) 55%, rgba(32, 14, 3, 0.38));
     box-shadow:
-        inset 0 3px 3px rgba(55, 30, 8, 0.45),
-        inset 0 -1px 1px rgba(255, 244, 222, 0.35),
-        0 1px 0 rgba(255, 244, 222, 0.6);
+        inset 0 4px 4px rgba(20, 8, 0, 0.5),
+        inset 0 -1px 1px rgba(255, 222, 176, 0.25),
+        0 1px 0 rgba(255, 222, 176, 0.32),
+        0 -1px 0 rgba(20, 8, 0, 0.25);
 }
 
-/* A yellow No. 2, eraser end to the left. */
+/* A yellow No. 2, eraser end to the left, resting in the bottom of the groove. */
 .reader .topbar::before {
     z-index: 1;
     right: calc(var(--groove-x) + 70px);
-    bottom: 9px;
+    bottom: 10px;
     width: 236px;
     height: 13px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 236 13'%3E%3Cpath d='M5 0.5H22V12.5H5A4.5 4.5 0 0 1 0.5 8V5A4.5 4.5 0 0 1 5 0.5Z' fill='%23ec9aa2'/%3E%3Cpath d='M3 2.5H22' stroke='%23f6c3c7' stroke-width='1.4'/%3E%3Crect x='22' y='0.5' width='17' height='12' fill='%23b9b7b0'/%3E%3Cpath d='M22 2.5H39M26 0.5V12.5M30.5 0.5V12.5M35 0.5V12.5' stroke='%23e4e2dc' stroke-width='1'/%3E%3Cpath d='M22 10.5H39' stroke='%23858279' stroke-width='1.4'/%3E%3Crect x='39' y='0.5' width='163' height='12' fill='%23f3bb1f'/%3E%3Crect x='39' y='0.5' width='163' height='4' fill='%23fbd65c'/%3E%3Crect x='39' y='8.5' width='163' height='4' fill='%23d8980f'/%3E%3Cpath d='M39 4.5H202M39 8.5H202' stroke='%23c88a0c' stroke-width='0.6'/%3E%3Ctext x='60' y='8.1' font-family='Arial,sans-serif' font-size='4.2' font-weight='700' fill='%232f5d2a' letter-spacing='0.6'%3ENo. 2 HB%3C/text%3E%3Cpath d='M202 0.5Q205 2.5 202 4.5Q205 6.5 202 8.5Q205 10.5 202 12.5L226 7.6V5.4Z' fill='%23e9c48f'/%3E%3Cpath d='M202 8.5Q205 10.5 202 12.5L226 7.6Z' fill='%23d3a46b'/%3E%3Cpath d='M220 4.6L235.5 6.5L220 8.4Z' fill='%23353438'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
     transform: rotate(-0.6deg);
-    filter: drop-shadow(0 2px 1px rgba(45, 25, 5, 0.35));
+    filter: drop-shadow(0 2px 1px rgba(20, 8, 0, 0.45));
 }
 
-/* The front edge: dark edge banding over the shadow under the desk. */
-.reader .footer {
-    padding-top: 40px;
-    border-top: 0;
-    background:
-        linear-gradient(#6a5747, #3b2f26 5px, #211a15 11px, #2d241e 13px, #17120f 16px) top / 100% 16px no-repeat,
-        #1c1714;
+/* Nav as index cards laid along the rim: cream on the wood, the open page in ink. */
+.reader .nav a {
+    background: var(--cream);
+    border-color: var(--ink);
+    color: var(--ink);
+    box-shadow: 2px 2px 0 rgba(20, 8, 0, 0.55);
 }
-
-.reader .footer .footer-copy { color: #cdbfa6; }
-
-.reader .nav a { border-color: var(--ink); color: var(--ink); }
 
 .reader .nav a:hover,
 .reader .nav a.active {
     background: var(--ink);
-    color: var(--bg);
+    color: var(--cream);
 }
 
 .reader .brand-sticker {
     background: var(--sticky);
     color: var(--ink);
     border-color: var(--ink);
-    box-shadow: 4px 4px 0 var(--ink);
+    box-shadow: 3px 3px 0 rgba(20, 8, 0, 0.6);
 }
 
-.reader .footer a { color: #f1e6d0; }
+/* The front edge: the top board rounding over toward you (lit on top, falling into shadow),
+ * then the dark under the desk. */
+.reader .footer {
+    padding-top: 44px;
+    border-top: 0;
+    background:
+        linear-gradient(rgba(255, 226, 182, 0.4), rgba(255, 226, 182, 0.12) 4px, rgba(36, 16, 4, 0) 8px,
+            rgba(36, 16, 4, 0.5) 15px, rgba(20, 8, 0, 0.88) 20px, #160e08 20px, #1c120a),
+        var(--desk);
+}
+
+.reader .footer .footer-copy { color: #d9c6a6; }
+.reader .footer a { color: var(--cream); }
 
 .reader .flip a:focus-visible,
 .reader .flip button:focus-visible,
