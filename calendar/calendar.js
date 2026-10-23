@@ -537,6 +537,17 @@
     return fromFile.concat(fromPage);
   }
 
+  // A dated todo that's also on the calendar as an event that day ("Lunch —
+  // 12:30" beside a 12:30p "Lunch" event) would show twice; the event, with its
+  // proper time, wins. Titles match once a trailing " — 12:30" is dropped.
+  function duplicatesEvent(todo) {
+    if (!todo.date) return false;
+    const key = s => String(s || "").replace(/\s+[—–-]\s*\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)?\s*$/i, "")
+      .trim().toLowerCase();
+    const k = key(todo.title);
+    return (calEvents || []).some(ev => ev.date === todo.date && key(ev.title) === k);
+  }
+
   // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
   function todoChipHtml(ev, when) {
     const isNew = todoSeen && !todoSeen.has(ev.todoKey);
@@ -1409,7 +1420,7 @@
     }
 
     const todayStr = etTodayStr();
-    const todoEvts = todoEvents(todayStr);
+    const todoEvts = todoEvents(todayStr).filter(t => !duplicatesEvent(t));
     const tp = todayStr.split("-").map(Number);
     const dow = new Date(tp[0], tp[1] - 1, tp[2], 12).getDay();   // 0 = Sun
     // Rolling window: start on the Sunday of the current week, then run enough
