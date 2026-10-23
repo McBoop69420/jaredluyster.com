@@ -83,28 +83,34 @@
   ];
   // League-wide games beyond my own teams. These come back marked `featured`
   // and render as quieter cards listed after my teams' games.
-  //   - NBA: nationally televised games only. NBA TV is left out on purpose:
-  //     it carries a couple of games most nights and would swamp the grid.
+  //   - NBA and NHL: nationally televised games only. NBA TV and NHL Network
+  //     are left out on purpose: they carry a couple of games most nights and
+  //     would swamp the grid. ESPN tags nearly every NHL game "national" for
+  //     its out-of-market ESPN+ stream, so ESPN+ doesn't count either; the
+  //     Hulu/Disney+ games are ESPN's national exclusives, so those do.
   //   - College basketball: games where both teams are in the top 25. ESPN's default
   //     scoreboard (no `groups`) is already limited to games with a ranked
   //     team, so the filter only has to check that both sides are ranked.
   //     It also carries every NCAA tournament game, which `postseason` picks
   //     out by ESPN's game note (leaving out the NIT, WBIT and CBC).
-  const NBA_NATIONAL = { key: "basketball/nba", label: "NBA", order: "away-home",
-    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" };
-  const NBA_NATIONAL_NETWORKS = new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]);
+  const NATIONAL_LEAGUES = [
+    { key: "basketball/nba", label: "NBA", order: "away-home",
+      networks: new Set(["ABC", "ESPN", "ESPN2", "NBC", "NBCSN", "PEACOCK", "PRIME VIDEO"]),
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" },
+    { key: "hockey/nhl", label: "NHL", order: "away-home",
+      networks: new Set(["ABC", "ESPN", "ESPN2", "TNT", "TRUTV", "HULU", "DISNEY+"]),
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
+  ];
   //   - Postseason: every playoff game in these leagues (ESPN's season type 3),
   //     e.g. the whole World Series. College football's postseason is ~40
-  //     bowls, so `only` keeps it to the Playoff by ESPN's game note. The NBA,
-  //     March Madness and the MLS Cup playoffs ride along with the fetches
-  //     that already pull those leagues (national NBA, ranked matchups, MLS).
+  //     bowls, so `only` keeps it to the Playoff by ESPN's game note. The NBA and
+  //     NHL playoffs, March Madness and the MLS Cup playoffs ride along with the fetches
+  //     that already pull those leagues (national games, ranked matchups, MLS).
   const POSTSEASON_LEAGUES = [
     { key: "baseball/mlb", label: "MLB", order: "away-home",
       logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },
     { key: "football/nfl", label: "NFL", order: "away-home",
       logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
-    { key: "hockey/nhl", label: "NHL", order: "away-home",
-      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
     { key: "football/college-football", label: "NCAAF", order: "away-home", only: /college football playoff/i,
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },
   ];
@@ -1049,13 +1055,13 @@
     return ((comp && comp.notes) || []).some(n => re.test(n.headline || ""));
   }
 
-  async function fetchNationalNbaEvents(minDate, maxDate) {
-    const events = await fetchScoreboardMonths(NBA_NATIONAL.key, minDate, maxDate);
+  async function fetchNationalEvents(entry, minDate, maxDate) {
+    const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
     return events.filter(ev => {
       const comp = ev.competitions && ev.competitions[0];
       return isPostseason(ev) || ((comp && comp.broadcasts) || []).some(b => b.market === "national" &&
-        (b.names || []).some(n => NBA_NATIONAL_NETWORKS.has(String(n).trim().toUpperCase())));
-    }).map(ev => parseGameEvent(ev, NBA_NATIONAL)).filter(inWindow(minDate, maxDate))
+        (b.names || []).some(n => entry.networks.has(String(n).trim().toUpperCase())));
+    }).map(ev => parseGameEvent(ev, entry)).filter(inWindow(minDate, maxDate))
       .map(g => Object.assign(g, { featured: true }));
   }
 
@@ -1163,7 +1169,7 @@
     const maxDate = addDaysToDateStr(todayStr, SPORTS_WINDOW_DAYS_AHEAD);
     const jobs = TEAM_SCHEDULE_TEAMS.map(t => fetchTeamScheduleEvents(t, minDate, maxDate))
       .concat(SOCCER_LEAGUES.map(l => fetchSoccerLeagueEvents(l, minDate, maxDate)))
-      .concat([fetchNationalNbaEvents(minDate, maxDate)])
+      .concat(NATIONAL_LEAGUES.map(l => fetchNationalEvents(l, minDate, maxDate)))
       .concat(RANKED_MATCHUP_LEAGUES.map(l => fetchRankedMatchups(l, minDate, maxDate)))
       .concat(POSTSEASON_LEAGUES.map(l => fetchPostseasonEvents(l, minDate, maxDate)))
       .concat([fetchExhibitionEvents(minDate, maxDate)]);
