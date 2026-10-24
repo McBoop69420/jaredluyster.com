@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/sports.css?v=63">
+<link rel="stylesheet" href="/sports.css?v=64">
 </head>
 <body>
 <article class="paper">
@@ -58,14 +58,7 @@
         <button type="button" class="picks-toggle" data-bets-view="settled" aria-pressed="false">Settled</button>
         <button type="button" class="picks-toggle" data-bets-view="all" aria-pressed="false">All</button>
       </div>
-      <div class="value-slate-wrap">
-        <table class="value-slate bets-list">
-          <thead>
-            <tr><th>Placed</th><th>Bet</th><th>Stake</th><th>Odds</th><th>Status</th><th>P/L</th><th></th></tr>
-          </thead>
-          <tbody id="myBetsListBody"></tbody>
-        </table>
-      </div>
+      <div class="games-grid bets-grid" id="myBetsList"></div>
     </div>
     <p class="value-legend">
       Paper bets in units, no real money &middot; games can be bet before or during play (in-game bets at the number you enter) &middot; graded
@@ -266,6 +259,6 @@
 <script src="/expert-picks.js?v=2"></script>
 <script src="/picks-ledger.js?v=3"></script>
 <script src="/sports.js?v=87"></script>
-<script src="/my-bets.js?v=6"></script>
+<script src="/my-bets.js?v=7"></script>
 </body>
 </html>

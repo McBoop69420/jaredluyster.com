@@ -134,7 +134,7 @@ test("legFromOffer keeps what grading and display need", () => {
   const leg = legOf("spread", "away");
   assert.deepEqual(leg, {
     league: "football/nfl", gameId: "401872996", start: "2026-10-18T17:00Z",
-    away: { id: "34", abbr: "HOU" }, home: { id: "30", abbr: "JAX" },
+    away: { id: "34", abbr: "HOU", name: "Houston Texans" }, home: { id: "30", abbr: "JAX", name: "Jacksonville Jaguars" },
     kind: "spread", side: "away", odds: 100, line: 2.5,
   });
   assert.equal(PB.legLabel(leg), "HOU +2.5");

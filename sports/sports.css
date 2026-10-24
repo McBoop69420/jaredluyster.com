@@ -424,10 +424,30 @@ table.value-slate tr.picks-detail td{white-space:normal;background:var(--card);p
 .bet-form-existing{margin-top:12px;padding-top:10px;border-top:1px dotted var(--ink);line-height:1.8}
 .bet-form-existing .call{font-size:.68rem;padding:0 5px}
 .bets-views{margin-top:16px}
-table.bets-list td.bet-cell{white-space:normal;min-width:240px}
-.bet-leg{line-height:1.5}
-.bet-leg .call{font-size:.68rem;padding:0 5px;margin-left:2px}
-.bet-parlay{font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+/* My Bets' list: each bet as a card, drawn like its game's card on Games.
+   The left edge goes green while it's winning (or won), red while losing. */
+.bets-grid{margin-top:10px}
+.bets-grid>.value-empty{margin:4px 2px}
+.bet-card--up{border-left-color:#1b8a3f}
+.bet-card--down{border-left-color:var(--live)}
+.bet-card--even{border-left-color:var(--ink)}
+.bet-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.bet-card-head .spotlight-league-tag{margin:0}
+.bet-card-placed{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+.bet-card-pick{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:-4px;font-family:var(--font-display);font-size:18px;font-weight:700;line-height:1.1;text-transform:uppercase;letter-spacing:-.01em}
+.bet-card-odds{font-size:15px;color:var(--muted)}
+.bet-card-leg{display:flex;flex-direction:column;gap:6px}
+.bet-card-leg+.bet-card-leg{border-top:1px dotted #b3a98e;padding-top:8px}
+.bet-card-leg-label{font-size:12px}
+.bet-card-leg-label .call{font-size:.68rem;padding:0 5px;margin-left:2px}
+/* The side you bet: its name underlined in the accent */
+.team--pick .team-name{text-decoration:underline 4px var(--accent);text-underline-offset:1px;text-decoration-skip-ink:none}
+.bet-card .bet-bar{max-width:none;margin-top:-2px}
+.bet-card-note{font-size:11px;font-style:italic;color:var(--muted)}
+.bet-card-foot{display:flex;align-items:center;gap:8px;border-top:1px dotted #b3a98e;padding-top:7px}
+.bet-card-foot .call{font-size:.68rem;padding:1px 6px}
+.bet-card-stake{margin-left:auto;font-size:12px;white-space:nowrap}
+.bet-card .bet-actions{border-top:1px dotted #b3a98e;padding-top:7px}
 .bet-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .bet-actions .bet-delete{margin-left:auto;color:var(--live)}
 .tier{display:inline-block;padding:1px 7px;border:1px solid var(--ink);font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em}

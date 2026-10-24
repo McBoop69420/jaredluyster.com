@@ -163,6 +163,7 @@
       teams[comp.homeAway] = {
         id: String(t.id), abbr: t.abbreviation || t.shortDisplayName || t.displayName || "?",
         name: t.displayName || t.name || t.abbreviation || "", score: num(comp.score),
+        logo: t.logo || (Array.isArray(t.logos) && t.logos[0] && t.logos[0].href) || null,
       };
     }
     if (!teams.away || !teams.home) return null;
@@ -198,10 +199,13 @@
   }
 
   function legFromOffer(game, offer) {
+    // Name and logo too, so a settled bet's card still looks like the game's
+    // without going back to ESPN.
+    const team = (t) => Object.assign({ id: t.id, abbr: t.abbr }, t.name ? { name: t.name } : {}, t.logo ? { logo: t.logo } : {});
     const leg = {
       league: game.league, gameId: game.id, start: game.start,
       ...(game.leagueLabel ? { leagueLabel: game.leagueLabel } : {}),
-      away: { id: game.away.id, abbr: game.away.abbr }, home: { id: game.home.id, abbr: game.home.abbr },
+      away: team(game.away), home: team(game.home),
       kind: offer.kind, side: offer.side, odds: offer.odds,
     };
     if (offer.line != null) leg.line = offer.line;
@@ -534,22 +538,32 @@ function mountMyBets(PB) {
     await recordFinals();
   }
 
-  // Write final scores onto legs whose games just ended (see the header).
+  // Write final scores onto legs whose games just ended (see the header), and
+  // the teams' names and logos for the bet card if the leg was saved without them.
   async function recordFinals() {
     const updates = [];
     S.bets.forEach(bet => {
       if (bet.result) return;
       bet.legs.forEach((leg, i) => {
         if (leg.final || leg.result) return;
-        const snap = PB.finalSnapshot(S.games.get(leg.gameId));
-        if (snap) updates.push({ id: bet.id, i, snap });
+        const game = S.games.get(leg.gameId);
+        const snap = PB.finalSnapshot(game);
+        if (snap) updates.push({ id: bet.id, i, snap, game });
       });
     });
     if (!updates.length) return;
     await mutate(bets => {
       for (const u of updates) {
         const bet = bets.find(b => b.id === u.id);
-        if (bet && bet.legs[u.i] && !bet.legs[u.i].final) bet.legs[u.i].final = u.snap;
+        const leg = bet && bet.legs[u.i];
+        if (!leg || leg.final) continue;
+        leg.final = u.snap;
+        for (const side of ["away", "home"]) {
+          const t = u.game[side];
+          if (!leg[side] || leg[side].id !== t.id) continue;
+          if (!leg[side].name && t.name) leg[side].name = t.name;
+          if (!leg[side].logo && t.logo) leg[side].logo = t.logo;
+        }
       }
       return bets;
     });
@@ -908,39 +922,89 @@ function mountMyBets(PB) {
     $("myBetsSummary").innerHTML = html;
   }
 
-  // A leg's own status chip only on parlays: a straight bet's is the Status column.
-  function legLineHtml(leg, g, parlay) {
-    const detail = g.detail ? ' <span class="value-note">' + esc(g.detail) + "</span>" : "";
-    return '<div class="bet-leg"><strong>' + esc(PB.legLabel(leg)) + '</strong> <span class="value-note">' +
-      esc(PB.fmtOdds(leg.odds)) + " · " + esc(PB.gameLabel(leg)) + (leg.final ? "" : " · " + esc(fmtWhen(leg.start))) +
-      "</span>" + (parlay && g.tone !== "pending" ? " " + chip(g.tone) : "") + detail + barHtml(leg, S.games.get(leg.gameId)) + "</div>";
+  // ---- Bet cards: each bet drawn like its game's card on Games -------------
+
+  // One side of the matchup, as sports.js's teamCell draws it. The leg's own
+  // name and logo (saved with the bet) first, then the game's from ESPN.
+  function teamHtml(leg, game, side, picked) {
+    const t = leg[side] || {};
+    const live = game && game[side];
+    const name = (live && live.name) || t.name || t.abbr || "?";
+    const logo = t.logo || (live && live.logo);
+    const mark = logo
+      ? '<img class="team-logo" src="' + esc(logo) + '" alt="" loading="lazy">'
+      : '<span class="team-badge">' + esc(String(t.abbr || "?").slice(0, 3).toUpperCase()) + "</span>";
+    return '<div class="team team--' + side + (picked ? " team--pick" : "") + '"><div class="team-cell">' + mark +
+      '<div class="team-text"><div class="team-name-row"><span class="team-name">' + esc(name) + "</span></div></div></div></div>";
   }
 
-  function betRowHtml(bet) {
+  // The score once there is one: the leg's saved final, else the live game's.
+  function scoreOf(leg, game) {
+    if (leg.final) return leg.final.void ? null : { away: leg.final.away, home: leg.final.home, final: true };
+    if (game && game.state !== "pre" && game.away.score != null && game.home.score != null) {
+      return { away: game.away.score, home: game.home.score, final: game.state === "post" };
+    }
+    return null;
+  }
+
+  function legStatusHtml(leg, game) {
+    if (leg.final) return '<div class="status">' + (leg.final.void ? "Postponed or canceled" : "Final") + "</div>";
+    if (game && game.state === "in") return '<div class="status status--live"><span class="live-dot"></span>' + esc(game.statusText) + "</div>";
+    if (game && game.state === "post") return '<div class="status">' + esc(game.statusText || "Final") + "</div>";
+    return '<div class="status">' + esc(fmtWhen(leg.start)) + " ET</div>";
+  }
+
+  // A parlay's legs each get their own label and status chip; a straight
+  // bet's are the card's headline and footer.
+  function legBlockHtml(leg, lg, parlay) {
+    const game = S.games.get(leg.gameId);
+    const s = scoreOf(leg, game);
+    const num = (side, other) => '<span class="score-num' +
+      (s.final ? (s[side] > s[other] ? " win" : s[side] < s[other] ? " lose" : "") : "") + '">' + esc(s[side]) + "</span>";
+    const score = s ? num("away", "home") + '<span class="score-vs">–</span>' + num("home", "away") : '<span class="score-vs">vs</span>';
+    const picked = leg.kind === "total" ? null : leg.side;
+    return '<div class="bet-card-leg">' +
+      (parlay ? '<div class="bet-card-leg-label"><strong>' + esc(PB.legLabel(leg)) + "</strong> " + esc(PB.fmtOdds(leg.odds)) +
+        (lg.tone !== "pending" ? " " + chip(lg.tone) : "") + "</div>" : "") +
+      '<div class="matchup">' + teamHtml(leg, game, "away", picked === "away") + '<div class="score">' + score + "</div>" +
+        teamHtml(leg, game, "home", picked === "home") + "</div>" +
+      legStatusHtml(leg, game) + barHtml(leg, game) + "</div>";
+  }
+
+  const CARD_TONE = { won: "up", winning: "up", lost: "down", losing: "down", push: "even", void: "even", pushing: "even" };
+
+  function betCardHtml(bet) {
     const g = grade(bet);
     const parlay = bet.legs.length > 1;
-    const dec = PB.betDecimal(bet.legs);
+    const leg = bet.legs[0];
+    const league = PB.LEAGUE_BY_KEY.get(leg.league);
+    const tag = parlay ? bet.legs.length + "-leg parlay"
+      : (leg.leagueLabel || (league ? league.label : leg.league)) + " · " + (PB.KINDS[leg.kind] || leg.kind);
+    const headline = parlay ? "Parlay" : PB.legLabel(leg);
+    const odds = parlay ? PB.toAmerican(PB.betDecimal(bet.legs)) : leg.odds;
     const pl = g.bet.final
-      ? '<span class="' + (g.bet.profit > 0 ? "picks-win" : g.bet.profit < 0 ? "picks-loss" : "") + '">' + esc(PB.fmtUnits(g.bet.profit, true)) + "</span>"
-      : '<span class="value-note">to win ' + esc(PB.fmtUnits(PB.toWin(bet))) + "</span>";
+      ? '<strong class="' + (g.bet.profit > 0 ? "picks-win" : g.bet.profit < 0 ? "picks-loss" : "") + '">' + esc(PB.fmtUnits(g.bet.profit, true)) + "</strong>"
+      : "to win " + esc(PB.fmtUnits(PB.toWin(bet)));
     const open = S.open.has(bet.id);
-    let html = "<tr><td>" + esc(fmtPlaced(bet.placedAt)) + '</td><td class="bet-cell">' +
-      (parlay ? '<div class="bet-parlay">' + bet.legs.length + "-leg parlay</div>" : "") +
-      bet.legs.map((leg, i) => legLineHtml(leg, g.legs[i], parlay)).join("") +
-      (bet.note ? '<div class="value-note">' + esc(bet.note) + "</div>" : "") + "</td>" +
-      "<td>" + esc(PB.fmtUnits(bet.stake)) + "</td><td>" + esc(PB.fmtOdds(PB.toAmerican(dec))) + "</td>" +
-      "<td>" + chip(g.bet.tone) + (bet.result ? ' <span class="value-note">by hand</span>' : "") + "</td><td>" + pl + "</td>" +
-      '<td><button type="button" class="picks-toggle" data-bet-toggle="' + esc(bet.id) + '" aria-expanded="' + open + '" aria-label="Bet options">' +
-      (open ? "▾" : "▸") + "</button></td></tr>";
+    let html = '<div class="game bet-card' + (CARD_TONE[g.bet.tone] ? " bet-card--" + CARD_TONE[g.bet.tone] : "") + '">' +
+      '<div class="bet-card-head"><span class="spotlight-league-tag">' + esc(tag) + "</span>" +
+        '<span class="bet-card-placed">Placed ' + esc(fmtPlaced(bet.placedAt)) + "</span></div>" +
+      '<div class="bet-card-pick"><span>' + esc(headline) + '</span><span class="bet-card-odds">' + esc(PB.fmtOdds(odds)) + "</span></div>" +
+      bet.legs.map((l, i) => legBlockHtml(l, g.legs[i], parlay)).join("") +
+      (bet.note ? '<div class="bet-card-note">' + esc(bet.note) + "</div>" : "") +
+      '<div class="bet-card-foot">' + chip(g.bet.tone) + (bet.result ? ' <span class="value-note">by hand</span>' : "") +
+        '<span class="bet-card-stake">' + esc(PB.fmtUnits(bet.stake)) + " · " + pl + "</span>" +
+        '<button type="button" class="picks-toggle" data-bet-toggle="' + esc(bet.id) + '" aria-expanded="' + open + '" aria-label="Bet options">' +
+        (open ? "▾" : "▸") + "</button></div>";
     if (open) {
       const btn = (r, label) => '<button type="button" class="picks-toggle" data-bet-grade="' + esc(bet.id) + '" data-grade="' + r +
         '" aria-pressed="' + ((bet.result || "") === r) + '">' + label + "</button>";
-      html += '<tr class="picks-detail"><td colspan="7"><div class="bet-actions"><span class="value-note">Placed ' +
+      html += '<div class="bet-actions"><span class="value-note">Placed ' +
         esc(new Date(bet.placedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })) +
         " ET · settle by hand:</span> " + btn("won", "Won") + btn("lost", "Lost") + btn("push", "Push") + btn("void", "No action") +
-        btn("", "Auto") + ' <button type="button" class="picks-toggle bet-delete" data-bet-delete="' + esc(bet.id) + '">Delete bet</button></div></td></tr>';
+        btn("", "Auto") + ' <button type="button" class="picks-toggle bet-delete" data-bet-delete="' + esc(bet.id) + '">Delete bet</button></div>';
     }
-    return html;
+    return html + "</div>";
   }
 
   function renderList() {
@@ -957,10 +1021,10 @@ function mountMyBets(PB) {
       .sort((a, b) => S.view === "open"
         ? String(a.legs[0].start).localeCompare(String(b.legs[0].start))
         : String(b.placedAt).localeCompare(String(a.placedAt)));
-    $("myBetsListBody").innerHTML = rows.length ? rows.map(betRowHtml).join("")
-      : '<tr><td colspan="7" class="value-empty">' + (S.view === "open"
+    $("myBetsList").innerHTML = rows.length ? rows.map(betCardHtml).join("")
+      : '<p class="value-empty">' + (S.view === "open"
         ? 'No open bets. Tap <strong>+ Bet</strong> on any upcoming game on <a href="/">Games</a>.'
-        : S.view === "settled" ? "No settled bets yet." : "No bets yet.") + "</td></tr>";
+        : S.view === "settled" ? "No settled bets yet." : "No bets yet.") + "</p>";
   }
 
   async function setResult(id, result) {
