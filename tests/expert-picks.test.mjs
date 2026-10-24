@@ -191,6 +191,62 @@ test("mergeCbs keeps an unmatched CBS game as its own row", () => {
   assert.ok(games[0].picks.every(p => p.market === "ml" && p.line == null && p.recLabel === "season straight up"));
 });
 
+// USC @ Wisconsin, 2026-10-24: all nine CBS writers took USC -3, so CBS never
+// showed a Wisconsin slug, and CBS's "WISC" isn't Action Network's "WIS". The
+// game used to split in two, each half a fake 100% strong lean.
+function splitGame(id, date, away, home) {
+  return { id, date, start: date + "T19:30:00.000Z", status: null, time: null, away, home, props: 0, picks: [] };
+}
+function unanimousCbs(date, awayCode, homeCode, pickCode, pickSlug, n) {
+  const picks = [];
+  for (let i = 0; i < n; i++) picks.push({ expert: i, code: pickCode, slug: pickSlug, text: pickCode + " -3", line: -3, result: null });
+  return {
+    experts: Array.from({ length: n }, (_, i) => ({ name: "Writer " + i, record: "40-40" })),
+    rows: [{ date, awayCode, homeCode, awayAbbr: awayCode, homeAbbr: homeCode, time: null, picks }],
+  };
+}
+
+test("mergeCbs joins a unanimous CBS row whose other team's abbreviation differs (USC @ WISC)", () => {
+  const games = [splitGame("an289689", "2026-10-24",
+    { abbr: "USC", name: "USC Trojans", slug: "usc-trojans" },
+    { abbr: "WIS", name: "Wisconsin Badgers", slug: "wisconsin-badgers" })];
+  const added = W.mergeCbs(games, "2026-10-24",
+    [{ market: "spread", parsed: unanimousCbs("2026-10-24", "USC", "WISC", "USC", "usc-trojans", 9) }]);
+  assert.equal(added, 9);
+  assert.equal(games.length, 1, "no stray CBS-only game");
+  assert.ok(games[0].picks.every(p => p.src === "CBS Sports" && p.side === "away" && p.line === -3));
+});
+
+test("mergeCbs joins a unanimous CBS row even when the other abbreviation shares no prefix", () => {
+  // Everyone on Houston: CBS's JAC has no slug and no prefix in common with JAX.
+  const games = [splitGame("an1", "2026-10-18",
+    { abbr: "HOU", name: "Houston Texans", slug: "houston-texans" },
+    { abbr: "JAX", name: "Jacksonville Jaguars", slug: "jacksonville-jaguars" })];
+  W.mergeCbs(games, "2026-10-18", [{ market: "spread", parsed: unanimousCbs("2026-10-18", "HOU", "JAC", "HOU", "houston-texans", 3) }]);
+  assert.equal(games.length, 1);
+  assert.equal(games[0].picks.length, 3);
+});
+
+test("mergeCbs joins a unanimous CBS row on the home team too (JAC @ HOU, all on Houston)", () => {
+  const games = [splitGame("an3", "2026-11-01",
+    { abbr: "JAX", name: "Jacksonville Jaguars", slug: "jacksonville-jaguars" },
+    { abbr: "HOU", name: "Houston Texans", slug: "houston-texans" })];
+  W.mergeCbs(games, "2026-11-01", [{ market: "spread", parsed: unanimousCbs("2026-11-01", "JAC", "HOU", "HOU", "houston-texans", 4) }]);
+  assert.equal(games.length, 1);
+  assert.ok(games[0].picks.length === 4 && games[0].picks.every(p => p.side === "home"));
+});
+
+test("mergeCbs still keeps a CBS game apart when only the abbreviations half-match", () => {
+  // No slug on either side and only one abbreviation agreeing is not enough.
+  const games = [splitGame("an2", "2026-10-24",
+    { abbr: "USC", name: "USC Trojans", slug: "usc-trojans" },
+    { abbr: "WIS", name: "Wisconsin Badgers", slug: "wisconsin-badgers" })];
+  const parsed = unanimousCbs("2026-10-24", "USC", "ORE", "USC", "usc-trojans", 2);
+  parsed.rows[0].picks.forEach(p => { p.slug = "southern-california"; });
+  W.mergeCbs(games, "2026-10-24", [{ market: "spread", parsed }]);
+  assert.equal(games.length, 2);
+});
+
 test("mergeCbs ignores rows from other days", () => {
   const games = W.normalizeActionNetwork(AN_DATA, "2026-10-18");
   W.mergeCbs(games, "2026-10-18", [{ market: "spread", parsed: W.parseCbsPicks(ATS_HTML) }]);

@@ -379,8 +379,8 @@ function slugTokens(s) {
 }
 
 // How well a CBS row's team (abbr + any slug seen in a pick) fits an Action
-// Network team. CBS and Action Network share most abbreviations (not JAX/JAC)
-// and most team slugs, so either one agreeing is a match.
+// Network team. CBS and Action Network share most abbreviations (not JAX/JAC,
+// WISC/WIS) and most team slugs, so either one agreeing is a match.
 function teamFit(abbr, slug, t) {
   let s = 0;
   if (abbr && t.abbr && abbr.toUpperCase() === t.abbr.toUpperCase()) s += 2;
@@ -432,8 +432,14 @@ export function mergeCbs(games, date, tables, through = date) {
   for (const { row, slugs, picks } of byKey.values()) {
     let best = null, bestScore = 0;
     for (const g of games) {
-      const a = teamFit(row.awayAbbr, slugs.away, g.away);
-      const h = teamFit(row.homeAbbr, slugs.home, g.home);
+      let a = teamFit(row.awayAbbr, slugs.away, g.away);
+      let h = teamFit(row.homeAbbr, slugs.home, g.home);
+      // A team's slug is only seen through picks on it, so when every CBS
+      // expert took the same side the other team has nothing but its
+      // abbreviation to go on. A team plays once a day: a full match on the
+      // known side (abbreviation and slug) on the same date is the game.
+      if (!h && !slugs.home && a >= 4 && g.date === row.date) h = 1;
+      if (!a && !slugs.away && h >= 4 && g.date === row.date) a = 1;
       if (!a || !h) continue;
       if (a + h > bestScore) { best = g; bestScore = a + h; }
     }
