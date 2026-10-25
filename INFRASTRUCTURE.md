@@ -198,8 +198,10 @@ with private data. Now the two are separate:
   JSON parses, then uploads it; live immediately. `--archive` re-uploads the gallery.
   It reads `~/.config/cloudflare_r2_token.txt`, the account token "R2 site data
   (JARED-SERVER)" (**Workers R2 Storage: Edit only**).
-- `deploy-pages.sh` and the `McBoop Daily Deploy` task are kept on disk but the task is
-  disabled. Everything below about them is historical.
+- `deploy-pages.sh` now exits immediately unless passed `--force`, so the `McBoop Daily
+  Deploy` task, which still fires every 15 minutes, does nothing. Disabling the task
+  needs an elevated shell (`Disable-ScheduledTask -TaskName "McBoop Daily Deploy"`; a
+  normal one gets "Access is denied"). Everything below about them is historical.
 
 **Reconciled 2026-09-06** — a live check of the Cloudflare account (`pages projects`
 list + zone DNS records) shows `news.jaredluyster.com` and `calendar.jaredluyster.com`
