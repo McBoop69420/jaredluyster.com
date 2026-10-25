@@ -15,5 +15,9 @@
 ],
 "mlb":[
 {"id":"an303591","start":"2026-10-18T21:08:00.000Z","away":"TB","home":"CLE","picks":[{"src":"Action Network","expert":"Sean Zerillo","market":"ml","side":"home","line":null,"result":"loss"},{"src":"Action Network","expert":"Matt Trollo","market":"ml","side":"home","line":null,"result":"loss"},{"src":"Action Network","expert":"Matt Trollo","market":"total","side":"under","line":6.5,"result":"win"},{"src":"Action Network","expert":"Player Prop Savant","market":"total","side":"under","line":7.5,"result":"win"},{"src":"Action Network","expert":"Scott Rickenbach","market":"total","side":"over","line":6,"result":"loss"},{"src":"Action Network","expert":"tonysartori99","market":"total","side":"under","line":6.5,"result":"win"}],"consensus":{"ml":{"side":"home","line":null,"n":2,"count":2,"result":"loss"},"total":{"side":"under","line":6.5,"n":3,"count":4,"result":"win"}}}
+],
+"nhl":[
+{"id":"an293433","start":"2026-10-18T22:00:00.000Z","away":"CBJ","home":"MIN","picks":[{"src":"Action Network","expert":"Player Prop Savant","market":"total","side":"over","line":4.5,"result":"loss"},{"src":"Action Network","expert":"Scott Rickenbach","market":"spread","side":"home","line":-1.5,"result":"loss"}],"consensus":{"spread":{"side":"home","line":-1.5,"n":1,"count":1,"result":"loss"},"total":{"side":"over","line":4.5,"n":1,"count":1,"result":"loss"}}},
+{"id":"an293434","start":"2026-10-19T00:00:00.000Z","away":"CAR","home":"CGY","picks":[{"src":"Action Network","expert":"Greg Liodice","market":"total","side":"over","line":6.5,"result":"loss"},{"src":"Action Network","expert":"Scott Rickenbach","market":"spread","side":"away","line":-1.5,"result":"loss"}],"consensus":{"spread":{"side":"away","line":-1.5,"n":1,"count":1,"result":"loss"},"total":{"side":"over","line":6.5,"n":1,"count":1,"result":"loss"}}}
 ]
 }}
