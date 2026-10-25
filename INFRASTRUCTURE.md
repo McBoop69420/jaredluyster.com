@@ -17,11 +17,12 @@ under `C:\Users\Jared Server\`.
 
 | What | Runs on | How |
 |---|---|---|
-| News + calendar deploy (`mcboop-daily`) | JARED-SERVER | Scheduled Task `McBoop Daily Deploy`, S4U, every 15 min — §4 |
+| News + calendar deploy (`mcboop-daily`) | GitHub Actions | `.github/workflows/deploy-mcboop-daily.yml`, on every push to `main` touching `news/`/`calendar/` — §4. (The 15-min `McBoop Daily Deploy` task is retired.) |
+| Private calendar data (`calendar.json`, `archive/`) | JARED-SERVER → R2 | `McBoop Newspaper/publish-calendar.sh` after each `calendar.json` edit — §4 |
 | Radio origin (`node server.js`, :8080) | JARED-SERVER | Scheduled Task `Radio Service`, S4U, at startup — §3 |
 | Radio tunnel (`mcboop-news`) | JARED-SERVER | Scheduled Task `Radio Tunnel`, S4U, at startup — §3 |
 | Expert Picks ledger (`sports/picks-history/`) | JARED-SERVER | Scheduled Task `Sports Picks Ledger`, as the logged-on user, daily 6:00 AM — §4b |
-| Site repo checkout used by the deploy | JARED-SERVER | `C:\Users\Jared Server\jaredluyster.com`, fast-forwarded by every deploy run |
+| Site repo checkout | JARED-SERVER | `C:\Users\Jared Server\jaredluyster.com` (no longer deployed from; the Action builds from GitHub) |
 | Kavita (:5000), media catalog (:8800), Hermes + local LLM | **Jared-PC** (deliberately) | They read the Buffalo LinkStation NAS (`\\192.168.68.62\Share`), which only speaks SMB1; JARED-SERVER keeps SMB1 off. The LLM also needs Jared-PC's RTX 2060. |
 
 On Jared-PC the old copies are switched off but not deleted: task `McBoop Daily Deploy`
@@ -172,6 +173,34 @@ that repo for its own infrastructure notes.
 
 ### 4. McBoop Newspaper + Calendar — Cloudflare Pages (`mcboop-daily` project, Wrangler-CLI deployed)
 
+**Deploys on push since 2026-10-25 — read this first; the 15-minute task described
+below is retired.** A push to `main` was not enough to ship a calendar change: a timer
+on JARED-SERVER rebuilt and uploaded the site every 15 minutes, so changes sat unshipped
+for up to a quarter hour. It also shipped uncommitted local edits, and
+`calendar.jaredluyster.com` drifted out of sync with the git-deployed
+`jaredluyster.com/calendar/`. It existed only because the upload mixed public code
+with private data. Now the two are separate:
+- **Code** (`news/`, `calendar/`): `.github/workflows/deploy-mcboop-daily.yml` runs the
+  Worker tests, stages `news/` at the root and `calendar/` under `calendar/` (the same
+  layout `deploy-pages.sh` built), runs `wrangler pages deploy --branch main`, then
+  checks `mcboop-daily.pages.dev` serves both shells' new `?v=` pins and `/api/feeds`
+  JSON. Live about a minute after the push, from any machine; pass/fail shows on
+  the commit in GitHub. Token: repo secret `CLOUDFLARE_PAGES_TOKEN`, the Cloudflare
+  account token "GitHub deploy (mcboop-daily)" (**Pages: Edit only**). The local
+  "Newspaper" token was deliberately not used there: it also has DNS Write.
+- **Private data** (`calendar.json`, the frozen `archive/` gallery): stored in R2, bucket
+  `jaredluyster-calendar` (the `CALENDAR_TICKS` binding the Worker already had), under
+  `site/calendar.json` and `site/archive/...`. `news/_worker.js` serves them from there
+  ("Private site data lives in R2"), still 404ing them on the ungated `pages.dev` hosts,
+  and falls back to a deployed copy if an object is missing.
+  **After editing `McBoop Newspaper\public\calendar.json`, run
+  `bash "C:/Users/Jared Server/McBoop Newspaper/publish-calendar.sh"`**. It checks the
+  JSON parses, then uploads it; live immediately. `--archive` re-uploads the gallery.
+  It reads `~/.config/cloudflare_r2_token.txt`, the account token "R2 site data
+  (JARED-SERVER)" (**Workers R2 Storage: Edit only**).
+- `deploy-pages.sh` and the `McBoop Daily Deploy` task are kept on disk but the task is
+  disabled. Everything below about them is historical.
+
 **Reconciled 2026-09-06** — a live check of the Cloudflare account (`pages projects`
 list + zone DNS records) shows `news.jaredluyster.com` and `calendar.jaredluyster.com`
 (added 2026-09-06) are the same Cloudflare Pages project, `mcboop-daily`, deployed by
@@ -321,7 +350,8 @@ Sports has its own project and its own deploy mechanism; see §4b.
   - The Calendar tab, already retired when it moved to its own domain.
 
   Calendar page reads `/calendar.json` (hand-edited at
-  `C:\Users\Jared Server\McBoop Newspaper\public\calendar.json` on JARED-SERVER, no-cache
+  `C:\Users\Jared Server\McBoop Newspaper\public\calendar.json` on JARED-SERVER, then
+  published to R2 with `publish-calendar.sh` (see the top of §4); served no-cache
   so new commitments show up without a redeploy) — no longer rendered anywhere on
   `news.jaredluyster.com`. **Edit it on JARED-SERVER only:** Jared-PC still has its old
   copy, but nothing deploys from there any more, so edits made there never go live.

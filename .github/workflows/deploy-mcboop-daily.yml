@@ -1,0 +1,72 @@
+# Deploys news.jaredluyster.com + calendar.jaredluyster.com (Cloudflare Pages
+# project mcboop-daily) on every push to main that touches news/ or calendar/.
+# Replaces the 15-minute "McBoop Daily Deploy" task on JARED-SERVER. The private
+# data (calendar.json, the archive/ gallery) is not part of this deploy: the
+# Worker reads it from R2 — see "Private site data lives in R2" in news/_worker.js.
+name: Deploy news + calendar
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "news/**"
+      - "calendar/**"
+      - ".github/workflows/deploy-mcboop-daily.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-mcboop-daily
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test the Worker
+        run: node --test tests/news-worker.test.mjs
+
+      # Same layout the old deploy-pages.sh staged: the news shell (with
+      # _worker.js) at the root, the calendar page under calendar/.
+      - name: Assemble the site
+        run: |
+          mkdir -p public/calendar
+          cp -r news/. public/
+          cp -r calendar/. public/calendar/
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 0bcd3fa8352671b67da90cdbef1e543d
+        run: >
+          npx --yes wrangler@4.141.0 pages deploy public
+          --project-name mcboop-daily --branch main
+          --commit-hash "$GITHUB_SHA" --commit-message "$(git log -1 --format=%s)"
+
+      # The pages.dev host has no Access login, so it can prove the new bytes
+      # are live: both shells pin their scripts (?v=NN), and the Worker must
+      # still answer /api/feeds with JSON.
+      - name: Verify it's live
+        run: |
+          host=https://mcboop-daily.pages.dev
+          app_pin=$(grep -o 'app\.js?v=[0-9]*' public/index.html | head -1)
+          cal_pin=$(grep -o 'calendar\.js?v=[0-9]*' public/calendar/index.html | head -1)
+          for attempt in 1 2 3 4 5 6; do
+            if curl -sf "$host/?cb=$RANDOM" | grep -q "$app_pin" &&
+               curl -sf "$host/calendar/?cb=$RANDOM" | grep -q "$cal_pin"; then
+              echo "Live: $app_pin, $cal_pin"; ok=1; break
+            fi
+            echo "Not live yet (attempt $attempt)"; sleep 10
+          done
+          [ "${ok:-}" = 1 ] || { echo "::error::$host never served $app_pin / $cal_pin"; exit 1; }
+          ct=$(curl -s -o /dev/null -w '%{content_type}' "$host/api/feeds")
+          case "$ct" in application/json*) echo "/api/feeds -> $ct" ;;
+            *) echo "::error::/api/feeds returned '$ct', expected JSON"; exit 1 ;; esac

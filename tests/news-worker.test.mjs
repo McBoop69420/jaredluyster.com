@@ -89,3 +89,66 @@ for (const host of GATED) {
 test("calendar.jaredluyster.com still serves the calendar shell at the root", async () => {
   assert.equal((await get("https://calendar.jaredluyster.com/")).body, "ASSET /calendar/");
 });
+
+// Private data now comes from R2 (site/ in the CALENDAR_TICKS bucket), with the
+// deployed asset as a fallback while an object is missing.
+function r2Env(objects) {
+  return Object.assign({}, env, {
+    CALENDAR_TICKS: {
+      get: async (key) => key in objects
+        ? { body: objects[key], httpEtag: '"e"', httpMetadata: {} }
+        : null,
+    },
+  });
+}
+
+async function getWith(e, url) {
+  const res = await worker.fetch(new Request(url), e);
+  return { status: res.status, body: await res.text(), headers: res.headers };
+}
+
+test("calendar.json is served from R2 when it's there", async () => {
+  const e = r2Env({ "site/calendar.json": '{"events":[]}' });
+  const r = await getWith(e, "https://calendar.jaredluyster.com/calendar.json?v=1");
+  assert.equal(r.status, 200);
+  assert.equal(r.body, '{"events":[]}');
+  assert.match(r.headers.get("Content-Type"), /application\/json/);
+  assert.match(r.headers.get("Cache-Control"), /no-cache/);
+});
+
+test("calendar.json falls back to the deployed asset when R2 has none", async () => {
+  const r = await getWith(r2Env({}), "https://calendar.jaredluyster.com/calendar.json");
+  assert.equal(r.body, "ASSET /calendar.json");
+});
+
+test("archive resolves .html, pretty and folder URLs from R2", async () => {
+  const e = r2Env({
+    "site/archive/index.html": "INDEX",
+    "site/archive/2026-07-13-evening.html": "FLAT",
+    "site/archive/2026-07-14-morning/index.html": "FOLDER",
+  });
+  const host = "https://news.jaredluyster.com";
+  assert.equal((await getWith(e, host + "/archive/")).body, "INDEX");
+  assert.equal((await getWith(e, host + "/archive/2026-07-13-evening.html")).body, "FLAT");
+  assert.equal((await getWith(e, host + "/archive/2026-07-13-evening")).body, "FLAT");
+  assert.equal((await getWith(e, host + "/archive/2026-07-14-morning/")).body, "FOLDER");
+  const html = await getWith(e, host + "/archive/2026-07-13-evening.html");
+  assert.match(html.headers.get("Content-Type"), /text\/html/);
+  const bare = await worker.fetch(new Request(host + "/archive"), e);
+  assert.equal(bare.status, 301);
+  assert.equal(bare.headers.get("Location"), host + "/archive/");
+  // An encoded slash survives URL parsing as "..%2F"; decoded, it must not
+  // climb out of archive/.
+  assert.equal((await getWith(e, host + "/archive/..%2Fcalendar.json")).status, 404);
+});
+
+test("the ungated hosts still 404 private paths even with R2 data present", async () => {
+  const e = r2Env({ "site/calendar.json": "SECRET", "site/archive/index.html": "SECRET" });
+  for (const host of UNGATED) {
+    for (const path of ["/calendar.json", "/archive/", "/archive/index.html"]) {
+      const r = await getWith(e, host + path);
+      assert.equal(r.status, 404, `${host}${path}`);
+      assert.doesNotMatch(r.body, /SECRET/);
+    }
+  }
+});

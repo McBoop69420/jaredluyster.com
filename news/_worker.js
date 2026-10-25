@@ -414,6 +414,61 @@ function isPrivatePath(pathname) {
 }
 
 // ---------------------------------------------------------------------------
+// Private site data lives in R2, not in the deploy (2026-10-25).
+// calendar.json and the archive/ gallery can't be committed to the public repo,
+// and the deploy is now built from that repo by a GitHub Action on every push
+// (.github/workflows/deploy-mcboop-daily.yml). So both sit in the
+// jaredluyster-calendar bucket (the CALENDAR_TICKS binding) under site/:
+//   site/calendar.json      <- scripts/publish-calendar.sh on JARED-SERVER
+//   site/archive/<path>     <- uploaded once; the gallery is frozen
+// Until an object exists in R2 these fall back to the deployed asset, which is
+// what made the move safe to roll out in either order.
+const SITE_PREFIX = "site/";
+const SITE_TYPES = {
+  html: "text/html; charset=utf-8", md: "text/markdown; charset=utf-8",
+  json: "application/json; charset=utf-8", css: "text/css; charset=utf-8",
+  js: "text/javascript; charset=utf-8", png: "image/png", jpg: "image/jpeg",
+  jpeg: "image/jpeg", svg: "image/svg+xml", ico: "image/x-icon",
+};
+
+function siteType(key) {
+  const ext = key.split(".").pop().toLowerCase();
+  return SITE_TYPES[ext] || "application/octet-stream";
+}
+
+async function siteObject(env, key) {
+  const bucket = env.CALENDAR_TICKS;
+  return bucket ? bucket.get(SITE_PREFIX + key) : null;
+}
+
+function siteResponse(obj, key, extraHeaders) {
+  const headers = new Headers(extraHeaders);
+  headers.set("Content-Type", (obj.httpMetadata && obj.httpMetadata.contentType) || siteType(key));
+  if (obj.httpEtag) headers.set("ETag", obj.httpEtag);
+  return new Response(obj.body, { status: 200, headers });
+}
+
+// /archive/x.html, /archive/x (Pages-style pretty URL) and /archive/x/ all
+// resolve the way the static deploy used to serve them. The gallery's links
+// are relative, so /archive itself has to redirect to /archive/.
+async function serveArchive(request, env, url) {
+  const rest = url.pathname.slice("/archive".length);
+  if (rest === "") return Response.redirect(url.origin + "/archive/" + url.search, 301);
+  let path;
+  try { path = decodeURIComponent(rest.slice(1)); } catch (e) { return new Response("Not found", { status: 404 }); }
+  if (path.split("/").some(seg => seg === "..")) return new Response("Not found", { status: 404 });
+  const base = "archive/" + path;
+  const candidates = path === "" || path.endsWith("/")
+    ? [base + "index.html"]
+    : [base, base + ".html", base + "/index.html"];
+  for (const key of candidates) {
+    const obj = await siteObject(env, key);
+    if (obj) return siteResponse(obj, key, { "Cache-Control": "public, max-age=300" });
+  }
+  return env.ASSETS.fetch(request);
+}
+
+// ---------------------------------------------------------------------------
 // Calendar ticks, shared across devices: /api/ticks on calendar.jaredluyster.com.
 // Which todos are ticked off and which movies are dismissed used to live only in
 // each browser's localStorage, so a tick on the phone never reached the wall
@@ -640,9 +695,16 @@ export default {
     if (url.pathname === "/api/exhibitions") return handleExhibitions();
 
     // Calendar data is no-cache so newly added commitments show immediately,
-    // regardless of which (gated) hostname/subsite is asking for it — the file
-    // itself lives at the deploy root, not under calendar/.
+    // regardless of which (gated) hostname/subsite is asking for it. It comes
+    // from R2 (see SITE_PREFIX above), falling back to a deployed copy.
     if (url.pathname === "/calendar.json") {
+      const obj = await siteObject(env, "calendar.json");
+      if (obj) {
+        return siteResponse(obj, "calendar.json", {
+          "Cache-Control": "no-cache, max-age=0, must-revalidate",
+          "Access-Control-Allow-Origin": "*",
+        });
+      }
       const res = await env.ASSETS.fetch(
         new Request(url.origin + url.pathname + url.search, request),
       );
@@ -657,6 +719,10 @@ export default {
 
     if (url.hostname === "calendar.jaredluyster.com") {
       return serveSubsite(request, env, url, "calendar");
+    }
+
+    if (url.pathname === "/archive" || url.pathname.startsWith("/archive/")) {
+      return serveArchive(request, env, url);
     }
 
     // Live in-browser RSS feed for the news sections (National/World/Business/
