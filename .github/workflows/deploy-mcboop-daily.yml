@@ -35,12 +35,18 @@ jobs:
         run: node --test tests/news-worker.test.mjs
 
       # Same layout the old deploy-pages.sh staged: the news shell (with
-      # _worker.js) at the root, the calendar page under calendar/.
+      # _worker.js) at the root, the calendar page under calendar/. Staged and
+      # deployed OUTSIDE the checkout on purpose: wrangler reads a wrangler.toml
+      # from its working directory or any parent, and the repo-root one belongs
+      # to the jaredluyster-com project. Picked up here, its bindings replace
+      # this project's own, dropping CALENDAR_TICKS (calendar.json, ticks).
       - name: Assemble the site
         run: |
-          mkdir -p public/calendar
-          cp -r news/. public/
-          cp -r calendar/. public/calendar/
+          site="$RUNNER_TEMP/mcboop-daily"
+          mkdir -p "$site/public/calendar"
+          cp -r news/. "$site/public/"
+          cp -r calendar/. "$site/public/calendar/"
+          echo "SITE=$site" >> "$GITHUB_ENV"
 
       # The secret was set from Windows PowerShell 5.1, which prefixes piped text
       # with a byte-order mark; keep only the characters a Cloudflare token uses.
@@ -50,9 +56,11 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: 0bcd3fa8352671b67da90cdbef1e543d
         run: |
           export CLOUDFLARE_API_TOKEN="$(printf %s "$RAW_TOKEN" | LC_ALL=C tr -cd 'A-Za-z0-9_-')"
+          msg="$(git log -1 --format=%s)"
+          cd "$SITE"
           npx --yes wrangler@4.141.0 pages deploy public \
             --project-name mcboop-daily --branch main \
-            --commit-hash "$GITHUB_SHA" --commit-message "$(git log -1 --format=%s)"
+            --commit-hash "$GITHUB_SHA" --commit-message "$msg"
 
       # The pages.dev host has no Access login, so it can prove the new bytes
       # are live: both shells pin their scripts (?v=NN), and the Worker must
@@ -60,8 +68,8 @@ jobs:
       - name: Verify it's live
         run: |
           host=https://mcboop-daily.pages.dev
-          app_pin=$(grep -o 'app\.js?v=[0-9]*' public/index.html | head -1)
-          cal_pin=$(grep -o 'calendar\.js?v=[0-9]*' public/calendar/index.html | head -1)
+          app_pin=$(grep -o 'app\.js?v=[0-9]*' "$SITE"/public/index.html | head -1)
+          cal_pin=$(grep -o 'calendar\.js?v=[0-9]*' "$SITE"/public/calendar/index.html | head -1)
           for attempt in 1 2 3 4 5 6; do
             if curl -sf "$host/?cb=$RANDOM" | grep -q "$app_pin" &&
                curl -sf "$host/calendar/?cb=$RANDOM" | grep -q "$cal_pin"; then
