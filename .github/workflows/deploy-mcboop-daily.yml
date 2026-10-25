@@ -42,14 +42,17 @@ jobs:
           cp -r news/. public/
           cp -r calendar/. public/calendar/
 
+      # The secret was set from Windows PowerShell 5.1, which prefixes piped text
+      # with a byte-order mark; keep only the characters a Cloudflare token uses.
       - name: Deploy to Cloudflare Pages
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 0bcd3fa8352671b67da90cdbef1e543d
-        run: >
-          npx --yes wrangler@4.141.0 pages deploy public
-          --project-name mcboop-daily --branch main
-          --commit-hash "$GITHUB_SHA" --commit-message "$(git log -1 --format=%s)"
+        run: |
+          export CLOUDFLARE_API_TOKEN="$(printf %s "$RAW_TOKEN" | LC_ALL=C tr -cd 'A-Za-z0-9_-')"
+          npx --yes wrangler@4.141.0 pages deploy public \
+            --project-name mcboop-daily --branch main \
+            --commit-hash "$GITHUB_SHA" --commit-message "$(git log -1 --format=%s)"
 
       # The pages.dev host has no Access login, so it can prove the new bytes
       # are live: both shells pin their scripts (?v=NN), and the Worker must
