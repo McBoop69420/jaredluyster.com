@@ -81,3 +81,18 @@ jobs:
           ct=$(curl -s -o /dev/null -w '%{content_type}' "$host/api/feeds")
           case "$ct" in application/json*) echo "/api/feeds -> $ct" ;;
             *) echo "::error::/api/feeds returned '$ct', expected JSON"; exit 1 ;; esac
+
+      # calendar.json, the archive and todo ticks all hang off the CALENDAR_TICKS
+      # R2 binding, and those routes sit behind Access, so the checks above can't
+      # see it go missing. A deploy that picked up a wrangler.toml once rewrote
+      # the project's bindings and dropped it; check the project config directly.
+      - name: Verify the R2 binding survived
+        env:
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
+        run: |
+          token="$(printf %s "$RAW_TOKEN" | LC_ALL=C tr -cd 'A-Za-z0-9_-')"
+          curl -sf -H "Authorization: Bearer $token" \
+            https://api.cloudflare.com/client/v4/accounts/0bcd3fa8352671b67da90cdbef1e543d/pages/projects/mcboop-daily |
+            jq -e '.result.deployment_configs.production.r2_buckets.CALENDAR_TICKS.name == "jaredluyster-calendar"' >/dev/null ||
+            { echo "::error::mcboop-daily lost its CALENDAR_TICKS binding; calendar.json and ticks are down"; exit 1; }
+          echo "CALENDAR_TICKS -> jaredluyster-calendar"
