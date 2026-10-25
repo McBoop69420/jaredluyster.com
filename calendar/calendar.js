@@ -125,7 +125,7 @@
   const CALENDAR_WEEKS = 3;               // rows shown in the rolling grid
   const MAX_DOTS = 4;                     // per day in the phone grid, then "+N"
   const PHONE_QUERY = "(max-width:680px)"; // must match the phone @media in calendar.css
-  const SPORTS_WINDOW_DAYS_BEHIND = 7;   // covers the display's Sunday-of-this-week start
+  const SPORTS_WINDOW_DAYS_BEHIND = 14;  // covers the display's last-week's-Sunday start
   const SPORTS_WINDOW_DAYS_AHEAD = 45;   // covers the rolling 3-week display (plenty of slack)
   const SPORTS_REFRESH_MS = 60 * 60 * 1000;      // schedules rarely change; poll hourly
   const SPORTS_MIN_REFETCH_MS = 10 * 60 * 1000;  // floor so manual refresh can't hammer ESPN
@@ -1423,10 +1423,10 @@
     const todoEvts = todoEvents(todayStr).filter(t => !duplicatesEvent(t));
     const tp = todayStr.split("-").map(Number);
     const dow = new Date(tp[0], tp[1] - 1, tp[2], 12).getDay();   // 0 = Sun
-    // Rolling window: start on the Sunday of the current week, then run enough
-    // whole weeks to cover three weeks. Days flow continuously across month
-    // boundaries (bleedthrough); there's no navigation into the past.
-    const start = new Date(tp[0], tp[1] - 1, tp[2] - dow, 12);
+    // Rolling window: last week, this week and next week, starting on last
+    // week's Sunday. Days flow continuously across month boundaries
+    // (bleedthrough); there's no navigation further into the past.
+    const start = new Date(tp[0], tp[1] - 1, tp[2] - dow - 7, 12);
     const totalDays = CALENDAR_WEEKS * 7;
 
     const days = [];
@@ -1543,7 +1543,7 @@
       html += '<div class="cal-todo-strip"><span class="cal-todo-label">To do</span>' +
         stripTodos.map(ev => todoChipHtml(ev, todoWhen(ev))).join('') + '</div>';
     }
-    if (!selectedDate || selectedDate < todayStr || selectedDate > dateStr(last)) selectedDate = todayStr;
+    if (!selectedDate || selectedDate < dateStr(start) || selectedDate > dateStr(last)) selectedDate = todayStr;
     html += '<div class="cal-grid" data-weeks="' + (totalDays / 7) + '">';
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(d =>
       html += '<div class="cal-dow">' + d + '</div>');
@@ -1553,14 +1553,16 @@
       const ds = d.getFullYear() + "-" + pad2(Mo) + "-" + pad2(day);
       const isToday = ds === todayStr;
       const isPast = ds < todayStr;
-      const evs = isPast ? [] : (byDate[ds] || []);   // days already gone show empty
+      // Days already gone keep only their games (with final scores); every
+      // other kind of event clears off.
+      const evs = (byDate[ds] || []).filter(ev => !isPast || ev.type === "sports");
       const showMon = day === 1 || i === 0;   // mark each new month for bleedthrough
       html += '<div class="cal-cell' +
         (isToday ? " cal-cell--today" : "") +
         (isPast ? " cal-cell--past" : "") +
         (ds === selectedDate ? " cal-cell--selected" : "") +
         (evs.length ? " cal-cell--has" : "") + '"' +
-        (isPast ? '' : ' data-date="' + ds + '"') + '>';
+        (isPast && !evs.length ? '' : ' data-date="' + ds + '"') + '>';
       html += '<div class="cal-daynum">' +
         (showMon ? '<span class="cal-mon">' + esc(d.toLocaleDateString("en-US", { month: "short" })) + '</span> ' : '') +
         day + '</div>';
@@ -1637,7 +1639,7 @@
     const selParts = selectedDate.split("-").map(Number);
     const selLabel = new Date(selParts[0], selParts[1] - 1, selParts[2], 12)
       .toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-    const selEvs = byDate[selectedDate] || [];
+    const selEvs = (byDate[selectedDate] || []).filter(ev => selectedDate >= todayStr || ev.type === "sports");
     html += '<div class="cal-day-panel" aria-live="polite"><h3 class="sub">' +
       esc((selectedDate === todayStr ? "Today · " : selectedDate === tomorrowStr ? "Tomorrow · " : "") + selLabel) + '</h3>' +
       (selEvs.length

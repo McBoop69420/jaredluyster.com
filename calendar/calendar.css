@@ -340,7 +340,7 @@ button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
   /* Grid cells are tap targets holding a day number and dots; the tapped
      day's events are listed in full in .cal-day-panel under the grid. */
   .cal-cell{padding:5px 2px;gap:5px;align-items:center;cursor:pointer;}
-  .cal-cell--past{cursor:default;}
+  .cal-cell--past:not([data-date]){cursor:default;}
   .cal-cell > .cal-ev,.cal-cell > .cal-ev-wrap,.cal-cell > .cal-ev-grid{display:none;}
   .cal-cell--selected{box-shadow:inset 0 0 0 2px var(--cal-ink);}
   .cal-cell--today.cal-cell--selected{box-shadow:inset 0 0 0 2px var(--cal-accent),inset 0 0 0 4px var(--cal-ink);}
