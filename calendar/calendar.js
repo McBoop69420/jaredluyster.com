@@ -984,6 +984,8 @@
       rightName: homeFirst ? awayName : homeName,
       leftLogo: teamLogoUrl((homeFirst ? home : away).team),
       rightLogo: teamLogoUrl((homeFirst ? away : home).team),
+      leftAbbr: ((homeFirst ? home : away).team || {}).abbreviation || "",
+      rightAbbr: ((homeFirst ? away : home).team || {}).abbreviation || "",
       leftScore: homeFirst ? homeScore : awayScore,
       rightScore: homeFirst ? awayScore : homeScore,
     };
@@ -1387,12 +1389,24 @@
   // parseGameEvent). Once the game is live or final, the time slot switches
   // to the score. `size` picks a CSS modifier for the three contexts this
   // renders in: "sm" grid chips (default), "md" the upcoming strip, "lg" the
-  // full-schedule agenda. Falls back to null (caller uses text) when either
-  // team logo is missing, e.g. an ESPN response with no team art. When ESPN
-  // gives us a Gamecast link, the whole chip becomes a link there — the
-  // legal, official source for where/how to watch, never a direct stream.
+  // full-schedule agenda. A team ESPN has no art for (lower-division Copa del
+  // Rey sides, say) gets an abbreviation badge in the logo's place; only a
+  // side with neither logo nor name falls back to null (caller uses text).
+  // When ESPN gives us a Gamecast link, the whole chip becomes a link there —
+  // the legal, official source for where/how to watch, never a direct stream.
+  function teamMarkHtml(logo, name, abbr) {
+    if (logo) {
+      return '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(logo) + '" alt="' + esc(name) + '" decoding="async">';
+    }
+    const words = String(name || "").split(/\s+/).filter(Boolean);
+    const short = abbr || (words.length > 1 ? words.map(w => w[0]).join("").slice(0, 3)
+      : String(name || "").slice(0, 3)).toUpperCase();
+    return '<span class="cal-ev-logo cal-ev-logo--team cal-ev-abbr" role="img" aria-label="' + esc(name) +
+      '" title="' + esc(name) + '">' + esc(short) + '</span>';
+  }
+
   function sportsMatchHtml(ev, size) {
-    if (ev.type !== "sports" || !ev.leftLogo || !ev.rightLogo) return null;
+    if (ev.type !== "sports" || !(ev.leftLogo || ev.leftName) || !(ev.rightLogo || ev.rightName)) return null;
     const sizeClass = size && size !== "sm" ? " cal-ev-match--" + size : "";
     const hasScore = (ev.state === "in" || ev.state === "post") &&
       ev.leftScore != null && ev.rightScore != null;
@@ -1402,17 +1416,16 @@
     if (hasScore && (!size || size === "sm")) {
       const final = ev.state === "post";
       const l = parseFloat(ev.leftScore), r = parseFloat(ev.rightScore);
-      const line = (logo, name, score, cls) =>
-        '<span class="cal-ev-line' + cls + '">' +
-          '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(logo) + '" alt="' + esc(name) + '" decoding="async">' +
+      const line = (logo, name, abbr, score, cls) =>
+        '<span class="cal-ev-line' + cls + '">' + teamMarkHtml(logo, name, abbr) +
           '<span class="cal-ev-pts">' + esc(score) + '</span></span>';
       const win = (a, b) => final && a > b ? " cal-ev-line--win" : final && a < b ? " cal-ev-line--lose" : "";
       const tag = ev.gameLink ? "a" : "span";
       const linkAttrs = ev.gameLink
         ? ' href="' + esc(ev.gameLink) + '" target="_blank" rel="noopener"' : "";
       return '<' + tag + ' class="cal-ev-match cal-ev-match--board' + (final ? "" : " cal-ev-match--live") + '"' + linkAttrs + '>' +
-        line(ev.leftLogo, ev.leftName, ev.leftScore, win(l, r)) +
-        line(ev.rightLogo, ev.rightName, ev.rightScore, win(r, l)) +
+        line(ev.leftLogo, ev.leftName, ev.leftAbbr, ev.leftScore, win(l, r)) +
+        line(ev.rightLogo, ev.rightName, ev.rightAbbr, ev.rightScore, win(r, l)) +
         '<span class="cal-ev-state">' + (final ? "Final" : "Live") + '</span>' +
         '</' + tag + '>';
     }
@@ -1425,9 +1438,9 @@
       ? ' href="' + esc(ev.gameLink) + '" target="_blank" rel="noopener"' : "";
     return '<' + tag + ' class="cal-ev-match' + sizeClass + '"' + linkAttrs + '>' +
       '<span class="cal-ev-match-teams">' +
-        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.leftLogo) + '" alt="' + esc(ev.leftName) + '" decoding="async">' +
+        teamMarkHtml(ev.leftLogo, ev.leftName, ev.leftAbbr) +
         centerHtml +
-        '<img class="cal-ev-logo cal-ev-logo--team" src="' + esc(ev.rightLogo) + '" alt="' + esc(ev.rightName) + '" decoding="async">' +
+        teamMarkHtml(ev.rightLogo, ev.rightName, ev.rightAbbr) +
       '</span>' +
       '</' + tag + '>';
   }

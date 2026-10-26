@@ -149,6 +149,14 @@ a.cal-ev-match:hover{background:none;color:inherit;opacity:.7;}
 .cal-ev-match--lg .cal-ev-logo--team{width:24px;height:24px;}
 .cal-ev-match--lg .cal-ev-match-time{font-size:12.5px;}
 .cal-ev-match--lg .cal-ev-score{font-size:14px;}
+/* Stand-in for a team ESPN has no logo for: its abbreviation in a square the
+   same size as the logos around it, so the match keeps its usual layout. */
+.cal-ev-abbr{display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:1px solid currentColor;border-radius:2px;font-size:5.5px;font-weight:800;
+  letter-spacing:-.02em;line-height:1;white-space:nowrap;text-transform:uppercase;}
+.cal-ev-match--md .cal-ev-abbr{font-size:7px;}
+.cal-ev-match--lg .cal-ev-abbr{font-size:9px;}
+.cal-ev-grid .cal-ev-match--board .cal-ev-abbr{font-size:6px;}
 
 /* Sports chips get their own 2-column layout instead of stacking full-width —
    a day with four games reads as 2x2 (square-ish cards), not a 4-row list.
