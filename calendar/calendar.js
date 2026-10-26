@@ -88,6 +88,9 @@
   //     would swamp the grid. ESPN tags nearly every NHL game "national" for
   //     its out-of-market ESPN+ stream, so ESPN+ doesn't count either; the
   //     Hulu/Disney+ games are ESPN's national exclusives, so those do.
+  //   - NFL: primetime games only (kickoff 7 pm ET or later: Thursday,
+  //     Sunday and Monday night, plus late-season Saturday nights). ESPN tags
+  //     every NFL game "national", so the network can't tell them apart.
   //   - College basketball: games where both teams are in the top 25. ESPN's default
   //     scoreboard (no `groups`) is already limited to games with a ranked
   //     team, so the filter only has to check that both sides are ranked.
@@ -100,6 +103,8 @@
     { key: "hockey/nhl", label: "NHL", order: "away-home",
       networks: new Set(["ABC", "ESPN", "ESPN2", "TNT", "TRUTV", "HULU", "DISNEY+"]),
       logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
+    { key: "football/nfl", label: "NFL", order: "away-home", primetime: "19:00",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
   ];
   //   - Postseason: every playoff game in these leagues (ESPN's season type 3),
   //     e.g. the whole World Series. College football's postseason is ~40
@@ -1095,6 +1100,11 @@
 
   async function fetchNationalEvents(entry, minDate, maxDate) {
     const events = await fetchScoreboardMonths(entry.key, minDate, maxDate);
+    if (entry.primetime) {
+      return events.filter(ev => !isPostseason(ev)).map(ev => parseGameEvent(ev, entry))
+        .filter(g => inWindow(minDate, maxDate)(g) && g.start && g.start >= entry.primetime)
+        .map(g => Object.assign(g, { featured: true }));
+    }
     return events.filter(ev => {
       const comp = ev.competitions && ev.competitions[0];
       return isPostseason(ev) || ((comp && comp.broadcasts) || []).some(b => b.market === "national" &&
