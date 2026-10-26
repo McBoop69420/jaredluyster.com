@@ -3,6 +3,7 @@
  * the page; nothing is sent anywhere — center logos included. */
 (function () {
   const $ = (id) => document.getElementById(id);
+  const PLACEHOLDER_URL = "https://jaredluyster.com";
   const RECENT_KEY = "qr.recent.v1";
   const DRAFT_KEY = "qr.draft.v1";
   // Logo images, keyed by content hash, so the same logo on many Recent codes is stored once.
@@ -315,7 +316,7 @@
 
     current = matrix ? { payload, matrix, opts } : null;
     ["downloadPng", "downloadSvg", "copyPng", "print"].forEach((id) => { $(id).disabled = !current; });
-    $("empty").hidden = !!payload;
+    $("empty").hidden = !!payload || !!opts.center;
 
     if (current) {
       preview.innerHTML = QRCode.toSvg(matrix, { ...opts, title: summary(fieldsOf("url")) });
@@ -325,9 +326,14 @@
         `Version ${matrix.version} · ${matrix.size}×${matrix.size} modules · ${bytes.toLocaleString()} byte${bytes === 1 ? "" : "s"} · ` +
         `${opts.ecc === "H" && center.kind !== "none" ? "High error correction for the logo · " : ""}` +
         `prints reliably at ${fmtIn(Math.max(0.75, minPrintIn(matrix, opts.margin)))} or larger`;
+    } else if (opts.center) {
+      // A logo with no link yet: show it on a sample code so the choice is visible.
+      preview.innerHTML = QRCode.toSvg(encodeFor(PLACEHOLDER_URL, opts), { ...opts, caption: "" });
+      preview.classList.remove("is-empty");
+      $("stats").textContent = "Type a link to make the code.";
     } else {
       // Keep a faint placeholder code so the card doesn't collapse while empty.
-      preview.innerHTML = QRCode.toSvg(QRCode.encode("https://jaredluyster.com", "M"), {});
+      preview.innerHTML = QRCode.toSvg(QRCode.encode(PLACEHOLDER_URL, "M"), {});
       preview.classList.add("is-empty");
       $("stats").textContent = "";
     }
