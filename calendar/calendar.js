@@ -520,11 +520,13 @@
 
   // Unticked todos as calendar events. An overdue one is pinned to today; an
   // undated one gets no date, which renderCalendar's byDate pass skips, so only
-  // the strip shows it.
+  // the strip shows it. A comic reminder stays off the calendar until its
+  // release day: there's nothing to do about an issue that isn't out yet.
   function todoEvents(todayStr) {
     // `due` keeps the real date after an overdue todo is moved to today, so
     // duplicatesEvent() still matches it against its own day's events.
-    const fromFile = todoList.concat(comicList).filter(t => !todoDone[t.key]).map(t => ({
+    const released = comicList.filter(t => !t.date || t.date <= todayStr);
+    const fromFile = todoList.concat(released).filter(t => !todoDone[t.key]).map(t => ({
       type: "todo", title: t.title, todoKey: t.key, due: t.date, comic: t.key.indexOf("C:") === 0,
       date: t.date && t.date < todayStr ? todayStr : t.date,
       overdue: !!t.date && t.date < todayStr,
