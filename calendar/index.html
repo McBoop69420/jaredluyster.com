@@ -19,17 +19,19 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/calendar.css?v=15">
+<link rel="stylesheet" href="/calendar.css?v=16">
 </head>
 <body>
 <article class="paper">
   <header class="masthead">
-    <div class="toprule"></div>
     <h1 class="title" id="title">Calendar &amp; Day Plan</h1>
-    <div class="dateline" id="dateline">loading&hellip;</div>
-    <div class="strip">
-      <span>Lexington, Kentucky</span>
-      <span id="updated">updating&hellip;</span>
+    <div class="masthead-when">
+      <div class="cal-range" id="range"></div>
+      <div class="dateline" id="dateline">loading&hellip;</div>
+    </div>
+    <div class="masthead-end">
+      <div class="updated"><span id="updated">updating&hellip;</span><span>Times in ET</span></div>
+      <button class="refresh-btn" id="refreshBtn" type="button">&#8635; Refresh</button>
     </div>
   </header>
 
@@ -38,14 +40,6 @@
       <div class="calendar" id="calRoot"></div>
     </div>
   </div>
-
-  <div class="board-toolbar">
-    <button class="refresh-btn" id="refreshBtn" type="button">&#8635; Refresh now</button>
-  </div>
-
-  <footer class="colophon">
-    <p>Auto-refreshing &middot; times in Eastern (ET).</p>
-  </footer>
 </article>
 <div class="todo-sheet" id="todoSheet" hidden>
   <div class="todo-panel" role="dialog" aria-modal="true" aria-labelledby="todoSheetTitle">
@@ -93,6 +87,6 @@
 </div>
 <div class="todo-undo" id="todoUndo" role="status" aria-live="polite"></div>
 <script src="/todo-repeat.js?v=1"></script>
-<script src="/calendar.js?v=28"></script>
+<script src="/calendar.js?v=29"></script>
 </body>
 </html>

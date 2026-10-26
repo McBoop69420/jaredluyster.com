@@ -1536,7 +1536,8 @@
     if (sy === ly) range = (sM === lM) ? (sM + " " + sy) : (sM + " – " + lM + " " + sy);
     else range = sM + " " + sy + " – " + lM + " " + ly;
 
-    let html = '<div class="cal-range">' + esc(range) + '</div>';
+    $("range").textContent = range;
+    let html = '';
     // The strip always renders: it carries the link to the news subdomain even
     // when there's nothing today or tomorrow.
     html += '<div class="cal-today-strip">' +

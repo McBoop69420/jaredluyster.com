@@ -13,10 +13,7 @@ html{overscroll-behavior:none;}
 body{
   background:var(--cal-paper);color:var(--cal-ink);
   font-family:var(--cal-font-body);line-height:1.5;
-  padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  /* The Home Screen app's status bar is black-translucent (white text), so the
-     strip under it stays dark rather than taking the paper colour. */
-  border-top:env(safe-area-inset-top) solid var(--cal-ink);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-font-smoothing:antialiased;
   overscroll-behavior:none;
   /* This runs as a mounted/kiosk display, not a page meant to be touched —
@@ -24,26 +21,27 @@ body{
   -webkit-user-select:none;user-select:none;
   -webkit-touch-callout:none;
 }
-/* Still allow following the two real links in the masthead. */
-.strip a{-webkit-touch-callout:default;}
 /* No frame around the page: the paper is the whole screen, so the grid gets
    all the width but a small gutter. */
-.paper{background:var(--cal-paper);padding:10px 12px 14px;}
-.masthead{text-align:center;}
-.toprule{height:4px;background:var(--cal-accent);margin:0 0 8px;}
+.paper{background:var(--cal-paper);padding:0 12px 14px;}
+/* One row: title left, the month range and today's date centred, update time
+   and Refresh right. Grid (not flex) so the middle is centred on the page
+   whatever the two sides' widths. */
+.masthead{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px 20px;
+  border-top:4px solid var(--cal-accent);border-bottom:var(--cal-border-w) solid var(--cal-ink);padding:8px 0;}
 h1.title{
   font-family:var(--cal-font-display);
-  font-weight:700;font-size:44px;letter-spacing:-.02em;
-  margin:6px 0 0;line-height:.95;text-transform:uppercase;
+  font-weight:700;font-size:30px;letter-spacing:-.02em;
+  margin:0;line-height:1;text-transform:uppercase;white-space:nowrap;justify-self:start;
 }
 h1.title::first-letter{color:var(--cal-accent);}
-.dateline{font-size:13px;font-style:italic;color:var(--cal-muted);margin:3px 0 3px;}
-.strip{
-  display:flex;justify-content:space-between;align-items:center;
-  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--cal-muted);border-top:2px solid var(--cal-ink);
-  border-bottom:var(--cal-border-w) solid var(--cal-ink);padding:6px 2px;margin-top:6px;
-}
+.masthead-when{text-align:center;line-height:1.25;}
+.cal-range{font-family:var(--cal-font-display);font-weight:700;font-size:18px;
+  text-transform:uppercase;letter-spacing:-.01em;}
+.dateline{font-size:12.5px;font-style:italic;color:var(--cal-muted);}
+.masthead-end{justify-self:end;display:flex;align-items:center;gap:14px;}
+.updated{display:flex;flex-direction:column;align-items:flex-end;font-size:11px;line-height:1.35;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--cal-muted);white-space:nowrap;}
 a{color:var(--cal-accent);text-decoration:none;border-bottom:2px solid var(--cal-accent);transition:background-color .12s ease,color .12s ease;}
 a:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 
@@ -53,8 +51,6 @@ h3.sub{font-size:14px;font-weight:700;margin:14px 0 4px;text-transform:uppercase
 
 /* Calendar grid — roomy, enough vertical space for 3+ daily chips */
 .panel-inner--cal{max-width:none;padding:0;}
-.cal-range{font-family:var(--cal-font-display);font-weight:700;font-size:18px;
-  text-transform:uppercase;letter-spacing:-.01em;text-align:center;margin:0 0 8px;}
 .cal-today-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;
   margin:0 0 10px;padding:8px 10px;background:var(--cal-highlight);border:2px solid var(--cal-ink);
   font-family:var(--cal-font-body);font-size:12px;line-height:1.35;}
@@ -327,12 +323,9 @@ button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
   font-variant-numeric:tabular-nums;}
 .cal-loading,.cal-empty{font-size:13px;color:var(--cal-muted);font-style:italic;}
 
-/* Toolbar */
-.board-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:10px 0 0;}
 .refresh-btn{font-family:var(--cal-font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;padding:8px 16px;border:2px solid var(--cal-ink);border-radius:0;background:var(--cal-ink);color:var(--cal-paper);box-shadow:4px 4px 0 var(--cal-accent);transition:transform .12s ease,box-shadow .12s ease;}
 .refresh-btn:hover{background:var(--cal-ink);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--cal-accent);}
 .refresh-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:4px 4px 0 var(--cal-accent);}
-.colophon{font-size:10.5px;color:var(--cal-muted);text-align:center;margin-top:10px;text-transform:uppercase;letter-spacing:.04em;line-height:1.4;}
 
 @media (prefers-reduced-motion:reduce){
   button.cal-todo--done,.todo-undo,.todo-undo.is-open{transition:none;}
@@ -340,7 +333,11 @@ button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
 }
 
 @media (max-width:680px){
-  .paper{padding:8px 6px 14px;}
+  .paper{padding:0 6px 14px;}
+  /* Too narrow for one row: stack the three parts, centred. */
+  .masthead{grid-template-columns:1fr;justify-items:center;text-align:center;}
+  h1.title{justify-self:center;font-size:26px;}
+  .masthead-end{justify-self:center;}
   .cal-today-strip{font-size:10.5px;justify-content:flex-start;padding:6px 7px;}
   .cal-today-item{padding:1px 6px;}
   /* Grid cells are tap targets holding a day number and dots; the tapped
