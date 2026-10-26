@@ -1612,11 +1612,15 @@
         // the tap target, not just the title text inside it.
         const wholeLink = ev.type === "movie" && ev.url;
         const tag = wholeLink ? "a" : "div";
+        // .cal-ev-s (the bare start) is CSS-hidden except on movie chips, and
+        // a sports chip carries its time in the match row, so a plain event
+        // with only a start ("Weightlifting", 12:00) needs it shown here.
+        const plain = ev.type !== "sports" && ev.type !== "movie";
         const chip = '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + '"' +
           (wholeLink ? ' href="' + esc(ev.url) + '" target="_blank" rel="noopener"' : '') +
           ' title="' + esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
-          (rng && rng !== start ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
+          (rng && (rng !== start || plain) ? '<span class="cal-ev-t">' + esc(rng) + '</span> ' : '') +
           '<span class="cal-ev-title">' + (wholeLink ? esc(ev.title || "") : (sportsMatchHtml(ev) || eventTitleHtml(ev))) +
           '</span>' + theatreLinksHtml(ev) + '</' + tag + '>';
         // The x is a sibling of the chip, not inside it: a button can't live in
