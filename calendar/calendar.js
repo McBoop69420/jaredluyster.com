@@ -1495,17 +1495,18 @@
     // would otherwise sort first, but a TBD college football game is far
     // more likely to kick off in the afternoon/evening than a soccer match
     // that already has a confirmed 7:30a start.
-    // League-wide games always come after my own teams' games and everything
-    // else, then by time.
+    // Everything in start-time order; league-wide games (outlined, so my own
+    // teams' solid cards still stand out) only yield to mine on a tie, e.g. the
+    // UCL card beside a 12:45 Liverpool match.
     Object.keys(byDate).forEach(k =>
       byDate[k].sort((a, b) => {
-        const lw = isLeagueWide(a) - isLeagueWide(b);
-        if (lw) return lw;
         const as = a.start || "", bs = b.start || "";
-        if (!as && !bs) return 0;
-        if (!as) return 1;
-        if (!bs) return -1;
-        return as.localeCompare(bs);
+        if (as !== bs) {
+          if (!as) return 1;
+          if (!bs) return -1;
+          return as.localeCompare(bs);
+        }
+        return isLeagueWide(a) - isLeagueWide(b);
       }));
 
     function isWorkEvent(ev) {
