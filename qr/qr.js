@@ -3,7 +3,6 @@
  * the page; nothing is sent anywhere — center logos included. */
 (function () {
   const $ = (id) => document.getElementById(id);
-  const TYPE_LABELS = { url: "Link", text: "Text", wifi: "Wi-Fi", contact: "Contact", email: "Email", phone: "Phone", sms: "SMS" };
   const RECENT_KEY = "qr.recent.v1";
   const DRAFT_KEY = "qr.draft.v1";
   // Logo images, keyed by content hash, so the same logo on many Recent codes is stored once.
@@ -17,11 +16,9 @@
   const GAP_IN = 0.25;
 
   const form = $("fields");
-  const tabs = [...document.querySelectorAll(".type-tabs [data-type]")];
   const segs = [...document.querySelectorAll(".seg [data-center]")];
   const preview = $("preview");
 
-  let type = "url";
   let current = null; // { payload, matrix, opts } for the code on screen, or null
   // What goes in the middle. logoId points into `logos`; the image itself never leaves the browser.
   const center = { kind: "none", logoId: null, text: "", size: 0.22, shape: "square", plate: "#ffffff", textColor: "#000000" };
@@ -126,29 +123,6 @@
   function encodeFor(payload, opts) {
     return QRCode.encode(payload, opts.ecc, opts.center ? QRCode.CENTER_MIN_VERSION : 0);
   }
-
-  function setType(t) {
-    if (!TYPE_LABELS[t]) return;
-    type = t;
-    tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.type === t)));
-    form.querySelectorAll("fieldset").forEach((fs) => { fs.hidden = fs.dataset.type !== t; });
-    if (t !== "url") showTypes(true);
-  }
-
-  // Links are the everyday case, so the other types stay tucked away until asked for (or
-  // until a draft or Recent code of another type is loaded).
-  function showTypes(open) {
-    $("typeTabs").hidden = !open;
-    const btn = $("moreTypes");
-    btn.setAttribute("aria-expanded", String(open));
-    btn.textContent = open ? "Just a link" : "Other kinds of code — Wi-Fi, contact card, text, email…";
-  }
-
-  $("moreTypes").addEventListener("click", () => {
-    if ($("typeTabs").hidden) { showTypes(true); return; }
-    showTypes(false);
-    if (type !== "url") { setType("url"); update(); }
-  });
 
   // ---- center logo controls -----------------------------------------------------------
 
@@ -318,7 +292,7 @@
   }
 
   function update() {
-    const payload = QRPayload.build(type, fieldsOf(type));
+    const payload = QRPayload.build(fieldsOf("url"));
     const style = styleState();
     const opts = buildOpts(style, center);
     const warn = colorWarning(opts.dark, opts.light);
@@ -344,7 +318,7 @@
     $("empty").hidden = !!payload;
 
     if (current) {
-      preview.innerHTML = QRCode.toSvg(matrix, { ...opts, title: summary(type, fieldsOf(type)) });
+      preview.innerHTML = QRCode.toSvg(matrix, { ...opts, title: summary(fieldsOf("url")) });
       preview.classList.remove("is-empty");
       const bytes = QRPayload.byteLength(payload);
       $("stats").textContent =
@@ -360,7 +334,7 @@
     updatePrintNote();
     scheduleCheck();
     schedulePrintSheet();
-    store.set(DRAFT_KEY, { type, fields: { [type]: fieldsOf(type) }, style, center: { ...center }, print: printOpts() });
+    store.set(DRAFT_KEY, { fields: { url: fieldsOf("url") }, style, center: { ...center }, print: printOpts() });
   }
 
   // ---- scan check ---------------------------------------------------------------------
@@ -430,34 +404,25 @@
 
   // ---- naming -------------------------------------------------------------------------
 
-  function summary(t, f) {
-    const pick = {
-      url: () => f.url,
-      text: () => f.text,
-      wifi: () => f.ssid,
-      contact: () => [f.first, f.last].filter(Boolean).join(" ") || f.org,
-      email: () => f.to,
-      phone: () => f.number,
-      sms: () => f.number,
-    }[t];
-    const s = String((pick && pick()) || "").replace(/\s+/g, " ").trim();
+  function summary(f) {
+    const s = String(f.url || "").replace(/\s+/g, " ").trim();
     return s.length > 60 ? `${s.slice(0, 59)}…` : s;
   }
 
   function fileName(ext) {
-    const base = summary(type, fieldsOf(type))
+    const base = summary(fieldsOf("url"))
       .replace(/^https?:\/\//i, "")
       .replace(/[^a-z0-9]+/gi, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40)
       .toLowerCase();
-    return `qr-${base || type}.${ext}`;
+    return `qr-${base || "link"}.${ext}`;
   }
 
   // ---- export -------------------------------------------------------------------------
 
   function svgMarkup() {
-    return QRCode.toSvg(current.matrix, { ...current.opts, title: summary(type, fieldsOf(type)) });
+    return QRCode.toSvg(current.matrix, { ...current.opts, title: summary(fieldsOf("url")) });
   }
 
   // PNG at a whole number of pixels per module (no blurry edges), at least ~2000px wide.
@@ -598,10 +563,10 @@
   function remember() {
     if (!current) return;
     const entry = {
-      type, fields: fieldsOf(type), style: styleState(), center: { ...center },
+      fields: fieldsOf("url"), style: styleState(), center: { ...center },
       payload: current.payload, at: Date.now(),
     };
-    const same = (e) => e.type === entry.type && e.payload === entry.payload &&
+    const same = (e) => e.payload === entry.payload &&
       JSON.stringify([e.style, e.center]) === JSON.stringify([entry.style, entry.center]);
     const list = store.get(RECENT_KEY, []).filter((e) => !same(e));
     list.unshift(entry);
@@ -611,7 +576,9 @@
   }
 
   function renderRecent() {
-    const list = store.get(RECENT_KEY, []);
+    // Recent codes saved before the other types were removed are dropped here.
+    const list = store.get(RECENT_KEY, []).filter((e) => !e.type || e.type === "url");
+    store.set(RECENT_KEY, list);
     const ul = $("recentList");
     ul.innerHTML = "";
     $("recentSection").hidden = list.length === 0;
@@ -633,15 +600,11 @@
       box.innerHTML = thumb;
       const label = document.createElement("span");
       label.className = "recent-label";
-      const kind = document.createElement("span");
-      kind.className = "recent-type";
-      kind.textContent = TYPE_LABELS[e.type] || e.type;
       const badge = e.center && e.center.kind === "text" ? e.center.text : "";
-      label.append(kind, document.createTextNode(e.style.caption || badge || summary(e.type, e.fields) || "—"));
+      label.textContent = e.style.caption || badge || summary(e.fields) || "—";
       open.append(box, label);
       open.addEventListener("click", () => {
-        setType(e.type);
-        fillFields(e.type, e.fields);
+        fillFields("url", e.fields);
         setCenter({ kind: "none" }); // unlock ECC first so setStyle's value sticks as the user's own
         setStyle(e.style);
         setCenter(e.center);
@@ -669,7 +632,6 @@
 
   // ---- wiring -------------------------------------------------------------------------
 
-  tabs.forEach((b) => b.addEventListener("click", () => { setType(b.dataset.type); update(); }));
   form.addEventListener("input", update);
   form.addEventListener("change", update);
   ["caption", "margin", "dark", "light"].forEach((id) => $(id).addEventListener("input", update));
@@ -687,9 +649,8 @@
 
   // Restore the last draft so a reload doesn't lose what was typed.
   const draft = store.get(DRAFT_KEY, null);
-  if (draft && TYPE_LABELS[draft.type]) {
-    setType(draft.type);
-    if (draft.fields && draft.fields[draft.type]) fillFields(draft.type, draft.fields[draft.type]);
+  if (draft && draft.fields) {
+    if (draft.fields.url) fillFields("url", draft.fields.url);
     if (draft.style) setStyle(draft.style);
     if (draft.print) {
       if (draft.print.size) $("printSize").value = String(draft.print.size);

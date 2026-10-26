@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="qr.css?v=5" />
+<link rel="stylesheet" href="qr.css?v=6" />
 </head>
 <body>
 <div class="screen">
@@ -24,99 +24,14 @@
 
 <main class="qr-main">
   <section class="panel panel-form" aria-label="What the code contains">
-    <div class="type-tabs" id="typeTabs" role="tablist" aria-label="Code type" hidden>
-      <button type="button" role="tab" data-type="url" aria-selected="true">Link</button>
-      <button type="button" role="tab" data-type="text" aria-selected="false">Text</button>
-      <button type="button" role="tab" data-type="wifi" aria-selected="false">Wi-Fi</button>
-      <button type="button" role="tab" data-type="contact" aria-selected="false">Contact</button>
-      <button type="button" role="tab" data-type="email" aria-selected="false">Email</button>
-      <button type="button" role="tab" data-type="phone" aria-selected="false">Phone</button>
-      <button type="button" role="tab" data-type="sms" aria-selected="false">SMS</button>
-    </div>
-
     <form id="fields" autocomplete="off" onsubmit="return false">
       <fieldset data-type="url">
         <label class="field">
           <span class="field-label">Link</span>
           <input name="url" type="text" inputmode="url" placeholder="jaredluyster.com" spellcheck="false" />
-          <span class="field-hint">https:// is added if you leave it off. The code works as long as this page does.</span>
         </label>
-      </fieldset>
-
-      <fieldset data-type="text" hidden>
-        <label class="field">
-          <span class="field-label">Text</span>
-          <textarea name="text" rows="5" placeholder="Anything — shown as plain text when scanned."></textarea>
-        </label>
-      </fieldset>
-
-      <fieldset data-type="wifi" hidden>
-        <label class="field">
-          <span class="field-label">Network name (SSID)</span>
-          <input name="ssid" type="text" spellcheck="false" />
-        </label>
-        <label class="field">
-          <span class="field-label">Password</span>
-          <input name="password" type="text" spellcheck="false" />
-        </label>
-        <div class="field-row">
-          <label class="field">
-            <span class="field-label">Security</span>
-            <select name="security">
-              <option value="WPA">WPA / WPA2 / WPA3</option>
-              <option value="WEP">WEP</option>
-              <option value="nopass">None (open)</option>
-            </select>
-          </label>
-          <label class="check">
-            <input name="hidden" type="checkbox" />
-            <span>Hidden network</span>
-          </label>
-        </div>
-        <span class="field-hint">Scanning joins the network. If you change the password, print a new code.</span>
-      </fieldset>
-
-      <fieldset data-type="contact" hidden>
-        <div class="field-row">
-          <label class="field"><span class="field-label">First name</span><input name="first" type="text" /></label>
-          <label class="field"><span class="field-label">Last name</span><input name="last" type="text" /></label>
-        </div>
-        <div class="field-row">
-          <label class="field"><span class="field-label">Company</span><input name="org" type="text" /></label>
-          <label class="field"><span class="field-label">Title</span><input name="title" type="text" /></label>
-        </div>
-        <div class="field-row">
-          <label class="field"><span class="field-label">Phone</span><input name="phone" type="tel" /></label>
-          <label class="field"><span class="field-label">Email</span><input name="email" type="email" spellcheck="false" /></label>
-        </div>
-        <label class="field"><span class="field-label">Website</span><input name="website" type="text" inputmode="url" spellcheck="false" /></label>
-        <label class="field"><span class="field-label">Address</span><input name="address" type="text" /></label>
-        <label class="field"><span class="field-label">Note</span><input name="note" type="text" /></label>
-        <span class="field-hint">Scanning offers to save this as a new contact.</span>
-      </fieldset>
-
-      <fieldset data-type="email" hidden>
-        <label class="field"><span class="field-label">To</span><input name="to" type="email" spellcheck="false" /></label>
-        <label class="field"><span class="field-label">Subject</span><input name="subject" type="text" /></label>
-        <label class="field"><span class="field-label">Message</span><textarea name="body" rows="4"></textarea></label>
-        <span class="field-hint">Scanning opens a new email, filled in and ready to send.</span>
-      </fieldset>
-
-      <fieldset data-type="phone" hidden>
-        <label class="field">
-          <span class="field-label">Phone number</span>
-          <input name="number" type="tel" placeholder="+1 859 555 0123" />
-          <span class="field-hint">Include the country code (+1 in the US) so it dials from anywhere.</span>
-        </label>
-      </fieldset>
-
-      <fieldset data-type="sms" hidden>
-        <label class="field"><span class="field-label">Phone number</span><input name="number" type="tel" placeholder="+1 859 555 0123" /></label>
-        <label class="field"><span class="field-label">Message</span><textarea name="message" rows="3"></textarea></label>
-        <span class="field-hint">Scanning opens a new text message, ready to send.</span>
       </fieldset>
     </form>
-    <button id="moreTypes" class="link-btn more-types" type="button" aria-controls="typeTabs" aria-expanded="false">Other kinds of code — Wi-Fi, contact card, text, email…</button>
 
     <div class="center-group">
       <h2 class="group-head">Center logo</h2>
@@ -280,10 +195,10 @@
   <p><strong>Why these never expire.</strong> Most "free QR code" sites hand you a code that points
     at their own short link, then redirect it to you — and when the trial ends or the site shuts
     down, the redirect stops and every printed copy goes dead. The codes made here hold the
-    actual link, text, Wi-Fi login or contact card in the pattern itself. Nothing is hosted,
-    tracked or counted, there's no account to lapse, and it all runs in your browser — the code
-    you print today will scan the same way in twenty years.</p>
-  <p>The one thing a static code can't change after it's printed is what it says, so a Link code
+    actual link in the pattern itself. Nothing is hosted, tracked or counted, there's no account
+    to lapse, and it all runs in your browser — the code you print today will scan the same way
+    in twenty years.</p>
+  <p>The one thing a static code can't change after it's printed is what it says, so a code
     works as long as that web page stays up.</p>
 </footer>
 </div>
@@ -291,8 +206,8 @@
 <div id="printSheet" class="print-sheet" aria-hidden="true"></div>
 
 <script src="vendor/qrcode.js"></script>
-<script src="payload.js?v=1"></script>
+<script src="payload.js?v=2"></script>
 <script src="code.js?v=3"></script>
-<script src="qr.js?v=4"></script>
+<script src="qr.js?v=5"></script>
 </body>
 </html>
