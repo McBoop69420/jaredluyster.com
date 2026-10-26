@@ -51,6 +51,10 @@ const FEED_SOURCES = {
   ],
 };
 
+// Only current-events sections carry a lean; business, tech and science
+// headlines go out without one.
+const BIAS_SECTIONS = new Set(["local", "national", "world"]);
+
 // Political lean shown next to each source (Ground-News-style), scored the way
 // Ground News does it: average the published ratings from AllSides, Ad Fontes
 // Media and Media Bias/Fact Check. Each rater is first put on one scale, -2
@@ -77,17 +81,6 @@ const BIAS_RATINGS = {
   "BBC World": { allsides: "center", adFontes: -1.42, mbfc: 1.5 },
   "Al Jazeera": { allsides: "lean-left", adFontes: -7.27, mbfc: -3.2 },
   "The Guardian": { allsides: "left", adFontes: -8.51, mbfc: -3.6 },
-  "MarketWatch": { allsides: "center", adFontes: -3.88, mbfc: 2.8 },
-  "CNBC": { allsides: "lean-left", adFontes: -1.92, mbfc: -3.3 },
-  "WSJ Markets": { allsides: "center", adFontes: 4.31, mbfc: 4.2 }, // AllSides: WSJ (News)
-  "Forbes": { allsides: "center", adFontes: -2.95, mbfc: 1.3 },
-  "Ars Technica": { allsides: "center", adFontes: -2.16, mbfc: -0.6 },
-  "The Verge": { allsides: "lean-left", adFontes: -7.27, mbfc: -2.8 },
-  "TechCrunch": { allsides: "center", adFontes: -0.47, mbfc: -3.6 },
-  "Wired": { allsides: "left", adFontes: -6.86, mbfc: -3.0 },
-  "ScienceDaily": { allsides: "center", mbfc: -1.0 },
-  "STAT News": { adFontes: -2.92, mbfc: -3.3 },
-  "Live Science": { allsides: "center", mbfc: -2.5 },
 };
 
 const ALLSIDES_SCORES = { left: -2, "lean-left": -1, center: 0, "lean-right": 1, right: 2 };
@@ -152,7 +145,8 @@ async function handleFeeds(request) {
   const sections = {};
   await Promise.all(
     Object.entries(FEED_SOURCES).map(async ([slug, sources]) => {
-      const results = await Promise.all(sources.map((s) => fetchAndParseFeed(s.url, s.name, outletBias(s.name))));
+      const results = await Promise.all(sources.map((s) =>
+        fetchAndParseFeed(s.url, s.name, BIAS_SECTIONS.has(slug) ? outletBias(s.name) : {})));
 
       // A flat recency sort lets high-cadence sources (post every few
       // minutes) crowd out slower ones (a few times a day) entirely — the

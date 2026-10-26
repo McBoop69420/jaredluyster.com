@@ -2,7 +2,8 @@
 // Run: node --test tests/*.test.mjs
 //
 // Every feed is stubbed to return one item, so the response carries one row per
-// configured source with the bias it was scored from BIAS_RATINGS.
+// configured source — scored from BIAS_RATINGS in the current-events sections,
+// unlabeled everywhere else.
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -18,12 +19,12 @@ globalThis.fetch = async (url) => new Response(
 
 const res = await worker.fetch(new Request("https://news.jaredluyster.com/api/feeds"), {});
 const { sections } = await res.json();
+const RATED = ["local", "national", "world"];
 const bySource = {};
-for (const items of Object.values(sections)) for (const it of items) bySource[it.source] = it;
+for (const slug of RATED) for (const it of sections[slug]) bySource[it.source] = it;
 
-test("every source gets a scored label; only uncovered outlets are unrated", () => {
-  const sources = Object.keys(bySource);
-  assert.ok(sources.length >= 20, "expected every configured source in the response");
+test("every current-events source gets a scored label; only uncovered outlets are unrated", () => {
+  assert.ok(Object.keys(bySource).length >= 12, "expected every configured source in the response");
   for (const [name, it] of Object.entries(bySource)) {
     if (name === "LEX 18") continue;
     assert.notEqual(it.bias, "unrated", `${name} has no BIAS_RATINGS entry`);
@@ -33,6 +34,13 @@ test("every source gets a scored label; only uncovered outlets are unrated", () 
   assert.equal(bySource["LEX 18"].biasScore, null);
 });
 
+test("business, tech and science headlines carry no lean", () => {
+  for (const slug of ["business", "tech", "science"]) {
+    assert.ok(sections[slug].length > 0, slug);
+    for (const it of sections[slug]) assert.equal(it.bias, undefined, `${slug}: ${it.source}`);
+  }
+});
+
 test("averaged scores land in the expected buckets", () => {
   const expected = {
     "The Hill": "center",
@@ -40,7 +48,6 @@ test("averaged scores land in the expected buckets", () => {
     "Mother Jones": "left",
     "Fox News": "right",
     "The Guardian": "lean-left",
-    "WSJ Markets": "lean-right",
     "ABC 36 (WTVQ)": "center",
   };
   for (const [name, bias] of Object.entries(expected)) assert.equal(bySource[name].bias, bias, name);
@@ -48,5 +55,5 @@ test("averaged scores land in the expected buckets", () => {
 
 test("hover note shows the score and each rater behind it", () => {
   assert.equal(bySource["The Hill"].biasNote, "Score −0.01 · AllSides Center · Ad Fontes −1.65 · MBFC +0.4");
-  assert.equal(bySource["STAT News"].biasNote.includes("AllSides"), false);
+  assert.equal(bySource["ABC 36 (WTVQ)"].biasNote, "Score −0.12 · MBFC −0.5");
 });
