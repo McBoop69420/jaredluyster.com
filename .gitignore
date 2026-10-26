@@ -1,13 +1,7 @@
 .DS_Store
 .claude/
 Caddyfile
-marketplace/__pycache__/
-marketplace/.venv/
-marketplace/*.db
-marketplace/*.db-shm
-marketplace/*.db-wal
 .env
-marketplace/.env
 .codex-tmp/
 .wrangler/
 
