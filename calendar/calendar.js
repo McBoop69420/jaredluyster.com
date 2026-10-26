@@ -522,14 +522,17 @@
   // undated one gets no date, which renderCalendar's byDate pass skips, so only
   // the strip shows it.
   function todoEvents(todayStr) {
+    // `due` keeps the real date after an overdue todo is moved to today, so
+    // duplicatesEvent() still matches it against its own day's events.
     const fromFile = todoList.concat(comicList).filter(t => !todoDone[t.key]).map(t => ({
-      type: "todo", title: t.title, todoKey: t.key,
+      type: "todo", title: t.title, todoKey: t.key, due: t.date,
       date: t.date && t.date < todayStr ? todayStr : t.date,
       overdue: !!t.date && t.date < todayStr,
       repeat: "",
     }));
     const fromPage = localTodos.map(t => ({
       type: "todo", title: t.title, todoKey: "L:" + t.id,   // repo keys are "date|title", so never clash
+      due: t.due,
       date: t.due && t.due < todayStr ? todayStr : t.due,
       overdue: !!t.due && t.due < todayStr,
       repeat: t.repeat && REPEAT ? REPEAT.describe(t.repeat) : "",
@@ -539,13 +542,16 @@
 
   // A dated todo that's also on the calendar as an event that day ("Lunch —
   // 12:30" beside a 12:30p "Lunch" event) would show twice; the event, with its
-  // proper time, wins. Titles match once a trailing " — 12:30" is dropped.
+  // proper time, wins. Titles match once a trailing " — 12:30" is dropped. An
+  // overdue todo is matched on its own date, not the today it was moved to, so
+  // it stays hidden after the day passes instead of resurfacing as overdue.
   function duplicatesEvent(todo) {
-    if (!todo.date) return false;
+    const day = todo.due || todo.date;
+    if (!day) return false;
     const key = s => String(s || "").replace(/\s+[—–-]\s*\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)?\s*$/i, "")
       .trim().toLowerCase();
     const k = key(todo.title);
-    return (calEvents || []).some(ev => ev.date === todo.date && key(ev.title) === k);
+    return (calEvents || []).some(ev => ev.date === day && key(ev.title) === k);
   }
 
   // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
