@@ -124,17 +124,18 @@
       '<a class="feed-item" href="' + esc(it.link) + '" target="_blank" rel="noopener">' +
         '<div class="feed-item-title">' + esc(it.title) + "</div>" +
         '<div class="feed-item-meta">' + esc(it.source || "") +
-        (it.bias ? ' <span class="bias-tag bias-' + esc(it.bias) + '">' + esc(BIAS_LABELS[it.bias] || it.bias) + "</span>" : "") +
+        (it.bias ? ' <span class="bias-tag bias-' + esc(it.bias) + '"' + (it.biasNote ? ' title="' + esc(it.biasNote) + '"' : "") + ">" + esc(BIAS_LABELS[it.bias] || it.bias) + "</span>" : "") +
         (it.pubDate ? " &middot; " + esc(relTime(it.pubDate)) : "") + "</div>" +
       "</a>"
     ).join("");
   }
 
-  // Rough editorial lean shown next to each source (Ground-News-style), not
-  // a scientific rating — see the comment above FEED_SOURCES in _worker.js.
+  // Lean shown next to each source (Ground-News-style), averaged from
+  // AllSides / Ad Fontes / MBFC — see BIAS_RATINGS in _worker.js. Hovering the
+  // chip shows the score and the ratings behind it.
   const BIAS_LABELS = {
     left: "Left", "lean-left": "Lean Left", center: "Center",
-    "lean-right": "Lean Right", right: "Right",
+    "lean-right": "Lean Right", right: "Right", unrated: "Unrated",
   };
 
   function relTime(iso) {

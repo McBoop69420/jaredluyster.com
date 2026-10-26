@@ -6,55 +6,135 @@
 // mcboop-morning-newspaper skill for the full contract.
 // ---------------------------------------------------------------------------
 
-// `bias` is a rough, editorially-labeled political lean shown next to each
-// source in the UI (Ground-News-style) — not a scientific rating. One of:
-// "left", "lean-left", "center", "lean-right", "right". Non-political
-// sections (Technology, Science & Health) are all tagged "center" since the
-// label doesn't really apply, but every item still carries one for a
-// consistent UI.
+// Each source's bias label is scored from BIAS_RATINGS below, keyed by `name`.
 const FEED_SOURCES = {
   local: [
-    { name: "LEX 18", url: "https://www.lex18.com/news.rss", bias: "center" },
-    { name: "ABC 36 (WTVQ)", url: "https://www.wtvq.com/category/local-news/feed", bias: "center" },
-    { name: "WKYT", url: "https://www.wkyt.com/arc/outboundfeeds/rss/", bias: "center" },
+    { name: "LEX 18", url: "https://www.lex18.com/news.rss" },
+    { name: "ABC 36 (WTVQ)", url: "https://www.wtvq.com/category/local-news/feed" },
+    { name: "WKYT", url: "https://www.wkyt.com/arc/outboundfeeds/rss/" },
     // kentucky.com (Lexington Herald-Leader) has no public RSS feed — the site
     // blocks automated fetches outright. This Google News search feed, scoped
     // to kentucky.com via allinurl, is the closest working substitute.
-    { name: "Herald-Leader (via Google News)", url: "https://news.google.com/rss/search?q=when:24h+allinurl:kentucky.com&hl=en-US&gl=US&ceid=US:en", bias: "center" },
+    { name: "Herald-Leader (via Google News)", url: "https://news.google.com/rss/search?q=when:24h+allinurl:kentucky.com&hl=en-US&gl=US&ceid=US:en" },
   ],
   national: [
-    { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml", bias: "lean-left" },
-    { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main", bias: "center" },
-    { name: "The Hill", url: "https://thehill.com/homenews/feed/", bias: "center" },
-    { name: "Mother Jones", url: "https://www.motherjones.com/feed/", bias: "left" },
-    { name: "Fox News", url: "https://feeds.foxnews.com/foxnews/national", bias: "right" },
+    { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml" },
+    { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main" },
+    { name: "The Hill", url: "https://thehill.com/homenews/feed/" },
+    { name: "Mother Jones", url: "https://www.motherjones.com/feed/" },
+    { name: "Fox News", url: "https://feeds.foxnews.com/foxnews/national" },
   ],
   world: [
-    { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", bias: "center" },
-    { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/world", bias: "center" },
-    { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", bias: "center" },
-    { name: "The Guardian", url: "https://www.theguardian.com/world/rss", bias: "left" },
-    { name: "Fox News", url: "https://feeds.foxnews.com/foxnews/world", bias: "right" },
+    { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
+    { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/world" },
+    { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml" },
+    { name: "The Guardian", url: "https://www.theguardian.com/world/rss" },
+    { name: "Fox News", url: "https://feeds.foxnews.com/foxnews/world" },
   ],
   business: [
-    { name: "MarketWatch", url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", bias: "center" },
-    { name: "CNBC", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", bias: "center" },
-    { name: "The Guardian", url: "https://www.theguardian.com/us/business/rss", bias: "left" },
-    { name: "WSJ Markets", url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", bias: "lean-right" },
-    { name: "Forbes", url: "https://www.forbes.com/business/feed/", bias: "lean-right" },
+    { name: "MarketWatch", url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" },
+    { name: "CNBC", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" },
+    { name: "The Guardian", url: "https://www.theguardian.com/us/business/rss" },
+    { name: "WSJ Markets", url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml" },
+    { name: "Forbes", url: "https://www.forbes.com/business/feed/" },
   ],
   tech: [
-    { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", bias: "center" },
-    { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", bias: "center" },
-    { name: "TechCrunch", url: "https://techcrunch.com/feed/", bias: "center" },
-    { name: "Wired", url: "https://www.wired.com/feed/rss", bias: "center" },
+    { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index" },
+    { name: "The Verge", url: "https://www.theverge.com/rss/index.xml" },
+    { name: "TechCrunch", url: "https://techcrunch.com/feed/" },
+    { name: "Wired", url: "https://www.wired.com/feed/rss" },
   ],
   science: [
-    { name: "ScienceDaily", url: "https://www.sciencedaily.com/rss/top.xml", bias: "center" },
-    { name: "STAT News", url: "https://www.statnews.com/feed/", bias: "center" },
-    { name: "Live Science", url: "https://www.livescience.com/feeds/all", bias: "center" },
+    { name: "ScienceDaily", url: "https://www.sciencedaily.com/rss/top.xml" },
+    { name: "STAT News", url: "https://www.statnews.com/feed/" },
+    { name: "Live Science", url: "https://www.livescience.com/feeds/all" },
   ],
 };
+
+// Political lean shown next to each source (Ground-News-style), scored the way
+// Ground News does it: average the published ratings from AllSides, Ad Fontes
+// Media and Media Bias/Fact Check. Each rater is first put on one scale, -2
+// (left) to +2 (right), stretched so its own category boundaries land on the
+// chip boundaries (±0.5 Center|Lean, ±1.5 Lean|Left/Right):
+//   allsides  category: Left / Lean Left / Center / Lean Right / Right → -2 / -1 / 0 / +1 / +2
+//   adFontes  bias score, -42..+42: Middle ±6 → ±0.5, Skews ±12 → ±1.5, Strong ±18 → ±2
+//   mbfc      bias score, -10..+10: Least Biased ±2 → ±0.5, Left/Right-Center ±5 → ±1.5, Left/Right ±8 → ±2
+// Anything past the last boundary caps at ±2, so one rater's extreme end can't
+// outweigh the other two. Missing entries mean that rater doesn't cover the
+// outlet; a source none of them cover shows as "Unrated".
+// Ratings checked 2026-10-26 on allsides.com, adfontesmedia.com and
+// mediabiasfactcheck.com — recheck when adding a source.
+const BIAS_RATINGS = {
+  "LEX 18": {},
+  "ABC 36 (WTVQ)": { mbfc: -0.5 },
+  "WKYT": { allsides: "center", mbfc: 1.1 },
+  "Herald-Leader (via Google News)": { allsides: "center", mbfc: -3.0 },
+  "NPR": { allsides: "lean-left", adFontes: -4.36, mbfc: -2.8 },
+  "CBS News": { allsides: "lean-left", adFontes: -2.57, mbfc: 2.2 },
+  "The Hill": { allsides: "center", adFontes: -1.65, mbfc: 0.4 },
+  "Mother Jones": { allsides: "left", adFontes: -15.09, mbfc: -4.4 },
+  "Fox News": { allsides: "right", adFontes: 11.40, mbfc: 8.0 },
+  "BBC World": { allsides: "center", adFontes: -1.42, mbfc: 1.5 },
+  "Al Jazeera": { allsides: "lean-left", adFontes: -7.27, mbfc: -3.2 },
+  "The Guardian": { allsides: "left", adFontes: -8.51, mbfc: -3.6 },
+  "MarketWatch": { allsides: "center", adFontes: -3.88, mbfc: 2.8 },
+  "CNBC": { allsides: "lean-left", adFontes: -1.92, mbfc: -3.3 },
+  "WSJ Markets": { allsides: "center", adFontes: 4.31, mbfc: 4.2 }, // AllSides: WSJ (News)
+  "Forbes": { allsides: "center", adFontes: -2.95, mbfc: 1.3 },
+  "Ars Technica": { allsides: "center", adFontes: -2.16, mbfc: -0.6 },
+  "The Verge": { allsides: "lean-left", adFontes: -7.27, mbfc: -2.8 },
+  "TechCrunch": { allsides: "center", adFontes: -0.47, mbfc: -3.6 },
+  "Wired": { allsides: "left", adFontes: -6.86, mbfc: -3.0 },
+  "ScienceDaily": { allsides: "center", mbfc: -1.0 },
+  "STAT News": { adFontes: -2.92, mbfc: -3.3 },
+  "Live Science": { allsides: "center", mbfc: -2.5 },
+};
+
+const ALLSIDES_SCORES = { left: -2, "lean-left": -1, center: 0, "lean-right": 1, right: 2 };
+const ALLSIDES_NAMES = { left: "Left", "lean-left": "Lean Left", center: "Center", "lean-right": "Lean Right", right: "Right" };
+const AD_FONTES_STEPS = [[6, 0.5], [12, 1.5], [18, 2]];
+const MBFC_STEPS = [[2, 0.5], [5, 1.5], [8, 2]];
+
+// Piecewise-linear map of a signed raw score through [rawBoundary, scaled]
+// steps (ascending), capped at the last step.
+function stepScale(raw, steps) {
+  const sign = Math.sign(raw), abs = Math.abs(raw);
+  let [prevRaw, prevOut] = [0, 0];
+  for (const [r, out] of steps) {
+    if (abs <= r) return sign * (prevOut + ((abs - prevRaw) / (r - prevRaw)) * (out - prevOut));
+    [prevRaw, prevOut] = [r, out];
+  }
+  return sign * prevOut;
+}
+
+function signed(n) {
+  return (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n);
+}
+
+// { bias, biasScore, biasNote } for a source name — bias is the chip class,
+// biasNote the hover text showing the score and the ratings behind it.
+function outletBias(name) {
+  const r = BIAS_RATINGS[name] || {};
+  const scores = [], parts = [];
+  if (r.allsides in ALLSIDES_SCORES) {
+    scores.push(ALLSIDES_SCORES[r.allsides]);
+    parts.push("AllSides " + ALLSIDES_NAMES[r.allsides]);
+  }
+  if (typeof r.adFontes === "number") {
+    scores.push(stepScale(r.adFontes, AD_FONTES_STEPS));
+    parts.push("Ad Fontes " + signed(r.adFontes));
+  }
+  if (typeof r.mbfc === "number") {
+    scores.push(stepScale(r.mbfc, MBFC_STEPS));
+    parts.push("MBFC " + signed(r.mbfc));
+  }
+  if (!scores.length) return { bias: "unrated", biasScore: null, biasNote: "Not rated by AllSides, Ad Fontes or MBFC" };
+  const score = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100;
+  const bias =
+    score <= -1.5 ? "left" : score <= -0.5 ? "lean-left" :
+    score < 0.5 ? "center" : score < 1.5 ? "lean-right" : "right";
+  return { bias, biasScore: score, biasNote: "Score " + signed(score) + " · " + parts.join(" · ") };
+}
 
 const FEED_CACHE_SECONDS = 240; // 4 min edge cache — "live" without hammering upstream
 const FEED_ITEMS_PER_SECTION = 20;
@@ -72,7 +152,7 @@ async function handleFeeds(request) {
   const sections = {};
   await Promise.all(
     Object.entries(FEED_SOURCES).map(async ([slug, sources]) => {
-      const results = await Promise.all(sources.map((s) => fetchAndParseFeed(s.url, s.name, s.bias)));
+      const results = await Promise.all(sources.map((s) => fetchAndParseFeed(s.url, s.name, outletBias(s.name))));
 
       // A flat recency sort lets high-cadence sources (post every few
       // minutes) crowd out slower ones (a few times a day) entirely — the
@@ -113,7 +193,7 @@ async function handleFeeds(request) {
   return response;
 }
 
-async function fetchAndParseFeed(url, sourceName, bias) {
+async function fetchAndParseFeed(url, sourceName, rating) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FEED_FETCH_TIMEOUT_MS);
   try {
@@ -124,7 +204,7 @@ async function fetchAndParseFeed(url, sourceName, bias) {
     });
     if (!res.ok) return [];
     const xml = await res.text();
-    return parseFeedItems(xml, sourceName, bias);
+    return parseFeedItems(xml, sourceName, rating);
   } catch (e) {
     return [];
   } finally {
@@ -134,7 +214,7 @@ async function fetchAndParseFeed(url, sourceName, bias) {
 
 // Minimal RSS 2.0 / Atom item parser — no DOMParser in the Workers runtime,
 // and these feeds are consistent enough that a regex extraction is reliable.
-function parseFeedItems(xml, fallbackSource, bias) {
+function parseFeedItems(xml, fallbackSource, rating) {
   const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || [];
   const items = [];
   for (const raw of blocks) {
@@ -160,7 +240,7 @@ function parseFeedItems(xml, fallbackSource, bias) {
       title,
       link: link.trim(),
       source,
-      bias: bias || "center",
+      ...rating,
       pubDate: !isNaN(ts) ? new Date(ts).toISOString() : "",
       ts: isNaN(ts) ? 0 : ts,
     });
