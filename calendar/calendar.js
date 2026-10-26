@@ -525,7 +525,7 @@
     // `due` keeps the real date after an overdue todo is moved to today, so
     // duplicatesEvent() still matches it against its own day's events.
     const fromFile = todoList.concat(comicList).filter(t => !todoDone[t.key]).map(t => ({
-      type: "todo", title: t.title, todoKey: t.key, due: t.date,
+      type: "todo", title: t.title, todoKey: t.key, due: t.date, comic: t.key.indexOf("C:") === 0,
       date: t.date && t.date < todayStr ? todayStr : t.date,
       overdue: !!t.date && t.date < todayStr,
       repeat: "",
@@ -555,13 +555,30 @@
   }
 
   // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
+  // Comic reminders arrive as "Comics: Absolute Batman #25 → Absolute Universe
+  // list". The chip shows just the issue; the book mark says it's a comic, and
+  // the full text stays in the tooltip and aria-label. Display only: the stored
+  // title is the tick key, so changing it in comics.json would un-tick issues.
+  function comicLabel(title) {
+    const short = String(title || "").replace(/^comics:\s*/i, "").replace(/\s*(→|->)\s*.*$/, "").trim();
+    return short || title;
+  }
+
+  const BOOK_ICON = '<svg class="cal-todo-book" viewBox="0 0 16 16" aria-hidden="true">' +
+    '<path d="M2 3.2C3.8 2.4 5.9 2.5 8 3.6c2.1-1.1 4.2-1.2 6-.4v9.6c-1.8-.8-3.9-.7-6 .4-2.1-1.1-4.2-1.2-6-.4z' +
+    'M8 3.6v9.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+
   function todoChipHtml(ev, when) {
     const isNew = todoSeen && !todoSeen.has(ev.todoKey);
+    const text = ev.comic ? comicLabel(ev.title) : ev.title;
     return '<button type="button" class="cal-todo' + (ev.overdue ? " cal-todo--overdue" : "") +
-      (isNew ? " cal-todo--new" : "") + '" data-todo-key="' + esc(ev.todoKey) +
-      '" aria-label="Mark done: ' + esc(ev.title) + (ev.repeat ? " (" + esc(ev.repeat.toLowerCase()) + ")" : "") + '">' +
+      (ev.comic ? " cal-todo--comic" : "") +
+      (isNew ? " cal-todo--new" : "") + '" data-todo-key="' + esc(ev.todoKey) + '"' +
+      (ev.comic ? ' title="' + esc(ev.title) + '"' : '') +
+      ' aria-label="Mark done: ' + esc(ev.title) + (ev.repeat ? " (" + esc(ev.repeat.toLowerCase()) + ")" : "") + '">' +
       '<span class="cal-todo-box" aria-hidden="true"></span>' +
-      '<span class="cal-todo-text">' + esc(ev.title) + '</span>' +
+      (ev.comic ? BOOK_ICON : '') +
+      '<span class="cal-todo-text">' + esc(text) + '</span>' +
       (ev.repeat ? '<span class="cal-todo-rep" aria-hidden="true" title="' + esc(ev.repeat) + '">&#8635;</span>' : '') +
       (when ? '<span class="cal-todo-tag">' + esc(when) + '</span>' : '') +
       '</button>';

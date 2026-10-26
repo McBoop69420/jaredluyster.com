@@ -237,6 +237,13 @@ button.cal-todo--overdue .cal-todo-tag{color:var(--cal-live);}
    mistaken for a (solid) event chip. */
 .cal-ev--todo button.cal-todo{display:flex;width:100%;padding:3px 5px;border-style:dashed;font-size:11px;font-weight:600;}
 .cal-agenda-title button.cal-todo{padding:6px 10px 6px 8px;}
+/* Comic reminders: just the issue name after a small book mark, on a tighter
+   chip, so a release day's few issues don't take over the cell. */
+.cal-todo-book{flex:none;width:12px;height:12px;margin-top:2px;margin-left:-2px;color:var(--cal-muted);}
+.cal-ev--todo button.cal-todo--comic{gap:4px;padding:2px 4px;font-size:10.5px;line-height:1.25;}
+.cal-ev--todo button.cal-todo--comic .cal-todo-box{width:12px;height:12px;}
+.cal-ev--todo button.cal-todo--comic .cal-todo-box::after{left:2px;top:-1px;}
+.cal-ev--todo + .cal-ev--todo{margin-top:-2px;}
 /* Ticked: circle fills and gets its check, holds a beat, then fades. TODO_EXIT_MS in calendar.js. */
 button.cal-todo--done{opacity:0;transform:scale(.94);pointer-events:none;
   transition:opacity .2s ease .12s,transform .2s ease .12s;}
