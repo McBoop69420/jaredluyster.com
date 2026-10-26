@@ -220,13 +220,22 @@ Tests: `node --test redzone/tests/api.test.mjs` (auth + endpoint) and
 
 **Done 2026-10-17** (steps 1, 2, 3 and 5; `ACCESS_AUD` not set). Kept for a rebuild.
 
-**My Bets** (paper bets placed from the game cards' **+ Bet** button, `sports/my-bets.js`) saves to one private R2
-object through `/api/bets` in `sports/_worker.js`, never to git (this repo is public). It is the
-same layering as RedZone's store above: only answers on `sports.jaredluyster.com`, needs a signed
-Access JWT, and that JWT's email must be in the `BETS_ALLOWED_EMAILS` secret (the `Sports guest
-access` policy lets guests onto the hostname; they get `403` and never see the panel). Until the
-steps below are done the endpoint answers `503 not-configured` and the panel says the store isn't
-set up. Shipping the code first is safe.
+**My Bets** (paper bets placed from the game cards' **+ Bet** button, `sports/my-bets.js`) saves
+through `/api/bets` in `sports/_worker.js` to a private R2 object **per Access login**
+(`bets/<url-encoded email>.json`), never to git (this repo is public). It is the same layering as
+RedZone's store above: only answers on `sports.jaredluyster.com` and needs a signed Access JWT with
+an email; every account the `sports` Access app admits (the owner and each `Sports guest access`
+guest) gets its own ledger and can only reach that one. Until the bucket exists and is bound the
+endpoint answers `503 not-configured` and the panel says the store isn't set up. Shipping the code
+first is safe.
+
+**Per-account since 2026-10-26.** Before that there was one shared object, `paper-bets.json`,
+gated to the owner by the `BETS_ALLOWED_EMAILS` secret. That object is left in place as a backup;
+the worker copies it to its owner's key the first time the owner loads My Bets without a ledger of
+their own. The owner is `BETS_LEGACY_OWNER` if set, else the one address in `BETS_ALLOWED_EMAILS`
+(with several addresses nothing is copied until `BETS_LEGACY_OWNER` names one:
+`wrangler pages secret put BETS_LEGACY_OWNER --project-name mcboop-sports`).
+`BETS_ALLOWED_EMAILS` is no longer a gate.
 
 `mcboop-sports` is a **separate, Git-integrated** Pages project (INFRASTRUCTURE.md §4b): its
 bindings come from `sports/wrangler.toml`, and its secrets are set per project.
@@ -236,20 +245,20 @@ exist fails the build, and pushes silently stop deploying (the live site keeps t
 
 1. `wrangler login` (once per machine).
 2. Create the bucket: `wrangler r2 bucket create mcboop-sports-bets`
-3. Set the allowlist secret (the owner's Access login email; comma-separate several):
-   `wrangler pages secret put BETS_ALLOWED_EMAILS --project-name mcboop-sports`
-   A **secret**, never a `[vars]` entry: `wrangler.toml` is public.
+3. (Before 2026-10-26: the `BETS_ALLOWED_EMAILS` allowlist secret. Not needed for a rebuild;
+   see "Per-account" above.)
 4. Optional hardening: `wrangler pages secret put ACCESS_AUD --project-name mcboop-sports` with the
    `sports` Access application's AUD tag (Zero Trust → Access → Applications → sports → Overview).
 5. Uncomment the `[[r2_buckets]]` block for `SPORTS_BETS` at the bottom of `sports/wrangler.toml`
    and push. The push is the deploy.
-6. Load `https://sports.jaredluyster.com/betting/` signed in as the owner: My Bets should show with
-   an empty record. If it says it couldn't confirm your login (HTTP 401), check `ACCESS_AUD` and the
-   team domain (`ACCESS_TEAM_DOMAIN` in `sports/_worker.js`); if the panel doesn't appear at all, the
-   console shows `HTTP 403` when the signed-in address isn't in `BETS_ALLOWED_EMAILS`.
+6. Load `https://sports.jaredluyster.com/betting/` signed in: My Bets should show with an empty
+   record. If it says it couldn't confirm your login (HTTP 401), check `ACCESS_AUD` and the team
+   domain (`ACCESS_TEAM_DOMAIN` in `sports/_worker.js`); `HTTP 403` means a login with no email
+   (a service token).
 
-Backup / inspect: `wrangler r2 object get mcboop-sports-bets/paper-bets.json --remote --file bets-backup.json`
-(keep the file out of the repo).
+Backup / inspect one account: `wrangler r2 object get "mcboop-sports-bets/bets/<email with @ as %40>.json" --remote --file bets-backup.json`;
+list them with `wrangler r2 object list mcboop-sports-bets --remote`. The pre-2026-10-26 shared
+ledger is still at `mcboop-sports-bets/paper-bets.json`. Keep backups out of the repo.
 
 **Local dev:** the `sports-bets-dev` launch config runs
 `npx wrangler pages dev sports --port 8792 --r2 SPORTS_BETS --binding BETS_DEV_EMAIL=dev@localhost`:

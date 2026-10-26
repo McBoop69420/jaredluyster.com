@@ -356,25 +356,32 @@ function mockCerts(byTeam) {
 }
 
 // In-memory R2 with etags and the etagMatches precondition, like the real thing.
-function fakeR2(initial) {
-  let obj = initial == null ? null : { body: initial, etag: "e0" };
+// `initial` is the owner's own ledger; `more` seeds other keys.
+const OWNER = "owner@example.com";
+const OWNER_KEY = "bets/owner%40example.com.json";
+function fakeR2(initial, more = {}) {
+  const objs = new Map();
+  if (initial != null) objs.set(OWNER_KEY, { body: initial, etag: "e0" });
+  for (const [k, body] of Object.entries(more)) objs.set(k, { body, etag: "seed-" + k });
   let n = 0;
   const bucket = {
-    reads: 0, writes: 0,
-    get body() { return obj && obj.body; },
-    async get() { bucket.reads++; return obj && { etag: obj.etag, text: async () => obj.body }; },
-    async head() { return obj && { etag: obj.etag }; },
+    reads: 0, writes: 0, objs,
+    get body() { const o = objs.get(OWNER_KEY); return o && o.body; },
+    bodyOf(key) { const o = objs.get(key); return o && o.body; },
+    async get(key) { bucket.reads++; const o = objs.get(key); return o && { etag: o.etag, text: async () => o.body }; },
+    async head(key) { const o = objs.get(key); return o && { etag: o.etag }; },
     async put(key, body, opts = {}) {
-      if (opts.onlyIf && opts.onlyIf.etagMatches && (!obj || obj.etag !== opts.onlyIf.etagMatches)) return null;
+      const o = objs.get(key);
+      if (opts.onlyIf && opts.onlyIf.etagMatches && (!o || o.etag !== opts.onlyIf.etagMatches)) return null;
       bucket.writes++;
-      obj = { body, etag: "e" + ++n };
-      return { etag: obj.etag };
+      const next = { body, etag: "e" + ++n };
+      objs.set(key, next);
+      return { etag: next.etag };
     },
   };
   return bucket;
 }
 
-const OWNER = "owner@example.com";
 const envFor = (team, r2, extra = {}) => ({ ACCESS_TEAM_DOMAIN: team, BETS_ALLOWED_EMAILS: OWNER, SPORTS_BETS: r2, ...extra });
 const claimsFor = (team, extra = {}) => ({ iss: `https://${team}`, exp: now() + 300, email: OWNER, ...extra });
 const BET = { id: "x1", placedAt: "2026-10-17T12:00:00Z", stake: 1, legs: [{ gameId: "401872996", kind: "spread", odds: -110, line: 2.5 }] };
@@ -462,16 +469,52 @@ test("api: malformed writes are refused before touching the store", async () => 
   assert.equal((await put(env, { ...headers, Origin: HOST }, { version: "e0", bets: [] })).status, 200);
 });
 
-test("api: a guest with a valid token is refused, and the store is never read or written", async () => {
+test("api: each account has its own ledger; a guest never sees or touches the owner's", async () => {
   const team = freshTeam(); const k = await signer(); mockCerts({ [team]: [k.jwk] });
   const r2 = fakeR2(STORED);
-  const headers = { "Cf-Access-Jwt-Assertion": await makeToken(k, claimsFor(team, { email: "guest@example.com" })) };
-  const res = await call(envFor(team, r2), { headers });
-  assert.equal(res.status, 403);
-  assert.doesNotMatch(await res.text(), /stake/);
-  assert.equal((await put(envFor(team, r2), headers, { version: "e0", bets: [] })).status, 403);
-  assert.equal(r2.reads, 0);
-  assert.equal(r2.writes, 0);
+  const env = envFor(team, r2);
+  const guest = { "Cf-Access-Jwt-Assertion": await makeToken(k, claimsFor(team, { email: "Guest@Example.com" })) };
+  const res = await call(env, { headers: guest });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { version: null, bets: [] });
+  // the owner's version doesn't open the owner's ledger to a guest
+  assert.equal((await put(env, guest, { version: "e0", bets: [] })).status, 409);
+  const mine = { ...BET, id: "g1" };
+  const w = await put(env, guest, { version: null, bets: [mine] });
+  assert.equal(w.status, 200);
+  assert.deepEqual(JSON.parse(r2.bodyOf("bets/guest%40example.com.json")).bets, [mine]);
+  assert.deepEqual(JSON.parse(r2.body).bets, [BET], "owner's ledger unchanged");
+  const owner = { "Cf-Access-Jwt-Assertion": await makeToken(k, claimsFor(team)) };
+  assert.deepEqual((await (await call(env, { headers: owner })).json()).bets, [BET]);
+  assert.deepEqual((await (await call(env, { headers: guest })).json()).bets, [mine]);
+});
+
+test("api: the old shared ledger moves to its owner on first load and stays as a backup", async () => {
+  const team = freshTeam(); const k = await signer(); mockCerts({ [team]: [k.jwk] });
+  const as = async (email) => ({ "Cf-Access-Jwt-Assertion": await makeToken(k, claimsFor(team, { email })) });
+  // a guest loading first gets nothing from it
+  let r2 = fakeR2(null, { "paper-bets.json": STORED });
+  let env = envFor(team, r2);
+  assert.deepEqual((await (await call(env, { headers: await as("guest@example.com") })).json()).bets, []);
+  // the owner (the one address in BETS_ALLOWED_EMAILS) gets it, now under their own key
+  let res = await (await call(env, { headers: await as(OWNER) })).json();
+  assert.deepEqual(res.bets, [BET]);
+  assert.ok(res.version);
+  assert.equal(r2.body, STORED);
+  assert.equal(r2.bodyOf("paper-bets.json"), STORED, "backup kept");
+  // saving works against the copy and leaves the backup alone
+  assert.equal((await put(env, await as(OWNER), { version: res.version, bets: [] })).status, 200);
+  assert.equal(r2.bodyOf("paper-bets.json"), STORED);
+  // an existing own ledger is never replaced by the old one
+  r2 = fakeR2(JSON.stringify({ bets: [] }), { "paper-bets.json": STORED });
+  assert.deepEqual((await (await call(envFor(team, r2), { headers: await as(OWNER) })).json()).bets, []);
+  // several allowed addresses: ambiguous, nothing moves until BETS_LEGACY_OWNER names one
+  r2 = fakeR2(null, { "paper-bets.json": STORED });
+  env = envFor(team, r2, { BETS_ALLOWED_EMAILS: OWNER + ", other@example.com" });
+  assert.deepEqual((await (await call(env, { headers: await as(OWNER) })).json()).bets, []);
+  env = { ...env, BETS_LEGACY_OWNER: "Other@Example.com" };
+  assert.deepEqual((await (await call(env, { headers: await as("other@example.com") })).json()).bets, [BET]);
+  assert.deepEqual(W.legacyOwner({}), null);
 });
 
 test("api: no token, forged tokens, bad claims and service tokens are refused", async () => {
@@ -503,7 +546,8 @@ test("api: no token, forged tokens, bad claims and service tokens are refused", 
 
 test("api: fails closed when unconfigured or Access keys are unreachable", async () => {
   const { team, k, headers } = await owner();
-  assert.equal((await call(envFor(team, fakeR2(STORED), { BETS_ALLOWED_EMAILS: "" }), { headers })).status, 503);
+  // no allowlist is needed any more: it only names the old shared ledger's owner
+  assert.equal((await call(envFor(team, fakeR2(STORED), { BETS_ALLOWED_EMAILS: "" }), { headers })).status, 200);
   assert.equal((await call(envFor(team, undefined), { headers })).status, 503);
   const body = await (await call(envFor(team, undefined), { headers })).json();
   assert.equal(body.error, "not-configured");

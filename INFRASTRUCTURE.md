@@ -565,20 +565,26 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   page; replaced the same day by the card button.) Maths and DOM:
   [`sports/my-bets.js`](sports/my-bets.js) (pure half tested in `tests/my-bets.test.mjs`), loaded
   by Games and Betting.
-  - **Store: private, NOT the repo.** `/api/bets` in `sports/_worker.js` keeps one R2 object
-    (binding `SPORTS_BETS`, bucket `mcboop-sports-bets`, key `paper-bets.json`). GET returns
-    `{ version, bets }`; PUT `{ version, bets }` replaces the list only if `version` (the R2 etag)
-    still matches, so two devices can't overwrite each other: a stale write gets 409 and the page
-    reloads and re-applies its change. Owner-only, same layering as RedZone's bet store (§6),
-    with the Access JWT check ported into the worker: only answers on `sports.jaredluyster.com` (the
-    ungated `mcboop-sports.pages.dev` gets 404), a valid signed Access JWT, and its email in the
-    `BETS_ALLOWED_EMAILS` **secret** on `mcboop-sports`, because `Sports guest access` lets guests
-    onto the hostname (they get 403, and the panel stays hidden). Writes must be JSON from the same
-    origin, at most 1 MB, and are shape-checked. Fails closed (503 `not-configured`) until set up;
+  - **Store: private, NOT the repo, one ledger per account (since 2026-10-26).** `/api/bets` in
+    `sports/_worker.js` keeps one R2 object per Access login (binding `SPORTS_BETS`, bucket
+    `mcboop-sports-bets`, key `bets/<url-encoded email>.json`). GET returns `{ version, bets }`;
+    PUT `{ version, bets }` replaces that account's list only if `version` (the R2 etag) still
+    matches, so two devices can't overwrite each other: a stale write gets 409 and the page
+    reloads and re-applies its change. Same layering as RedZone's bet store (§6), with the
+    Access JWT check ported into the worker: only answers on `sports.jaredluyster.com` (the
+    ungated `mcboop-sports.pages.dev` gets 404) and needs a valid signed Access JWT with an
+    email. Every account the `sports` Access app admits (the owner and the `Sports guest access`
+    guests) gets its own ledger and can reach only that one; a login with no email (service
+    token) gets 403 and the panel stays hidden. Writes must be JSON from the same origin, at
+    most 1 MB, and are shape-checked. Fails closed (503 `not-configured`) with no bucket bound;
     **the `[[r2_buckets]]` block in `sports/wrangler.toml` stays commented out until the bucket
     exists** because a missing bound bucket fails this Git-integrated project's build. **Set up
-    2026-10-17:** bucket created, `BETS_ALLOWED_EMAILS` set on `mcboop-sports`, binding live
-    (`ACCESS_AUD` not set). Setup and local dev: DEPLOY.md, "Sports My Bets — private store setup".
+    2026-10-17** (`ACCESS_AUD` not set). Setup and local dev: DEPLOY.md, "Sports My Bets —
+    private store setup".
+    **Before 2026-10-26** it was one shared object, `paper-bets.json`, gated to the owner by the
+    `BETS_ALLOWED_EMAILS` secret. That object is kept as a backup and copied to the owner's own
+    key on the owner's first load (owner = `BETS_LEGACY_OWNER`, else the single address in
+    `BETS_ALLOWED_EMAILS`); `BETS_ALLOWED_EMAILS` no longer gates anything.
 - **Expert Picks — added 2026-10-16.** The Betting page's second panel (`#expertPicks`):
   for one day's games (date picker, ET), how many published experts are on each side of
   the spread, the winner (straight-up and moneyline picks combined) and the total, with

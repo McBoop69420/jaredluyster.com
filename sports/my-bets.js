@@ -11,9 +11,10 @@
  * (live, then final).
  *
  * Storage is private and synced across devices: GET/PUT /api/bets
- * (sports/_worker.js), one R2 object readable and writable only by the owner's
- * Access login. Nothing about the bets is in this public repo. Guests get a 403:
- * no buttons, no panel.
+ * (sports/_worker.js), one R2 object per Access login, so every account that
+ * can sign in (the owner and each guest) has its own ledger and sees only its
+ * own bets. Nothing about the bets is in this public repo. A login with no
+ * email (a service token) gets a 403: no buttons, no panel.
  *
  * Once a game is final its score is written onto the leg (`final`), so a settled
  * bet never needs ESPN again and old results can't change under it.
@@ -449,7 +450,7 @@ function mountMyBets(PB) {
       S.bets = body.bets;
     } else if (res.status === 503 && body && body.error === "not-configured") S.status = "not-configured";
     else if (res.status === 401) S.status = "unauthenticated";
-    else if (res.status === 403 || res.status === 404) S.status = "hidden"; // a guest, or an ungated host
+    else if (res.status === 403 || res.status === 404) S.status = "hidden"; // no email to file bets under, or an ungated host
     else S.status = "error";
     if (S.status !== "ready") console.warn("My Bets: bet store answered HTTP " + res.status, body);
   }

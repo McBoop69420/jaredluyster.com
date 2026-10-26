@@ -569,31 +569,39 @@ async function handlePicks(request, url) {
 
 // ---------------------------------------------------------------------------
 // My Bets (paper bets) — /api/bets
-// The Betting page's "My Bets" panel (sports/my-bets.js) keeps its bets in one
-// private R2 object (SPORTS_BETS, key paper-bets.json), never in this repo:
-// the repo is public. GET returns { version, bets }; PUT { version, bets }
-// replaces the list, but only if `version` (the object's etag, or null for "no
-// object yet") still matches, so two devices can't silently overwrite each
-// other: a stale write gets 409 and the page reloads and re-applies its change.
+// The Betting page's "My Bets" panel (sports/my-bets.js) keeps each account's
+// bets in its own private R2 object (SPORTS_BETS, key bets/<email>.json), never
+// in this repo: the repo is public. GET returns { version, bets }; PUT
+// { version, bets } replaces the list, but only if `version` (the object's
+// etag, or null for "no object yet") still matches, so two devices can't
+// silently overwrite each other: a stale write gets 409 and the page reloads
+// and re-applies its change.
 //
-// Owner only, failing closed at every step, same layering as RedZone's bet
-// store (functions/redzone/api/[[path]].ts, _lib/access.ts — ported here
-// because this project is a _worker.js, not Functions):
+// One ledger per Access login, failing closed at every step, same layering as
+// RedZone's bet store (functions/redzone/api/[[path]].ts, _lib/access.ts —
+// ported here because this project is a _worker.js, not Functions):
 //   1. only answers on sports.jaredluyster.com, the hostname the `sports`
 //      Access app gates (mcboop-sports.pages.dev is not gated: 404 there);
-//   2. requires a valid, signed Access JWT;
-//   3. requires that JWT's email to be in the BETS_ALLOWED_EMAILS secret —
-//      the `Sports guest access` policy lets guests onto this hostname, and
-//      they must not see or touch the owner's bets (403; the panel hides).
-// Until the bucket is bound and the secret set this answers 503
-// "not-configured". Setup: DEPLOY.md, "Sports My Bets — private store setup".
+//   2. requires a valid, signed Access JWT with an email (service tokens have
+//      none: 403);
+//   3. reads and writes only that email's object, so the owner and each guest
+//      the `Sports guest access` policy admits see only their own bets.
+// Until the bucket is bound this answers 503 "not-configured". Setup: DEPLOY.md,
+// "Sports My Bets — private store setup".
+//
+// Before 2026-10-26 there was one shared object, paper-bets.json, gated to the
+// owner by the BETS_ALLOWED_EMAILS secret. It is kept, untouched, as a backup,
+// and copied to its owner's key the first time they load with no ledger of
+// their own: the owner is BETS_LEGACY_OWNER if set, else the one address in
+// BETS_ALLOWED_EMAILS (with several, nothing is copied until BETS_LEGACY_OWNER
+// names one).
 //
 // Local dev only: `wrangler pages dev sports` on localhost/127.0.0.1 with
 // BETS_DEV_EMAIL set (sports/.dev.vars, gitignored) skips the JWT check. The
 // production hostname is never localhost, so this can't open the real store.
 // ---------------------------------------------------------------------------
 const BETS_HOST = "sports.jaredluyster.com";
-const BETS_KEY = "paper-bets.json";
+const BETS_LEGACY_KEY = "paper-bets.json";
 const BETS_MAX_BYTES = 1024 * 1024;
 const BETS_MAX_COUNT = 5000;
 const BETS_MAX_LEGS = 12;
@@ -697,19 +705,29 @@ export async function verifyAccessJwt(token, env, nowMs = Date.now()) {
   return { status: "ok", email: typeof claims.email === "string" ? claims.email.toLowerCase() : null };
 }
 
-// 401 = no valid Access identity; 403 = a valid identity that isn't on the
-// allowlist (a guest); 503 = can't tell (keys unreachable, no allowlist).
-export async function authenticateOwner(request, env) {
-  const allowed = parseAllowlist(env.BETS_ALLOWED_EMAILS);
-  if (!allowed.size) return { ok: false, status: 503, error: "not-configured" };
+// 401 = no valid Access identity; 403 = a valid identity with no email (a
+// service token); 503 = can't tell (Access keys unreachable).
+export async function authenticateUser(request, env) {
   const token = accessTokenFrom(request);
   if (!token) return { ok: false, status: 401, error: "unauthenticated" };
   const v = await verifyAccessJwt(token, env);
   if (v.status === "unavailable") return { ok: false, status: 503, error: "auth-unavailable" };
   if (v.status !== "ok") return { ok: false, status: 401, error: "unauthenticated" };
-  // Service tokens carry no email; they were never granted this data.
-  if (!v.email || !allowed.has(v.email)) return { ok: false, status: 403, error: "forbidden" };
+  // Service tokens carry no email, so there is no ledger to give them.
+  if (!v.email) return { ok: false, status: 403, error: "forbidden" };
   return { ok: true, email: v.email };
+}
+
+export function betsKeyFor(email) {
+  return "bets/" + encodeURIComponent(String(email).toLowerCase()) + ".json";
+}
+
+// Who the pre-2026-10-26 shared ledger belongs to, or null if that's ambiguous.
+export function legacyOwner(env) {
+  const named = parseAllowlist(env.BETS_LEGACY_OWNER);
+  if (named.size) return named.size === 1 ? [...named][0] : null;
+  const allowed = parseAllowlist(env.BETS_ALLOWED_EMAILS);
+  return allowed.size === 1 ? [...allowed][0] : null;
 }
 
 function betsJson(data, status = 200, extra = {}) {
@@ -741,16 +759,25 @@ export async function handleBets(request, env) {
   if (url.hostname !== BETS_HOST && !dev) return betsJson({ error: "not-found" }, 404);
 
   const bucket = env.SPORTS_BETS;
-  if (!bucket || (!dev && parseAllowlist(env.BETS_ALLOWED_EMAILS).size === 0)) {
-    return betsJson({ error: "not-configured" }, 503);
-  }
+  if (!bucket) return betsJson({ error: "not-configured" }, 503);
+  let email = String(env.BETS_DEV_EMAIL || "").toLowerCase();
   if (!dev) {
-    const auth = await authenticateOwner(request, env);
+    const auth = await authenticateUser(request, env);
     if (!auth.ok) return betsJson({ error: auth.error }, auth.status);
+    email = auth.email;
   }
+  const key = betsKeyFor(email);
 
   if (request.method === "GET" || request.method === "HEAD") {
-    const object = await bucket.get(BETS_KEY);
+    let object = await bucket.get(key);
+    if (!object && email === legacyOwner(env)) {
+      // First load since ledgers went per account: bring the shared one along.
+      const legacy = await bucket.get(BETS_LEGACY_KEY);
+      if (legacy) {
+        await bucket.put(key, await legacy.text(), { httpMetadata: { contentType: "application/json" } });
+        object = await bucket.get(key);
+      }
+    }
     let bets = [];
     if (object) {
       try {
@@ -787,10 +814,10 @@ export async function handleBets(request, env) {
   const options = { httpMetadata: { contentType: "application/json" } };
   if (version) {
     options.onlyIf = { etagMatches: version };
-  } else if (await bucket.head(BETS_KEY)) {
+  } else if (await bucket.head(key)) {
     return betsJson({ error: "conflict" }, 409); // someone created it since this page loaded
   }
-  const written = await bucket.put(BETS_KEY, doc, options);
+  const written = await bucket.put(key, doc, options);
   if (!written) return betsJson({ error: "conflict" }, 409); // etag moved on: a newer save exists
   return betsJson({ version: written.etag });
 }
