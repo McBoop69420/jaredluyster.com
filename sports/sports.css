@@ -316,6 +316,7 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 .value-screen-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px}
 .value-screen-kicker{display:inline-flex;padding:4px 10px;background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--paper);color:var(--accent-ink);font-family:var(--font-display);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .value-screen h2{font-family:var(--font-display);font-size:24px;line-height:1;margin:8px 0 0;text-transform:uppercase;letter-spacing:-.01em}
+.value-screen h2:first-child{margin-top:0}
 .value-screen-meta{font-family:var(--font-display);font-size:11px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .value-explain{margin-top:10px;padding:10px 12px;background:var(--card);border:1px solid var(--ink);font-size:.82rem;line-height:1.5;color:var(--ink)}
 .value-explain p{margin:0}
