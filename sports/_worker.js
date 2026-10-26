@@ -568,6 +568,189 @@ async function handlePicks(request, url) {
 }
 
 // ---------------------------------------------------------------------------
+// Accounts — /api/auth/*
+// Anyone can join: sign up with an email and a password, sign in again later
+// with the same pair (sports/join/). Each account is one private R2 object
+// (SPORTS_BETS, key users/<email>.json) holding a salted PBKDF2-SHA256 hash,
+// never the password. Sign-up and sign-in set the `sports_session` cookie:
+// `<base64url payload>.<HMAC-SHA256 signature>`, payload { email, exp }, signed
+// with the SESSION_SECRET Pages secret (at least 32 characters). Without the
+// secret or the bucket, every /api/auth call answers 503 "not-configured".
+//
+//   POST /api/auth/signup { email, password } -> 201 { email }  (409 email-taken)
+//   POST /api/auth/login  { email, password } -> 200 { email }  (401 bad-credentials)
+//   POST /api/auth/logout                     -> 200 { ok: true }
+//   GET  /api/auth/me                         -> 200 { email }  (401 unauthenticated)
+//
+// POSTs need a JSON body from this very origin, same as /api/bets. Setup: DEPLOY.md,
+// "Sports accounts — sign up / sign in".
+// ---------------------------------------------------------------------------
+const ACCOUNT_KEY_PREFIX = "users/";
+const SESSION_COOKIE = "sports_session";
+const SESSION_TTL_S = 30 * 24 * 60 * 60;
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 200;
+const EMAIL_MAX = 254;
+const PBKDF2_ITERATIONS = 100000; // Workers' ceiling for PBKDF2
+const SESSION_SECRET_MIN = 32;
+const DUMMY_PASSWORD_RECORD = { alg: "PBKDF2-SHA256", iterations: PBKDF2_ITERATIONS, salt: "AAAAAAAAAAAAAAAAAAAAAA", hash: "AAAA" };
+
+const textEncoder = new TextEncoder();
+
+function b64urlFromBytes(bytes) {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// -> lowercased address, or null if it isn't one we'd store
+export function normalizeEmail(raw) {
+  const email = String(raw || "").trim().toLowerCase();
+  if (!email || email.length > EMAIL_MAX || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+  return email;
+}
+
+export async function hashPassword(password, salt = crypto.getRandomValues(new Uint8Array(16)), iterations = PBKDF2_ITERATIONS) {
+  const key = await crypto.subtle.importKey("raw", textEncoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations }, key, 256);
+  return { alg: "PBKDF2-SHA256", iterations, salt: b64urlFromBytes(salt), hash: b64urlFromBytes(new Uint8Array(bits)) };
+}
+
+export async function verifyPassword(password, record) {
+  if (!record || record.alg !== "PBKDF2-SHA256" || typeof record.salt !== "string" || typeof record.hash !== "string") return false;
+  if (!Number.isInteger(record.iterations) || record.iterations < 1) return false;
+  let salt;
+  try {
+    salt = b64urlToBytes(record.salt);
+  } catch (e) {
+    return false;
+  }
+  const actual = (await hashPassword(password, salt, record.iterations)).hash;
+  return constantTimeEqual(actual, record.hash);
+}
+
+function constantTimeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function sessionKey(env) {
+  const secret = String(env.SESSION_SECRET || "");
+  if (secret.length < SESSION_SECRET_MIN) return null;
+  return crypto.subtle.importKey("raw", textEncoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+
+export async function signSession(email, env, nowMs = Date.now()) {
+  const key = await sessionKey(env);
+  if (!key) return null;
+  const payload = b64urlFromBytes(textEncoder.encode(JSON.stringify({ email, exp: Math.floor(nowMs / 1000) + SESSION_TTL_S })));
+  const sig = await crypto.subtle.sign("HMAC", key, textEncoder.encode(payload));
+  return payload + "." + b64urlFromBytes(new Uint8Array(sig));
+}
+
+// -> the signed-in email, or null (no cookie, bad signature, expired, no secret)
+export async function readSession(token, env, nowMs = Date.now()) {
+  const key = await sessionKey(env);
+  if (!key || !token) return null;
+  const parts = String(token).split(".");
+  if (parts.length !== 2) return null;
+  let sig, claims;
+  try {
+    sig = b64urlToBytes(parts[1]);
+    claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])));
+  } catch (e) {
+    return null;
+  }
+  if (!(await crypto.subtle.verify("HMAC", key, sig, textEncoder.encode(parts[0])))) return null;
+  if (!claims || typeof claims.email !== "string" || typeof claims.exp !== "number") return null;
+  if (claims.exp < Math.floor(nowMs / 1000)) return null;
+  return claims.email;
+}
+
+function sessionTokenFrom(request) {
+  const m = /(?:^|;\s*)sports_session=([^;]+)/.exec(request.headers.get("Cookie") || "");
+  return m ? m[1] : null;
+}
+
+function sessionCookie(value, maxAge) {
+  return SESSION_COOKIE + "=" + value + "; Path=/; Max-Age=" + maxAge + "; HttpOnly; Secure; SameSite=Lax";
+}
+
+function authJson(data, status = 200, cookie = null) {
+  const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
+  if (cookie) headers["Set-Cookie"] = cookie;
+  return new Response(JSON.stringify(data), { status, headers });
+}
+
+export function accountKeyFor(email) {
+  return ACCOUNT_KEY_PREFIX + encodeURIComponent(String(email).toLowerCase()) + ".json";
+}
+
+export async function handleAuth(request, env) {
+  const url = new URL(request.url);
+  const action = url.pathname.slice("/api/auth/".length);
+  const bucket = env.SPORTS_BETS;
+  if (!bucket || !(await sessionKey(env))) return authJson({ error: "not-configured" }, 503);
+
+  if (action === "me") {
+    if (request.method !== "GET") return authJson({ error: "method-not-allowed" }, 405);
+    const email = await readSession(sessionTokenFrom(request), env);
+    return email ? authJson({ email }) : authJson({ error: "unauthenticated" }, 401);
+  }
+
+  if (request.method !== "POST") return authJson({ error: "method-not-allowed" }, 405);
+  const origin = request.headers.get("Origin");
+  if (origin && origin !== url.origin) return authJson({ error: "bad-origin" }, 403);
+
+  if (action === "logout") {
+    return authJson({ ok: true }, 200, sessionCookie("", 0));
+  }
+  if (action !== "signup" && action !== "login") return authJson({ error: "not-found" }, 404);
+  if (!/^application\/json\b/i.test(request.headers.get("Content-Type") || "")) {
+    return authJson({ error: "json-only" }, 415);
+  }
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch (e) {
+    return authJson({ error: "bad-json" }, 400);
+  }
+  const email = normalizeEmail(body && body.email);
+  if (!email) return authJson({ error: "bad-email" }, 400);
+  const password = body && typeof body.password === "string" ? body.password : "";
+  if (password.length > PASSWORD_MAX) return authJson({ error: "bad-password" }, 400);
+  const key = accountKeyFor(email);
+
+  if (action === "signup") {
+    if (password.length < PASSWORD_MIN) return authJson({ error: "bad-password" }, 400);
+    const doc = { email, createdAt: new Date().toISOString(), password: await hashPassword(password) };
+    const written = await bucket.put(key, JSON.stringify(doc), {
+      onlyIf: { etagDoesNotMatch: "*" }, // create only: never overwrite an existing account
+      httpMetadata: { contentType: "application/json" },
+    });
+    if (!written) return authJson({ error: "email-taken" }, 409);
+    const token = await signSession(email, env);
+    return authJson({ email }, 201, sessionCookie(token, SESSION_TTL_S));
+  }
+
+  // login: always run one PBKDF2 pass, so an unknown email takes as long as a wrong password
+  const object = await bucket.get(key);
+  let record = DUMMY_PASSWORD_RECORD;
+  if (object) {
+    try {
+      const doc = JSON.parse(await object.text());
+      if (doc && doc.password) record = doc.password;
+    } catch (e) { /* unreadable account: treat as wrong credentials */ }
+  }
+  const ok = await verifyPassword(password, record);
+  if (!object || !ok) return authJson({ error: "bad-credentials" }, 401);
+  const token = await signSession(email, env);
+  return authJson({ email }, 200, sessionCookie(token, SESSION_TTL_S));
+}
+
+// ---------------------------------------------------------------------------
 // My Bets (paper bets) — /api/bets
 // The Betting page's "My Bets" panel (sports/my-bets.js) keeps each account's
 // bets in its own private R2 object (SPORTS_BETS, key bets/<email>.json), never
@@ -577,13 +760,14 @@ async function handlePicks(request, url) {
 // silently overwrite each other: a stale write gets 409 and the page reloads
 // and re-applies its change.
 //
-// One ledger per Access login, failing closed at every step, same layering as
+// One ledger per account, failing closed at every step, same layering as
 // RedZone's bet store (functions/redzone/api/[[path]].ts, _lib/access.ts —
 // ported here because this project is a _worker.js, not Functions):
-//   1. only answers on sports.jaredluyster.com, the hostname the `sports`
-//      Access app gates (mcboop-sports.pages.dev is not gated: 404 there);
-//   2. requires a valid, signed Access JWT with an email (service tokens have
-//      none: 403);
+//   1. only answers on sports.jaredluyster.com (mcboop-sports.pages.dev is not
+//      gated: 404 there);
+//   2. requires a valid join-page session (/api/auth) or, until the sports
+//      Access app is removed, a signed Access JWT with an email (service tokens
+//      have none: 403);
 //   3. reads and writes only that email's object, so the owner and each guest
 //      the `Sports guest access` policy admits see only their own bets.
 // Until the bucket is bound this answers 503 "not-configured". Setup: DEPLOY.md,
@@ -705,9 +889,13 @@ export async function verifyAccessJwt(token, env, nowMs = Date.now()) {
   return { status: "ok", email: typeof claims.email === "string" ? claims.email.toLowerCase() : null };
 }
 
-// 401 = no valid Access identity; 403 = a valid identity with no email (a
-// service token); 503 = can't tell (Access keys unreachable).
+// 401 = no valid identity; 403 = a valid Access identity with no email (a
+// service token); 503 = can't tell (Access keys unreachable). A join-page
+// session (/api/auth) is checked first; Cloudflare Access is the fallback for as
+// long as the sports Access app still gates the hostname.
 export async function authenticateUser(request, env) {
+  const session = await readSession(sessionTokenFrom(request), env);
+  if (session) return { ok: true, email: session };
   const token = accessTokenFrom(request);
   if (!token) return { ok: false, status: 401, error: "unauthenticated" };
   const v = await verifyAccessJwt(token, env);
@@ -850,6 +1038,14 @@ export default {
           status: 200,
           headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
         });
+      }
+    }
+
+    if (url.pathname.startsWith("/api/auth/")) {
+      try {
+        return await handleAuth(request, env);
+      } catch (e) {
+        return authJson({ error: "server-error" }, 500);
       }
     }
 

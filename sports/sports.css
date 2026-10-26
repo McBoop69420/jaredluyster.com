@@ -456,3 +456,24 @@ table.value-slate tr.picks-detail td{white-space:normal;background:var(--card);p
 .tier--elevated{background:var(--card);color:var(--ink)}
 .tier--stressed{background:var(--highlight);color:#8a6414}
 .tier--burnt{background:#fdeaea;color:var(--live)}
+
+/* Sign-in page (sports/join/) */
+.join{max-width:420px;margin:26px auto 0}
+.join [hidden]{display:none!important}
+.join-title{font-family:var(--font-display);font-size:24px;margin:0 0 6px}
+.join-note{font-size:14px;color:var(--muted);margin:0}
+.join-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 14px}
+.join-form{display:grid;gap:12px}
+.join-field{display:grid;gap:4px;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.join-field input{
+  font-family:var(--font-body);font-size:16px;font-weight:400;text-transform:none;letter-spacing:0;
+  padding:9px 10px;border:2px solid var(--ink);border-radius:0;background:var(--card);color:var(--ink);
+}
+.join-field input:focus{outline:3px solid var(--accent);outline-offset:1px}
+.join-msg{min-height:1.4em;margin:0;font-weight:600}
+.join-msg--error{color:var(--live)}
+.join-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.join-actions .refresh-btn:disabled{opacity:.5}
+.join-signedin{display:grid;gap:14px;margin-top:18px}
+.join-actions a.refresh-btn{text-decoration:none;border-bottom:2px solid var(--ink)}
+.join-actions a.refresh-btn:hover{background:var(--ink);color:var(--paper)}

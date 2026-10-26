@@ -11,10 +11,11 @@
  * (live, then final).
  *
  * Storage is private and synced across devices: GET/PUT /api/bets
- * (sports/_worker.js), one R2 object per Access login, so every account that
- * can sign in (the owner and each guest) has its own ledger and sees only its
- * own bets. Nothing about the bets is in this public repo. A login with no
- * email (a service token) gets a 403: no buttons, no panel.
+ * (sports/_worker.js), one R2 object per account, so every account (signed in
+ * on sports/join/) has its own ledger and sees only its own bets. Nothing about
+ * the bets is in this public repo. Signed out gets a 401 and a sign-in link; a
+ * Cloudflare Access login with no email (a service token) gets a 403: no
+ * buttons, no panel.
  *
  * Once a game is final its score is written onto the leg (`final`), so a settled
  * bet never needs ESPN again and old results can't change under it.
@@ -879,11 +880,11 @@ function mountMyBets(PB) {
     if (!panel) return;
     panel.hidden = S.status === "hidden" || S.status === "loading";
     const note = {
-      "not-configured": "The private bet store isn't set up yet, so bets can't be saved. Setup steps are in DEPLOY.md (\"Sports My Bets — private store setup\").",
-      unauthenticated: "Couldn't confirm your login to the bet store (HTTP 401). Reload the page; if it persists, check the Access settings in DEPLOY.md.",
-      error: "Couldn't reach the bet store. Hit Refresh to try again.",
+      "not-configured": esc("The private bet store isn't set up yet, so bets can't be saved. Setup steps are in DEPLOY.md (\"Sports My Bets — private store setup\")."),
+      unauthenticated: '<a href="/join/?next=/betting/">Sign in</a> or create an account to see and save your bets.',
+      error: esc("Couldn't reach the bet store. Hit Refresh to try again."),
     }[S.status];
-    $("myBetsStatus").innerHTML = note ? '<p class="value-empty">' + esc(note) + "</p>" : "";
+    $("myBetsStatus").innerHTML = note ? '<p class="value-empty">' + note + "</p>" : "";
     $("myBetsBody").hidden = S.status !== "ready";
     if (S.status !== "ready") {
       $("myBetsMeta").textContent = S.status === "loading" ? "Loading bets…" : "Unavailable";

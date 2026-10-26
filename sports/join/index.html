@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sign up or sign in to save your paper bets on the Sports and Betting pages.">
+<title>Sports — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon-16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/sports.css?v=66">
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1><span class="accent-box">Sports</span></h1>
+    <nav class="section-tabs" aria-label="Section">
+      <a class="section-tab" href="/">Games</a>
+      <a class="section-tab" href="/betting/">Betting</a>
+      <a class="section-tab" href="/models/">Models</a>
+      <a class="section-tab section-tab--active" href="/join/" aria-current="page">Sign in</a>
+    </nav>
+  </header>
+
+  <main class="join" aria-labelledby="joinTitle">
+    <h2 id="joinTitle" class="join-title">Join the board</h2>
+    <p class="join-note">Make a free account to save your paper bets. Use the same email and password on any device.</p>
+
+    <section id="joinOut" class="join-signedin" hidden>
+      <p class="join-msg">Signed in as <strong id="joinEmail"></strong>.</p>
+      <div class="join-actions">
+        <a class="refresh-btn" id="joinContinue" href="/betting/">Go to Betting</a>
+        <button class="chip" id="joinSignOut" type="button">Sign out</button>
+      </div>
+    </section>
+
+    <section id="joinIn" aria-label="Account" hidden>
+      <div class="join-tabs" role="group" aria-label="Account action">
+        <button class="chip" id="joinModeUp" type="button" aria-pressed="true">Create account</button>
+        <button class="chip" id="joinModeIn" type="button" aria-pressed="false">Sign in</button>
+      </div>
+
+      <form class="join-form" id="joinForm" novalidate>
+        <label class="join-field">
+          <span>Email</span>
+          <input id="joinEmailInput" name="email" type="email" autocomplete="email" required maxlength="254">
+        </label>
+        <label class="join-field">
+          <span>Password</span>
+          <input id="joinPassword" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="200">
+        </label>
+        <p class="join-note" id="joinHint">At least 8 characters.</p>
+        <p class="join-msg" id="joinMsg" role="status" aria-live="polite"></p>
+        <div class="join-actions">
+          <button class="refresh-btn" id="joinSubmit" type="submit">Create account</button>
+        </div>
+      </form>
+    </section>
+
+    <p class="join-msg" id="joinStatus" role="status" aria-live="polite">Checking your sign-in&hellip;</p>
+  </main>
+
+  <footer class="colophon">
+    <p>Accounts are private: only your own bets are stored under your login. Looking for odds and the model? See <a href="/betting/">Betting</a>.</p>
+  </footer>
+</article>
+<script src="/join/join.js?v=1"></script>
+</body>
+</html>

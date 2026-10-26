@@ -268,6 +268,34 @@ is `localhost`/`127.0.0.1`, so it can never open the real store.
 Tests: `node --test tests/my-bets.test.mjs` (grading, ESPN parsing, and the endpoint's auth and
 writes with real RSA signatures; each guard was mutation-tested).
 
+## Sports accounts — sign up / sign in (one-time, needs your Cloudflare login)
+
+Anyone can join `sports.jaredluyster.com/join/` with an email and password. Accounts live in the
+private `mcboop-sports-bets` bucket under `users/<email>.json` (salted PBKDF2 hash, never the
+password). The session is an HMAC-signed `sports_session` cookie, 30 days, keyed by a secret.
+Games and Betting stay public; only My Bets needs a sign-in. Code: the "Accounts" section of
+`sports/_worker.js` (`/api/auth/*`) and `sports/join/`.
+
+Until steps 1 and 2 are done, `/api/auth/*` answers `503 not-configured` and the join page says
+accounts aren't on yet. Nothing else breaks.
+
+1. Set the session secret (at least 32 characters; never commit it):
+   `openssl rand -base64 48`, then `npx wrangler pages secret put SESSION_SECRET --project-name mcboop-sports`.
+   For local dev, put `SESSION_SECRET=<any 32+ characters>` in `sports/.dev.vars` (gitignored).
+2. Remove the Cloudflare Access app for `sports.jaredluyster.com` (Zero Trust → Access →
+   Applications → `sports` → Delete). Access gates the whole hostname, so while it exists a
+   visitor hits the Google login wall and never reaches the join page. Deleting it opens Games and
+   Betting to everyone. Keep the `Sports guest access` policy only if you still want it: it has no
+   effect once the app is gone. Until the app is removed, My Bets still accepts Access logins as a
+   fallback, so nothing you use today stops working.
+3. Your existing bets carry over: sign up with `doctormcboop@gmail.com` (the same email your Access
+   login used) and the account's ledger key is the same `bets/<email>.json` object as before.
+4. Verify: load `https://sports.jaredluyster.com/join/` in a private window, create an account,
+   then `/betting/` should show My Bets with your bets; sign out and it should show the sign-in link.
+
+Tests: `node --test tests/accounts.test.mjs` (hashing, the signed cookie, sign-up/sign-in/sign-out
+against an in-memory bucket).
+
 ## QR Code Maker (qr.jaredluyster.com)
 
 Make, download (PNG/SVG) and print QR codes for links, text, Wi-Fi logins, contact cards,
