@@ -32,7 +32,7 @@ is Disabled, and the NSSM services `RadioService` / `RadioTunnel` are Stopped + 
 Checked live (zone DNS via the API, `curl` on each host, `cloudflared tunnel info`, and a
 read-only look at both machines' tasks/services/ports/tunnel configs):
 
-- Hosted: apex + `www` (Render), `wizardbattle.` (GitHub Pages), `bcs.`/`bluegrasscube.`/
+- Hosted: apex + `www` (Cloudflare Pages — moved from Render 2026-10-26), `wizardbattle.` (GitHub Pages), `bcs.`/`bluegrasscube.`/
   `news.`/`calendar.`/`sports.`/`social.`/`redzone.`/`roto.`/`wintergreen.` (Cloudflare Pages),
   `mail.` and the `*.` wildcard (Hover).
 - JARED-SERVER: `radio.` only — the `mcboop-news` tunnel has exactly one connector, started
@@ -55,21 +55,34 @@ read-only look at both machines' tasks/services/ports/tunnel configs):
 
 The site is a **hybrid deployment** — two hosting mechanisms under one domain umbrella:
 
-### 1. Homepage — Render (Flask, dynamic)
+### 1. Homepage — Cloudflare Pages (static)
 
-**This is the primary hosting** for the `jaredluyster.com` domain.
+**This is the primary hosting** for the `jaredluyster.com` apex domain.
 
-- **Host:** Render (Python web service)
-- **Config:** `render.yaml` in repo root
-  - Runtime: Python 3.11.11
-  - Build: `pip install -r requirements.txt`
-  - Start: `waitress-serve --host=0.0.0.0 --port=$PORT app:app`
-  - Requirements: `flask`, `waitress`, `gunicorn`, `werkzeug`
-- **App:** `app.py` (repo root) — a minimal Flask app, two routes: `GET /` serves `index.html`, `GET /<path:filename>` serves any other static file from the repo root (`radio.html`, `shared-theme.css`, etc.)
+- **Host:** Cloudflare Pages, project `jaredluyster-com` — the same project that serves the
+  repo root (`wrangler.toml`, `pages_build_output_dir = "."`). `jaredluyster.com` and
+  `www.jaredluyster.com` are custom domains on that project (CNAME → `jaredluyster-com.pages.dev`,
+  proxied; the zone is already on Cloudflare so the swap was edge-side, no visitor DNS wait).
+- **No build step:** the site is static. Pages serves `index.html`, `radio.html`,
+  `shared-theme.css`, etc. straight from the repo root; dynamic routes live in `functions/`
+  (`_middleware.ts` maps subdomain roots to folders and 404s the config files).
+- **`www` → apex:** a Cloudflare Redirect Rule (Single Redirect) sends `https://www.*` →
+  `https://${1}` (301, path + query preserved — the wildcard `${1}` already carries them).
 
-**Verified via HTTP headers:**
-- `jaredluyster.com` → `Server: cloudflare`, `x-render-origin-server: waitress`, `rndr-id: ...` (Render)
-- `jaredluyster.com/radio.html` → served by Render (same `x-render-origin-server: waitress`)
+**Retired Render (2026-10-27).** The apex used to run on Render — a minimal Flask app
+(`app.py`, served by `waitress` per `render.yaml`, two routes: `GET /` → `index.html`,
+`GET /<path:filename>` → any other static file from the repo root). On 2026-10-26 the apex+`www`
+CNAMEs were swapped from `jaredluyster-com.onrender.com` to `jaredluyster-com.pages.dev`; after a
+day of clean serving (cert issued and active via Google Trust Services, no `x-render` header,
+`www` 301 working, Render origin idle) the Render service was retired and
+`app.py` / `render.yaml` / `requirements.txt` were deleted from the repo on 2026-10-27. **Still to
+do in the Render dashboard:** suspend/delete the `jaredluyster-com` web service and remove its
+apex/`www` custom-domain entries (the service was left running one day as a rollback net and can
+go now).
+
+**Verified via HTTP headers (2026-10-27):**
+- `jaredluyster.com` → `HTTP 200`, `Server: cloudflare`, **no** `x-render-origin-server` (Pages, not Render)
+- `www.jaredluyster.com` → `HTTP 301` → `https://jaredluyster.com/`
 
 **Retired subdomain:** `shop.jaredluyster.com` no longer serves anything as of 2026-09-06 — the
 shop moved to `bluegrasstcg.online` (see below), and that subdomain (if DNS for it still
@@ -169,7 +182,7 @@ that repo for its own infrastructure notes.
   cloudflared tries `::1` first and the server isn't reached there). Its credentials file
   was generated on JARED-SERVER from the account cert (`cloudflared tunnel token
   --cred-file`), so DNS did not change.
-- **Player page:** `radio/index.html` (static, served via Render)
+- **Player page:** `radio/index.html` (static, served by Cloudflare Pages — the apex `jaredluyster-com` project)
 
 ### 4. McBoop Newspaper + Calendar — Cloudflare Pages (`mcboop-daily` project, Wrangler-CLI deployed)
 
@@ -761,11 +774,13 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   app, with guest addresses listed inside it — not one policy per address. Verified via `curl`: `302` →
   `.../cdn-cgi/access/login/redzone.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`.
   Since 2026-09-20 the `redzone` Access app also covers `jaredluyster-com.pages.dev/redzone/*`,
-  so the Pages default hostname is gated too. Remaining limit: the apex `jaredluyster.com` is
-  served by Render (not proxied through this zone), so `jaredluyster.com/redzone/*` files are
-  reachable without a login and Access cannot cover them — public ESPN schedule data and the
-  page's own code only (the repo is public anyway; the bet data is deliberately NOT in this
-  folder, see the bet tracker below). See DEPLOY.md.
+  so the Pages default hostname is gated too. Note: since the apex moved onto this same
+  `jaredluyster-com` Pages project (2026-10-26), `jaredluyster.com/redzone/*` serves the same
+  files and is now proxied through the zone — but it is only gated if the `redzone` Access app's
+  hostname list includes `jaredluyster.com` (add it there if that path should require a login).
+  Either way it exposes public ESPN schedule data and the page's own code only (the repo is
+  public anyway; the bet data is deliberately NOT in this folder, see the bet tracker below).
+  See DEPLOY.md.
 - **FBS coverage (2026-09-19).** The board fetches
   `…/college-football/scoreboard?groups=80&limit=500` — `groups=80` is FBS and, dateless, returns
   the whole current game week (~75 games incl. FBS-vs-FCS ones; identical to passing `week=N`).
@@ -870,13 +885,10 @@ Until 2026-09-26 `mcboop-news` ran on Jared-PC as the NSSM service `RadioTunnel`
 
 ```
 jaredluyster.com/
-├── app.py                  # Flask app serving the homepage + static files (Render)
-├── index.html              # Homepage (served by Render Flask from site root)
-├── radio.html              # Radio player page (served by Render Flask from site root)
+├── index.html              # Homepage (served by Cloudflare Pages from repo root)
+├── radio.html              # Radio player page (served by Cloudflare Pages from repo root)
 ├── shared-theme.css        # Shared styles (homepage + radio)
-├── render.yaml             # Render deployment config
-├── requirements.txt        # Python deps for Render
-├── .gitignore              # Ignores .env, __pycache__, *.db, Caddyfile
+├── .gitignore              # Ignores .env, Caddyfile, .wrangler/, .dev.vars, redzone/bets.json
 ├── docs/                   # Wizard Battle site (GitHub Pages, CNAME: wizardbattle.jaredluyster.com)
 │   ├── CNAME               # → wizardbattle.jaredluyster.com
 │   ├── .nojekyll
@@ -996,8 +1008,8 @@ this repo.
 
 | URL | Service | Host |
 |-----|---------|------|
-| `jaredluyster.com` | Homepage + static assets | Render (Flask) |
-| `jaredluyster.com/radio.html` | Radio player page | Render (Flask) |
+| `jaredluyster.com` | Homepage + static assets | Cloudflare Pages (project `jaredluyster-com`, repo root) |
+| `jaredluyster.com/radio.html` | Radio player page | Cloudflare Pages (project `jaredluyster-com`, repo root) |
 | `wizardbattle.jaredluyster.com` | Wizard Battle site | GitHub Pages (docs/) |
 | `bluegrasstcg.online` | Marketplace | Separate repo (`McBoop69420/bluegrasstcg`) + Render service |
 | `bluegrasscube.jaredluyster.com` | Bluegrass Cube staging | Cloudflare Pages (separate project) — not yet created |
@@ -1016,18 +1028,18 @@ this repo.
 
 ### Local development
 1. **Homepage/Wizard Battle (static):**
-   - Homepage: Edit `index.html`, `radio.html`, `shared-theme.css` in repo root — push to `main`, Render auto-deploys (`app.py`)
+   - Homepage: Edit `index.html`, `radio.html`, `shared-theme.css` in repo root — push to `main`, the `jaredluyster-com` Cloudflare Pages project auto-deploys
    - Wizard Battle: Edit files in `docs/` — push to `main`, GitHub Pages auto-deploys
 2. **Marketplace (Flask):** Separate repo now — see `McBoop69420/bluegrasstcg`
 3. **Radio service:** Separate private repo (`McBoop69420/radio-service`)
 
 ### Deployment triggers
 - **GitHub Pages (Wizard Battle):** Push to `main` branch (`docs/` directory)
-- **Render (Homepage):** Push to `main` branch (auto-deploys from `render.yaml`)
+- **Cloudflare Pages (Homepage/apex):** Push to `main` branch — the `jaredluyster-com` project auto-deploys the repo root (serves apex + `www`)
 - **Cloudflare Tunnel (Radio):** Runs on JARED-SERVER via `cloudflared` (public, no Access); radio code changes need a restart of the `Radio Service` task there
 - **Cloudflare Pages, Git-integrated (Sports, Bluegrass Cube, and a few legacy
   subdomains — see each project's own section):** Push to `main` branch, same as
-  GitHub Pages/Render above — Cloudflare's own GitHub integration builds directly
+  GitHub Pages above — Cloudflare's own GitHub integration builds directly
   from this repo using each project's configured root directory.
 - **Cloudflare Pages, Wrangler-CLI deployed (News + Calendar):** not a Cloudflare
   git build, but effectively push-triggered since 2026-09-26: `deploy-pages.sh`

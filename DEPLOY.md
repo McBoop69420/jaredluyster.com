@@ -4,14 +4,17 @@
 
 | Layer | Host | Notes |
 |---|---|---|
-| Static site + tools (`index.html`, `atlas.html`, `card-designer/`, `dropoutcube/`, images…) | **Cloudflare Pages** | Served straight from the repo root, no build step. |
-| Marketplace backend (`/marketplace/*`) | **Render** (Flask) | Reached via the Pages Function in `functions/marketplace/[[path]].ts`, which reverse-proxies to `MARKETPLACE_ORIGIN`. |
-| Database | **Turso** (libsql) | Set on the Render service via `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`. |
+| Static site + tools + **apex `jaredluyster.com` / `www`** (`index.html`, `radio.html`, `roto/`, `social/`, `comic/`, …) | **Cloudflare Pages** (`jaredluyster-com`) | Served straight from the repo root, no build step. Apex + `www` are custom domains on this project since 2026-10-26. |
+| Per-tool backends | **Cloudflare** (Pages Functions + R2 + a Durable Object) | `functions/*` over R2 buckets (social, comic, redzone/sports bets) and the roto DraftRoom DO. |
 
-This is **Phase 1**: everything static is on Cloudflare, and the store keeps working
-unchanged behind a proxy. **Phase 2** replaces the Render/Flask backend with a native
-Cloudflare Worker + D1 + Resend, at which point the proxy Function is swapped for the
-Worker and Render/Turso are retired.
+**History — this repo no longer uses Render.** This file began as a Render→Cloudflare
+migration plan. Phase 1 put the static site on Cloudflare Pages while the marketplace stayed on
+Render behind a proxy Function. That's all done and then some: the marketplace moved to its
+**own repo + Render service** (`McBoop69420/bluegrasstcg`, serving `bluegrasstcg.online`), the
+proxy Function `functions/marketplace/[[path]].ts` and its `MARKETPLACE_ORIGIN` var were deleted,
+and on **2026-10-27 the apex's own Render service was retired** — apex + `www` now serve from the
+`jaredluyster-com` Pages project. The "DNS cutover" and "Phase 2" sections at the bottom are the
+completed migration, kept as a record; the per-tool sections below are setup history.
 
 ## One-time Cloudflare Pages setup
 
@@ -20,10 +23,9 @@ Worker and Render/Turso are retired.
    - Framework preset: **None**
    - Build command: *(empty)*
    - Build output directory: **`/`**
-2. **Set the backend origin** — Pages project → Settings → Environment variables →
-   add `MARKETPLACE_ORIGIN` = your Render URL (confirm it in the Render dashboard;
-   likely `https://jaredluyster-com.onrender.com`). This overrides the default in
-   `wrangler.toml`.
+2. **(Obsolete) backend origin** — this step used to add a `MARKETPLACE_ORIGIN` env var
+   pointing at Render, for the marketplace proxy Function. That Function and variable are gone
+   (the shop moved to its own repo), so there is no backend origin to set here anymore.
 3. **Deploy** — the first push builds the project. To deploy from the CLI instead:
    ```bash
    npx wrangler pages deploy .
@@ -165,14 +167,15 @@ board through Access (needs a login).
 the board's files without a login (verified: `302` to Access on `/redzone/` and
 `/redzone/redzone.js`; `pages.dev/roto/` and `jaredluyster.com/` are unaffected).
 
-**Known limit — the apex can't be gated.** `jaredluyster.com` resolves to Render's own IPs
-(`216.24.57.x`), not through this Cloudflare zone, so Cloudflare Access never sees those
-requests (the `Server: cloudflare` header there is Render's CDN). `app.py` serves any file in
-the repo root, so `jaredluyster.com/redzone/redzone.js` etc. answer 200 without a login. A
-`jaredluyster.com/redzone/*` Access destination was tried and removed the same day because it
-did nothing. This is acceptable because the repo is public on GitHub anyway and the only
-private data (the bets) is behind the API's own auth — see the bet tracker section. Do not
-put anything secret in `redzone/`.
+**The apex `/redzone/*` path (updated 2026-10-26).** When the apex ran on Render it couldn't be
+gated at all — `jaredluyster.com` resolved to Render's own IPs (`216.24.57.x`), not through this
+Cloudflare zone, so Access never saw those requests, and a `jaredluyster.com/redzone/*` Access
+destination tried back then did nothing. Since the apex moved onto the `jaredluyster-com` Pages
+project it is proxied through the zone, so a `jaredluyster.com` destination on the `redzone`
+Access app *would* now take effect — add it there if you want that path gated. Either way it's
+acceptable to leave open: the repo is public on GitHub anyway and the only private data (the
+bets) is behind the API's own auth — see the bet tracker section. Do not put anything secret in
+`redzone/`.
 
 **Google sign-in test (2026-09-20):** Cloudflare's "Test" on the Google provider (run as the
 owner) returned "Your Identity Provider works", confirming the OAuth client ID/secret are
@@ -458,33 +461,36 @@ cron for this — each room schedules its own cleanup alarm the moment it comple
 Multiplayer is additive. Removing the binding (or leaving the Worker undeployed) makes
 "Draft with friends" fail at room creation while solo drafting continues to work.
 
-## DNS cutover (do this when you're ready to go live on Cloudflare)
+## DNS cutover — DONE 2026-10-26
 
-The domain currently points at Render (`216.24.57.x`). To move the front door to Cloudflare:
+The apex used to point at Render (`216.24.57.x`); it now serves from the `jaredluyster-com`
+Pages project. What was done, kept as a record:
 
-1. Add `jaredluyster.com` as a **custom domain** on the Pages project (dashboard →
-   the project → Custom domains). Cloudflare walks you through the DNS record.
-2. Add `www.jaredluyster.com` as a second custom domain, then create a **Redirect Rule**
-   (`www.jaredluyster.com/*` → `https://jaredluyster.com/$1`, 301) to preserve the old
-   Caddy `www → apex` behavior.
-3. Leave the Render service running — the proxy Function depends on it. Do **not** remove
-   `jaredluyster.com` from Render's custom domains until you've confirmed the store works
-   through Cloudflare (the Function reaches Render by its `onrender.com` hostname, so this
-   is just belt-and-suspenders).
+1. Added `jaredluyster.com` as a **custom domain** on the `jaredluyster-com` Pages project
+   (CNAME swapped from `jaredluyster-com.onrender.com` → `jaredluyster-com.pages.dev`; the zone
+   is already on Cloudflare, so it was an edge-side swap with no visitor DNS wait).
+2. Added `www.jaredluyster.com` as a second custom domain, plus a **Redirect Rule**
+   (`https://www.*` → `https://${1}`, 301) to preserve the old Caddy `www → apex` behavior.
+   The wildcard `${1}` already carries path + query, so "Preserve query string" stays off.
+3. Left the Render service running one day as a rollback net, then retired it 2026-10-27
+   (no marketplace proxy depended on it anymore — that had moved to its own repo).
 
-**Verify after cutover:** load the homepage, click through to `/marketplace/`, log in,
-add to cart, and place a test order. Cookies/sessions must persist (they ride through the
-proxy). If a password-reset email shows the wrong domain, confirm the Render service has
-picked up the `X-Forwarded-Host` change in `marketplace/server.py`.
+**Verified (2026-10-26 → 27):** apex `200` `Server: cloudflare` with **no** `x-render` header,
+`www` `301` → apex (path + query preserved), config files `404` at the apex, cert issued and
+active (Google Trust Services, valid to 2027-01-24). The Render origin went idle (cold-started
+in ~21s), confirming no real traffic.
 
-**Rollback:** point the apex DNS back at Render (or lower Cloudflare to DNS-only). Because
-Render still serves the full site, this is an instant revert.
+**Rollback (while it lasted):** point the apex CNAME back at `jaredluyster-com.onrender.com`.
+That one-click revert is gone now that the Render service is retired — but the static site lives
+in the repo, so rebuilding it on Pages (or anywhere) is the fallback. Render is no longer special.
 
-## Phase 2 (later) — retire Render
+## Phase 2 — retire Render (resolved differently, 2026-09 → 2026-10)
 
-- Rewrite `marketplace/server.py` as a TypeScript Worker (Hono), backed by **D1**.
-- Move `inventory.json` / `lands.json` into D1 tables (removes the file-lock race).
-- Sessions/cart → signed cookie or KV; email → **Resend** (HTTP, since Workers can't SMTP).
-- Port the PayPal create/capture flow — it's just HTTPS calls to PayPal, so it maps cleanly
-  to a Worker; PayPal + Resend credentials become Worker **secrets**.
-- Delete the proxy Function, `render.yaml`, and `requirements.txt` once the Worker is live.
+This was originally a plan to rewrite `marketplace/server.py` as a TypeScript Worker (D1 +
+Resend + PayPal) so Render could go away. It played out differently: the **marketplace left this
+repo entirely** — it's now its own private repo and Render service (`McBoop69420/bluegrasstcg`,
+`bluegrasstcg.online`), so there was nothing to rewrite here. With the shop gone, the apex was
+the last thing on Render; it moved to Pages (see "DNS cutover" above), the proxy Function
+`functions/marketplace/[[path]].ts` was deleted, and `app.py` + `render.yaml` + `requirements.txt`
+were removed on 2026-10-27. **This repo no longer uses Render.** (The separate `bluegrasstcg`
+repo still runs its own Render service — unrelated to this one.)
