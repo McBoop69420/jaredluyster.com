@@ -558,7 +558,7 @@
     const key = s => String(s || "").replace(/\s+[—–-]\s*\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)?\s*$/i, "")
       .trim().toLowerCase();
     const k = key(todo.title);
-    return (calEvents || []).some(ev => ev.date === day && key(ev.title) === k);
+    return allCalEvents().some(ev => ev.date === day && key(ev.title) === k);
   }
 
   // The whole chip is the tap target. `when` is a short tag ("overdue", "today").
@@ -819,6 +819,177 @@
       showTodoUndo("Deleted", r.title, r.restore);
       renderCalendar();
       renderTodoSheetList();
+    });
+  }
+
+  // ---- Page-made events -------------------------------------------------
+  // Added from the "+ Add event" sheet and kept in /api/events (news/_worker.js:
+  // events.json in R2, behind the same Access login as the ticks), so unlike
+  // page-made todos they reach every device. They draw exactly like calendar.json
+  // events. Where there's no API (local previews, jaredluyster.com/calendar/) the
+  // sheet says it can't save rather than pretending to.
+  const EVENTS_API = "/api/events";
+  let webEvents = [];
+
+  function allCalEvents() {
+    return (calEvents || []).concat(webEvents);
+  }
+
+  function takeWebEvents(j) {
+    if (!j || !Array.isArray(j.events)) return false;
+    webEvents = j.events.filter(ev => ev && ev.id && ev.title && ev.date);
+    return true;
+  }
+
+  async function loadWebEvents() {
+    try {
+      const res = await fetch(EVENTS_API, { cache: "no-store" });
+      if (res.ok) takeWebEvents(await res.json());
+    } catch (e) { /* offline, signed out or no API: keep the last list */ }
+  }
+
+  // Resolves once the server has the change; rejects with something to show.
+  async function postEvents(body) {
+    let res, j = null;
+    try {
+      res = await fetch(EVENTS_API, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body), cache: "no-store" });
+      j = await res.json();
+    } catch (e) {
+      // Access's login redirect and the no-API HTML page both land here.
+      throw new Error("Couldn't reach the calendar. Reload the page (it may need you to sign in again) and try once more.");
+    }
+    if (!res.ok || !takeWebEvents(j)) throw new Error("Couldn't save that (" + ((j && j.error) || res.status) + ").");
+  }
+
+  function newEventId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function eventFormDays() {
+    return Array.prototype.map.call(document.querySelectorAll("#eventDays [aria-pressed='true']"), b => b.dataset.day);
+  }
+
+  // Like the todo sheet: the day picker starts on the chosen date's weekday.
+  function syncEventRepeatUi() {
+    const weekly = $("eventRepeat").value === "weekly";
+    $("eventDays").hidden = !weekly;
+    if (weekly && !eventFormDays().length) {
+      const ds = $("eventDate").value || etTodayStr();
+      const code = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][new Date(ds + "T12:00:00").getDay()];
+      const b = document.querySelector('#eventDays [data-day="' + code + '"]');
+      if (b) b.setAttribute("aria-pressed", "true");
+    }
+  }
+
+  // Upcoming ones only: a one-off that's over has nothing left to change.
+  function renderEventSheetList() {
+    const ul = $("eventList");
+    if (!ul) return;
+    const today = etTodayStr();
+    const dayNames = { SU: "Sun", MO: "Mon", TU: "Tue", WE: "Wed", TH: "Thu", FR: "Fri", SA: "Sat" };
+    const items = webEvents.filter(ev => ev.date >= today ||
+      (ev.recurrence && (!ev.recurrence.until || ev.recurrence.until >= today)))
+      .sort((a, b) => (a.date + (a.start || "")).localeCompare(b.date + (b.start || "")));
+    ul.innerHTML = items.length ? items.map(ev => {
+      const when = ev.recurrence
+        ? "Every " + ev.recurrence.byDay.split(",").map(d => dayNames[d] || d).join(", ") + " from " + todoDueLabel(ev.date)
+        : todoDueLabel(ev.date);
+      const meta = [when, fmtRange(ev), ev.location].filter(Boolean).join(" · ");
+      return '<li class="todo-list-item"><span class="todo-list-main">' +
+        '<span class="todo-list-title">' + esc(ev.title) + '</span>' +
+        '<span class="todo-list-meta">' + esc(meta) + '</span></span>' +
+        '<button type="button" class="todo-del" data-del-event="' + esc(ev.id) + '" aria-label="Delete ' + esc(ev.title) + '">Delete</button></li>';
+    }).join("") : '<li class="todo-list-empty">Nothing coming up yet.</li>';
+  }
+
+  function openEventSheet() {
+    const sheet = $("eventSheet");
+    if (!sheet) return;
+    sheet.hidden = false;
+    $("eventNote").textContent = "";
+    if (!$("eventDate").value) $("eventDate").value = etTodayStr();
+    renderEventSheetList();
+    $("eventTitle").focus();
+    loadWebEvents().then(renderEventSheetList);
+  }
+
+  function closeEventSheet() {
+    const sheet = $("eventSheet");
+    if (!sheet || sheet.hidden) return;
+    sheet.hidden = true;
+    const opener = document.querySelector("[data-add-event]");
+    if (opener) opener.focus();
+  }
+
+  function initEventSheet() {
+    const sheet = $("eventSheet");
+    if (!sheet) return;
+    $("eventClose").addEventListener("click", closeEventSheet);
+    sheet.addEventListener("click", e => { if (e.target === sheet) closeEventSheet(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeEventSheet(); });
+    $("eventRepeat").addEventListener("change", syncEventRepeatUi);
+    $("eventDays").addEventListener("click", e => {
+      const b = e.target.closest && e.target.closest("[data-day]");
+      if (b) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+    });
+    $("eventForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const note = $("eventNote");
+      const ev = { id: newEventId(), title: $("eventTitle").value.trim(), date: $("eventDate").value };
+      const start = $("eventStart").value, end = $("eventEnd").value, loc = $("eventLocation").value.trim();
+      if (!ev.title) { $("eventTitle").focus(); return; }
+      if (!ev.date) { $("eventDate").focus(); return; }
+      if (end && !start) { note.textContent = "Add a start time to go with the end time."; $("eventStart").focus(); return; }
+      if (start) ev.start = start;
+      if (end) ev.end = end;
+      if (loc) ev.location = loc;
+      if ($("eventRepeat").value === "weekly") {
+        const days = eventFormDays();
+        if (!days.length) { note.textContent = "Pick at least one day for it to repeat on."; return; }
+        ev.recurrence = { freq: "weekly", byDay: days.join(",") };
+      }
+      const btn = $("eventAddBtn");
+      btn.disabled = true;
+      note.textContent = "Saving…";
+      try {
+        await postEvents({ op: "add", event: ev });
+      } catch (err) {
+        note.textContent = err.message;
+        return;
+      } finally {
+        btn.disabled = false;
+      }
+      $("eventForm").reset();
+      Array.prototype.forEach.call(document.querySelectorAll("#eventDays [data-day]"), b => b.setAttribute("aria-pressed", "false"));
+      $("eventDays").hidden = true;
+      $("eventDate").value = ev.date;   // the next one is likely the same day
+      note.textContent = "Added: " + ev.title + " (" + todoDueLabel(ev.date) + ")";
+      $("eventTitle").focus();
+      renderCalendar();
+      renderEventSheetList();
+    });
+    $("eventList").addEventListener("click", async e => {
+      const b = e.target.closest && e.target.closest("[data-del-event]");
+      if (!b) return;
+      const ev = webEvents.find(x => x.id === b.dataset.delEvent);
+      if (!ev) return;
+      b.disabled = true;
+      try {
+        await postEvents({ op: "delete", id: ev.id });
+      } catch (err) {
+        $("eventNote").textContent = err.message;
+        b.disabled = false;
+        return;
+      }
+      const restore = Object.assign({}, ev);
+      delete restore.added;
+      showTodoUndo("Deleted", ev.title, () => {
+        postEvents({ op: "add", event: restore }).then(() => { renderCalendar(); renderEventSheetList(); },
+          err => { $("eventNote").textContent = err.message; });
+      });
+      renderCalendar();
+      renderEventSheetList();
     });
   }
 
@@ -1463,7 +1634,7 @@
       // already-drawn calendar stays up while new data is fetched.
       root.innerHTML = '<p class="cal-loading">Loading calendar&hellip;</p>';
       lastCalendarHtml = null;
-      Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies(), syncTicks()]).then(() => { renderCalendar(); stampUpdated(); });
+      Promise.all([loadCalendar(), loadWebEvents(), loadTodos(), loadComics(), loadMovies(), syncTicks()]).then(() => { renderCalendar(); stampUpdated(); });
       return;
     }
 
@@ -1489,7 +1660,7 @@
       const copy = Object.assign({}, ev, { date: dateStr });
       (byDate[dateStr] = byDate[dateStr] || []).push(copy);
     }
-    calEvents.concat(sportsEvents, todoEvts, movieEvents()).forEach(ev => {
+    allCalEvents().concat(sportsEvents, todoEvts, movieEvents()).forEach(ev => {
       if (!ev || !ev.date) return;
       const recur = ev.recurrence || {};
       const freq = String(recur.freq || "").toLowerCase();
@@ -1575,7 +1746,8 @@
             (!matchHtml && rng && !sameAsLabel ? '<strong>' + esc(rng) + '</strong> ' : '') +
             (matchHtml || eventTitleHtml(ev)) + '</span>';
         }).join('') +
-      '<div class="daily-link-row"><button type="button" class="add-todo-btn" data-add-todo>+ Add todo</button>' +
+      '<div class="daily-link-row"><button type="button" class="add-todo-btn" data-add-event>+ Add event</button>' +
+      '<button type="button" class="add-todo-btn" data-add-todo>+ Add todo</button>' +
       '<a class="daily-link" href="https://news.jaredluyster.com/">News &rarr;</a>' +
       '<a class="daily-link" href="https://social.jaredluyster.com/">Create social/LinkedIn post &rarr;</a></div></div>';
     // What's owed now: overdue, due today, or undated. Anything later only sits on its
@@ -1759,7 +1931,7 @@
     // Fetch fresh /calendar.json so new commitments appear, but keep the
     // current grid on screen meanwhile and only redraw once it arrives.
     try {
-      await Promise.all([loadCalendar(), loadTodos(), loadComics(), loadMovies(), syncTicks()]);
+      await Promise.all([loadCalendar(), loadWebEvents(), loadTodos(), loadComics(), loadMovies(), syncTicks()]);
       renderCalendar();
       stampUpdated();
     } finally {
@@ -1784,6 +1956,7 @@
     }, true);
     if (calRoot) calRoot.addEventListener("click", e => {
       if (e.target.closest && e.target.closest("[data-add-todo]")) { openTodoSheet(); return; }
+      if (e.target.closest && e.target.closest("[data-add-event]")) { openEventSheet(); return; }
       const x = e.target.closest && e.target.closest("[data-dismiss-movie]");
       if (x) {
         const key = x.dataset.dismissMovie;
@@ -1806,6 +1979,7 @@
       if (e.target.closest && e.target.closest("[data-undo]")) undoLast();
     });
     initTodoSheet();
+    initEventSheet();
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) { refresh(); refreshLiveGames(); requestWakeLock(); }
     });

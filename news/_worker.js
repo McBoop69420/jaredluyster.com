@@ -570,7 +570,8 @@ const TICKS_MAX_OPS = 500;
 const TICKS_MAX_KEY = 400;
 const TICKS_MAX_ENTRIES = 5000;   // per map; the oldest go first, far beyond normal use
 
-async function handleTicks(request, env, url) {
+// The owner check /api/ticks and /api/events share. Answers the refusal, or null to go on.
+async function calendarGate(request, env, url) {
   const host = url.hostname.toLowerCase();
   const isDev = TICKS_DEV_HOSTS.has(host);
   if (host !== TICKS_HOST && !isDev) return ticksJson({ error: "not-found" }, 404);
@@ -580,8 +581,14 @@ async function handleTicks(request, env, url) {
     const auth = await accessAuthenticate(request, env, env.CALENDAR_OWNER_EMAILS);
     if (!auth.ok) return ticksJson({ error: auth.error }, auth.status);
   }
+  if (!env.CALENDAR_TICKS) return ticksJson({ error: "not-configured" }, 503);
+  return null;
+}
+
+async function handleTicks(request, env, url) {
+  const refused = await calendarGate(request, env, url);
+  if (refused) return refused;
   const bucket = env.CALENDAR_TICKS;
-  if (!bucket) return ticksJson({ error: "not-configured" }, 503);
 
   if (request.method === "GET") return ticksJson((await readTicks(bucket)).state);
   if (request.method !== "POST") return ticksJson({ error: "method-not-allowed" }, 405, { Allow: "GET, POST" });
@@ -651,6 +658,108 @@ function ticksJson(data, status = 200, extra = {}) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "private, no-store", ...extra },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Events added on the calendar page: /api/events on calendar.jaredluyster.com,
+// behind the same owner check as /api/ticks. They live in their own file,
+// events.json in the CALENDAR_TICKS bucket, not in site/calendar.json: that one
+// is published whole from JARED-SERVER (publish-calendar.sh) and would wipe
+// anything the page wrote into it. The page lays these over calendar.json.
+//   GET  /api/events                          -> { "events": [ ... ] }
+//   POST /api/events  { "op": "add", "event": { "id", "title", "date",
+//                       "start"?, "end"?, "location"?, "recurrence"? } }
+//   POST /api/events  { "op": "delete", "id" }
+// The page picks the id, so a retried add (or an Undo of a delete) can't double
+// up. Every answer is the whole list.
+const EVENTS_FILE = "events.json";
+const EVENTS_MAX_BODY = 16 * 1024;
+const EVENTS_MAX = 2000;
+const EVENT_DAYS = new Set(["SU", "MO", "TU", "WE", "TH", "FR", "SA"]);
+const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+async function handleEvents(request, env, url) {
+  const refused = await calendarGate(request, env, url);
+  if (refused) return refused;
+  const bucket = env.CALENDAR_TICKS;
+
+  if (request.method === "GET") return ticksJson({ events: (await readEvents(bucket)).events });
+  if (request.method !== "POST") return ticksJson({ error: "method-not-allowed" }, 405, { Allow: "GET, POST" });
+
+  const text = await request.text();
+  if (text.length > EVENTS_MAX_BODY) return ticksJson({ error: "too-large" }, 413);
+  let body;
+  try { body = JSON.parse(text); } catch (e) { return ticksJson({ error: "bad-json" }, 400); }
+  let change;
+  if (body && body.op === "add") {
+    const ev = cleanEvent(body.event);
+    if (!ev) return ticksJson({ error: "bad-event" }, 400);
+    change = events => events.some(e => e.id === ev.id) ? events : events.concat([{ ...ev, added: Date.now() }]);
+  } else if (body && body.op === "delete" && typeof body.id === "string") {
+    change = events => events.filter(e => e.id !== body.id);
+  } else {
+    return ticksJson({ error: "bad-op" }, 400);
+  }
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { events, etag } = await readEvents(bucket);
+    const next = change(events);
+    if (next.length > EVENTS_MAX) return ticksJson({ error: "too-many" }, 413);
+    const opts = { httpMetadata: { contentType: "application/json" } };
+    if (etag) opts.onlyIf = { etagMatches: etag };
+    const written = await bucket.put(EVENTS_FILE, JSON.stringify({ events: next }), opts);
+    if (written) return ticksJson({ events: next });
+  }
+  return ticksJson({ error: "conflict" }, 409);
+}
+
+async function readEvents(bucket) {
+  const obj = await bucket.get(EVENTS_FILE);
+  if (!obj) return { events: [], etag: null };
+  let raw = null;
+  try { raw = JSON.parse(await obj.text()); } catch (e) { /* a damaged file starts over */ }
+  const list = raw && Array.isArray(raw.events) ? raw.events : [];
+  return {
+    events: list.map(e => {
+      const ev = cleanEvent(e);
+      return ev && { ...ev, added: typeof e.added === "number" ? e.added : 0 };
+    }).filter(Boolean),
+    etag: obj.etag,
+  };
+}
+
+// Only the fields calendar.json events use, in the shapes the page draws.
+// Times are Eastern, 24-hour; an end of 00:00 means midnight.
+function cleanEvent(e) {
+  if (!e || typeof e !== "object") return null;
+  const str = (v, max) => typeof v === "string" && v.trim() && v.trim().length <= max ? v.trim() : null;
+  const id = typeof e.id === "string" && /^[A-Za-z0-9_-]{6,64}$/.test(e.id) ? e.id : null;
+  const title = str(e.title, 120);
+  if (!id || !title || typeof e.date !== "string" || !DATE_RE.test(e.date)) return null;
+  const out = { id, title, date: e.date };
+  for (const k of ["start", "end"]) {
+    if (e[k] == null || e[k] === "") continue;
+    if (typeof e[k] !== "string" || !TIME_RE.test(e[k])) return null;
+    out[k] = e[k];
+  }
+  if (out.end && !out.start) return null;
+  if (e.location != null && e.location !== "") {
+    const loc = str(e.location, 200);
+    if (!loc) return null;
+    out.location = loc;
+  }
+  if (e.recurrence != null) {
+    const r = e.recurrence;
+    const days = r && r.freq === "weekly" && typeof r.byDay === "string" ? r.byDay.split(",") : null;
+    if (!days || !days.length || days.some(d => !EVENT_DAYS.has(d))) return null;
+    out.recurrence = { freq: "weekly", byDay: Array.from(new Set(days)).join(",") };
+    if (r.until != null) {
+      if (typeof r.until !== "string" || !DATE_RE.test(r.until)) return null;
+      out.recurrence.until = r.until;
+    }
+  }
+  return out;
 }
 
 // ---- Cloudflare Access JWT check ------------------------------------------
@@ -766,6 +875,7 @@ export default {
     }
 
     if (url.pathname === "/api/ticks") return handleTicks(request, env, url);
+    if (url.pathname === "/api/events") return handleEvents(request, env, url);
     if (url.pathname === "/api/exhibitions") return handleExhibitions();
 
     // Calendar data is no-cache so newly added commitments show immediately,

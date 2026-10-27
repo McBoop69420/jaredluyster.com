@@ -85,8 +85,60 @@
     <ul class="todo-list" id="todoList"></ul>
   </div>
 </div>
+<div class="todo-sheet" id="eventSheet" hidden>
+  <div class="todo-panel" role="dialog" aria-modal="true" aria-labelledby="eventSheetTitle">
+    <div class="todo-panel-head">
+      <h2 id="eventSheetTitle">Add an event</h2>
+      <button type="button" class="todo-close" id="eventClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="eventForm" autocomplete="off">
+      <label class="todo-field">What is it?
+        <input type="text" id="eventTitle" maxlength="120" required>
+      </label>
+      <div class="todo-row">
+        <label class="todo-field">Date
+          <input type="date" id="eventDate" required>
+        </label>
+        <label class="todo-field">Repeat
+          <select id="eventRepeat">
+            <option value="">Doesn't repeat</option>
+            <option value="weekly">Every week</option>
+          </select>
+        </label>
+      </div>
+      <div class="todo-field todo-days" id="eventDays" hidden>
+        <span>On</span>
+        <div class="todo-day-row">
+          <button type="button" class="todo-day" data-day="SU" aria-pressed="false" aria-label="Sunday">S</button>
+          <button type="button" class="todo-day" data-day="MO" aria-pressed="false" aria-label="Monday">M</button>
+          <button type="button" class="todo-day" data-day="TU" aria-pressed="false" aria-label="Tuesday">T</button>
+          <button type="button" class="todo-day" data-day="WE" aria-pressed="false" aria-label="Wednesday">W</button>
+          <button type="button" class="todo-day" data-day="TH" aria-pressed="false" aria-label="Thursday">T</button>
+          <button type="button" class="todo-day" data-day="FR" aria-pressed="false" aria-label="Friday">F</button>
+          <button type="button" class="todo-day" data-day="SA" aria-pressed="false" aria-label="Saturday">S</button>
+        </div>
+      </div>
+      <div class="todo-row">
+        <label class="todo-field"><span>Starts <span class="todo-opt">(optional)</span></span>
+          <input type="time" id="eventStart">
+        </label>
+        <label class="todo-field"><span>Ends <span class="todo-opt">(optional)</span></span>
+          <input type="time" id="eventEnd">
+        </label>
+      </div>
+      <label class="todo-field"><span>Where <span class="todo-opt">(optional)</span></span>
+        <input type="text" id="eventLocation" maxlength="200">
+      </label>
+      <p class="todo-hint">Times are Eastern. Events added here are saved to your calendar and show on every device.</p>
+      <button type="submit" class="refresh-btn todo-add-btn" id="eventAddBtn">Add</button>
+      <p class="todo-note" id="eventNote" role="status" aria-live="polite"></p>
+    </form>
+    <h3 class="sub">Coming up, added on this page</h3>
+    <ul class="todo-list" id="eventList"></ul>
+  </div>
+</div>
 <div class="todo-undo" id="todoUndo" role="status" aria-live="polite"></div>
 <script src="/todo-repeat.js?v=1"></script>
-<script src="/calendar.js?v=32"></script>
+<script src="/calendar.js?v=33"></script>
 </body>
 </html>
