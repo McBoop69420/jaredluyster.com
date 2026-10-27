@@ -265,6 +265,16 @@ Sports has its own project and its own deploy mechanism; see §4b.
     `tests/calendar-ticks.test.mjs`. Local dev: the `calendar-ticks-dev` launch config
     (`wrangler pages dev` on a staging copy of `calendar/` plus `_worker.js`, with
     `--r2 CALENDAR_TICKS --binding CALENDAR_DEV_EMAIL=dev@localhost`).
+    **Events added on the page (2026-10-27):** the "+ Add event" sheet saves to
+    `/api/events` in `news/_worker.js` (same owner gate as `/api/ticks`), which keeps
+    them in `events.json` at the root of the same R2 bucket — deliberately NOT in
+    `site/calendar.json`, which `publish-calendar.sh` uploads whole and would wipe
+    them. The page lays them over `calendar.json` everywhere it draws events. Fields:
+    id (picked by the page, so retries and Undo can't double up), title, date,
+    optional start/end/location, optional weekly recurrence. So the calendar's events
+    are the union of the two files: to change or remove a page-made event, use the
+    sheet's list (upcoming ones, with Delete) or edit `events.json` in R2. Tests:
+    `tests/calendar-events.test.mjs`. Not available on `jaredluyster.com/calendar/`.
     **Basketball exhibitions (2026-10-22):** ESPN, the calendar's source for every
     other game, doesn't list college exhibitions, so `/api/exhibitions` in
     `news/_worker.js` scrapes UK's and Louisville's men's and women's basketball
