@@ -1,0 +1,45 @@
+{
+  "note": "Series the comic tracker follows. 'name' is how the series appears in calendar reminders ('Comics: <name> #<n> → <list> list'); changing it un-ticks that series' reminders on the calendar. 'path' is the League of Comic Geeks series path (https://leagueofcomicgeeks.com/comics/series/<path>). Finished runs are left out.",
+  "first_day": "2026-10-18",
+  "lists": {
+    "Absolute Universe": [
+      { "name": "Absolute Batman", "path": "178012/absolute-batman" },
+      { "name": "Absolute Wonder Woman", "path": "178014/absolute-wonder-woman" },
+      { "name": "Absolute Superman", "path": "178013/absolute-superman" },
+      { "name": "Absolute Flash", "path": "178283/absolute-flash" },
+      { "name": "Absolute Green Lantern", "path": "178310/absolute-green-lantern" },
+      { "name": "Absolute Green Arrow", "path": "193454/absolute-green-arrow" },
+      { "name": "Absolute Catwoman", "path": "198467/absolute-catwoman" },
+      { "name": "Absolute Batman: Beyond Ark M", "path": "216469/absolute-batman-beyond-ark-m" },
+      { "name": "Absolute Black Canary", "path": "216459/absolute-black-canary" },
+      { "name": "Absolute Justice", "path": "221037/absolute-justice" }
+    ],
+    "Department of Truth": [
+      { "name": "The Department of Truth", "path": "147715/the-department-of-truth" }
+    ],
+    "Unnamed Universe": [
+      { "name": "Geiger", "path": "171511/geiger" },
+      { "name": "Redcoat", "path": "171492/redcoat" },
+      { "name": "First Ghost", "path": "171600/first-ghost" },
+      { "name": "Ghost Machine: The Official Guidebook", "path": "204725/ghost-machine-the-official-guidebook" }
+    ],
+    "Ryan North Marvel": [
+      { "name": "Fantastic Four (Vol. 8, ongoing)", "path": "187342/fantastic-four" },
+      { "name": "Doomquest (10 issues)", "path": "205941/doomquest" },
+      { "name": "Marvel Winter Break Special 2026", "path": "217952/marvel-winter-break-special-2026" }
+    ]
+  },
+  "creators": [
+    {
+      "name": "Ryan North",
+      "path": "2215/ryan-north",
+      "publisher": "Marvel Comics",
+      "since": 2025
+    }
+  ],
+  "ignore": [
+    "195347", "210569", "203491", "207908", "213375", "213633", "192714", "189739", "190067",
+    "192884", "203017", "210138", "186387", "183131", "178917", "182236", "191137", "214517",
+    "189458", "188036", "187759", "188476", "180968"
+  ]
+}
