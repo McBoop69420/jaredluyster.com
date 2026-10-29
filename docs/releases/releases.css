@@ -39,7 +39,7 @@
 .owner-filter button { font-family: var(--font-display); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; background: transparent; border: 2px solid var(--paper); padding: 6px 12px; cursor: pointer; }
 .owner-filter button.active, .owner-filter button:hover { background: var(--paper); color: var(--ink); }
 .task { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; background: var(--card); border: 2px solid var(--paper); padding: 12px 14px; margin-bottom: 8px; }
-.task.overdue, .task.blocked { border-color: var(--fire); }
+.task.blocked { border-color: var(--fire); }
 .task .title { flex: 1 1 320px; font-size: 0.92rem; }
 .task .note { flex-basis: 100%; font-size: 0.78rem; color: var(--muted); }
 #done-wrap summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); margin: 12px 0 8px; }

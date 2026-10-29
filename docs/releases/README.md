@@ -19,14 +19,13 @@ or itch download keys. Use roles or first names in `by`, not emails.
 
 ## tasks.json (the to-do list)
 
-The page leads with this. Every open task needs an `owner` and a `due` date;
-the banner calls out overdue, unowned and undated tasks. Blocked and overdue
-tasks sort to the top.
+The page leads with this. Every open task needs an `owner`; the banner calls
+out unowned tasks. Blocked tasks sort to the top, then in-progress ones.
 
 ```json
 { "tasks": [
   { "id": 1, "title": "...", "owner": "jared", "status": "todo|doing|blocked|done",
-    "due": "2026-11-05", "created": "2026-10-29", "done": "2026-11-02", "note": "optional" }
+    "created": "2026-10-29", "done": "2026-11-02", "note": "optional" }
 ] }
 ```
 

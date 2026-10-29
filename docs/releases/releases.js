@@ -47,26 +47,21 @@
         return issues;
     }
 
-    const today = () => new Date().toISOString().slice(0, 10);
-
     function taskIssues(tasks) {
         const issues = [];
         tasks.filter(t => t.status !== 'done').forEach(t => {
             if (!t.owner) issues.push('Task "' + t.title + '" has no owner.');
-            if (!t.due) issues.push('Task "' + t.title + '" has no due date.');
-            else if (t.due < today()) issues.push('Task "' + t.title + '" was due ' + t.due + (t.owner ? ' (' + t.owner + ')' : '') + '.');
         });
         return issues;
     }
 
     function taskRow(t) {
         const open = t.status !== 'done';
-        const overdue = open && t.due && t.due < today();
         const st = t.status === 'done' ? 'st-live' : t.status === 'blocked' ? 'st-bad' : t.status === 'doing' ? 'st-pending' : 'st-unknown';
-        return '<div class="task' + (overdue ? ' overdue' : '') + (t.status === 'blocked' ? ' blocked' : '') + '">' +
+        return '<div class="task' + (t.status === 'blocked' ? ' blocked' : '') + '">' +
             '<span class="flag ' + st + '">' + esc(t.status) + '</span><span class="title">' + esc(t.title) + '</span>' +
-            '<span class="meta">' + esc(t.owner || 'NO OWNER') + (t.due ? ' · due ' + esc(t.due) : '') +
-            (t.done ? ' · done ' + esc(t.done) : '') + (overdue ? ' · OVERDUE' : '') + '</span>' +
+            '<span class="meta">' + esc(t.owner || 'NO OWNER') +
+            (t.done ? ' · done ' + esc(t.done) : '') + '</span>' +
             (t.note ? '<span class="note">' + esc(t.note) + '</span>' : '') + '</div>';
     }
 
@@ -83,9 +78,9 @@
             b.onclick = () => { ownerFilter = b.getAttribute('data-owner'); renderTasks(allTasks); };
         });
         const tasks = allTasks.filter(t => ownerFilter === 'all' || (t.owner || 'unowned') === ownerFilter);
-        const rank = t => (t.status === 'blocked' ? 0 : t.due && t.due < today() ? 1 : t.status === 'doing' ? 2 : 3);
+        const rank = t => (t.status === 'blocked' ? 0 : t.status === 'doing' ? 1 : 2);
         const open = tasks.filter(t => t.status !== 'done')
-            .sort((a, b) => rank(a) - rank(b) || String(a.due || '9').localeCompare(String(b.due || '9')));
+            .sort((a, b) => rank(a) - rank(b) || (a.id || 0) - (b.id || 0));
         const done = tasks.filter(t => t.status === 'done').sort((a, b) => String(b.done).localeCompare(String(a.done)));
         $('tasks').innerHTML = open.length ? open.map(taskRow).join('') : '<p class="rel-empty">Nothing open.</p>';
         $('done').innerHTML = done.map(taskRow).join('');
