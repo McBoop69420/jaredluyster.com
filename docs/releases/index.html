@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Wizard Battle — Releases</title>
+    <link rel="icon" type="image/svg+xml" href="../master-sigil.svg">
+    <link rel="stylesheet" href="../shared-theme.css">
+    <link rel="stylesheet" href="../reference-pages.css">
+    <link rel="stylesheet" href="releases.css">
+</head>
+<body>
+    <main class="page-narrow">
+        <h1 class="page-title">Releases</h1>
+        <p class="subtitle" id="generated">Loading…</p>
+
+        <div id="banner"></div>
+
+        <section class="rel-section">
+            <h2>Current build per platform</h2>
+            <div class="rel-grid" id="platforms"></div>
+        </section>
+
+        <section class="rel-section">
+            <h2>Unreleased on main</h2>
+            <div id="unreleased"></div>
+        </section>
+
+        <section class="rel-section">
+            <h2>Release history</h2>
+            <div id="history"></div>
+        </section>
+
+        <section class="rel-section">
+            <h2>Ship checklist</h2>
+            <ol class="rel-checklist">
+                <li>DuelModeEnabled is false; TutorialEnabled is what you intend.</li>
+                <li>Working tree clean and main pushed.</li>
+                <li>Simulator opens and a floor plays (<code>./run-ios-sim.sh</code>).</li>
+                <li>Build number comes from <code>git rev-list --count HEAD</code>; tag the built commit <code>b&lt;build&gt;</code>.</li>
+            </ol>
+        </section>
+    </main>
+    <script src="releases.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+.rel-section { margin: 0 0 40px; }
+.rel-section h2 {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+}
+.rel-banner {
+    background: var(--fire);
+    color: #fff;
+    border: var(--border-w) solid var(--paper);
+    padding: 14px 16px;
+    margin-bottom: 28px;
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+.rel-banner ul { margin: 6px 0 0; padding-left: 20px; font-weight: 500; }
+.rel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.rel-card {
+    background: var(--card);
+    border: 2px solid var(--paper);
+    padding: 14px;
+    box-shadow: var(--shadow-soft);
+}
+.rel-card .label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.rel-card .value { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
+.rel-card .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.st-unknown { color: var(--muted); }
+.st-live { color: var(--plant); }
+.st-pending { color: var(--accent); }
+.flag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border: 2px solid var(--paper); margin: 0 6px 4px 0; }
+.flag.bad { background: var(--fire); border-color: var(--fire); color: #fff; }
+.flag.ok { color: var(--plant); border-color: var(--plant); }
+.flag.unk { color: var(--muted); border-color: var(--muted); }
+.flag.st-live { border-color: var(--plant); }
+.flag.st-pending { border-color: var(--accent); }
+.flag.st-unknown { border-color: var(--muted); }
+.rel-entry { background: var(--card); border: 2px solid var(--paper); padding: 16px; margin-bottom: 14px; }
+.rel-entry header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; margin-bottom: 8px; }
+.rel-entry h3 { margin: 0; font-family: var(--font-display); font-size: 1.15rem; }
+.rel-entry .meta { font-size: 0.78rem; color: var(--muted); }
+.rel-entry pre.changelog { white-space: pre-wrap; margin: 10px 0 0; font: inherit; font-size: 0.85rem; line-height: 1.5; }
+.rel-entry ul.commits { margin: 8px 0 0; padding-left: 20px; font-size: 0.85rem; }
+.rel-empty { color: var(--muted); font-size: 0.9rem; }
+.rel-checks { margin-bottom: 6px; }
+.rel-checklist { font-size: 0.85rem; line-height: 1.7; margin: 0; padding-left: 20px; color: var(--muted); }
