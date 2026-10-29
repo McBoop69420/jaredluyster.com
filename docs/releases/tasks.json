@@ -1,0 +1,10 @@
+{
+  "tasks": [
+    { "id": 1, "title": "Confirm Unity Build Automation can run a pre-build step that sets build number from git rev-list --count HEAD", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "Unverified; the whole numbering plan depends on it." },
+    { "id": 2, "title": "Write tools/export-release-data.sh in the game repo (emits releases.json)", "owner": "claude", "status": "todo", "due": "2026-11-05", "created": "2026-10-29" },
+    { "id": 3, "title": "Tag the commit behind the current TestFlight build (first b-tag)", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "Needed before the git snapshot has any history." },
+    { "id": 4, "title": "Record what is currently live on iOS, Android and Windows in ledger.json", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "platform": "all" },
+    { "id": 5, "title": "Verify DuelModeEnabled is false on main before the next build", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "PvP once shipped to testers for about a month." },
+    { "id": 6, "title": "Head changelog entries with the build number", "owner": "claude", "status": "todo", "due": "2026-11-12", "created": "2026-10-29" }
+  ]
+}

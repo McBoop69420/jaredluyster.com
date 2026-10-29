@@ -47,7 +47,42 @@
         return issues;
     }
 
-    function render(data, ledgerData) {
+    const today = () => new Date().toISOString().slice(0, 10);
+
+    function taskIssues(tasks) {
+        const issues = [];
+        tasks.filter(t => t.status !== 'done').forEach(t => {
+            if (!t.owner) issues.push('Task "' + t.title + '" has no owner.');
+            if (!t.due) issues.push('Task "' + t.title + '" has no due date.');
+            else if (t.due < today()) issues.push('Task "' + t.title + '" was due ' + t.due + (t.owner ? ' (' + t.owner + ')' : '') + '.');
+        });
+        return issues;
+    }
+
+    function taskRow(t) {
+        const open = t.status !== 'done';
+        const overdue = open && t.due && t.due < today();
+        const st = t.status === 'done' ? 'st-live' : t.status === 'blocked' ? 'st-bad' : t.status === 'doing' ? 'st-pending' : 'st-unknown';
+        return '<div class="task' + (overdue ? ' overdue' : '') + (t.status === 'blocked' ? ' blocked' : '') + '">' +
+            '<span class="flag ' + st + '">' + esc(t.status) + '</span><span class="title">' + esc(t.title) + '</span>' +
+            '<span class="meta">' + esc(t.owner || 'NO OWNER') + (t.due ? ' · due ' + esc(t.due) : '') +
+            (t.done ? ' · done ' + esc(t.done) : '') + (overdue ? ' · OVERDUE' : '') + '</span>' +
+            (t.note ? '<span class="note">' + esc(t.note) + '</span>' : '') + '</div>';
+    }
+
+    function renderTasks(tasks) {
+        const rank = t => (t.status === 'blocked' ? 0 : t.due && t.due < today() ? 1 : t.status === 'doing' ? 2 : 3);
+        const open = tasks.filter(t => t.status !== 'done')
+            .sort((a, b) => rank(a) - rank(b) || String(a.due || '9').localeCompare(String(b.due || '9')));
+        const done = tasks.filter(t => t.status === 'done').sort((a, b) => String(b.done).localeCompare(String(a.done)));
+        $('tasks').innerHTML = open.length ? open.map(taskRow).join('') : '<p class="rel-empty">Nothing open.</p>';
+        $('done').innerHTML = done.map(taskRow).join('');
+        $('done-wrap').style.display = done.length ? '' : 'none';
+    }
+
+    function render(data, ledgerData, taskData) {
+        const tasks = taskData.tasks || [];
+        renderTasks(tasks);
         const releases = (data.releases || []).slice().sort((a, b) => (b.build || 0) - (a.build || 0));
         const un = data.unreleased;
         const ledger = (ledgerData.entries || []).slice().sort((a, b) =>
@@ -58,7 +93,7 @@
             : 'Ledger is empty') +
             (data.generated ? ' · git snapshot ' + data.generated : ' · no git snapshot yet');
 
-        const issues = audit(ledger, releases);
+        const issues = audit(ledger, releases).concat(taskIssues(tasks));
         if (un && un.flags && un.flags.DuelModeEnabled === true) issues.unshift('DuelModeEnabled is true on main right now.');
         $('banner').innerHTML = issues.length
             ? '<div class="rel-banner">' + issues.length + ' accountability issue' + (issues.length === 1 ? '' : 's') +
@@ -109,8 +144,8 @@
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
         .catch(() => fallback);
 
-    Promise.all([load('releases.json', {}), load('ledger.json', null)]).then(res => {
-        if (res[1] === null) { $('generated').textContent = 'Could not load ledger.json.'; return; }
-        render(res[0], res[1]);
+    Promise.all([load('releases.json', {}), load('ledger.json', null), load('tasks.json', null)]).then(res => {
+        if (res[1] === null || res[2] === null) { $('generated').textContent = 'Could not load ledger.json or tasks.json.'; return; }
+        render(res[0], res[1], res[2]);
     });
 })();

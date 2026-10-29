@@ -34,6 +34,12 @@
 .flag.bad { background: var(--fire); border-color: var(--fire); color: #fff; }
 .flag.ok { color: var(--plant); border-color: var(--plant); }
 .flag.unk { color: var(--muted); border-color: var(--muted); }
+.task { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; background: var(--card); border: 2px solid var(--paper); padding: 12px 14px; margin-bottom: 8px; }
+.task.overdue, .task.blocked { border-color: var(--fire); }
+.task .title { flex: 1 1 320px; font-size: 0.92rem; }
+.task .note { flex-basis: 100%; font-size: 0.78rem; color: var(--muted); }
+#done-wrap summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); margin: 12px 0 8px; }
+#done-wrap .task .title { text-decoration: line-through; color: var(--muted); }
 .flag.st-bad { color: var(--fire); border-color: var(--fire); }
 .flag.st-live { border-color: var(--plant); }
 .flag.st-pending { border-color: var(--accent); }

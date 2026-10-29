@@ -17,6 +17,19 @@ ledgered, an entry lacks `by` or `date`, or main has `DuelModeEnabled` true.
 The site is public: no Unity/App Store Connect/Firebase ids, keys, tester names
 or itch download keys. Use roles or first names in `by`, not emails.
 
+## tasks.json (the to-do list)
+
+The page leads with this. Every open task needs an `owner` and a `due` date;
+the banner calls out overdue, unowned and undated tasks. Blocked and overdue
+tasks sort to the top.
+
+```json
+{ "tasks": [
+  { "id": 1, "title": "...", "owner": "jared", "status": "todo|doing|blocked|done",
+    "due": "2026-11-05", "created": "2026-10-29", "done": "2026-11-02", "note": "optional" }
+] }
+```
+
 ## ledger.json
 
 ```json
