@@ -1702,6 +1702,15 @@
         }
         return isLeagueWide(a) - isLeagueWide(b);
       }));
+    // My own events (calendar.json and page-made) drop off today once their
+    // start time has passed, like earlier days' do. Games keep their scores;
+    // movies and todos have rules of their own. The 5-minute refresh redraws.
+    if (byDate[todayStr]) {
+      const nowMin = etNowMinutes();
+      const nowHm = pad2(Math.floor(nowMin / 60)) + ":" + pad2(nowMin % 60);
+      byDate[todayStr] = byDate[todayStr].filter(ev =>
+        ev.type === "sports" || ev.type === "movie" || ev.type === "todo" || !ev.start || ev.start >= nowHm);
+    }
 
     function isWorkEvent(ev) {
       return String(ev.type || ev.kind || ev.category || "").toLowerCase() === "work";
