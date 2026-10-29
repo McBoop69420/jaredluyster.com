@@ -34,6 +34,7 @@
 .flag.bad { background: var(--fire); border-color: var(--fire); color: #fff; }
 .flag.ok { color: var(--plant); border-color: var(--plant); }
 .flag.unk { color: var(--muted); border-color: var(--muted); }
+.flag.st-bad { color: var(--fire); border-color: var(--fire); }
 .flag.st-live { border-color: var(--plant); }
 .flag.st-pending { border-color: var(--accent); }
 .flag.st-unknown { border-color: var(--muted); }

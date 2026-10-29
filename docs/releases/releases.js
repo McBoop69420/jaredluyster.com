@@ -9,10 +9,12 @@
         { key: 'DuelModeEnabled', bad: true },
         { key: 'TutorialEnabled', bad: null }
     ];
+    const ACTIONS = { submitted: 'st-pending', live: 'st-live', pulled: 'st-unknown', failed: 'st-bad' };
 
     const $ = id => document.getElementById(id);
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const label = key => (PLATFORMS.find(p => p.key === key) || { label: key }).label;
 
     function flagChips(flags) {
         flags = flags || {};
@@ -24,43 +26,62 @@
         }).join('');
     }
 
-    function platformStatus(rel, key) {
-        const s = (rel.platforms || {})[key];
-        return s ? String(s) : 'unknown';
+    // Cross-check the hand-kept ledger against the git snapshot.
+    function audit(ledger, releases) {
+        const byBuild = {};
+        releases.forEach(r => { byBuild[r.build] = r; });
+        const issues = [];
+        ledger.forEach(e => {
+            const r = byBuild[e.build];
+            if (!r) {
+                issues.push('Ledger has build ' + e.build + ' (' + label(e.platform) + ', ' + e.action + ') but git has no tag for it.');
+            } else if (e.action !== 'pulled' && e.action !== 'failed' && r.flags && r.flags.DuelModeEnabled === true) {
+                issues.push('Build ' + e.build + ' reached ' + label(e.platform) + ' with DuelModeEnabled true.');
+            }
+            if (!e.by || !e.date) issues.push('Ledger entry for build ' + e.build + ' (' + label(e.platform) + ') is missing who or when.');
+        });
+        const ledgered = new Set(ledger.map(e => e.build));
+        releases.forEach(r => {
+            if (!ledgered.has(r.build)) issues.push('Build ' + r.build + ' is tagged in git but never recorded as shipped anywhere.');
+        });
+        return issues;
     }
 
-    function statusClass(s) {
-        return s === 'live' ? 'st-live' : s === 'unknown' ? 'st-unknown' : 'st-pending';
-    }
-
-    function render(data) {
+    function render(data, ledgerData) {
         const releases = (data.releases || []).slice().sort((a, b) => (b.build || 0) - (a.build || 0));
         const un = data.unreleased;
+        const ledger = (ledgerData.entries || []).slice().sort((a, b) =>
+            String(b.date).localeCompare(String(a.date)) || (b.build || 0) - (a.build || 0));
 
-        $('generated').textContent = data.generated
-            ? 'Snapshot generated ' + data.generated + (data.bundleVersion ? ' · version ' + data.bundleVersion : '')
-            : 'No snapshot yet. Run the export script in the game repo.';
+        $('generated').textContent = (ledger.length
+            ? ledger.length + ' ledger entr' + (ledger.length === 1 ? 'y' : 'ies')
+            : 'Ledger is empty') +
+            (data.generated ? ' · git snapshot ' + data.generated : ' · no git snapshot yet');
 
-        const warn = [];
-        if (un && un.flags && un.flags.DuelModeEnabled === true) warn.push('main (unreleased)');
-        releases.forEach(r => {
-            if (r.flags && r.flags.DuelModeEnabled === true) warn.push('build ' + r.build);
-        });
-        $('banner').innerHTML = warn.length
-            ? '<div class="rel-banner">DuelModeEnabled is TRUE in:<ul>' +
-              warn.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul></div>'
+        const issues = audit(ledger, releases);
+        if (un && un.flags && un.flags.DuelModeEnabled === true) issues.unshift('DuelModeEnabled is true on main right now.');
+        $('banner').innerHTML = issues.length
+            ? '<div class="rel-banner">' + issues.length + ' accountability issue' + (issues.length === 1 ? '' : 's') +
+              ':<ul>' + issues.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul></div>'
             : '';
 
+        // Current build per platform = most recent ledger entry that says live.
         $('platforms').innerHTML = PLATFORMS.map(p => {
-            const rel = releases.find(r => platformStatus(r, p.key) === 'live');
+            const e = ledger.find(x => x.platform === p.key && x.action === 'live');
             return '<div class="rel-card"><div class="label">' + esc(p.label) + '</div>' +
-                '<div class="value ' + (rel ? 'st-live' : 'st-unknown') + '">' +
-                (rel ? 'b' + esc(rel.build) : 'unknown') + '</div>' +
-                '<div class="sub">' + (rel ? esc(rel.date || '') : 'no build marked live') + '</div></div>';
+                '<div class="value ' + (e ? 'st-live' : 'st-unknown') + '">' + (e ? 'b' + esc(e.build) : 'unknown') + '</div>' +
+                '<div class="sub">' + (e ? esc(e.date) + ' · ' + esc(e.by || '?') : 'nothing recorded live') + '</div></div>';
         }).join('');
 
+        $('ledger').innerHTML = ledger.length ? ledger.map(e =>
+            '<div class="rel-entry"><header><h3>Build ' + esc(e.build) + ' → ' + esc(label(e.platform)) +
+            '</h3><span class="flag ' + (ACTIONS[e.action] || 'st-unknown') + '">' + esc(e.action) + '</span>' +
+            '<span class="meta">' + esc(e.date) + ' · by ' + esc(e.by || '?') + '</span></header>' +
+            (e.note ? '<div class="meta">' + esc(e.note) + '</div>' : '') + '</div>'
+        ).join('') : '<p class="rel-empty">Nothing recorded yet. Every submission, go-live and pull goes here.</p>';
+
         if (!un) {
-            $('unreleased').innerHTML = '<p class="rel-empty">No data.</p>';
+            $('unreleased').innerHTML = '<p class="rel-empty">No git snapshot.</p>';
         } else {
             const commits = un.commits || [];
             const checks = [['Working tree clean', un.clean], ['Main pushed', un.pushed]].map(pair => {
@@ -79,17 +100,17 @@
         $('history').innerHTML = releases.length ? releases.map(r =>
             '<article class="rel-entry"><header><h3>Build ' + esc(r.build) + '</h3><span class="meta">' +
             [r.tag, r.date, r.sha, r.bundleVersion ? 'v' + r.bundleVersion : ''].filter(Boolean).map(esc).join(' · ') +
-            '</span></header><div class="rel-checks">' + flagChips(r.flags) + '</div><div>' +
-            PLATFORMS.map(p => {
-                const s = platformStatus(r, p.key);
-                return '<span class="flag ' + statusClass(s) + '">' + esc(p.label.split(' ')[0]) + ': ' + esc(s) + '</span>';
-            }).join('') + '</div>' +
+            '</span></header><div class="rel-checks">' + flagChips(r.flags) + '</div>' +
             (r.changelog ? '<pre class="changelog">' + esc(r.changelog) + '</pre>' : '') + '</article>'
         ).join('') : '<p class="rel-empty">No tagged releases yet.</p>';
     }
 
-    fetch('releases.json', { cache: 'no-store' })
+    const load = (url, fallback) => fetch(url, { cache: 'no-store' })
         .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(render)
-        .catch(() => { $('generated').textContent = 'Could not load releases.json.'; });
+        .catch(() => fallback);
+
+    Promise.all([load('releases.json', {}), load('ledger.json', null)]).then(res => {
+        if (res[1] === null) { $('generated').textContent = 'Could not load ledger.json.'; return; }
+        render(res[0], res[1]);
+    });
 })();
