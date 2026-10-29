@@ -70,7 +70,19 @@
             (t.note ? '<span class="note">' + esc(t.note) + '</span>' : '') + '</div>';
     }
 
-    function renderTasks(tasks) {
+    let ownerFilter = 'all';
+
+    function renderTasks(allTasks) {
+        const owners = Array.from(new Set(allTasks.map(t => t.owner || 'unowned'))).sort();
+        $('owner-filter').innerHTML = ['all'].concat(owners).map(o => {
+            const n = allTasks.filter(t => t.status !== 'done' && (o === 'all' || (t.owner || 'unowned') === o)).length;
+            return '<button type="button" data-owner="' + esc(o) + '" class="' + (o === ownerFilter ? 'active' : '') + '">' +
+                esc(o) + ' (' + n + ')</button>';
+        }).join('');
+        Array.prototype.forEach.call($('owner-filter').querySelectorAll('button'), b => {
+            b.onclick = () => { ownerFilter = b.getAttribute('data-owner'); renderTasks(allTasks); };
+        });
+        const tasks = allTasks.filter(t => ownerFilter === 'all' || (t.owner || 'unowned') === ownerFilter);
         const rank = t => (t.status === 'blocked' ? 0 : t.due && t.due < today() ? 1 : t.status === 'doing' ? 2 : 3);
         const open = tasks.filter(t => t.status !== 'done')
             .sort((a, b) => rank(a) - rank(b) || String(a.due || '9').localeCompare(String(b.due || '9')));

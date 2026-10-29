@@ -1,10 +1,17 @@
 {
   "tasks": [
     { "id": 1, "title": "Confirm Unity Build Automation can run a pre-build step that sets build number from git rev-list --count HEAD", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "Unverified; the whole numbering plan depends on it." },
-    { "id": 2, "title": "Write tools/export-release-data.sh in the game repo (emits releases.json)", "owner": "claude", "status": "todo", "due": "2026-11-05", "created": "2026-10-29" },
+    { "id": 2, "title": "Write tools/export-release-data.sh in the game repo (emits releases.json)", "owner": "claude", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "Game repo is not on this machine; needs a session there." },
     { "id": 3, "title": "Tag the commit behind the current TestFlight build (first b-tag)", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "Needed before the git snapshot has any history." },
-    { "id": 4, "title": "Record what is currently live on iOS, Android and Windows in ledger.json", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "platform": "all" },
+    { "id": 4, "title": "Record what is currently live on iOS, Android and Windows in ledger.json", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29" },
     { "id": 5, "title": "Verify DuelModeEnabled is false on main before the next build", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29", "note": "PvP once shipped to testers for about a month." },
-    { "id": 6, "title": "Head changelog entries with the build number", "owner": "claude", "status": "todo", "due": "2026-11-12", "created": "2026-10-29" }
+    { "id": 6, "title": "Head changelog entries with the build number", "owner": "claude", "status": "todo", "due": "2026-11-12", "created": "2026-10-29" },
+    { "id": 7, "title": "Decide: export script writes into a sibling website checkout, or snapshot copied by hand", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29" },
+    { "id": 8, "title": "Decide: link /releases/ from the public Wizard Battle home page nav", "owner": "jared", "status": "todo", "due": "2026-11-05", "created": "2026-10-29" },
+    { "id": 9, "title": "Inspect docs/ and reference page styling", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-29" },
+    { "id": 10, "title": "Build the releases page (HTML, JS, CSS, releases.json)", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-29" },
+    { "id": 11, "title": "Pivot page to an independent shipping ledger with git cross-check", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-29" },
+    { "id": 12, "title": "Lead the page with an owned, dated to-do list", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-29" },
+    { "id": 13, "title": "Match the Wizard Battle site look (topbar, nav) and mirror Claude's working to-dos here", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-29" }
   ]
 }

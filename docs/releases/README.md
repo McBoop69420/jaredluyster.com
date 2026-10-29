@@ -30,6 +30,10 @@ tasks sort to the top.
 ] }
 ```
 
+Claude's own working to-dos for this project are mirrored here with
+`"owner": "claude"` (done items keep a `done` date). Use the owner buttons on
+the page to see just yours or just Claude's.
+
 ## ledger.json
 
 ```json

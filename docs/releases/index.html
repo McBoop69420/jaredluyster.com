@@ -11,14 +11,29 @@
     <link rel="stylesheet" href="releases.css">
 </head>
 <body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="../index.html">
+                <img class="brand-wordmark" src="../wordmark-horizontal.svg" alt="Wizard Battle — Roguelike Deckbuilder">
+            </a>
+            <nav class="nav">
+                <a href="../index.html">Home</a>
+                <a href="../atlas.html">Wiki</a>
+                <a class="active" href="index.html">Releases</a>
+            </nav>
+        </div>
+    </header>
+
     <main class="page-narrow">
-        <h1 class="page-title">Releases</h1>
+        <div class="rel-eyebrow">Distribution</div>
+        <h1 class="page-title">Releases &amp; To Do</h1>
         <p class="subtitle" id="generated">Loading…</p>
 
         <div id="banner"></div>
 
         <section class="rel-section">
             <h2>To do</h2>
+            <div class="owner-filter" id="owner-filter"></div>
             <div id="tasks"></div>
             <details id="done-wrap"><summary>Done</summary><div id="done"></div></details>
         </section>
