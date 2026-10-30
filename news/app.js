@@ -47,6 +47,11 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
 
+  // Feed links come from third-party XML: only ever render http(s), never javascript: or data:.
+  function safeLink(u) {
+    return /^https?:\/\//i.test(String(u || "")) ? u : "#";
+  }
+
   function activeSection() {
     return SECTIONS[activeTab] || null;
   }
@@ -121,7 +126,7 @@
     if (!liveFeeds) return '<p class="feed-loading">Loading live headlines&hellip;</p>';
     if (!items || !items.length) return '<p class="feed-loading">No headlines available right now.</p>';
     return items.map((it) =>
-      '<a class="feed-item" href="' + esc(it.link) + '" target="_blank" rel="noopener">' +
+      '<a class="feed-item" href="' + esc(safeLink(it.link)) + '" target="_blank" rel="noopener">' +
         '<div class="feed-item-title">' + esc(it.title) + "</div>" +
         '<div class="feed-item-meta">' + esc(it.source || "") +
         (it.bias ? ' <span class="bias-tag bias-' + esc(it.bias) + '"' + (it.biasNote ? ' title="' + esc(it.biasNote) + '"' : "") + ">" + esc(BIAS_LABELS[it.bias] || it.bias) + "</span>" : "") +

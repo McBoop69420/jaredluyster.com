@@ -108,7 +108,7 @@ embed slots using official embed codes from services you're personally authentic
    `redzone.jaredluyster.com`) reuses the "Only Me" policy
    (`e664394b-54a3-4cd4-bc10-18b5f4b90c5b`) the same way `news`/`sports`/`calendar`/`social`
    do — same Zero Trust org, independently editable per-app. A second policy,
-   `Redzone guest access` (Include Emails = `mohara350376@gmail.com`), was added 2026-09-18;
+   `Redzone guest access` (Include Emails = `guest A`), was added 2026-09-18;
    that address is also on `Sports guest access`. One guest policy per app, addresses listed
    inside it.
 
@@ -130,7 +130,7 @@ embed slots using official embed codes from services you're personally authentic
    **The Google consent screen is in Testing mode** (External; Publish is blocked until the
    Branding page has a homepage/privacy/terms link). Only Google accounts on the *Test users*
    list (Google Auth Platform → Audience) can sign in with Google, so a new guest must be added
-   there *and* to their app's Access policy. `mohara350376@gmail.com` is on the list. With the
+   there *and* to their app's Access policy. `guest A` is on the list. With the
    emailed code removed, a guest who isn't a test user and has no Cloudflare account has no
    way to sign in.
 
@@ -154,8 +154,8 @@ embed slots using official embed codes from services you're personally authentic
    ID `prefab-pride-461709-i0`, number `205430663206` (the client ID prefix). Manage test users
    at Google Auth Platform → Audience while signed in as that account. `doctormcboop`
    can't open the project and isn't a test user, yet its Google sign-in to Access works
-   (seen 2026-10-22). Test users as of 2026-10-22: `mohara350376@gmail.com` and
-   `lebronwall6@gmail.com` (added that day, for `Sports guest access`).
+   (seen 2026-10-22). Test users as of 2026-10-22: `guest A` and
+   `guest B` (added that day, for `Sports guest access`).
 
 Verified via `curl`: an unauthenticated request to `https://redzone.jaredluyster.com/` gets
 `302` to `quiet-frost-ed57.cloudflareaccess.com/cdn-cgi/access/login/redzone.jaredluyster.com`
@@ -179,7 +179,7 @@ bets) is behind the API's own auth — see the bet tracker section. Do not put a
 
 **Google sign-in test (2026-09-20):** Cloudflare's "Test" on the Google provider (run as the
 owner) returned "Your Identity Provider works", confirming the OAuth client ID/secret are
-valid. A real guest sign-in (`mohara350376@gmail.com`) is still untested.
+valid. A real guest sign-in (`guest A`) is still untested.
 
 ### RedZone bet tracker — private store setup (one-time, needs your Cloudflare login)
 

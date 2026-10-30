@@ -3,10 +3,25 @@
 // One object per asset (`<project>/<filename>.png`), plus an optional sibling
 // `<project>/<filename>.png.json` holding the editor's layer state so a saved design can be
 // reloaded and edited again later — the PNG alone can't be un-flattened.
+//
+// Gated twice, the same layering as the RedZone bet store: the `social` Access app covers
+// social.jaredluyster.com, and this Function checks the signed Access JWT itself. Access only
+// guards that one hostname; the same Function is reachable on jaredluyster.com and *.pages.dev,
+// so without the in-code check every route here was open to the internet. Fails closed (503)
+// until SOCIAL_OWNER_EMAILS (or the shared BETS_ALLOWED_EMAILS) is set.
+
+import { authenticate, type AccessEnv } from "../../redzone/_lib/access.ts";
 
 interface Env {
   SOCIAL_ASSETS: R2Bucket;
+  SOCIAL_OWNER_EMAILS?: string; // SECRET: the repo is public
+  SOCIAL_ACCESS_AUD?: string; // optional: the `social` Access app's AUD tag
+  BETS_ALLOWED_EMAILS?: string; // fallback: the owner's email, already set for RedZone
+  ACCESS_TEAM_DOMAIN?: string;
 }
+
+const HOST = "social.jaredluyster.com";
+const DEV_HOSTS = new Set(["localhost", "127.0.0.1", "social.localhost"]);
 
 type Context = {
   request: Request;
@@ -20,6 +35,13 @@ const MAX_BYTES = 20 * 1024 * 1024;
 export const onRequest = async (context: Context): Promise<Response> => {
   const { request, env } = context;
   const url = new URL(request.url);
+  const host = url.hostname.toLowerCase();
+  if (host !== HOST && !DEV_HOSTS.has(host)) return json({ error: "not-found" }, 404);
+  if (!DEV_HOSTS.has(host)) {
+    const accessEnv: AccessEnv = { ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN, ACCESS_AUD: env.SOCIAL_ACCESS_AUD };
+    const auth = await authenticate(request, accessEnv, env.SOCIAL_OWNER_EMAILS || env.BETS_ALLOWED_EMAILS);
+    if (!auth.ok) return json({ error: auth.error }, auth.status);
+  }
   const segments = Array.isArray(context.params.path)
     ? context.params.path
     : context.params.path
@@ -114,6 +136,9 @@ async function getAsset(env: Env, key: string): Promise<Response> {
   obj.writeHttpMetadata(headers);
   headers.set("etag", obj.httpEtag);
   headers.set("cache-control", "private, max-age=0, must-revalidate");
+  // Uploads are whatever the client declared. Never let one run as a page on this origin.
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("content-security-policy", "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'");
   return new Response(obj.body, { headers });
 }
 

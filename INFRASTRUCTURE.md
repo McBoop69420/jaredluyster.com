@@ -705,7 +705,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   the same way as news/calendar (`302 Found` → Cloudflare Access login).
 - **Guest policy — added 2026-09-12:** The `sports` app carries a second Allow
   policy, `Sports guest access` (policy id `8f76fd1b-23c9-4acc-a26d-960b6b3eb94f`),
-  Include rule Emails = `lebronwall6@gmail.com`, `mohara350376@gmail.com` (the latter added
+  Include rule Emails = `guest B`, `guest A` (the latter added
   2026-09-18). It sits alongside the shared
   "Only Me" policy (order 2) rather than replacing it — Access allows on any
   matching policy, so this grants that one address `sports.jaredluyster.com`
@@ -780,7 +780,7 @@ else here. It rebuilds and redeploys automatically on every push to `main`
   Pages project, then a `redzone` self-hosted Access application reusing the "Only Me"
   policy `e664394b-54a3-4cd4-bc10-18b5f4b90c5b` (same as `news`/`calendar`/`social`), plus
   its own `Redzone guest access` policy (id `d939ad56-d1cb-4731-90bc-78e8b3788a4e`, Include
-  Emails = `mohara350376@gmail.com`, added 2026-09-18). Convention: one guest policy per
+  Emails = `guest A`, added 2026-09-18). Convention: one guest policy per
   app, with guest addresses listed inside it — not one policy per address. Verified via `curl`: `302` →
   `.../cdn-cgi/access/login/redzone.jaredluyster.com`, `Www-Authenticate: Cloudflare-Access`.
   Since 2026-09-20 the `redzone` Access app also covers `jaredluyster-com.pages.dev/redzone/*`,
