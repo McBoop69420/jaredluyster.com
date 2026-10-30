@@ -2,7 +2,7 @@
   "tasks": [
     { "id": 1, "title": "Confirm Unity Build Automation can run a pre-build step that sets build number from git rev-list --count HEAD", "owner": "jared", "status": "todo", "created": "2026-10-29", "note": "Unverified; the whole numbering plan depends on it." },
     { "id": 2, "title": "Write tools/export-release-data.sh in the game repo (emits releases.json)", "owner": "claude", "status": "todo", "created": "2026-10-29", "note": "Game repo is not on this machine; needs a session there." },
-    { "id": 3, "title": "Tag the commit behind the current TestFlight build (first b-tag)", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-30", "note": "b16 -> a8d2ba4 (last main commit before the Sep 9 upload)." },
+    { "id": 3, "title": "Tag the commit behind the current TestFlight build (first b-tag)", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-30", "note": "b16 -> a8d2ba4 (last main commit before the Sep 9 upload). b13 -> 74acf2c (the build-13 bump, only commit before the Aug 16 Firebase upload)." },
     { "id": 4, "title": "Record what is currently live on iOS, Android and Windows in ledger.json", "owner": "jared", "status": "done", "created": "2026-10-29", "done": "2026-10-30" },
     { "id": 5, "title": "Verify DuelModeEnabled is false on main before the next build", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-30", "note": "Checked on GitHub main at 79c5fb2: DuelModeEnabled false, TutorialEnabled true. Re-check before each build." },
     { "id": 6, "title": "Head changelog entries with the build number", "owner": "claude", "status": "todo", "created": "2026-10-29" },

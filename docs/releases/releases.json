@@ -13,6 +13,18 @@
         "TutorialEnabled": true
       },
       "changelog": "No build-headed changelog section yet. Built from a8d2ba4 \"Bump iOS build number to 16 for TestFlight upload\" (2026-09-08). DuelModeEnabled was switched on by accident in 74acf2c (2026-08-16) and back off in 22156a0 (2026-09-16), so this build has PvP on."
+    },
+    {
+      "build": 13,
+      "tag": "b13",
+      "date": "2026-08-16",
+      "sha": "74acf2c",
+      "bundleVersion": "1.2.0",
+      "flags": {
+        "DuelModeEnabled": true,
+        "TutorialEnabled": true
+      },
+      "changelog": "No build-headed changelog section yet. Built from 74acf2c \"Ship Tutorial Tower on; fix hand, callout, and map sizing on phone\" (2026-08-16 20:07Z), which bumped build numbers to 13 and is the only commit before the Firebase upload about 90 minutes later. That commit also turned DuelModeEnabled on, so this build has PvP on."
     }
   ],
   "unreleased": {
