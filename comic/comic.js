@@ -67,13 +67,17 @@
         <img src="${imageUrl(s.image)}" width="${s.image.w}" height="${s.image.h}"
              alt="${esc(s.alt || s.title || `Strip ${at}`)}" decoding="async" />
       </figure>
-      <nav class="flip snap-rule" aria-label="Flip through strips">
-        ${link(1, "« first", at > 1)}
-        ${link(at - 1, "‹ back", at > 1)}
-        <button class="scribble" type="button" id="randomBtn" ${latest < 2 ? "disabled" : ""}>random?</button>
-        ${link(at + 1, "next ›", at < latest)}
-        ${link(latest, "newest »", at < latest)}
-      </nav>
+      ${
+        latest > 1
+          ? `<nav class="flip snap-rule" aria-label="Flip through strips">
+              ${link(1, "« first", at > 1)}
+              ${link(at - 1, "‹ back", at > 1)}
+              <button class="scribble" type="button" id="randomBtn">random?</button>
+              ${link(at + 1, "next ›", at < latest)}
+              ${link(latest, "newest »", at < latest)}
+            </nav>`
+          : ""
+      }
       ${
         s.note.trim()
           ? `<div class="artist-note"><span class="who">note from the artist:</span>${esc(s.note)}</div>`
@@ -84,11 +88,12 @@
     `;
 
     const randomBtn = document.getElementById("randomBtn");
-    randomBtn.addEventListener("click", () => {
-      let pick = at;
-      while (latest > 1 && pick === at) pick = 1 + Math.floor(Math.random() * latest);
-      location.hash = `#/${pick}`;
-    });
+    if (randomBtn)
+      randomBtn.addEventListener("click", () => {
+        let pick = at;
+        while (pick === at) pick = 1 + Math.floor(Math.random() * latest);
+        location.hash = `#/${pick}`;
+      });
     setTitle(n == null ? "" : s.title || `#${at}`);
   }
 

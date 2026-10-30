@@ -16,16 +16,18 @@
  * normal mixed case and never text-transform it. Each letter has three versions that rotate on
  * their own (calt). It covers A-Z, 0-9 and basic punctuation; anything else (@ $ % + =) falls
  * through to Patrick Hand in --font-hand. Bold text uses the bold one, written with a thick pen.
- * Bump ?v= when the fonts are re-exported, so browsers don't keep the old ones. */
+ * Bump ?v= when the fonts are re-exported, so browsers don't keep the old ones. The paths start
+ * with /comic/ because on comic.jaredluyster.com a bare /fonts/ goes to the site-wide shared
+ * fonts folder (functions/_middleware.ts), which doesn't have these. */
 @font-face {
     font-family: "Handwriting";
-    src: url("fonts/Handwriting.woff2?v=2") format("woff2");
+    src: url("/comic/fonts/Handwriting.woff2?v=2") format("woff2");
     font-weight: 400;
     font-display: swap;
 }
 @font-face {
     font-family: "Handwriting";
-    src: url("fonts/Handwriting-Bold.woff2?v=2") format("woff2");
+    src: url("/comic/fonts/Handwriting-Bold.woff2?v=2") format("woff2");
     font-weight: 700;
     font-display: swap;
 }
@@ -33,7 +35,7 @@
  * names): those rules stay at weight 400, so a fallback font is never faked bold. */
 @font-face {
     font-family: "Handwriting Marker";
-    src: url("fonts/Handwriting-Bold.woff2?v=2") format("woff2");
+    src: url("/comic/fonts/Handwriting-Bold.woff2?v=2") format("woff2");
     font-display: swap;
 }
 
@@ -457,7 +459,9 @@
 }
 
 .flip a,
-.flip button {
+.flip button,
+.flip .is-off {
+    position: relative;
     display: inline-flex;
     align-items: center;
     min-height: 40px;
@@ -471,16 +475,45 @@
     transition: background-color 120ms, transform 120ms;
 }
 
+/* Gone over a second time with the pen, a little off the first line. */
+.flip a::before,
+.flip button:not(:disabled)::before {
+    content: "";
+    position: absolute;
+    inset: -3px -2px -1px -3px;
+    border: 1.5px solid currentColor;
+    border-radius: 14px 225px 14px 255px / 255px 14px 225px 14px;
+    opacity: 0.5;
+    transform: rotate(-1.2deg);
+    pointer-events: none;
+}
+
 .flip a:hover,
 .flip button:hover:not(:disabled) {
     background: var(--highlight);
     transform: rotate(-1.5deg);
 }
 
+/* Nowhere to go that way: written in pencil, no box, and crossed out. */
 .flip .is-off,
 .flip button:disabled {
-    color: #b8b8bf;
+    border-color: transparent;
+    color: var(--pencil);
+    opacity: 0.72;
     pointer-events: none;
+}
+
+.flip .is-off::after,
+.flip button:disabled::after {
+    content: "";
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    top: 50%;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: rotate(-5deg);
 }
 
 .flip a:focus-visible,
