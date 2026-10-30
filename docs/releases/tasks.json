@@ -4,7 +4,7 @@
     { "id": 2, "title": "Write tools/export-release-data.sh in the game repo (emits releases.json)", "owner": "claude", "status": "todo", "created": "2026-10-29", "note": "Game repo is not on this machine; needs a session there." },
     { "id": 3, "title": "Tag the commit behind the current TestFlight build (first b-tag)", "owner": "jared", "status": "todo", "created": "2026-10-29", "note": "Needed before the git snapshot has any history." },
     { "id": 4, "title": "Record what is currently live on iOS, Android and Windows in ledger.json", "owner": "jared", "status": "done", "created": "2026-10-29", "done": "2026-10-30" },
-    { "id": 5, "title": "Verify DuelModeEnabled is false on main before the next build", "owner": "jared", "status": "todo", "created": "2026-10-29", "note": "PvP once shipped to testers for about a month." },
+    { "id": 5, "title": "Verify DuelModeEnabled is false on main before the next build", "owner": "claude", "status": "done", "created": "2026-10-29", "done": "2026-10-30", "note": "Checked on GitHub main at 79c5fb2: DuelModeEnabled false, TutorialEnabled true. Re-check before each build." },
     { "id": 6, "title": "Head changelog entries with the build number", "owner": "claude", "status": "todo", "created": "2026-10-29" },
     { "id": 7, "title": "Decide: export script writes into a sibling website checkout, or snapshot copied by hand", "owner": "jared", "status": "todo", "created": "2026-10-29" },
     { "id": 8, "title": "Decide: link /releases/ from the public Wizard Battle home page nav", "owner": "jared", "status": "todo", "created": "2026-10-29" },
