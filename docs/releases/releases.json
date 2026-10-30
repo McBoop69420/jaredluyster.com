@@ -1,6 +1,265 @@
 {
-  "generated": null,
-  "bundleVersion": null,
-  "releases": [],
-  "unreleased": null
+  "generated": "2026-10-30",
+  "bundleVersion": "2.0.0",
+  "releases": [
+    {
+      "build": 16,
+      "tag": "b16",
+      "date": "2026-09-09",
+      "sha": "a8d2ba4",
+      "bundleVersion": "2.0.0",
+      "flags": {
+        "DuelModeEnabled": true,
+        "TutorialEnabled": true
+      },
+      "changelog": "No build-headed changelog section yet. Built from a8d2ba4 \"Bump iOS build number to 16 for TestFlight upload\" (2026-09-08). DuelModeEnabled was switched on by accident in 74acf2c (2026-08-16) and back off in 22156a0 (2026-09-16), so this build has PvP on."
+    }
+  ],
+  "unreleased": {
+    "since": "b16",
+    "commits": [
+      {
+        "sha": "79c5fb2",
+        "subject": "UI: fix hand scroll axis and clipped class names on phones"
+      },
+      {
+        "sha": "39506f9",
+        "subject": "Merge remote-tracking branch 'origin/main'"
+      },
+      {
+        "sha": "1124415",
+        "subject": "Tooling: one-command iOS Simulator build and launch"
+      },
+      {
+        "sha": "fc5ac41",
+        "subject": "Docs: record affordance Phase 4 in the changelog and plan file"
+      },
+      {
+        "sha": "80b7a90",
+        "subject": "Title: keep the hidden class sheet's close button from catching taps"
+      },
+      {
+        "sha": "3720508",
+        "subject": "Game Over: label the button for where it actually goes (affordance 4.3)"
+      },
+      {
+        "sha": "7681b69",
+        "subject": "Title: give the class info sheet a visible close button (affordance 4.2)"
+      },
+      {
+        "sha": "37478ee",
+        "subject": "Battle: show \"Tap again to cast\" and a Cancel while a card is selected (affordance 4.1)"
+      },
+      {
+        "sha": "ec916ca",
+        "subject": "Docs: record affordance Phase 2 in the changelog and plan file"
+      },
+      {
+        "sha": "2ae4a46",
+        "subject": "Pickers: select a spell, see the upgrade, then confirm (affordance 2.3)"
+      },
+      {
+        "sha": "651029b",
+        "subject": "Shop: rows open to a Buy button, and rows you can't buy say why (affordance 2.2)"
+      },
+      {
+        "sha": "191d31f",
+        "subject": "Reward: tap to select and read a spell, TAKE to commit (affordance 2.1)"
+      },
+      {
+        "sha": "2cf5eb4",
+        "subject": "Docs: record affordance Phase 1 in the changelog and plan file"
+      },
+      {
+        "sha": "5f15ff0",
+        "subject": "Rest: say \"choose one\", make Heal honest, promote Continue once done (affordance 1.2)"
+      },
+      {
+        "sha": "984488f",
+        "subject": "Event: show the outcome before returning to the map (affordance 1.1)"
+      },
+      {
+        "sha": "8666017",
+        "subject": "Docs: plan the affordance pass and record Phase 0"
+      },
+      {
+        "sha": "ba4cae0",
+        "subject": "Event: disable choices the player can't afford instead of failing silently (affordance 0.2)"
+      },
+      {
+        "sha": "f90ab84",
+        "subject": "Shop: charge Ink of Erasure when a spell is picked, not when the picker opens (affordance 0.1)"
+      },
+      {
+        "sha": "141529d",
+        "subject": "Add class-select screen overflow bug notes"
+      },
+      {
+        "sha": "c3b83b2",
+        "subject": "Merge branch 'main' of https://github.com/McBoop69420/wizard-battle-demo"
+      },
+      {
+        "sha": "3daf091",
+        "subject": "Docs: close out TODO-battle-ui-critique.md"
+      },
+      {
+        "sha": "6c994b2",
+        "subject": "Battle UI: pin the combat log and make its history reachable (critique 4.3, 4.4)"
+      },
+      {
+        "sha": "f39147a",
+        "subject": "Explain the − / + spell tier suffix (critique 4.1)"
+      },
+      {
+        "sha": "7f445aa",
+        "subject": "Docs: record Phase 3 in the changelog and plan file"
+      },
+      {
+        "sha": "de068f0",
+        "subject": "Battle UI: move the enemy readout inside the card (critique 3.1, 1.3)"
+      },
+      {
+        "sha": "ac93b6c",
+        "subject": "Docs: record Phase 2 in the changelog and plan file"
+      },
+      {
+        "sha": "7751c7b",
+        "subject": "Battle UI: make card information reachable on touch (critique 2.1, 2.2)"
+      },
+      {
+        "sha": "48d4c2a",
+        "subject": "Docs: record the staged enemy turn in the changelog and plan file"
+      },
+      {
+        "sha": "0b9e25e",
+        "subject": "Battle: stage the enemy's turn so the player can see it happen (critique 1.5)"
+      },
+      {
+        "sha": "c6ed0ff",
+        "subject": "Battle: make player Strength actually increase damage dealt"
+      },
+      {
+        "sha": "2cdc50a",
+        "subject": "Docs: record the Phase 1 preview work in the changelog and plan file"
+      },
+      {
+        "sha": "8c661eb",
+        "subject": "Battle UI: make the intent pill say what will land, and stop it looking pressable"
+      },
+      {
+        "sha": "548a51f",
+        "subject": "Battle UI: show what a hand card will actually deal (critique 1.1)"
+      },
+      {
+        "sha": "bc292fd",
+        "subject": "Docs: plan the open items from the battle screen UI critique"
+      },
+      {
+        "sha": "0fe8bc4",
+        "subject": "Restore packages-lock.json to Unity 6000.4.8f1 state"
+      },
+      {
+        "sha": "92d3a5d",
+        "subject": "Add back button to class-select screen"
+      },
+      {
+        "sha": "6e475e8",
+        "subject": "Docs: close roster-name bug as not reproducible"
+      },
+      {
+        "sha": "d1dd19b",
+        "subject": "Docs: close out playtest TODO stale items, log missing roster-name bug"
+      },
+      {
+        "sha": "9cfb38b",
+        "subject": "Add session-handoff notes to TODO-playtest-bugs.md and CHANGELOG entry"
+      },
+      {
+        "sha": "54083c3",
+        "subject": "Backlog: 2-per-row hand at narrow viewports (UI size 115%/130%)"
+      },
+      {
+        "sha": "fefb4a0",
+        "subject": "Update TODO-playtest-bugs.md: close out remaining battle screen items"
+      },
+      {
+        "sha": "a8ca10e",
+        "subject": "Battle screen polish: mana readout, HP bar consistency, type-row size"
+      },
+      {
+        "sha": "4e6bbe3",
+        "subject": "Title screen: affinity panel covers the whole button stack, with a dismiss path"
+      },
+      {
+        "sha": "5dc6c61",
+        "subject": "Bump portrait roster card icon size again (130px -> 180px)"
+      },
+      {
+        "sha": "518f6d7",
+        "subject": "Restructure portrait roster cards: icon big and centered below name"
+      },
+      {
+        "sha": "26df820",
+        "subject": "Strip redundant info from portrait roster cards"
+      },
+      {
+        "sha": "4da3c4b",
+        "subject": "Fix roster card name truncation on portrait phones"
+      },
+      {
+        "sha": "3b6b7e5",
+        "subject": "Fix difficulty badge spacing on right-column roster cards"
+      },
+      {
+        "sha": "b6a53c7",
+        "subject": "Fix class-select featured dossier panel on portrait phones"
+      },
+      {
+        "sha": "04ac9df",
+        "subject": "Update TODO-playtest-bugs.md: check off Phase 1-2, record what was done"
+      },
+      {
+        "sha": "8d3bbfc",
+        "subject": "Add CHANGELOG entry for Phase 1-2 playtest bug fixes"
+      },
+      {
+        "sha": "eb0455b",
+        "subject": "Let the hand shrink instead of pushing END TURN off-screen"
+      },
+      {
+        "sha": "0935d19",
+        "subject": "Compact combat log into a strip on the tall-phone battle layout"
+      },
+      {
+        "sha": "7ee5603",
+        "subject": "Give locked map nodes their type icon back"
+      },
+      {
+        "sha": "fee0c90",
+        "subject": "Reword intent pill header to name the actor"
+      },
+      {
+        "sha": "7da75c9",
+        "subject": "Fix class card name overflow pushing difficulty badge off-screen"
+      },
+      {
+        "sha": "22156a0",
+        "subject": "Restore PvE-only: DuelModeEnabled back to false"
+      },
+      {
+        "sha": "7c1fd1e",
+        "subject": "Add playtest bug findings register and execution plan"
+      },
+      {
+        "sha": "904dbac",
+        "subject": "Gitignore local debug tooling, editor schema, and recovery autosave cruft"
+      }
+    ],
+    "flags": {
+      "DuelModeEnabled": false,
+      "TutorialEnabled": true
+    },
+    "clean": null,
+    "pushed": null
+  }
 }
