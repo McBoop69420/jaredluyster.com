@@ -33,7 +33,9 @@
         const issues = [];
         ledger.forEach(e => {
             const r = byBuild[e.build];
-            if (!r) {
+            if (e.build == null) {
+                // version-only entry (e.g. itch.io); nothing to match against a git tag
+            } else if (!r) {
                 issues.push('Ledger has build ' + e.build + ' (' + label(e.platform) + ', ' + e.action + ') but git has no tag for it.');
             } else if (e.action !== 'pulled' && e.action !== 'failed' && r.flags && r.flags.DuelModeEnabled === true) {
                 issues.push('Build ' + e.build + ' reached ' + label(e.platform) + ' with DuelModeEnabled true.');
@@ -111,12 +113,12 @@
         $('platforms').innerHTML = PLATFORMS.map(p => {
             const e = ledger.find(x => x.platform === p.key && x.action === 'live');
             return '<div class="rel-card"><div class="label">' + esc(p.label) + '</div>' +
-                '<div class="value ' + (e ? 'st-live' : 'st-unknown') + '">' + (e ? 'b' + esc(e.build) : 'unknown') + '</div>' +
+                '<div class="value ' + (e ? 'st-live' : 'st-unknown') + '">' + (e ? (e.build != null ? 'b' + esc(e.build) : esc(e.version)) : 'unknown') + '</div>' +
                 '<div class="sub">' + (e ? esc(e.date) + ' · ' + esc(e.by || '?') : 'nothing recorded live') + '</div></div>';
         }).join('');
 
         $('ledger').innerHTML = ledger.length ? ledger.map(e =>
-            '<div class="rel-entry"><header><h3>Build ' + esc(e.build) + ' → ' + esc(label(e.platform)) +
+            '<div class="rel-entry"><header><h3>' + (e.build != null ? 'Build ' + esc(e.build) : esc(e.version)) + ' → ' + esc(label(e.platform)) +
             '</h3><span class="flag ' + (ACTIONS[e.action] || 'st-unknown') + '">' + esc(e.action) + '</span>' +
             '<span class="meta">' + esc(e.date) + ' · by ' + esc(e.by || '?') + '</span></header>' +
             (e.note ? '<div class="meta">' + esc(e.note) + '</div>' : '') + '</div>'
