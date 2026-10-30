@@ -11,10 +11,11 @@
  * (live, then final).
  *
  * Storage is private and synced across devices: GET/PUT /api/bets
- * (sports/_worker.js), one R2 object per account, so every account (signed in
- * on sports/join/) has its own ledger and sees only its own bets. Nothing about
- * the bets is in this public repo. Signed out gets a 401 and a sign-in link; a
- * Cloudflare Access login with no email (a service token) gets a 403: no
+ * (sports/_worker.js), one R2 object per Cloudflare Access login, so every
+ * account has its own ledger and sees only its own bets. Nothing about the bets
+ * is in this public repo. Access guards only /api/bets and /signin/: signed
+ * out, the fetch is redirected to the Access login, which shows here as a
+ * sign-in link; a login with no email (a service token) gets a 403: no
  * buttons, no panel.
  *
  * Once a game is final its score is written onto the leg (`final`), so a settled
@@ -439,9 +440,14 @@ function mountMyBets(PB) {
   async function loadStore() {
     let res;
     try {
-      res = await fetch("/api/bets", { credentials: "same-origin", cache: "no-store" });
+      // Signed out, Access answers with a redirect to its login page; don't follow it.
+      res = await fetch("/api/bets", { credentials: "same-origin", cache: "no-store", redirect: "manual" });
     } catch (e) {
       S.status = "error";
+      return;
+    }
+    if (res.type === "opaqueredirect") {
+      S.status = "unauthenticated";
       return;
     }
     const body = await res.json().catch(() => null);
@@ -464,10 +470,13 @@ function mountMyBets(PB) {
       for (let attempt = 0; attempt < 2; attempt++) {
         const next = fn(clone(S.bets));
         const res = await fetch("/api/bets", {
-          method: "PUT", credentials: "same-origin",
+          method: "PUT", credentials: "same-origin", redirect: "manual",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ version: S.version, bets: next }),
         }).catch(() => null);
+        if (res && res.type === "opaqueredirect") {
+          return "You're signed out, so this wasn't saved. Sign in again and retry.";
+        }
         if (res && res.ok) {
           const body = await res.json();
           S.bets = next;
@@ -881,7 +890,7 @@ function mountMyBets(PB) {
     panel.hidden = S.status === "hidden" || S.status === "loading";
     const note = {
       "not-configured": esc("The private bet store isn't set up yet, so bets can't be saved. Setup steps are in DEPLOY.md (\"Sports My Bets — private store setup\")."),
-      unauthenticated: '<a href="/join/?next=/betting/">Sign in</a> or create an account to see and save your bets.',
+      unauthenticated: '<a href="' + esc(signinHref()) + '">Sign in</a> with your email to keep your own paper bets.',
       error: esc("Couldn't reach the bet store. Hit Refresh to try again."),
     }[S.status];
     $("myBetsStatus").innerHTML = note ? '<p class="value-empty">' + note + "</p>" : "";
@@ -1127,8 +1136,28 @@ function mountMyBets(PB) {
     if (!document.hidden && hasLiveLegs() && Date.now() - gradedAt >= LIVE_REFRESH_MS) regrade();
   }
 
+  // /signin/ sits behind Cloudflare Access and sends the visitor back here.
+  function signinHref() {
+    return "/signin/?next=" + encodeURIComponent(location.pathname + location.search);
+  }
+
+  // The header's Sign in tab: back to this page after signing in, or Sign out
+  // (Access's own logout) once the bet store has recognised the visitor.
+  function updateSigninTab() {
+    const tab = document.querySelector("a[data-signin]");
+    if (!tab) return;
+    if (S.status === "ready") {
+      tab.textContent = "Sign out";
+      tab.href = "/cdn-cgi/access/logout";
+    } else {
+      tab.textContent = "Sign in";
+      tab.href = signinHref();
+    }
+  }
+
   async function start() {
     await loadStore();
+    updateSigninTab();
     renderPanel();
     if (S.status !== "ready") return;
     decorateCards();

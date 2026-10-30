@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sports — Signing in</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="stylesheet" href="/sports.css?v=67">
+<!--
+  Cloudflare Access guards this path (the `sports` Access app covers /signin and
+  /api/bets only), so reaching this page means the visitor has signed in with an
+  email Cloudflare verified. All it does is send them back to the page they came
+  from: ?next=<same-site path>, else the Betting page.
+-->
+<script>
+  (function () {
+    var next = new URLSearchParams(location.search).get("next") || "";
+    // Same-site paths only: "/betting/", never "//evil.example" or "https://...".
+    if (!/^\/(?![\/\\])/.test(next)) next = "/betting/";
+    location.replace(next);
+  })();
+</script>
+</head>
+<body>
+<article class="paper">
+  <p class="value-empty">Signed in. <a href="/betting/">Back to Betting</a>.</p>
+</article>
+</body>
+</html>
