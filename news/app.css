@@ -5,7 +5,7 @@
   --font-display:"Space Grotesk","Arial Black",sans-serif;
   --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('/fonts/fonts.css');
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{

@@ -9,3 +9,7 @@ Caddyfile
 redzone/bets.json
 # Local wrangler secrets (BETS_ALLOWED_EMAILS etc.)
 .dev.vars
+
+# Operational docs (LAN addresses, accounts, Access policies) are kept privately, outside the repo.
+DEPLOY.md
+INFRASTRUCTURE.md

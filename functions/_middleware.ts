@@ -31,6 +31,10 @@ const SUBDOMAIN_ROOTS: Record<string, string> = {
 // is silently dropped rather than 404ing. These pass through unrewritten instead.
 const SHARED_ROOT_ASSETS = new Set(["/shared-theme.css"]);
 
+// Self-hosted web fonts (fonts/fonts.css + woff2) are shared by every tool the same way, and
+// must not be rewritten into a tool's folder on its subdomain.
+const SHARED_ROOT_PREFIXES = ["/fonts/"];
+
 // The radio player's own script calls these paths on radio.jaredluyster.com expecting
 // the actual streaming backend (AzuraCast/Icecast-style), not this Pages project. If the
 // subdomain rewrite above sent them into /radio/*, they'd 404 into the SPA-style
@@ -86,6 +90,7 @@ export const onRequest = async (context: {
   if (
     root &&
     !SHARED_ROOT_ASSETS.has(path) &&
+    !SHARED_ROOT_PREFIXES.some((prefix) => path.startsWith(prefix)) &&
     !RADIO_BACKEND_PATHS.has(path) &&
     !path.startsWith(`${root}/`) &&
     path !== root

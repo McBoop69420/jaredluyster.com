@@ -14,6 +14,8 @@
   Cache-Control: public, max-age=604800
 /*.svg
   Cache-Control: public, max-age=604800
+/*.woff2
+  Cache-Control: public, max-age=2592000
 /*.css
   Cache-Control: public, max-age=86400
 /*.js

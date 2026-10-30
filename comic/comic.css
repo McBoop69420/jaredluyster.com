@@ -10,7 +10,7 @@
  * paper layer, where it reads as a pen line. Chrome stays square.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap');
+@import url('/fonts/fonts.css');
 
 /* Jared's own handwriting: block capitals, with lowercase drawn as smaller capitals, so type in
  * normal mixed case and never text-transform it. Each letter has three versions that rotate on
