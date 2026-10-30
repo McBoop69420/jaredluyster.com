@@ -1,5 +1,6 @@
 {
   "entries": [
+    { "build": 16, "version": "2.0.0", "platform": "ios", "action": "live", "date": "2026-09-09", "by": "jared", "note": "TestFlight internal group only. Build 15 (2.0.0) also still available. Read from App Store Connect 2026-10-30." },
     { "build": 13, "version": "1.2.0", "platform": "android", "action": "live", "date": "2026-08-16", "by": "jared", "note": "Firebase App Distribution release 1.2.0 (13), automated Unity Build Automation build. Read from the Firebase console 2026-10-30." },
     { "build": null, "version": "2026.08.29.2153", "platform": "windows", "action": "live", "date": "2026-08-29", "by": "jared", "note": "itch.io wizard-battle-demo-windows.zip. Read from the public itch page 2026-10-30." }
   ]
