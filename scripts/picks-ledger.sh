@@ -6,7 +6,8 @@
 # from, or pushes someone's half-done work out of, the checkout people edit in:
 #   C:\Users\Jared Server\picks-ledger\jaredluyster.com
 # Pulls main, records the last few days' graded picks (scripts/picks-ledger.mjs),
-# and commits + pushes sports/picks-history/ only if it changed. The push is what
+# logs and grades System Bets (scripts/system-bets.mjs), and commits + pushes
+# sports/picks-history/ and sports/system-bets/ only if they changed. The push is what
 # redeploys mcboop-sports. Extra arguments go to picks-ledger.mjs (e.g. --days 7).
 #
 # The whole body is in one { } block so bash has read all of it before the pull
@@ -19,13 +20,15 @@ echo "== $(date '+%Y-%m-%d %H:%M:%S') picks ledger"
 
 git pull --ff-only --quiet origin main
 node scripts/picks-ledger.mjs "$@"
+# Its own failure mustn't hold back the expert ledger; it says what went wrong.
+node scripts/system-bets.mjs || echo "WARN: system bets run failed"
 
-git add sports/picks-history
+git add sports/picks-history sports/system-bets
 if git diff --cached --quiet; then
   echo "no new graded picks"
   exit 0
 fi
-git commit --quiet -m "Sports: log graded expert picks ($(date '+%Y-%m-%d'))" -- sports/picks-history
+git commit --quiet -m "Sports: log graded expert picks ($(date '+%Y-%m-%d'))" -- sports/picks-history sports/system-bets
 for attempt in 1 2 3; do
   if git push --quiet origin main; then
     echo "pushed $(git rev-parse --short HEAD)"

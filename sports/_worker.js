@@ -268,6 +268,25 @@ function anRecord(r) {
   return r.win + "-" + r.loss + (r.push ? "-" + r.push : "");
 }
 
+// The Consensus book's (bookIds=15) full-game total and its prices: before
+// kickoff the current line, afterwards the closing one. null when not posted.
+function anTotal(g) {
+  const book = g.markets && g.markets["15"];
+  const rows = (book && book.event && book.event.total) || [];
+  const over = rows.find(r => r && r.side === "over"), under = rows.find(r => r && r.side === "under");
+  const line = num(over && over.value);
+  if (line == null) return null;
+  return { line, over: num(over.odds), under: num(under && under.value === over.value ? under.odds : null) };
+}
+
+// Final score once Action Network calls the game complete, else null.
+function anFinal(g) {
+  const b = g.boxscore;
+  if (g.status !== "complete" || !b) return null;
+  const away = num(b.total_away_points), home = num(b.total_home_points);
+  return away == null || home == null ? null : { away, home };
+}
+
 function anTeam(t) {
   return { abbr: t.abbr, name: t.full_name || t.display_name || t.abbr, slug: t.url_slug || null };
 }
@@ -285,6 +304,7 @@ export function normalizeActionNetwork(data, date, through = date) {
     const game = {
       id: "an" + g.id, date: day, start: g.start_time, status: g.status || null, time: null,
       away: anTeam(away), home: anTeam(home), props: 0, picks: [],
+      total: anTotal(g), final: anFinal(g), // for System Bets (sports/system-bets.js)
     };
     const seen = new Set();
     for (const e of g.experts || []) {

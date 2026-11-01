@@ -107,6 +107,28 @@
     </p>
   </section>
 
+  <section class="value-screen" id="systemBets" aria-labelledby="systemBetsTitle">
+    <header class="value-screen-head">
+      <div>
+        <h2 id="systemBetsTitle">System Bets</h2>
+      </div>
+      <div class="value-screen-meta" id="systemBetsMeta">Loading&hellip;</div>
+    </header>
+    <div class="value-explain">
+      <p>A forward test of the one edge the Expert Leaderboard has turned up: <strong>college football totals
+        where the experts lean hard</strong> (5+ experts on the total, 75%+ on one side). Every qualifying game is
+        paper-bet 1 unit on the experts' side, at Action Network's consensus line and price as of 6:00 AM ET on game
+        day, then graded from the final score. On win rate alone that lean went 24&ndash;13 from Aug 27 to Oct 18;
+        this tracks whether it makes money against real prices, and whether the bets beat the closing line.</p>
+    </div>
+    <div id="systemBetsBody"><p class="value-empty">Loading system bets&hellip;</p></div>
+    <p class="value-legend">
+      Paper bets, no real money &middot; logged and graded daily by the picks ledger job &middot; a canceled or
+      postponed game is no action &middot; ROI leaves pushes out &middot; close: the consensus total at kickoff, and how
+      many points better (+) or worse (&minus;) the bet's line was
+    </p>
+  </section>
+
   <section class="value-screen" id="picksBoard" aria-labelledby="picksBoardTitle">
     <header class="value-screen-head">
       <div>
@@ -254,5 +276,6 @@
 <script src="/picks-ledger.js?v=3"></script>
 <script src="/sports.js?v=87"></script>
 <script src="/my-bets.js?v=10"></script>
+<script src="/system-bets.js?v=1"></script>
 </body>
 </html>
