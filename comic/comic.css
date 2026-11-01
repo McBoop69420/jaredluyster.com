@@ -1,10 +1,9 @@
 /* Comic — layered on shared-theme.css's zine tokens.
  *
- * Two layers on purpose. The chrome (top bar, nav, labels, buttons) is the zine: ink, one
- * orange accent, square borders, hard offset shadows. What's *on the desk* is a middle
- * schooler's loose-leaf: ruled lines, a red margin, binder holes, ballpoint handwriting,
- * marker titles, tape and margin doodles. The orange accent crosses over as highlighter and
- * as the sheet's offset shadow, which is what ties the two together.
+ * Two layers on purpose. The chrome (top bar, nav, labels, buttons) keeps the zine's square
+ * borders and hard offset shadows, set on an old wooden school desk (body.on-desk, below).
+ * What's *on the desk* is a middle schooler's loose-leaf: ruled lines, a red margin, binder
+ * holes, ballpoint handwriting, marker titles, tape and margin doodles.
  *
  * Hand-drawn wobble (the irregular border-radius on .scribble) is allowed only on the
  * paper layer, where it reads as a pen line. Chrome stays square.
@@ -96,15 +95,15 @@
 
 .footer a { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---- Reader palette: an old wooden school desk ------------------------ */
-/* The public pages (body.reader) put the notebook on an old classroom desk instead of the zine's
- * ink: varnished oak boards glued edge to edge, darker toward the corners where the light falls
+/* ---- The desk: an old wooden school desk ------------------------------ */
+/* The reader and the planner (body.on-desk) put the notebook on an old classroom desk instead of
+ * the zine's ink: varnished oak boards glued edge to edge, darker toward the corners where the light falls
  * off, with a pencil lying in the groove along the back. The top bar is that back rim; the footer
  * is the rounded front edge and the dark under the desk. Black ink rules and type, the comic's
- * name on a sticky note, yellow highlighter, and the paper lying flat with no shadow. The planner
- * keeps the dark zine palette. --bg is the wood's average tone, for the places that need one flat
- * color. */
-.reader {
+ * name on a sticky note, yellow highlighter, and the paper lying flat with no shadow. The
+ * planner's own pieces on the desk are in plan.css. --bg is the wood's average tone, for the
+ * places that need one flat color. */
+.on-desk {
     --bg: #93602f;
     --text: var(--ink);
     --muted: #f0dcbc;
@@ -123,7 +122,7 @@
 
 /* Varnish: a soft sheen from the window side, and the wood falling into shade at the corners.
  * Fixed to the screen, under everything on the desk. */
-.reader::before {
+.on-desk::before {
     content: "";
     position: fixed;
     inset: 0;
@@ -134,13 +133,13 @@
         radial-gradient(ellipse 120% 90% at 50% 40%, rgba(30, 14, 4, 0) 55%, rgba(30, 14, 4, 0.34));
 }
 
-.reader .desk { flex: 1 0 auto; }
+.on-desk .desk { flex: 1 0 auto; }
 
-.reader .sheet { box-shadow: none; }
-.reader .sheet-wrap { filter: none; }
+.on-desk .sheet { box-shadow: none; }
+.on-desk .sheet-wrap { filter: none; }
 
 /* Binder holes show the desk's grain through them, not a flat color. */
-.reader .sheet::before {
+.on-desk .sheet::before {
     --hole-fill: #000;
     background: var(--desk);
     -webkit-mask: var(--holes);
@@ -149,7 +148,7 @@
 
 /* The back rim, a shade darker from years of hands, with a pencil groove cut along it. The bar
  * stays stuck to the top of the screen, so the pencil is always within reach. */
-.reader .topbar {
+.on-desk .topbar {
     --groove-x: max(16px, calc((100% - 1180px) / 2));
     padding-bottom: 24px;
     background: linear-gradient(rgba(36, 16, 4, 0.2), rgba(36, 16, 4, 0.1)), var(--desk);
@@ -160,15 +159,15 @@
         0 3px 6px rgba(36, 16, 4, 0.28);
 }
 
-.reader .topbar::after,
-.reader .topbar::before {
+.on-desk .topbar::after,
+.on-desk .topbar::before {
     content: "";
     position: absolute;
     pointer-events: none;
 }
 
 /* The groove: rounded at both ends, shadowed along its top lip, worn pale along the bottom. */
-.reader .topbar::after {
+.on-desk .topbar::after {
     left: var(--groove-x);
     right: var(--groove-x);
     bottom: 8px;
@@ -183,7 +182,7 @@
 }
 
 /* A yellow No. 2, eraser end to the left, resting in the bottom of the groove. */
-.reader .topbar::before {
+.on-desk .topbar::before {
     z-index: 1;
     right: calc(var(--groove-x) + 70px);
     bottom: 10px;
@@ -196,7 +195,7 @@
 
 /* Nav as index cards laid along the rim: cream on the wood, the open page in ink, labelled in
  * Jared's bold handwriting (mixed case, never uppercased; see the @font-face note). */
-.reader .nav a {
+.on-desk .nav a {
     padding: 6px 13px 4px;
     background: var(--cream);
     border-color: var(--ink);
@@ -209,22 +208,29 @@
     text-transform: none;
 }
 
-.reader .nav a:hover,
-.reader .nav a.active {
+.on-desk .nav a:hover,
+.on-desk .nav a.active {
     background: var(--ink);
     color: var(--cream);
 }
 
-.reader .brand-sticker {
+.on-desk .brand-sticker {
     background: var(--sticky);
     color: var(--ink);
     border-color: var(--ink);
     box-shadow: 3px 3px 0 rgba(20, 8, 0, 0.6);
 }
 
+/* Buttons: the main action on a sticky note, the rest on cream cards, shadows in the desk's
+ * brown. They still slide into their shadow when pressed. */
+.on-desk .button { box-shadow: 3px 3px 0 rgba(20, 8, 0, 0.55); }
+.on-desk .button:hover:not(:disabled) { box-shadow: 1px 1px 0 rgba(20, 8, 0, 0.55); }
+.on-desk .button-primary { background: var(--sticky); color: var(--ink); }
+.on-desk .button-secondary { background: var(--cream); color: var(--ink); border-color: var(--ink); }
+
 /* The front edge: the top board rounding over toward you (lit on top, falling into shadow),
  * then the dark under the desk. */
-.reader .footer {
+.on-desk .footer {
     padding-top: 44px;
     border-top: 0;
     background:
@@ -233,13 +239,13 @@
         var(--desk);
 }
 
-.reader .footer .footer-copy { color: #d9c6a6; }
-.reader .footer a { color: var(--cream); }
+.on-desk .footer .footer-copy { color: #d9c6a6; }
+.on-desk .footer a { color: var(--cream); }
 
-.reader .flip a:focus-visible,
-.reader .flip button:focus-visible,
-.reader .toc a:focus-visible,
-.reader .nav a:focus-visible {
+.on-desk .flip a:focus-visible,
+.on-desk .flip button:focus-visible,
+.on-desk .toc a:focus-visible,
+.on-desk .nav a:focus-visible {
     outline: 2px solid var(--pen);
     outline-offset: 2px;
 }
@@ -641,11 +647,11 @@
         --hole-box: 18px;
         left: 9px;
     }
-    .reader .topbar { padding-bottom: 20px; }
-    .reader .nav { gap: 6px; }
-    .reader .nav a { padding: 5px 9px 3px; font-size: 0.98rem; }
-    .reader .topbar::before { width: 176px; height: 10px; right: calc(var(--groove-x) + 24px); bottom: 9px; }
-    .reader .topbar::after { height: 14px; }
+    .on-desk .topbar { padding-bottom: 20px; }
+    .on-desk .nav { gap: 6px; }
+    .on-desk .nav a { padding: 5px 9px 3px; font-size: 0.98rem; }
+    .on-desk .topbar::before { width: 176px; height: 10px; right: calc(var(--groove-x) + 24px); bottom: 9px; }
+    .on-desk .topbar::after { height: 14px; }
     .school-head { right: 16px; gap: 12px; font-size: 1rem; }
     .strip { padding: 6px; box-shadow: 4px 4px 0 var(--ink); }
     .tape { width: 78px; height: 24px; }
