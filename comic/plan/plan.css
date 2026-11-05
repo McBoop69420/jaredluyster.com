@@ -3,13 +3,6 @@
  * its cards are index cards, script panels are drawn as comic panels, and the editor is a
  * sheet. Shadows are the desk's dark brown, not the zine's orange. */
 
-:root {
-    /* The planner keeps the stock handwriting and marker fonts; Jared's own (comic.css) are
-       for the public pages only, for now. */
-    --font-hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
-    --font-marker: "Permanent Marker", "Patrick Hand", "Comic Sans MS", cursive;
-}
-
 .top-right {
     display: flex;
     align-items: center;
@@ -137,7 +130,9 @@
     padding: 14px 8px;
     border: 2px dashed rgba(90, 56, 16, 0.4);
     color: #7a5a2c;
-    font-size: 0.8rem;
+    font-family: var(--font-hand);
+    font-size: 1.05rem;
+    line-height: 1.3;
     text-align: center;
 }
 
@@ -397,7 +392,7 @@
     align-items: end;
 }
 
-.line-row .who { color: var(--red-pen); text-transform: uppercase; font-size: 1.02rem; }
+.line-row .who { color: var(--red-pen); font-size: 1.02rem; }
 
 .icon-btn {
     display: inline-grid;
@@ -498,6 +493,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    font-family: var(--font-hand);
     font-size: 1.1rem;
     cursor: pointer;
 }
@@ -510,7 +506,8 @@
 
 .cast-edit {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    /* wide enough for a role on one line: the handwriting runs wider than a typeface */
+    grid-template-columns: repeat(auto-fill, min(396px, 100%));
     gap: 30px 24px;
 }
 
@@ -522,6 +519,8 @@
     box-shadow: 5px 5px 0 rgba(20, 8, 0, 0.55);
     color: var(--pen);
 }
+
+.char-card .f-input { font-size: 1rem; }
 
 .char-card .portrait {
     display: grid;
