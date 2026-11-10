@@ -169,7 +169,7 @@
       playoffPoolMode: "whole", implicationZones: [{ count: 4, fromTop: true }, { count: 3, fromTop: false }], spotlightRank: SPOTLIGHT_RANK.SOCCER, season: [["08-08", "05-25"]] },
     // Two cutoffs per conference: 6th (straight into the playoffs) and 10th
     // (into the play-in).
-    { key: "basketball/nba",  label: "NBA",              myTeams: [],                           standings: "conference", standingsCurrentSeason: true,
+    { key: "basketball/nba",  label: "NBA",              myTeams: ["San Antonio Spurs"],                          standings: "conference", standingsCurrentSeason: true,
       playoffPoolMode: "confDirect", implicationZones: [{ count: 6, fromTop: true }, { count: 10, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.NBA, bracket: true, season: [["10-20", "06-20"]] },
     { key: "basketball/wnba", label: "WNBA",             myTeams: [],                           standings: "overall",
       playoffPoolMode: "whole", implicationZones: [{ count: 8, fromTop: true }], spotlightRank: SPOTLIGHT_RANK.WNBA, bracket: true, season: [["05-15", "10-25"]] },
@@ -184,6 +184,7 @@
   const MY_PATTERNS = [
     "cincinnati reds", "fc cincinnati", "racing louisville", "lexington",
     "liverpool", "arsenal", "cincinnati bengals", "kentucky wildcats", "louisville cardinals",
+    "san antonio spurs",
     "athletic club", // Athletic Bilbao — ESPN's displayName is "Athletic Club", not "Bilbao"
     "united states", // USMNT/USWNT — no club or youth side fetched here contains it
   ].map(s => s.toLowerCase());

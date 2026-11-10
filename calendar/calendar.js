@@ -51,6 +51,8 @@
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Kentucky Wildcats
     { key: "basketball/womens-college-basketball", id: "97", label: "NCAAW", order: "away-home",
       logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" },        // Louisville Cardinals
+    { key: "basketball/nba", id: "24", label: "NBA", order: "away-home",
+      logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" },                 // San Antonio Spurs
   ];
   const SOCCER_LEAGUES = [
     // postseason: the rest of the MLS Cup playoffs come back as featured cards.
