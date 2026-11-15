@@ -796,14 +796,15 @@
   // "11:05 • P1" drawn as a scoreboard: lit digits in a dark box, period beside it.
   // Anything that isn't a plain clock (innings, "Halftime", "End of 2nd") stays text.
   function gameClockHtml(g) {
-    const m = /^(\d{1,2}:\d{2}|\d{1,2}\.\d)\s*•\s*P(\d+)$/.exec(g.statusText || "");
+    const m = /^(\d{1,2}:\d{2}|\d{1,2}\.\d|\d{1,3}['’]?(?:\s*\+\s*\d{1,2}['’]?)?)\s*•\s*P(\d+)$/.exec(g.statusText || "");
     if (!m) return '<span class="status-text">' + esc(g.statusText) + '</span>';
     const n = Number(m[2]);
     const k = g.leagueKey || "";
     let per;
-    if (k === "basketball/mens-college-basketball") per = n <= 2 ? (n === 1 ? "1ST" : "2ND") : (n === 3 ? "OT" : "OT" + (n - 2));
+    if (k.indexOf("soccer/") === 0) per = n === 1 ? "1H" : n === 2 ? "2H" : n <= 4 ? "ET" : "PK";
+    else if (k === "basketball/mens-college-basketball") per = n <= 2 ? (n === 1 ? "1ST" : "2ND") : (n === 3 ? "OT" : "OT" + (n - 2));
     else if (k.indexOf("football/") === 0 || k.indexOf("basketball/") === 0) per = n <= 4 ? "Q" + n : (n === 5 ? "OT" : "OT" + (n - 4));
-    else per = "P" + n;
+    else per = "P" + n;   // hockey
     return '<span class="game-clock"><span class="game-clock-time">' + esc(m[1]) + '</span>' +
       '<span class="game-clock-per">' + esc(per) + '</span></span>';
   }
