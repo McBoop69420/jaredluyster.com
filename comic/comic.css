@@ -292,7 +292,7 @@
  * sheet carries on with the next sheet's holes; a shorter one only shows the holes above the
  * point where it was torn off (.sheet.torn, below). */
 .sheet::before {
-    --page-h: calc((100cqw + var(--pad-l) + var(--pad-r)) * 11 / 8.5);
+    --page-h: var(--sheet-h, calc((100cqw + var(--pad-l) + var(--pad-r)) * 11 / 8.5));
     --hole-fill: var(--bg);
     --hole-r: 10px;
     --hole-box: 24px;

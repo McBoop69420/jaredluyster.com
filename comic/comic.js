@@ -228,11 +228,16 @@
   // and table of contents break between rows. Every sheet is a whole number of letter sheets
   // tall, so nothing is torn off. (comic.css still has .torn, but nothing sets it any more.)
   const LETTER = 11 / 8.5;
+  // On a phone a letter-proportioned sheet is shorter than one cast card, so sheets never go
+  // below this height; the binder holes follow via --sheet-h.
+  const MIN_SHEET = 1100;
+  const sheetHeight = () => Math.max(sheet.offsetWidth * LETTER, MIN_SHEET);
   const SPLITTABLE = ".cast-grid, .toc";
 
   // Round a sheet's height up to a whole number of letter sheets. Returns that number.
   function fitToSheets(page, full, minSheets = 1) {
     page.style.minHeight = "";
+    page.style.setProperty("--sheet-h", `${full}px`);
     const sheets = Math.max(minSheets, Math.ceil(page.offsetHeight / full - 0.001));
     // min-height is measured to the content box unless box-sizing is border-box
     const cs = getComputedStyle(page);
@@ -245,8 +250,8 @@
     const wrap = sheet.parentElement;
     wrap.querySelectorAll(".sheet.extra").forEach((p) => p.remove());
     sheet.style.minHeight = "";
-    const full = sheet.offsetWidth * LETTER;
-    if (!full) return;
+    const full = sheetHeight();
+    if (!sheet.offsetWidth) return;
     const padBottom = parseFloat(getComputedStyle(sheet).paddingBottom) || 0;
     const flow = (page) =>
       [...page.children].filter((el) => getComputedStyle(el).position !== "absolute");
