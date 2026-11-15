@@ -450,7 +450,11 @@
       const text = situation.shortDownDistanceText
         ? situation.shortDownDistanceText + (spot ? " · " + spot : "")
         : situation.downDistanceText;
-      return text ? { text, redZone: !!situation.isRedZone, field: fieldPosition(situation, possId, competitors) } : null;
+      const dd = /^(\d)(?:st|nd|rd|th)\s*&\s*(goal|\d+)/i.exec(String(situation.shortDownDistanceText || ""));
+      return text ? {
+        text, redZone: !!situation.isRedZone, field: fieldPosition(situation, possId, competitors),
+        board: dd ? { down: dd[1], toGo: /goal/i.test(dd[2]) ? "GOAL" : dd[2], spot: spot ? String(spot).toUpperCase() : "" } : null,
+      } : null;
     }
     const play = situation.lastPlay;
     const type = play && play.type && play.type.text;
@@ -1041,8 +1045,17 @@
         fw.innerHTML = fieldHtml(fs.field);
         card.appendChild(fw);
       }
-      card.appendChild(el("div", "football-situation" + (fs && fs.redZone ? " football-situation--redzone" : ""),
-        fs ? esc(fs.text) : "&nbsp;"));
+      if (fs && fs.board) {
+        const b = fs.board;
+        const cell = (label, val) => '<span class="down-cell"><span class="down-label">' + label + '</span><span class="down-val">' + esc(val) + '</span></span>';
+        const bd = el("div", "down-board" + (fs.redZone ? " down-board--redzone" : ""));
+        bd.setAttribute("aria-label", fs.text);
+        bd.innerHTML = cell("DOWN", b.down) + cell("TO GO", b.toGo) + (b.spot ? cell("BALL ON", b.spot) : "");
+        card.appendChild(bd);
+      } else {
+        card.appendChild(el("div", "football-situation" + (fs && fs.redZone ? " football-situation--redzone" : ""),
+          fs ? esc(fs.text) : "&nbsp;"));
+      }
     }
     if (g.broadcast && g.state !== "post") {
       card.appendChild(el("div", "broadcast", esc(g.broadcast)));
