@@ -395,6 +395,48 @@
   // the last play, so those gaps say what just happened instead of going
   // blank. Never guesses who has the ball: the marker on the team name only
   // appears when ESPN names a team.
+  // Where the ball is, as yards from the away team's goal line (0) to the home
+  // team's (100): the away side is drawn on the left, like on the card. possessionText
+  // is the spot as ESPN words it ("MIA 40", "50"). `fd` is the first-down marker,
+  // or null when it isn't a down-and-distance snap (kickoff, PAT).
+  function fieldPosition(situation, possId, competitors) {
+    const spot = String(situation.possessionText || "").trim();
+    const away = competitors.find(c => c.homeAway === "away");
+    const home = competitors.find(c => c.homeAway === "home");
+    const poss = competitors.find(c => String((c.team && c.team.id) || c.id) === String(possId));
+    if (!away || !home || !poss) return null;
+    let pos = null;
+    const m = /^([A-Za-z0-9&.\-]+)\s+(\d{1,2})$/.exec(spot);
+    if (m) {
+      const n = Number(m[2]);
+      if (n >= 1 && n <= 50) {
+        if (m[1] === away.team.abbreviation) pos = n;
+        else if (m[1] === home.team.abbreviation) pos = 100 - n;
+      }
+    } else if (/^(50|midfield)$/i.test(spot)) pos = 50;
+    if (pos == null) return null;
+    const dir = poss === away ? 1 : -1;
+    const dist = Number(situation.distance);
+    const fd = Number.isFinite(dist) && dist > 0 && situation.down > 0
+      ? Math.max(0, Math.min(100, pos + dir * dist)) : null;
+    return { pos, dir, fd, away: teamAbbr(away), home: teamAbbr(home) };
+  }
+
+  function fieldHtml(f) {
+    // 120-yard scale: 10-yard end zones either side of the 100-yard field.
+    const x = yd => ((yd + 10) / 120 * 100).toFixed(2) + "%";
+    const ticks = [];
+    for (let yd = 0; yd <= 100; yd += 10) {
+      const label = yd === 0 || yd === 100 ? "G" : String(yd <= 50 ? yd : 100 - yd);
+      ticks.push('<span class="field-tick" style="left:' + x(yd) + '">' + label + '</span>');
+    }
+    return '<div class="field-wrap"><div class="field" role="img" aria-label="Ball on the ' + (f.pos === 50 ? "50" : f.pos < 50 ? f.away + " " + f.pos : f.home + " " + (100 - f.pos)) + '">' +
+      '<span class="field-ez field-ez--l">' + esc(f.away) + '</span><span class="field-ez field-ez--r">' + esc(f.home) + '</span>' +
+      (f.fd != null ? '<span class="field-fd" style="left:' + x(f.fd) + '"></span>' : '') +
+      '<span class="field-ball field-ball--' + (f.dir > 0 ? "r" : "l") + '" style="left:' + x(f.pos) + '"></span></div>' +
+      '<div class="field-ticks">' + ticks.join("") + '</div></div>';
+  }
+
   function parseFootballSituation(situation, possId, status, competitors) {
     const typeName = ((status && status.type) || {}).name || "";
     if (!situation || typeName === "STATUS_HALFTIME" || typeName === "STATUS_END_PERIOD") return null;
@@ -407,7 +449,7 @@
       const text = situation.shortDownDistanceText
         ? situation.shortDownDistanceText + (spot ? " · " + spot : "")
         : situation.downDistanceText;
-      return text ? { text, redZone: !!situation.isRedZone } : null;
+      return text ? { text, redZone: !!situation.isRedZone, field: fieldPosition(situation, possId, competitors) } : null;
     }
     const play = situation.lastPlay;
     const type = play && play.type && play.type.text;
@@ -977,6 +1019,11 @@
     // plays, so the card doesn't shrink and grow as ESPN's feed comes and goes.
     if (g.footballSituation || (g.state === "in" && g.leagueKey.indexOf("football/") === 0)) {
       const fs = g.footballSituation;
+      if (fs && fs.field) {
+        const fw = el("div", "field-holder");
+        fw.innerHTML = fieldHtml(fs.field);
+        card.appendChild(fw);
+      }
       card.appendChild(el("div", "football-situation" + (fs && fs.redZone ? " football-situation--redzone" : ""),
         fs ? esc(fs.text) : "&nbsp;"));
     }

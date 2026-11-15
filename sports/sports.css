@@ -139,6 +139,20 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .status--live{color:var(--live);font-weight:700}
 .football-situation{text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .football-situation--redzone{color:var(--live)}
+/* Football field as a number line: 10-yard end zones, 100 yards, ball and first-down line. */
+.field-wrap{margin:2px 4px 0}
+.field{position:relative;height:16px;border:2px solid var(--ink);background:
+  repeating-linear-gradient(90deg,transparent 0,transparent calc(8.333% - 1px),rgba(28,32,36,.28) calc(8.333% - 1px),rgba(28,32,36,.28) 8.333%),var(--paper)}
+.field-ez{position:absolute;top:0;bottom:0;width:8.333%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--paper);font-family:var(--font-display);font-size:7px;font-weight:700;overflow:hidden;letter-spacing:0}
+.field-ez--l{left:0}.field-ez--r{right:0}
+.field-fd{position:absolute;top:-2px;bottom:-2px;width:3px;margin-left:-1.5px;background:var(--live)}
+.field-ball{position:absolute;top:50%;width:11px;height:7px;margin:-5px 0 0 -7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--ink);box-sizing:content-box}
+.field-ball::after{content:"";position:absolute;top:50%;margin-top:-4px;border:4px solid transparent}
+.field-ball--r::after{left:100%;margin-left:2px;border-left:5px solid var(--ink);border-right:0}
+.field-ball--l::after{right:100%;margin-right:2px;border-right:5px solid var(--ink);border-left:0}
+.field-ticks{position:relative;height:11px}
+.field-tick{position:absolute;top:1px;transform:translateX(-50%);font-size:8px;font-weight:700;line-height:1;color:var(--muted)}
+.field-holder{margin-top:-2px}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:4px;vertical-align:middle}
 .broadcast{text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:2px}
 .baseball-situation{border-top:1px dotted #b3a98e;padding-top:6px;display:grid;gap:4px;font-family:var(--font-body)}
