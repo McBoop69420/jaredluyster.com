@@ -219,14 +219,20 @@
   }
 
   // Pages are 8½×11 sheets at this width (the binder holes in comic.css follow the same size).
-  // When the writing stops partway down a sheet, the rest was torn off: ragged bottom edge.
+  // Every page is a whole number of sheets tall, so short pages are a full blank-bottomed sheet
+  // and none are torn off. (comic.css still has .torn, but nothing sets it any more.)
   const LETTER = 11 / 8.5;
-  const markTorn = () => {
+  const fitToSheets = () => {
+    sheet.style.minHeight = "";
     const full = sheet.offsetWidth * LETTER;
-    const left = sheet.offsetHeight % full;
-    sheet.classList.toggle("torn", left > 1 && full - left > 1);
+    if (!full) return;
+    const sheets = Math.max(1, Math.ceil(sheet.offsetHeight / full - 0.001));
+    // min-height applies to the content box here, so take the vertical padding back off
+    const cs = getComputedStyle(sheet);
+    const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    sheet.style.minHeight = `${sheets * full - pad}px`;
   };
-  if (window.ResizeObserver) new ResizeObserver(markTorn).observe(sheet);
+  if (window.ResizeObserver) new ResizeObserver(fitToSheets).observe(sheet);
 
   let resizeTimer = null;
   window.addEventListener("resize", () => {
