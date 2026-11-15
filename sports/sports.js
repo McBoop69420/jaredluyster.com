@@ -763,12 +763,13 @@
     const txt = el("div", "team-text");
     const nameRow = el("div", "team-name-row");
     if (t.rank) nameRow.appendChild(el("span", "team-rank", "#" + t.rank));
-    nameRow.appendChild(el("span", "team-name", esc(t.name)));
+    const nameEl = el("span", "team-name", esc(t.name));
+    nameRow.appendChild(nameEl);
     if (t.poss) {
       const poss = el("span", "team-poss");
       poss.setAttribute("role", "img");
       poss.setAttribute("aria-label", "Possession: " + t.poss);
-      nameRow.appendChild(poss);
+      nameEl.appendChild(poss);   // inside the name, so it stays with the last word when the name wraps
     }
     txt.appendChild(nameRow);
     if (t.rec) txt.appendChild(el("div", "team-rec", esc(t.rec)));
