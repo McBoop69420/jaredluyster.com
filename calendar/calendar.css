@@ -96,6 +96,11 @@ a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 /* Daily routine blocks (morning / evening / wind down): quiet outlined chips so they
    recede behind real commitments instead of competing as solid dark blocks. */
 .cal-ev--routine{background:transparent;color:var(--cal-muted);border-left:3px solid var(--cal-muted);padding:1px 5px;font-weight:500;}
+.cal-ev--menu{cursor:pointer;}
+.cal-ev--menu .cal-ev-title::after{content:"";display:inline-block;margin-left:5px;vertical-align:middle;border:4px solid transparent;border-top-color:currentColor;border-bottom-width:0;}
+.menu-list{list-style:none;margin:0;padding:0;}
+.menu-list li{padding:12px 0;border-bottom:1px dotted var(--cal-ink);font-size:17px;font-weight:600;}
+.menu-list li:last-child{border-bottom:none;}
 .cal-ev--routine .cal-ev-t{font-weight:600;}
 .cal-ev-t{font-weight:700;opacity:.95;}
 .cal-ev-s{display:none;}

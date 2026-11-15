@@ -916,6 +916,20 @@
     loadWebEvents().then(renderEventSheetList);
   }
 
+  // Tapping a routine block (an event with a "menu" list) opens its options.
+  function openMenuSheet(title, items) {
+    const sheet = $("menuSheet");
+    if (!sheet) return;
+    $("menuSheetTitle").textContent = title;
+    $("menuList").innerHTML = items.map(t => "<li>" + esc(t) + "</li>").join("");
+    sheet.hidden = false;
+    $("menuClose").focus();
+  }
+  function closeMenuSheet() {
+    const sheet = $("menuSheet");
+    if (sheet) sheet.hidden = true;
+  }
+
   function closeEventSheet() {
     const sheet = $("eventSheet");
     if (!sheet || sheet.hidden) return;
@@ -1822,7 +1836,9 @@
         // a sports chip carries its time in the match row, so a plain event
         // with only a start ("Weightlifting", 12:00) needs it shown here.
         const plain = ev.type !== "sports" && ev.type !== "movie";
-        const chip = '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + '"' +
+        const menu = Array.isArray(ev.menu) && ev.menu.length ? ev.menu : null;
+        const chip = '<' + tag + ' class="cal-ev' + eventClass(ev) + (wholeLink ? ' cal-ev--linked' : '') + (menu ? ' cal-ev--menu' : '') + '"' +
+          (menu ? ' role="button" tabindex="0" data-menu-title="' + esc(ev.title || "") + '" data-menu="' + esc(JSON.stringify(menu.map(String))) + '"' : '') +
           (wholeLink ? ' href="' + esc(ev.url) + '" target="_blank" rel="noopener"' : '') +
           ' title="' + esc((ev.title || "") + (rng ? " · " + rng : "")) + '">' +
           (start ? '<span class="cal-ev-s">' + esc(start) + '</span> ' : '') +
@@ -1977,6 +1993,11 @@
         renderCalendar();
         return;
       }
+      const menuChip = e.target.closest && e.target.closest("[data-menu]");
+      if (menuChip) {
+        try { openMenuSheet(menuChip.dataset.menuTitle || "Menu", JSON.parse(menuChip.dataset.menu)); } catch (err) { /* bad menu: ignore */ }
+        return;
+      }
       const chip = e.target.closest && e.target.closest("[data-todo-key]");
       if (chip) { completeTodo(chip.dataset.todoKey); return; }
       const cell = e.target.closest && e.target.closest(".cal-cell[data-date]");
@@ -1985,6 +2006,15 @@
         renderCalendar();
       }
     });
+    if (calRoot) calRoot.addEventListener("keydown", e => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-menu]")) { e.preventDefault(); e.target.click(); }
+    });
+    const menuSheet = $("menuSheet");
+    if (menuSheet) {
+      $("menuClose").addEventListener("click", closeMenuSheet);
+      menuSheet.addEventListener("click", e => { if (e.target === menuSheet) closeMenuSheet(); });
+      document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenuSheet(); });
+    }
     const undoBar = $("todoUndo");
     if (undoBar) undoBar.addEventListener("click", e => {
       if (e.target.closest && e.target.closest("[data-undo]")) undoLast();
