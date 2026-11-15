@@ -202,16 +202,20 @@
   // line so the handwriting below it lands back on the rules.
   function snapToRules() {
     const rule = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--rule")) || 28;
-    const top = sheet.getBoundingClientRect().top;
-    sheet.querySelectorAll(":scope > .snap-rule").forEach((el) => {
-      el.style.marginBottom = "";
-      const base = parseFloat(getComputedStyle(el).marginBottom) || 0;
-      const bottom = el.getBoundingClientRect().bottom - top + base;
-      el.style.marginBottom = `${base + ((rule - (bottom % rule)) % rule)}px`;
+    sheet.parentElement.querySelectorAll(".sheet").forEach((page) => {
+      const top = page.getBoundingClientRect().top;
+      page.querySelectorAll(":scope > .snap-rule").forEach((el) => {
+        el.style.marginBottom = "";
+        const base = parseFloat(getComputedStyle(el).marginBottom) || 0;
+        const bottom = el.getBoundingClientRect().bottom - top + base;
+        el.style.marginBottom = `${base + ((rule - (bottom % rule)) % rule)}px`;
+      });
     });
   }
 
   function afterRender() {
+    snapToRules();
+    paginate();
     snapToRules();
     sheet.querySelectorAll("img").forEach((img) => {
       if (!img.complete) img.addEventListener("load", snapToRules, { once: true });
@@ -219,32 +223,96 @@
   }
 
   // Pages are 8½×11 sheets at this width (the binder holes in comic.css follow the same size).
-  // Every page is a whole number of sheets tall, so short pages are a full blank-bottomed sheet
-  // and none are torn off. (comic.css still has .torn, but nothing sets it any more.)
+  // Writing that runs past the bottom of a sheet carries on to a fresh sheet below it, with a
+  // gap between them. Things are never cut in half: a whole block moves over, and the cast grid
+  // and table of contents break between rows. Every sheet is a whole number of letter sheets
+  // tall, so nothing is torn off. (comic.css still has .torn, but nothing sets it any more.)
   const LETTER = 11 / 8.5;
-  const fitToSheets = () => {
+  const SPLITTABLE = ".cast-grid, .toc";
+
+  // Round a sheet's height up to a whole number of letter sheets. Returns that number.
+  function fitToSheets(page, full, minSheets = 1) {
+    page.style.minHeight = "";
+    const sheets = Math.max(minSheets, Math.ceil(page.offsetHeight / full - 0.001));
+    // min-height is measured to the content box unless box-sizing is border-box
+    const cs = getComputedStyle(page);
+    const pad = cs.boxSizing === "border-box" ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    page.style.minHeight = `${sheets * full - pad}px`;
+    return sheets;
+  }
+
+  function paginate() {
+    const wrap = sheet.parentElement;
+    wrap.querySelectorAll(".sheet.extra").forEach((p) => p.remove());
     sheet.style.minHeight = "";
     const full = sheet.offsetWidth * LETTER;
     if (!full) return;
-    const sheets = Math.max(1, Math.ceil(sheet.offsetHeight / full - 0.001));
-    // min-height is measured to the content box unless box-sizing is border-box
-    const cs = getComputedStyle(sheet);
-    const pad = cs.boxSizing === "border-box" ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-    sheet.style.minHeight = `${sheets * full - pad}px`;
-  };
-  if (window.ResizeObserver) new ResizeObserver(fitToSheets).observe(sheet);
+    const padBottom = parseFloat(getComputedStyle(sheet).paddingBottom) || 0;
+    const flow = (page) =>
+      [...page.children].filter((el) => getComputedStyle(el).position !== "absolute");
+
+    let page = sheet;
+    for (let guard = 0; guard < 30; guard++) {
+      let sheetsAllowed = 1;
+      let tail = null; // what moves to the next page
+      for (;;) {
+        const limit = page.getBoundingClientRect().top + sheetsAllowed * full - padBottom;
+        const units = flow(page);
+        const idx = units.findIndex((el) => el.getBoundingClientRect().bottom > limit + 0.5);
+        if (idx < 0) break;
+        const el = units[idx];
+
+        // break a grid / list between rows when its first row fits
+        if (el.matches(SPLITTABLE) && el.children.length > 1) {
+          const kids = [...el.children];
+          let j = kids.findIndex((k) => k.getBoundingClientRect().bottom > limit + 0.5);
+          const rowTop = kids[j].offsetTop;
+          while (j > 0 && kids[j - 1].offsetTop === rowTop) j--;
+          if (j > 0) {
+            const rest = el.cloneNode(false);
+            rest.classList.add("cont");
+            kids.slice(j).forEach((k) => rest.appendChild(k));
+            tail = [rest, ...units.slice(idx + 1)];
+            break;
+          }
+        }
+
+        // otherwise the whole block moves, and takes a heading above it along
+        let from = idx;
+        while (from > 0 && units[from - 1].matches("h1, h2, h3")) from--;
+        if (from === 0) {
+          sheetsAllowed++; // taller than a sheet by itself: this page just gets longer
+          continue;
+        }
+        tail = units.slice(from);
+        break;
+      }
+      if (!tail) {
+        fitToSheets(page, full, sheetsAllowed);
+        break;
+      }
+      fitToSheets(page, full, sheetsAllowed);
+      const next = document.createElement("article");
+      next.className = "sheet extra";
+      tail.forEach((el) => next.appendChild(el));
+      page.after(next);
+      page = next;
+    }
+  }
 
   let resizeTimer = null;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(snapToRules, 120);
+    resizeTimer = setTimeout(() => {
+      // content moved between sheets, so redraw it rather than just re-snapping
+      if (site && sheet.offsetWidth !== lastWidth) relayout();
+    }, 120);
   });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => site && snapToRules());
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => site && relayout());
 
   // ---- Router ---------------------------------------------------------------
 
-  function route() {
-    if (!site) return;
+  function draw() {
     const hash = location.hash.replace(/^#/, "");
     const m = /^\/(\d+)$/.exec(hash);
     if (m) renderStrip(Number(m[1]));
@@ -253,6 +321,15 @@
     else if (hash === "about") renderAbout();
     else renderStrip(null);
     afterRender();
+    lastWidth = sheet.offsetWidth;
+  }
+
+  let lastWidth = 0;
+  const relayout = () => draw();
+
+  function route() {
+    if (!site) return;
+    draw();
     window.scrollTo({ top: 0 });
   }
 

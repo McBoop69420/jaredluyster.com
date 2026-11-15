@@ -325,6 +325,9 @@
 
 .sheet-wrap > .sheet { box-shadow: none; }
 
+/* A page that runs on carries over to a fresh sheet: a separate piece of paper below. */
+.sheet-wrap > .sheet + .sheet { margin-top: 40px; }
+
 .sheet.torn {
     --tear: 16px;
     -webkit-mask:
