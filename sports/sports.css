@@ -140,9 +140,16 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 /* Scoreboard clock: lit digits on a dark panel, period tag beside it. */
 .status--live .status-text{color:var(--live)}
 .status--live:has(.game-clock) .live-dot{display:none}
-.game-clock{display:inline-flex;align-items:stretch;vertical-align:middle;border:2px solid var(--ink);background:#14171a}
-.game-clock-time{padding:1px 7px;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:15px;font-weight:500;line-height:1.25;letter-spacing:.06em;color:#ffb21e;text-shadow:0 0 6px rgba(255,178,30,.55);font-variant-numeric:tabular-nums}
-.game-clock-per{display:flex;align-items:center;padding:0 6px;background:var(--live);color:#fff;font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.06em}
+.game-clock{display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
+.game-clock-time{display:block;padding:3px 8px;border:2px solid var(--ink);background:#14171a}
+.seg-display{display:block;transform:skewX(-7deg);overflow:visible}
+.seg-on{fill:#ffb21e;filter:drop-shadow(0 0 2px rgba(255,178,30,.75))}
+.seg-off{fill:rgba(255,178,30,.1)}
+/* The period tag is a hand-painted sign: cream board, wobbly edge, marker lettering. */
+.game-clock-per{display:inline-block;padding:2px 8px 1px;transform:rotate(-4deg);background:#f3e9cf;
+  border:2px solid #14171a;border-radius:4px 7px 5px 8px / 7px 4px 8px 5px;box-shadow:1px 2px 0 rgba(20,23,26,.45);
+  color:#c23a1e;font-family:"Permanent Marker","Marker Felt",cursive;font-size:14px;line-height:1.25;letter-spacing:.02em;
+  text-shadow:.5px .5px 0 rgba(194,58,30,.45)}
 .football-situation{text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .football-situation--redzone{color:var(--live)}
 /* Down & distance as a stadium scoreboard: three lit readouts on a dark panel. */

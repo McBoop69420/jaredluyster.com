@@ -797,6 +797,49 @@
     };
   }
 
+  // Seven-segment readout as inline SVG: every segment is drawn, unlit ones as a faint
+  // ghost, lit ones glowing (see .seg-on / .seg-off). Handles digits, ":", ".", "'" and "+".
+  const SEG_ON = { 0: "abcdef", 1: "bc", 2: "abged", 3: "abgcd", 4: "fgbc", 5: "afgcd", 6: "afgedc", 7: "abc", 8: "abcdefg", 9: "abcdfg" };
+  function segPoly(a, b, fixed, horiz) {
+    // A pointed bar from a..b along one axis, centred on `fixed` on the other.
+    const p = horiz
+      ? [[a, fixed], [a + 1, fixed - 1], [b - 1, fixed - 1], [b, fixed], [b - 1, fixed + 1], [a + 1, fixed + 1]]
+      : [[fixed, a], [fixed + 1, a + 1], [fixed + 1, b - 1], [fixed, b], [fixed - 1, b - 1], [fixed - 1, a + 1]];
+    return p.map(q => q[0] + "," + q[1]).join(" ");
+  }
+  const SEG_GEO = {
+    a: segPoly(1.3, 8.7, 1, true), g: segPoly(1.3, 8.7, 9, true), d: segPoly(1.3, 8.7, 17, true),
+    f: segPoly(1.3, 8.7, 1, false), b: segPoly(1.3, 8.7, 9, false),
+    e: segPoly(9.3, 16.7, 1, false), c: segPoly(9.3, 16.7, 9, false),
+  };
+  function sevenSegHtml(str) {
+    let x = 0;
+    const parts = [];
+    const seg = (cls, pts, dx) => '<polygon class="' + cls + '" points="' + pts + '"' + (dx ? ' transform="translate(' + dx + ' 0)"' : "") + "/>";
+    String(str).split("").forEach(ch => {
+      if (/\d/.test(ch)) {
+        const on = SEG_ON[ch];
+        ["a", "b", "c", "d", "e", "f", "g"].forEach(k =>
+          parts.push(seg(on.indexOf(k) >= 0 ? "seg-on" : "seg-off", SEG_GEO[k], x)));
+        x += 12;
+      } else if (ch === ":") {
+        parts.push('<rect class="seg-on" x="' + (x + 1) + '" y="4.5" width="2" height="2"/><rect class="seg-on" x="' + (x + 1) + '" y="11.5" width="2" height="2"/>');
+        x += 5;
+      } else if (ch === ".") {
+        parts.push('<rect class="seg-on" x="' + (x + 0.5) + '" y="15.5" width="2" height="2"/>');
+        x += 4;
+      } else if (ch === "'" || ch === "’") {
+        parts.push('<rect class="seg-on" x="' + (x + 0.5) + '" y="0" width="1.6" height="5"/>');
+        x += 4;
+      } else if (ch === "+") {
+        parts.push('<rect class="seg-on" x="' + (x + 1) + '" y="8" width="6" height="2"/><rect class="seg-on" x="' + (x + 3) + '" y="6" width="2" height="6"/>');
+        x += 9;
+      } else if (ch === " ") x += 3;
+    });
+    const w = Math.max(x - 1, 1);
+    return '<svg class="seg-display" viewBox="0 0 ' + w + ' 18" width="' + (w * 20 / 18).toFixed(1) + '" height="20" role="img" aria-label="' + esc(str) + '">' + parts.join("") + "</svg>";
+  }
+
   // "11:05 • P1" drawn as a scoreboard: lit digits in a dark box, period beside it.
   // Anything that isn't a plain clock (innings, "Halftime", "End of 2nd") stays text.
   function gameClockHtml(g) {
@@ -809,7 +852,7 @@
     else if (k === "basketball/mens-college-basketball") per = n <= 2 ? (n === 1 ? "1ST" : "2ND") : (n === 3 ? "OT" : "OT" + (n - 2));
     else if (k.indexOf("football/") === 0 || k.indexOf("basketball/") === 0) per = n <= 4 ? "Q" + n : (n === 5 ? "OT" : "OT" + (n - 4));
     else per = "P" + n;   // hockey
-    return '<span class="game-clock"><span class="game-clock-time">' + esc(m[1]) + '</span>' +
+    return '<span class="game-clock"><span class="game-clock-time">' + sevenSegHtml(m[1]) + '</span>' +
       '<span class="game-clock-per">' + esc(per) + '</span></span>';
   }
 
