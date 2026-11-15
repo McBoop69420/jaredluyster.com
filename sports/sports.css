@@ -137,6 +137,12 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .score-vs{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em}
 .status{text-align:center;font-size:11px;color:var(--muted)}
 .status--live{color:var(--live);font-weight:700}
+/* Scoreboard clock: lit digits on a dark panel, period tag beside it. */
+.status--live .status-text{color:var(--live)}
+.status--live:has(.game-clock) .live-dot{display:none}
+.game-clock{display:inline-flex;align-items:stretch;vertical-align:middle;border:2px solid var(--ink);background:#14171a}
+.game-clock-time{padding:1px 7px;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:15px;font-weight:500;line-height:1.25;letter-spacing:.06em;color:#ffb21e;text-shadow:0 0 6px rgba(255,178,30,.55);font-variant-numeric:tabular-nums}
+.game-clock-per{display:flex;align-items:center;padding:0 6px;background:var(--live);color:#fff;font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.06em}
 .football-situation{text-align:center;font-size:11px;font-weight:700;color:var(--ink);margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .football-situation--redzone{color:var(--live)}
 /* Football field as a number line: 10-yard end zones, 100 yards, ball and first-down line. */
