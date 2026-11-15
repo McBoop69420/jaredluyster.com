@@ -237,6 +237,11 @@ table.stand td.col-rank{text-align:center;color:var(--muted)}
 @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .colophon{margin-top:30px;padding-top:12px;border-top:var(--border-w) solid var(--ink);font-size:12px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.04em}
 
+/* iPad portrait: the Spotlight shows two games per row. Cards come out ~320px wide,
+   a bit under the 360px the auto-fill grid asks for, so it is forced here. */
+@media(min-width:621px) and (max-width:900px){
+  #spotlightGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:800px){
   .standings-conferences,.player-box-grid{grid-template-columns:1fr}
   /* Standings: shrink padding so more columns survive on a 768px tablet */
