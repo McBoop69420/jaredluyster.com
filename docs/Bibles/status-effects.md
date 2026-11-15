@@ -79,7 +79,7 @@ All status effects are tracked as integer stacks on `statusEffects` in the battl
 - **Note:** Probabilistic — does not guarantee safety, and decays faster than a naive "1 stack = 1 blocked attack" read would suggest
 
 ### Weak `#cc6666`
-- **Applied by:** Enemy intents only (Shade Wraith, Tide Witch, Shadow Stalker, Abyssal Leviathan, Shadow Sovereign). No player spell currently applies Weak.
+- **Applied by:** Enemy intents only (Hollow Stalker, Grey Pilgrim, Hooded Duelist, Gnawing Beast, Faceless Acolyte). No player spell currently applies Weak.
 - **Ticks:** Each turn
 - **Effect:** All damage dealt by the affected target is multiplied by ×0.75 (floored). This is **flat** — any Weak stack applies the full ×0.75; it does not scale with stack count.
 - **Decay:** -1 per turn

@@ -91,7 +91,7 @@ Node fills are near-black (so PNG icon backgrounds blend in); the **stroke/accen
 
 State strokes (applied over the type color): current = `#22dd66`, available = `#f0be63`, hover = `#ffd97a`.
 
-> There is no dedicated Start node type — floor 0 is a Combat node.
+> There is no dedicated Start node type — floor 1 is a Combat node.
 
 ---
 

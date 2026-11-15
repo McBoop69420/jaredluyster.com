@@ -161,41 +161,41 @@ Each enemy's type determines what spell types hit it for 2× or 0.5×.
 
 | Enemy | Type | Weak to | Resists |
 |---|---|---|---|
-| 👺 Fire Imp | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
-| 🌋 Lava Golem | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
-| 🧜 Sea Sprite | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| 🟤 Mud Elemental | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
-| 🔵 Storm Wisp | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 🐺 Frost Wolf | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 👻 Shade Wraith | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
-| 🛡 Holy Sentinel | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
-| 🌱 Vine Creeper | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| 👺 Skittering Mite | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🌋 Brass Automaton | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🧜 Bound Familiar | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| 🟤 Wandering Husk | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 🔵 Drifting Wisp | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
+| 🐺 Rune Hound | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 👻 Hollow Stalker | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| 🛡 Tower Sentinel | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
+| 🌱 Coiled Serpent | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
 
 ### Elite Enemies
 
 | Enemy | Type | Weak to | Resists |
 |---|---|---|---|
-| 🌞 Magma Lord | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
-| 🧙 Tide Witch | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| 🗿 Stone Guardian | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
-| 🧝 Thunder Mage | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 💀 Frost Lich | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 🦇 Shadow Stalker | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
-| 🌳 Thornwood | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
-| ⚔️ Radiant Knight | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
+| 🌞 Mimic Chest | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
+| 🧙 Grey Pilgrim | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| 🗿 Masked Warden | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 🧝 Ragged Scavenger | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
+| 💀 Crooked Hermit | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 🦇 Hooded Duelist | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| 🌳 Spellbound Squire | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| ⚔️ Tattered Knight | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
 
 ### Bosses
 
 | Boss | Type | Weak to | Resists |
 |---|---|---|---|
 | 👁 The Drifter | 🔥 Fire | 🌊 Water, 🪨 Rock, ⚡ Arc | ❄️ Ice, 🌑 Shadow, 🌿 Plant |
-| 🐉 Abyssal Leviathan | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
-| ⛰️ Mountain Titan | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
-| 🌩️ Storm Sovereign | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
-| 🧊 Glacial Mass | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
-| 🌑 Shadow Sovereign | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
-| ✨ Celestial Arbiter | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
-| 🌲 World Root | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
+| 🐉 Gnawing Beast | 🌊 Water | ⚡ Arc, 🌑 Shadow, 🌿 Plant | 🔥 Fire, 🪨 Rock, ☀️ Light |
+| ⛰️ Bone Collector | 🪨 Rock | 🌊 Water, ❄️ Ice, 🌿 Plant | 🔥 Fire, ⚡ Arc, ☀️ Light |
+| 🌩️ Howling Brute | ⚡ Arc | 🪨 Rock, ❄️ Ice, ☀️ Light | 🔥 Fire, 🌊 Water, 🌑 Shadow |
+| 🧊 Clockwork Sentinel | ❄️ Ice | 🔥 Fire, 🌿 Plant, ☀️ Light | 🪨 Rock, ⚡ Arc, 🌑 Shadow |
+| 🌑 Faceless Acolyte | 🌑 Shadow | 🔥 Fire, ⚡ Arc, ❄️ Ice | 🌊 Water, 🌿 Plant, ☀️ Light |
+| ✨ Glass-Eyed Watcher | ☀️ Light | 🌊 Water, 🪨 Rock, 🌑 Shadow | ⚡ Arc, ❄️ Ice, 🌿 Plant |
+| 🌲 Antlered Beast | 🌿 Plant | 🔥 Fire, 🌑 Shadow, ☀️ Light | 🌊 Water, ❄️ Ice, 🪨 Rock |
 
 ---
 
@@ -203,7 +203,7 @@ Each enemy's type determines what spell types hit it for 2× or 0.5×.
 
 Your class type determines your spell type. Bold = favorable (2×). Italic = unfavorable (0.5×).
 
-| Class | 👁 Drifter (🔥) | 🐉 Leviathan (🌊) | ⛰️ Titan (🪨) | 🌩️ Sovereign (⚡) | 🧊 Glacial Mass (❄️) | 🌑 Shadow Sov (🌑) | ✨ Arbiter (☀️) | 🌲 World Root (🌿) |
+| Class | 👁 Drifter (🔥) | 🐉 Gnawing Beast (🌊) | ⛰️ Bone Collector (🪨) | 🌩️ Howling Brute (⚡) | 🧊 Clockwork Sentinel (❄️) | 🌑 Faceless Acolyte (🌑) | ✨ Glass-Eyed Watcher (☀️) | 🌲 Antlered Beast (🌿) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 🔥 Pyromancer | 1× | *0.5×* | *0.5×* | *0.5×* | **2×** | **2×** | 1× | **2×** |
 | 🌊 Tidecaller | **2×** | 1× | **2×** | *0.5×* | 1× | *0.5×* | **2×** | *0.5×* |
@@ -214,7 +214,7 @@ Your class type determines your spell type. Bold = favorable (2×). Italic = unf
 | ☀️ Dawnmage | 1× | *0.5×* | *0.5×* | **2×** | **2×** | *0.5×* | 1× | **2×** |
 | 🌿 Verdantmaker | *0.5×* | **2×** | **2×** | 1× | **2×** | *0.5×* | *0.5×* | 1× |
 
-> Note: Any boss can appear on floor 12. The matchup you draw is luck — but knowing it early lets you buy the right spells at the shop on floor 10.
+> Note: Any boss can appear on floor 12. The matchup you draw is luck — but knowing it early lets you buy the right spells at the shops on floors 7 and 11.
 
 ---
 
