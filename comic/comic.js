@@ -227,9 +227,9 @@
     const full = sheet.offsetWidth * LETTER;
     if (!full) return;
     const sheets = Math.max(1, Math.ceil(sheet.offsetHeight / full - 0.001));
-    // min-height applies to the content box here, so take the vertical padding back off
+    // min-height is measured to the content box unless box-sizing is border-box
     const cs = getComputedStyle(sheet);
-    const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const pad = cs.boxSizing === "border-box" ? 0 : parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     sheet.style.minHeight = `${sheets * full - pad}px`;
   };
   if (window.ResizeObserver) new ResizeObserver(fitToSheets).observe(sheet);
