@@ -462,6 +462,30 @@
     if (/^End (Period|of Half)/i.test(type)) {
       return { text: String(play.text || type).replace(/\.$/, "") };
     }
+    // A score: say who scored, what kind, and who kicks off next (the scorer, except
+    // after a safety, where the team scored on kicks). A touchdown is followed by the
+    // extra point or two-point try, so it says that instead.
+    const scorer = play.team && play.team.id != null ? abbrById(play.team.id) : null;
+    if (scorer) {
+      const other = competitors.map(teamAbbr).find(a => a !== scorer) || null;
+      const yds = /(\d+)\s*(?:-|\s)?yards?/i.exec(String(play.text || ""));
+      let what = null, next = scorer + " kicking off";
+      if (/touchdown/i.test(type)) {
+        const kind = type.replace(/touchdown/i, "").replace(/\s+/g, " ").trim().toLowerCase();
+        what = (kind ? kind + " " : "") + "touchdown";
+        next = "extra point next";
+      } else if (/field goal good/i.test(type)) {
+        what = (yds ? yds[1] + "-yd " : "") + "field goal";
+      } else if (/(extra point|point after).*good/i.test(type)) {
+        what = "extra point good";
+      } else if (/two.?point/i.test(type) && Number(play.scoreValue) > 0) {
+        what = "two-point conversion good";
+      } else if (/safety/i.test(type)) {
+        what = "safety";
+        next = other ? other + " kicking off" : "free kick next";
+      }
+      if (what) return { text: scorer + " " + what + " · " + next };
+    }
     const label = type.charAt(0) + type.slice(1).toLowerCase();
     // A kickoff's team is ambiguous (kicking or receiving side), so it gets
     // the receiving team's spot instead, when ESPN already has one.
