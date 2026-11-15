@@ -93,6 +93,10 @@ a.daily-link:hover{background:var(--cal-accent);color:var(--cal-accent-ink);}
 .cal-ev--sports{background:var(--cal-accent);color:var(--cal-accent-ink);}
 .cal-ev--movie{background:var(--cal-movie);color:var(--cal-accent-ink);}
 .cal-ev--todo{background:none;color:var(--cal-ink);padding:0;}
+/* Daily routine blocks (morning / evening / wind down): quiet outlined chips so they
+   recede behind real commitments instead of competing as solid dark blocks. */
+.cal-ev--routine{background:transparent;color:var(--cal-muted);border-left:3px solid var(--cal-muted);padding:1px 5px;font-weight:500;}
+.cal-ev--routine .cal-ev-t{font-weight:600;}
 .cal-ev-t{font-weight:700;opacity:.95;}
 .cal-ev-s{display:none;}
 /* A screening is worth nothing without its showtime, so movie chips keep the
@@ -123,6 +127,7 @@ a.cal-ev--linked:hover{background:var(--cal-movie);color:var(--cal-accent-ink);o
 .cal-dot.cal-ev--work{background:var(--cal-work);}
 .cal-dot.cal-ev--sports{background:var(--cal-accent);}
 .cal-dot.cal-ev--movie{background:var(--cal-movie);}
+.cal-dot.cal-ev--routine{background:var(--cal-muted);}
 .cal-dot.cal-ev--todo{background:none;box-shadow:inset 0 0 0 1.5px var(--cal-ink);}
 .cal-dot-more{font-size:9px;font-weight:700;line-height:7px;color:var(--cal-muted);}
 .cal-agenda-item .cal-dot{align-self:center;}
