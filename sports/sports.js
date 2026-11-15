@@ -419,7 +419,7 @@
     const dist = Number(situation.distance);
     const fd = Number.isFinite(dist) && dist > 0 && situation.down > 0
       ? Math.max(0, Math.min(100, pos + dir * dist)) : null;
-    return { pos, dir, fd, away: teamAbbr(away), home: teamAbbr(home) };
+    return { pos, dir, fd, away: teamAbbr(away), home: teamAbbr(home), logo: teamLogo(poss), offense: teamAbbr(poss) };
   }
 
   function fieldHtml(f) {
@@ -433,7 +433,8 @@
     return '<div class="field-wrap"><div class="field" role="img" aria-label="Ball on the ' + (f.pos === 50 ? "50" : f.pos < 50 ? f.away + " " + f.pos : f.home + " " + (100 - f.pos)) + '">' +
       '<span class="field-ez field-ez--l">' + esc(f.away) + '</span><span class="field-ez field-ez--r">' + esc(f.home) + '</span>' +
       (f.fd != null ? '<span class="field-fd" style="left:' + x(f.fd) + '"></span>' : '') +
-      '<span class="field-ball field-ball--' + (f.dir > 0 ? "r" : "l") + '" style="left:' + x(f.pos) + '"></span></div>' +
+      '<span class="field-ball field-ball--' + (f.dir > 0 ? "r" : "l") + (f.logo ? " field-ball--logo" : "") + '" style="left:' + x(f.pos) + '">' +
+        (f.logo ? '<img src="' + esc(f.logo) + '" alt="' + esc(f.offense) + ' has the ball">' : "") + '</span></div>' +
       '<div class="field-ticks">' + ticks.join("") + '</div></div>';
   }
 
