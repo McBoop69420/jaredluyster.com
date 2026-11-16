@@ -273,7 +273,7 @@
     const live = new Set(todoList.concat(comicList).map(t => t.key));
     let changed = false;
     Object.keys(todoDone).forEach(k => {
-      if (live.has(k)) return;
+      if (live.has(k) || k.indexOf("B:") === 0) return;   // bill ticks aren't in either file
       // The shared store forgets it too, but only once the tick is a while old: a
       // device still holding last deploy's files mustn't untick a todo just added.
       if (Date.now() - todoDone[k] > PRUNE_SHARED_AFTER_MS) queueTickOp("untick", k, { send: false });
@@ -546,7 +546,35 @@
       overdue: !!t.due && t.due < todayStr,
       repeat: t.repeat && REPEAT ? REPEAT.describe(t.repeat) : "",
     }));
-    return fromFile.concat(fromPage);
+    return fromFile.concat(fromPage, billTodos(todayStr));
+  }
+
+  // Bills: calendar.json events with type "bill" and a monthly recurrence become
+  // one tickable todo per due date, keyed "B:<title>|<date>" (ticks sync like any
+  // other todo). An unpaid bill whose day has passed is pinned to today as overdue.
+  function billTodos(todayStr) {
+    const out = [];
+    const end = new Date(Date.now() + 200 * 86400000);
+    const endStr = end.getFullYear() + "-" + pad2(end.getMonth() + 1) + "-" + pad2(end.getDate());
+    (calEvents || []).forEach(ev => {
+      if (!ev || ev.type !== "bill" || !ev.date || !ev.title) return;
+      const dom = Number(ev.date.slice(8, 10));
+      const until = (ev.recurrence && ev.recurrence.until) || "";
+      let y = Number(ev.date.slice(0, 4)), m = Number(ev.date.slice(5, 7));
+      for (let guard = 0; guard < 400; guard++, m++) {
+        if (m > 12) { m = 1; y++; }
+        const ds = y + "-" + pad2(m) + "-" + pad2(Math.min(dom, new Date(y, m, 0).getDate()));
+        if (ds > endStr || (until && ds > until)) break;
+        if (!(ev.recurrence && ev.recurrence.freq === "monthly") && ds !== ev.date) break;
+        const key = "B:" + ev.title + "|" + ds;
+        if (!todoDone[key]) out.push({
+          type: "todo", bill: true, title: ev.title, todoKey: key, due: ds,
+          date: ds < todayStr ? todayStr : ds, overdue: ds < todayStr, repeat: "",
+        });
+        if (!ev.recurrence) break;
+      }
+    });
+    return out;
   }
 
   // A dated todo that's also on the calendar as an event that day ("Lunch —
@@ -555,6 +583,7 @@
   // overdue todo is matched on its own date, not the today it was moved to, so
   // it stays hidden after the day passes instead of resurfacing as overdue.
   function duplicatesEvent(todo) {
+    if (todo.bill) return false;
     const day = todo.due || todo.date;
     if (!day) return false;
     const key = s => String(s || "").replace(/\s+[—–-]\s*\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)?\s*$/i, "")
@@ -685,7 +714,8 @@
       if (!result) return;
     } else {
       if (todoDone[key]) return;
-      const t = todoList.concat(comicList).find(x => x.key === key);
+      const t = todoList.concat(comicList).find(x => x.key === key) ||
+        (key.indexOf("B:") === 0 ? { title: key.slice(2).replace(/\|.*$/, "") } : null);
       todoDone[key] = Date.now();
       saveTodoDone();
       queueTickOp("tick", key);
@@ -1677,7 +1707,7 @@
       (byDate[dateStr] = byDate[dateStr] || []).push(copy);
     }
     allCalEvents().concat(sportsEvents, todoEvts, movieEvents()).forEach(ev => {
-      if (!ev || !ev.date) return;
+      if (!ev || !ev.date || ev.type === "bill") return;   // bills draw as todos (billTodos)
       const recur = ev.recurrence || {};
       const freq = String(recur.freq || "").toLowerCase();
       if (freq === "weekly") {
