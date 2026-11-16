@@ -1698,6 +1698,24 @@
         });
         return;
       }
+      if (freq === "monthly") {
+        // Same day of the month as the start date, clamped in short months
+        // (a 31st lands on Feb 28, then goes back to the 31st).
+        const dom = Number(ev.date.slice(8, 10));
+        const until = recur.until || "";
+        const exclusions = new Set((Array.isArray(recur.exclude) ? recur.exclude : [recur.exclude])
+          .map(s => String(s || "").trim()).filter(Boolean));
+        days.forEach(d => {
+          const ds = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+          if (ds < ev.date) return;
+          if (until && ds > until) return;
+          if (exclusions.has(ds)) return;
+          const lastDom = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+          if (d.getDate() !== Math.min(dom, lastDom)) return;
+          addByDate(ds, ev);
+        });
+        return;
+      }
       addByDate(ev.date, ev);
     });
     // Events with no confirmed start time (TBD kickoffs, timeLabel-only
