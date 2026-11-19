@@ -66,6 +66,19 @@
     return league.mine.some(t => name.toLowerCase().indexOf(t.toLowerCase()) >= 0);
   }
 
+  // How worth-reading a game is, for picking the top 10. Pro leagues get a
+  // small edge over the 100+ college games that finish on a busy night.
+  function interest(a, h, stakes, ranked, detail, hasRecap) {
+    const sa = parseFloat(a.score), sh = parseFloat(h.score);
+    const margin = Number.isFinite(sa) && Number.isFinite(sh) ? Math.abs(sa - sh) : 99;
+    const both = a.rank != null && h.rank != null;
+    const upset = (a.rank != null && !a.winner && h.winner && h.rank == null) ||
+                  (h.rank != null && !h.winner && a.winner && a.rank == null);
+    return (stakes ? 30 : 0) + (both ? 25 : ranked ? 12 : 0) + (upset ? 25 : 0) +
+      (/OT|SO|Pens|extra/i.test(detail) ? 15 : 0) + (margin <= 3 ? 10 : margin <= 6 ? 5 : 0) +
+      (hasRecap ? 8 : 0);
+  }
+
   function parse(ev, league) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
     const cs = comp.competitors || [];
@@ -90,7 +103,7 @@
     const hl = (comp.headlines || []).find(x => x.type === "Recap") || (comp.headlines || [])[0] || null;
     const link = (ev.links || []).find(l => (l.rel || []).indexOf("summary") >= 0 || (l.rel || []).indexOf("desktop") >= 0);
     const mine = isMine(league, a.name) || isMine(league, h.name);
-    const stakes = (ev.season && ev.season.type === 3) || (note && !/group play/i.test(note));
+    const stakes = (ev.season && ev.season.type === 3) || /champion|final|playoff|bowl|cup/i.test(note) && !/group play/i.test(note);
     const ranked = a.rank != null || h.rank != null;
     const detail = type.detail && !/^final$/i.test(type.detail) ? type.detail : ""; // "Final/OT", "FT-Pens"
     return {
@@ -98,8 +111,7 @@
       recap: hl && (hl.shortLinkText || hl.description) ? { title: hl.shortLinkText || "", body: hl.description || "" } : null,
       url: link && link.href,
       mine, stakes: !!stakes, ranked,
-      // Ordering score: my teams, then playoff/ranked, then anything with a recap.
-      weight: (mine ? 100 : 0) + (stakes ? 30 : 0) + (ranked ? 20 : 0) + (hl ? 10 : 0),
+      weight: (mine ? 100 : 0) + interest(a, h, stakes, ranked, detail, !!hl),
     };
   }
 
@@ -135,28 +147,7 @@
     return html + "</div>";
   }
 
-  function compactRow(g) {
-    const w = g.away.winner ? 0 : g.home.winner ? 1 : -1;
-    const nm = (t, win) => '<span class="' + (win ? "w" : "") + '">' + esc(t.name) + " " + esc(t.score) + "</span>";
-    return "<div>" + nm(g.away, w === 0) + nm(g.home, w === 1) + "</div>";
-  }
-
-  function section(league, games) {
-    games.sort((x, y) => y.weight - x.weight);
-    // College leagues run 50 to 150 games a day: feature the ones that mattered,
-    // fold the rest into a one-line-per-game list.
-    const cap = league.college ? 8 : 12;
-    const featured = (league.college ? games.filter(g => g.weight >= 20) : games).slice(0, cap);
-    const rest = games.filter(g => featured.indexOf(g) < 0);
-    let html = '<h3 class="sec"><span>' + esc(league.intl ? "International" : league.label) +
-      '</span><small>' + games.length + (games.length === 1 ? " game" : " games") + "</small></h3>";
-    html += featured.map(gameCard).join("");
-    if (rest.length) {
-      html += '<details class="brief-more"><summary>' + (featured.length ? "More " : "All ") + esc(league.label) +
-        " finals (" + rest.length + ")</summary><div class=\"brief-compact\">" + rest.map(compactRow).join("") + "</div></details>";
-    }
-    return html;
-  }
+  const TOP_N = 10;
 
   function render(iso, results) {
     const out = $("#out");
@@ -171,37 +162,26 @@
       return;
     }
 
-    // Merge the international competitions into one section.
-    const groups = new Map();
-    results.forEach(r => {
-      if (!r.games.length) return;
-      const k = r.league.intl ? "intl" : r.league.key;
-      if (!groups.has(k)) groups.set(k, { league: r.league.intl ? { key: "intl", label: "International", mine: r.league.mine, intl: true } : r.league, games: [] });
-      groups.get(k).games.push(...r.games);
-    });
-
-    // Top of the brief: my teams' results, all leagues together.
+    const label = g => Object.assign({}, g, { note: [g.league.label, g.note].filter(Boolean).join(" · ") });
     const mine = all.filter(g => g.mine).sort((a, b) => b.weight - a.weight);
+    // Pro leagues get a small edge so a 150-game college night can't crowd them out.
+    const others = all.filter(g => !g.mine)
+      .map(g => Object.assign(g, { weight: g.weight + (g.league.college ? 0 : 15) }))
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, TOP_N);
+
     let html = "";
     if (mine.length) {
       html += '<h3 class="sec"><span>My Teams</span><small>' + mine.length + (mine.length === 1 ? " game" : " games") + "</small></h3>" +
-        mine.map(g => gameCard(Object.assign({}, g, { note: [g.league.label, g.note].filter(Boolean).join(" · ") }))).join("");
+        mine.map(g => gameCard(label(g))).join("");
+    } else {
+      html += '<h3 class="sec"><span>My Teams</span></h3><div class="brief-status">None of my teams played.</div>';
     }
-
-    // Pro leagues first, then college, each in the order they're listed above.
-    const idx = g => LEAGUES.findIndex(l => l.key === g.league.key || (g.league.intl && l.intl));
-    const ordered = [...groups.values()].sort((a, b) =>
-      (a.league.college ? 1 : 0) - (b.league.college ? 1 : 0) || idx(a) - idx(b));
-    // My games already ran above; keep them out of the league sections.
-    html += ordered.map(g => {
-      const rest = g.games.filter(x => !x.mine);
-      return rest.length ? section(g.league, rest) : "";
-    }).join("");
+    html += '<h3 class="sec"><span>Top ' + others.length + ' Around Sports</span><small>of ' + (all.length - mine.length) + " other finals</small></h3>" +
+      others.map(g => gameCard(label(g))).join("");
     out.innerHTML = html;
 
-    const leaguesN = groups.size;
-    $("#summary").textContent = all.length + " finals across " + leaguesN + (leaguesN === 1 ? " league" : " leagues") +
-      (failed ? " · " + failed + " feeds unavailable" : "");
+    $("#summary").textContent = all.length + " finals yesterday" + (failed ? " · " + failed + " feeds unavailable" : "");
   }
 
   function setNav(iso) {
