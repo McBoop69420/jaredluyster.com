@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A daily brief of yesterday's final scores and game recaps across the leagues I follow.">
+<title>Daily Brief — Sports</title>
+<link rel="preconnect" href="https://site.api.espn.com">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon-16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/sports.css?v=78">
+<style>
+  .brief{max-width:820px;margin:0 auto}
+  .brief-date{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 4px;flex-wrap:wrap}
+  .brief-date h2{font-family:var(--font-display);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;margin:0}
+  .brief-date a{
+    font-family:var(--font-display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    padding:5px 10px;border:2px solid var(--ink);background:var(--card);color:var(--ink);text-decoration:none;
+  }
+  .brief-date a:hover{background:var(--highlight)}
+  .brief-date a[aria-disabled="true"]{opacity:.35;pointer-events:none}
+  .brief-summary{text-align:center;font-size:.9rem;margin:0 0 18px;color:var(--ink)}
+  .brief h3.sec{
+    font-family:var(--font-display);font-size:18px;text-transform:uppercase;letter-spacing:-.01em;
+    margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  }
+  .brief h3.sec small{font-size:11px;letter-spacing:.06em;font-weight:600}
+  .brief-game{background:var(--card);border:2px solid var(--ink);padding:10px 12px;margin:0 0 10px}
+  .brief-game.mine{background:var(--highlight)}
+  .brief-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--font-display);font-size:15px;line-height:1.5}
+  .brief-line .t{display:flex;align-items:center;gap:7px;min-width:0}
+  .brief-line img{width:20px;height:20px;object-fit:contain;flex:none}
+  .brief-line .rk{font-size:10px;opacity:.7}
+  .brief-line.win{font-weight:700}
+  .brief-line:not(.win) .s{opacity:.7}
+  .brief-meta{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-top:4px;opacity:.75}
+  .brief-recap{font-size:.9rem;line-height:1.5;margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--ink)}
+  .brief-recap b{font-weight:700}
+  .brief-recap a{color:inherit}
+  details.brief-more{margin:6px 0 0}
+  details.brief-more summary{cursor:pointer;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:6px 0}
+  .brief-compact{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px 14px;font-size:.85rem;margin-top:6px}
+  .brief-compact div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.15)}
+  .brief-compact span.w{font-weight:700}
+  .brief-status{text-align:center;padding:30px 10px;font-size:.95rem}
+</style>
+</head>
+<body>
+<article class="paper">
+  <header class="masthead">
+    <div class="toprule"></div>
+    <h1><span class="accent-box">Sports</span></h1>
+    <nav class="section-tabs" aria-label="Section">
+      <a class="section-tab" href="/">Games</a>
+      <a class="section-tab section-tab--active" href="/brief/" aria-current="page">Brief</a>
+      <a class="section-tab" href="/betting/">Betting</a>
+      <a class="section-tab" href="/models/">Models</a>
+      <a class="section-tab" href="/signin/" data-signin>Sign in</a>
+    </nav>
+  </header>
+
+  <main class="brief">
+    <div class="brief-date">
+      <a id="prevDay" href="#">&larr; Earlier</a>
+      <h2 id="dateTitle">Daily Brief</h2>
+      <a id="nextDay" href="#">Later &rarr;</a>
+    </div>
+    <p class="brief-summary" id="summary"></p>
+    <div id="out" aria-live="polite"><div class="brief-status">Loading yesterday's games&hellip;</div></div>
+  </main>
+
+  <footer class="colophon">
+    <p>Final scores and recap blurbs from ESPN. Each brief covers one Eastern (ET) day, and the default is yesterday.
+      My teams come first, then ranked and playoff games, then everything else. Want today's live scores? See <a href="/">Games</a>.</p>
+  </footer>
+</article>
+<script src="/brief.js?v=1"></script>
+</body>
+</html>
