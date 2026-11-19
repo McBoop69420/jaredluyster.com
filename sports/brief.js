@@ -79,13 +79,16 @@
       (hasRecap ? 8 : 0);
   }
 
-  function parse(ev, league) {
+  function parse(ev, league, mode) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
     const cs = comp.competitors || [];
     if (cs.length < 2) return null;
     const status = ev.status || comp.status || {};
     const type = status.type || {};
-    if (type.state !== "post" || type.name === "STATUS_POSTPONED" || type.name === "STATUS_CANCELED") return null;
+    if (type.name === "STATUS_POSTPONED" || type.name === "STATUS_CANCELED") return null;
+    const preview = mode === "pre";
+    // Recap: finished games only. Preview: games not yet started, or live right now.
+    if (preview ? type.state === "post" : type.state !== "post") return null;
     const away = cs.find(c => c.homeAway === "away") || cs[0];
     const home = cs.find(c => c.homeAway === "home") || cs[1];
     const side = c => {
@@ -94,6 +97,7 @@
         name: c.team.displayName,
         logo: c.team.logo || (c.team.logos && c.team.logos[0] && c.team.logos[0].href) || "",
         score: c.score,
+        rec: (c.records && c.records[0] && c.records[0].summary) || "",
         winner: !!c.winner,
         rank: typeof r === "number" && r <= 25 ? r : null,
       };
@@ -106,6 +110,22 @@
     const stakes = (ev.season && ev.season.type === 3) || /champion|final|playoff|bowl|cup/i.test(note) && !/group play/i.test(note);
     const ranked = a.rank != null || h.rank != null;
     const detail = type.detail && !/^final$/i.test(type.detail) ? type.detail : ""; // "Final/OT", "FT-Pens"
+    if (preview) {
+      const odds = comp.odds && comp.odds[0];
+      const nets = (comp.broadcasts || []).find(b => b.market === "national") || (comp.broadcasts || [])[0];
+      const line = [odds && odds.details, odds && odds.overUnder ? "O/U " + odds.overUnder : ""].filter(Boolean).join(" · ");
+      const closeLine = odds && typeof odds.spread === "number" && Math.abs(odds.spread) <= 3;
+      const live = type.state === "in";
+      const when = live ? (type.shortDetail || type.detail || "Live") :
+        new Date(ev.date).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET";
+      const both = a.rank != null && h.rank != null;
+      return {
+        id: league.key + ":" + ev.id, league, away: a, home: h, note, detail: "", preview: true, live,
+        when, startMs: new Date(ev.date).getTime(), line, tv: nets && nets.names ? nets.names.join("/") : "",
+        url: link && link.href, mine, stakes: !!stakes, ranked,
+        weight: (mine ? 100 : 0) + (stakes ? 30 : 0) + (both ? 25 : ranked ? 12 : 0) + (closeLine ? 8 : 0) + (live ? 5 : 0),
+      };
+    }
     return {
       id: league.key + ":" + ev.id, league, away: a, home: h, note, detail,
       recap: hl && (hl.shortLinkText || hl.description) ? { title: hl.shortLinkText || "", body: hl.description || "" } : null,
@@ -115,29 +135,34 @@
     };
   }
 
-  async function fetchLeague(league, iso) {
+  async function fetchLeague(league, iso, mode) {
     const url = ESPN + league.key + "/scoreboard?" + (league.q || "limit=300") + "&dates=" + iso.replace(/-/g, "");
     try {
       const res = await fetch(url);
       if (!res.ok) return { league, games: [], failed: true };
       const json = await res.json();
-      const games = (json.events || []).map(ev => parse(ev, league)).filter(Boolean);
+      const games = (json.events || []).map(ev => parse(ev, league, mode)).filter(Boolean);
       return { league, games };
     } catch (e) {
       return { league, games: [], failed: true };
     }
   }
 
-  function teamLine(t, label) {
+  function teamLine(t, pre) {
     return '<div class="brief-line' + (t.winner ? " win" : "") + '">' +
       '<span class="t">' + (t.logo ? '<img src="' + esc(t.logo) + '" alt="" loading="lazy">' : "") +
-      (t.rank ? '<span class="rk">' + t.rank + "</span>" : "") + esc(t.name) + "</span>" +
-      '<span class="s">' + esc(t.score) + "</span></div>";
+      (t.rank ? '<span class="rk">' + t.rank + "</span>" : "") + esc(t.name) +
+      (pre && t.rec ? ' <span class="rk">' + esc(t.rec) + "</span>" : "") + "</span>" +
+      '<span class="s">' + (pre ? "" : esc(t.score)) + "</span></div>";
   }
 
   function gameCard(g) {
     const meta = [g.league.intl ? g.league.label : "", g.note, g.detail].filter(Boolean).join(" · ");
-    let html = '<div class="brief-game' + (g.mine ? " mine" : "") + '">' + teamLine(g.away) + teamLine(g.home);
+    let html = '<div class="brief-game' + (g.mine ? " mine" : "") + '">' + teamLine(g.away, g.preview && !g.live) + teamLine(g.home, g.preview && !g.live);
+    if (g.preview) {
+      const pm = [g.when, g.tv, g.line, g.league.intl ? g.league.label : "", g.note].filter(Boolean).join(" · ");
+      return html + '<div class="brief-meta">' + (g.live ? "<b>Live</b> · " : "") + esc(pm) + "</div></div>";
+    }
     if (meta) html += '<div class="brief-meta">' + esc(meta) + "</div>";
     if (g.recap) {
       html += '<p class="brief-recap">' + (g.recap.title ? "<b>" + esc(g.recap.title) + ".</b> " : "") +
@@ -149,39 +174,52 @@
 
   const TOP_N = 10;
 
-  function render(iso, results) {
-    const out = $("#out");
-    const all = [];
-    results.forEach(r => r.games.forEach(g => all.push(g)));
-    const failed = results.filter(r => r.failed).length;
+  const label = g => Object.assign({}, g, { note: [g.league.label, g.note].filter(Boolean).join(" · ") });
+  // Pro leagues get a small edge so a 150-game college night can't crowd them out.
+  const boost = g => Object.assign(g, { weight: g.weight + (g.league.college ? 0 : 15) });
+  const count = n => n + (n === 1 ? " game" : " games");
+  const flat = results => results.reduce((acc, r) => acc.concat(r.games), []);
 
-    if (!all.length) {
-      out.innerHTML = '<div class="brief-status">No finished games found for this day' +
-        (failed ? " (some leagues failed to load)" : "") + ".</div>";
-      $("#summary").textContent = "";
-      return;
-    }
-
-    const label = g => Object.assign({}, g, { note: [g.league.label, g.note].filter(Boolean).join(" · ") });
-    const mine = all.filter(g => g.mine).sort((a, b) => b.weight - a.weight);
-    // Pro leagues get a small edge so a 150-game college night can't crowd them out.
-    const others = all.filter(g => !g.mine)
-      .map(g => Object.assign(g, { weight: g.weight + (g.league.college ? 0 : 15) }))
-      .sort((a, b) => b.weight - a.weight)
-      .slice(0, TOP_N);
-
+  // One half of the page: My Teams, then the top 10 of everything else.
+  function half(all, o) {
+    const byTime = (a, b) => a.startMs - b.startMs;
+    let mine = all.filter(g => g.mine).sort((a, b) => b.weight - a.weight);
+    let others = all.filter(g => !g.mine).map(boost).sort((a, b) => b.weight - a.weight).slice(0, TOP_N);
+    if (o.preview) { mine = mine.sort(byTime); others = others.sort(byTime); }
     let html = "";
     if (mine.length) {
-      html += '<h3 class="sec"><span>My Teams</span><small>' + mine.length + (mine.length === 1 ? " game" : " games") + "</small></h3>" +
-        mine.map(g => gameCard(label(g))).join("");
+      html += '<h3 class="sec"><span>My Teams</span><small>' + count(mine.length) + "</small></h3>" + mine.map(g => gameCard(label(g))).join("");
     } else {
-      html += '<h3 class="sec"><span>My Teams</span></h3><div class="brief-status">None of my teams played.</div>';
+      html += '<h3 class="sec"><span>My Teams</span></h3><div class="brief-status">' + o.none + "</div>";
     }
-    html += '<h3 class="sec"><span>Top ' + others.length + ' Around Sports</span><small>of ' + (all.length - mine.length) + " other finals</small></h3>" +
-      others.map(g => gameCard(label(g))).join("");
+    if (others.length) {
+      html += '<h3 class="sec"><span>Top ' + others.length + " Around Sports</span><small>of " + (all.length - mine.length) +
+        " other " + o.noun + "</small></h3>" + others.map(g => gameCard(label(g))).join("");
+    }
+    return html;
+  }
+
+  function render(results, previewResults) {
+    const out = $("#out");
+    const all = flat(results);
+    const failed = results.filter(r => r.failed).length;
+    const pre = previewResults ? flat(previewResults) : null;
+
+    let html = "";
+    if (pre) html += '<h2 class="brief-part">Yesterday\'s Recap</h2>';
+    html += all.length
+      ? half(all, { none: "None of my teams played.", noun: "finals" })
+      : '<div class="brief-status">No finished games found for this day' + (failed ? " (some leagues failed to load)" : "") + ".</div>";
+    if (pre) {
+      html += '<h2 class="brief-part">Today\'s Preview</h2>';
+      html += pre.length
+        ? half(pre, { preview: true, none: "None of my teams play today.", noun: "games today" })
+        : '<div class="brief-status">No upcoming games found for today.</div>';
+    }
     out.innerHTML = html;
 
-    $("#summary").textContent = all.length + " finals yesterday" + (failed ? " · " + failed + " feeds unavailable" : "");
+    $("#summary").textContent = all.length + " finals yesterday" + (pre ? " · " + pre.length + " games on today" : "") +
+      (failed ? " · " + failed + " feeds unavailable" : "");
   }
 
   function setNav(iso) {
@@ -198,8 +236,13 @@
   async function init() {
     const iso = pickDate();
     setNav(iso);
-    const results = await Promise.all(LEAGUES.map(l => fetchLeague(l, iso)));
-    render(iso, results);
+    // Today's preview only goes with the default view; for an older day, "today" is long over.
+    const wantPreview = iso === yesterday;
+    const [results, previewResults] = await Promise.all([
+      Promise.all(LEAGUES.map(l => fetchLeague(l, iso, "post"))),
+      wantPreview ? Promise.all(LEAGUES.map(l => fetchLeague(l, today, "pre"))) : null,
+    ]);
+    render(results, previewResults);
   }
 
   init();
