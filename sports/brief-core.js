@@ -69,6 +69,79 @@
       (hasRecap ? 8 : 0);
   }
 
+  // Record "W-L", "W-L-OTL" or soccer "W-D-L" -> { games, wins, losses, pct } or null.
+  function readRec(rec, soccer) {
+    const n = String(rec || "").split("-").map(Number);
+    if (n.length < 2 || n.some(x => !Number.isFinite(x))) return null;
+    const games = n.reduce((s, x) => s + x, 0);
+    if (!games) return null;
+    const losses = soccer ? (n[2] || 0) : n.slice(1).reduce((s, x) => s + x, 0);
+    // Soccer: share of available points, so a draw counts for something.
+    const pct = soccer ? (3 * n[0] + n[1]) / (3 * games) : n[0] / games;
+    return { games, wins: n[0], losses, pct };
+  }
+
+  // One or two plain sentences on why a finished game mattered, built only
+  // from what the scoreboard says: rankings, records, the score by period.
+  function whyItMattered(league, away, home, detail) {
+    const sport = league.key.split("/")[0];
+    const soccer = sport === "soccer";
+    const pair = [away, home];
+    const W = pair.find(t => t.raw.winner), L = pair.find(t => t !== W);
+    const out = [];
+    // US pro teams read as "the Bengals"; schools, clubs and countries don't.
+    const pro = /^(football\/nfl|basketball\/nba|basketball\/wnba|baseball\/mlb|hockey\/nhl)$/.test(league.key);
+    pair.forEach(t => { t.short = (pro ? "the " : "") + t.short; });
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const nm = t => (t.rank != null ? "No. " + t.rank + " " : "") + t.short;
+    const mine = t => isMine(league, t.name);
+
+    if (W && L) {
+      const sw = parseFloat(W.raw.score), sl = parseFloat(L.raw.score);
+      const margin = sw - sl;
+      const rw = readRec(W.raw.rec, soccer), rl = readRec(L.raw.rec, soccer);
+
+      // Upsets: by poll ranking first, then by record.
+      if (L.rank != null && W.rank == null) out.push("Upset: unranked " + W.short + " beat " + nm(L) + ".");
+      else if (L.rank != null && W.rank != null && W.rank - L.rank >= 8) out.push("Upset: " + nm(W) + " beat " + nm(L) + ".");
+      else if (W.rank == null && L.rank == null && rw && rl && rw.games >= 6 && rl.games >= 6 && rl.pct - rw.pct >= 0.25)
+        out.push("Upset: " + W.short + " (" + W.raw.rec + ") beat " + L.short + " (" + L.raw.rec + ").");
+      else if (W.rank != null && L.rank != null) out.push("Top-25 matchup: " + nm(W) + " beat " + nm(L) + ".");
+
+      // Streaks the result started or ended.
+      if (rl && rl.losses === 1 && rl.games >= 5) out.push("First loss of the season for " + L.short + " (" + L.raw.rec + ").");
+      if (rw && rw.wins === 1 && rw.games >= 4) out.push("First win of the season for " + W.short + ".");
+
+      // Comebacks, from the running score at the end of each period.
+      const big = { basketball: 12, football: 14, baseball: 4, hockey: 2, soccer: 2 }[sport] || 99;
+      const lw = W.raw.ls, ll = L.raw.ls;
+      if (lw.length && lw.length === ll.length) {
+        let cw = 0, cl = 0, worst = 0;
+        for (let i = 0; i < lw.length - 1; i++) { cw += lw[i]; cl += ll[i]; worst = Math.max(worst, cl - cw); }
+        if (worst >= big) out.push(cap(W.short) + " came back from " + worst + " down.");
+      }
+
+      if (/AET|extra time/i.test(detail)) out.push("Went to extra time.");
+      else if (/OT|extra/i.test(detail)) out.push("Went to overtime.");
+      else if (/SO|shootout/i.test(detail)) out.push("Decided in a shootout.");
+      else if (/Pens|penalt/i.test(detail)) out.push("Decided on penalties.");
+      else {
+        const close = { basketball: 3, football: 3, baseball: 1 }[sport];
+        if (close && margin <= close) out.push("Decided by " + margin + ".");
+      }
+
+      if (rw && rw.losses === 0 && rw.wins >= 5) out.push("Still unbeaten: " + W.short + " " + W.raw.rec + ".");
+    }
+
+    const why = out.slice(0, 2);
+    // For my teams, always say where the season stands.
+    pair.filter(mine).forEach(t => {
+      if (!t.raw.rec || why.some(s => s.indexOf(t.raw.rec) >= 0)) return;
+      why.push(cap(t.short) + " now " + t.raw.rec + ".");
+    });
+    return why.join(" ");
+  }
+
   // mode "post": finished games (the recap). mode "pre": not started or live (the preview).
   function parse(ev, league, mode) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
@@ -120,8 +193,15 @@
 
     const hl = (comp.headlines || []).find(x => x.type === "Recap") || (comp.headlines || [])[0] || null;
     const detail = type.detail && !/^final$/i.test(type.detail) ? type.detail : ""; // "Final/OT", "FT-Pens"
+    // Only what whyItMattered needs; not stored in the snapshot.
+    const forWhy = (c, t) => ({
+      name: t.name, rank: t.rank,
+      short: (league.college && c.team.location) || c.team.shortDisplayName || t.name, // "Central Connecticut", "Bengals"
+      raw: { winner: t.winner, score: t.score, rec: t.rec, ls: (c.linescores || []).map(x => Number(x.value) || 0) },
+    });
     return {
       id: league.key + ":" + ev.id, league: lg, away: a, home: h, note, detail,
+      why: whyItMattered(league, forWhy(away, a), forWhy(home, h), detail),
       recap: hl && (hl.shortLinkText || hl.description) ? { title: hl.shortLinkText || "", body: hl.description || "" } : null,
       url: link && link.href, mine,
       weight: (mine ? 100 : 0) + interest(a, h, stakes, ranked, detail, !!hl),

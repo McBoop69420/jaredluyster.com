@@ -40,10 +40,14 @@
     }
     const meta = [g.league.intl ? g.league.label : "", g.note, g.detail].filter(Boolean).join(" · ");
     if (meta) html += '<div class="brief-meta">' + esc(meta) + "</div>";
-    if (g.recap) {
+    const link = g.url ? ' <a href="' + esc(g.url) + '" target="_blank" rel="noopener">Full recap</a>' : "";
+    if (g.why) {
+      // Why it mattered first, then ESPN's one-line headline for what happened.
+      html += '<p class="brief-recap"><b>' + esc(g.why) + "</b>" +
+        (g.recap && g.recap.title ? " " + esc(g.recap.title) + "." : "") + link + "</p>";
+    } else if (g.recap) {
       html += '<p class="brief-recap">' + (g.recap.title ? "<b>" + esc(g.recap.title) + ".</b> " : "") +
-        (g.recap.body ? esc(g.recap.body.replace(/^[—–-]\s*/, "")) : "") +
-        (g.url ? ' <a href="' + esc(g.url) + '" target="_blank" rel="noopener">Full recap</a>' : "") + "</p>";
+        (g.recap.body ? esc(g.recap.body.replace(/^[—–-]\s*/, "")) : "") + link + "</p>";
     }
     return html + "</div>";
   }
