@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
-<title>Rebuild — Jared Luyster</title>
+<title>Rebuild | Jared Luyster</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%23131113'/%3E%3Cpath fill='%23f2971d' d='M1 6h6v1H1zM2 3h4v2H2zM3 1h2v2H3z'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="/shared-theme.css" />
 <style>
@@ -13,17 +13,16 @@
   .kicker { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
   h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 8vw, 3.6rem); line-height: 1; margin: 0 0 8px; }
   .sub { color: var(--muted); margin: 0 0 28px; font-size: 1.05rem; }
-  .card { border: var(--border-w) solid var(--paper); background: var(--surface); box-shadow: var(--shadow); padding: 20px; margin-bottom: 28px; }
-  .big { font-family: var(--font-display); font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0 0 4px; }
-  .row { margin-top: 8px; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .9rem; flex-wrap: wrap; }
   h2 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .08em; font-size: 1rem; margin: 0 0 12px; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .sem { border: 2px solid var(--muted); padding: 10px 12px; color: var(--muted); }
   .sem b { display: block; font-family: var(--font-display); color: var(--text); }
   .sem.done { border-color: var(--paper); color: var(--paper); opacity: .6; }
-  .sem.now { border-color: var(--accent); color: var(--text); box-shadow: var(--shadow-soft); }
+  .sem.now { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: var(--shadow-soft); }
+  .sem .tag { float: right; margin-left: 8px; padding: 1px 6px; background: var(--accent); color: var(--accent-ink); font-family: var(--font-display); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
   .sem small { display: block; margin-top: 2px; }
-  .yr { margin: 0 0 6px; font-family: var(--font-display); color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; grid-column: 1 / -1; }
+  .yr { margin: 18px 0 6px; font-family: var(--font-display); color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; grid-column: 1 / -1; }
+  .yr:first-child { margin-top: 0; }
   @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -32,17 +31,6 @@
   <p class="kicker">Rebuild</p>
   <h1 id="year">…</h1>
   <p class="sub" id="where"></p>
-
-  <section class="card" aria-label="Right now">
-    <p class="big" id="term"></p>
-    <div class="row"><span id="termLeft"></span></div>
-    <div class="row"><span id="termBreak"></span></div>
-  </section>
-
-  <section class="card" aria-label="To graduation">
-    <p class="big" id="grad"></p>
-    <div class="row"><span id="gradStart"></span></div>
-  </section>
 
   <section aria-label="Timeline">
     <h2>Timeline</h2>
@@ -68,6 +56,8 @@ const GRADUATION = [2030, 5, 11];
 const d = ([y, m, day]) => new Date(y, m - 1, day);
 const DAY = 86400000;
 const fmt = (dt) => dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const short = (dt) => dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const dayOf = (dt) => dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 const $ = (id) => document.getElementById(id);
 
 const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -91,31 +81,18 @@ if (now > grad) {
 } else if (cur >= 0) {
   const t = terms[cur];
   $("year").textContent = `${t.year} year`;
-  $("where").textContent = `${t.label} semester, ${t.a.getFullYear()}`;
   const onBreak = t.breaks.find((k) => now >= k.a && now <= k.b);
   const nextBreak = t.breaks.find((k) => k.a > now);
-  if (onBreak) {
-    const back = new Date(onBreak.b.getTime() + DAY);
-    $("term").textContent = onBreak.name;
-    $("termLeft").textContent = `Classes resume ${back.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`;
-  } else {
-    $("term").textContent = `Ends ${fmt(t.b)}`;
-    $("termLeft").textContent = `Began ${fmt(t.a)}`;
-  }
-  if (nextBreak && !onBreak) {
-    $("termBreak").textContent = `Next: ${nextBreak.name}, ${fmt(nextBreak.a)}`;
-  }
+  let ahead;
+  if (onBreak) ahead = `${onBreak.name}. Classes resume ${dayOf(new Date(onBreak.b.getTime() + DAY))}.`;
+  else if (nextBreak) ahead = `${nextBreak.name} starts ${dayOf(nextBreak.a)}.`;
+  else ahead = `Semester ends ${dayOf(t.b)}.`;
+  $("where").textContent = `${t.label} semester ${t.a.getFullYear()}. ${ahead}`;
 } else {
   const prev = next > 0 ? terms[next - 1] : null;
   $("year").textContent = next >= 0 ? (terms[next].label === "Fall" && prev ? `Summer before ${terms[next].year.toLowerCase()} year` : "Break") : "Final stretch";
   $("where").textContent = next >= 0 ? `Between semesters. Next up: ${terms[next].year} ${terms[next].label}.` : "";
-  if (next >= 0) {
-    $("term").textContent = `${terms[next].label} semester starts ${fmt(terms[next].a)}`;
-  }
 }
-
-$("grad").textContent = `Graduation ${fmt(grad)}`;
-$("gradStart").textContent = `Began ${fmt(start)}`;
 
 const tl = $("timeline");
 YEARS.forEach((y, i) => {
@@ -127,8 +104,8 @@ YEARS.forEach((y, i) => {
     const idx = i * 2 + k, t = terms[idx];
     const el = document.createElement("div");
     el.className = "sem" + (idx === cur ? " now" : now > t.b ? " done" : "");
-    el.innerHTML = `<b>${t.label} ${t.a.getFullYear()}</b><small>${fmt(t.a)} – ${fmt(t.b)}</small>` +
-      t.breaks.map((k) => `<small>${k.name}: ${k.a.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${k.b.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small>`).join("");
+    el.innerHTML = `<b>${idx === cur ? '<span class="tag">Now</span>' : ""}${t.label} ${t.a.getFullYear()}</b><small>${short(t.a)} – ${short(t.b)}</small>` +
+      t.breaks.map((k) => `<small>${k.name}: ${short(k.a)} – ${short(k.b)}</small>`).join("");
     tl.appendChild(el);
   });
 });
