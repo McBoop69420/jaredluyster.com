@@ -35,13 +35,13 @@
 
   <section class="card" aria-label="Right now">
     <p class="big" id="term"></p>
-    <div class="row"><span id="termLeft"></span><span id="termPct"></span></div>
+    <div class="row"><span id="termLeft"></span></div>
     <div class="row"><span id="termBreak"></span></div>
   </section>
 
   <section class="card" aria-label="To graduation">
     <p class="big" id="grad"></p>
-    <div class="row"><span id="gradStart"></span><span id="gradPct"></span></div>
+    <div class="row"><span id="gradStart"></span></div>
   </section>
 
   <section aria-label="Timeline">
@@ -67,7 +67,6 @@ const GRADUATION = [2030, 5, 11];
 
 const d = ([y, m, day]) => new Date(y, m - 1, day);
 const DAY = 86400000;
-const days = (a, b) => Math.round((b - a) / DAY);
 const fmt = (dt) => dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const $ = (id) => document.getElementById(id);
 
@@ -85,14 +84,12 @@ const terms = YEARS.flatMap((y) => [
 
 const cur = terms.findIndex((t) => now >= t.a && now <= t.b);
 const next = terms.findIndex((t) => t.a > now);
-const pct = (a, b) => Math.max(0, Math.min(100, ((now - a) / (b - a)) * 100));
 
 if (now > grad) {
   $("year").textContent = "Graduated";
   $("where").textContent = fmt(grad);
 } else if (cur >= 0) {
   const t = terms[cur];
-  const wk = Math.floor(days(t.a, now) / 7) + 1, wks = Math.ceil((days(t.a, t.b) + 1) / 7);
   $("year").textContent = `${t.year} year`;
   $("where").textContent = `${t.label} semester, ${t.a.getFullYear()}`;
   const onBreak = t.breaks.find((k) => now >= k.a && now <= k.b);
@@ -102,28 +99,23 @@ if (now > grad) {
     $("term").textContent = onBreak.name;
     $("termLeft").textContent = `Classes resume ${back.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`;
   } else {
-    $("term").textContent = `Week ${wk} of ${wks}`;
-    $("termLeft").textContent = `${days(now, t.b)} days until the semester ends (${fmt(t.b)})`;
+    $("term").textContent = `Ends ${fmt(t.b)}`;
+    $("termLeft").textContent = `Began ${fmt(t.a)}`;
   }
-  $("termPct").textContent = Math.round(pct(t.a, t.b)) + "%";
   if (nextBreak && !onBreak) {
-    const n = days(now, nextBreak.a);
-    $("termBreak").textContent = `${nextBreak.name} starts ${fmt(nextBreak.a)} (${n} ${n === 1 ? "day" : "days"})`;
+    $("termBreak").textContent = `Next: ${nextBreak.name}, ${fmt(nextBreak.a)}`;
   }
 } else {
   const prev = next > 0 ? terms[next - 1] : null;
   $("year").textContent = next >= 0 ? (terms[next].label === "Fall" && prev ? `Summer before ${terms[next].year.toLowerCase()} year` : "Break") : "Final stretch";
   $("where").textContent = next >= 0 ? `Between semesters. Next up: ${terms[next].year} ${terms[next].label}.` : "";
   if (next >= 0) {
-    $("term").textContent = `${days(now, terms[next].a)} days until ${terms[next].label.toLowerCase()} semester`;
-    $("termLeft").textContent = `Starts ${fmt(terms[next].a)}`;
-    $("termPct").textContent = "";
+    $("term").textContent = `${terms[next].label} semester starts ${fmt(terms[next].a)}`;
   }
 }
 
-$("grad").textContent = `${Math.max(0, days(now, grad))} days to graduation`;
-$("gradStart").textContent = `${fmt(start)} → ${fmt(grad)}`;
-$("gradPct").textContent = Math.round(pct(start, grad)) + "%";
+$("grad").textContent = `Graduation ${fmt(grad)}`;
+$("gradStart").textContent = `Began ${fmt(start)}`;
 
 const tl = $("timeline");
 YEARS.forEach((y, i) => {
