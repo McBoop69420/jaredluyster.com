@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/shared-theme.css" />
 <style>
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
-  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
   .kicker { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
   h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 8vw, 3.6rem); line-height: 1; margin: 0 0 8px; }
   .sub { color: var(--muted); margin: 0 0 28px; font-size: 1.05rem; }
@@ -24,6 +24,32 @@
   .yr { margin: 18px 0 6px; font-family: var(--font-display); color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; grid-column: 1 / -1; }
   .yr:first-child { margin-top: 0; }
   @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+
+  section + section { margin-top: 40px; }
+  .cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .cal-head h2 { margin: 0; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tabs button { font: inherit; font-family: var(--font-display); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; background: none; color: var(--muted); border: 2px solid var(--muted); cursor: pointer; }
+  .tabs button:hover { color: var(--text); border-color: var(--paper); }
+  .tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .range { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
+  .months { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px 16px; }
+  .month h3 { font-family: var(--font-display); font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 6px; }
+  .month h3 span { color: var(--muted); }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: .78rem; text-align: center; }
+  .days .dow { color: var(--muted); font-size: .65rem; padding-bottom: 2px; }
+  .days .d { padding: 4px 0; color: var(--muted); border: 1px solid transparent; }
+  .days .d.term { background: var(--surface); color: var(--text); }
+  .days .d.brk { background: none; color: var(--accent); border-color: var(--accent); }
+  .days .d.grad { background: var(--paper); color: var(--ink); font-weight: 700; }
+  .days .d.today { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  .days .d.past { opacity: .45; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; color: var(--muted); font-size: .8rem; }
+  .legend i { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; border: 1px solid transparent; }
+  .legend .term { background: var(--surface); border-color: var(--muted); }
+  .legend .brk { border-color: var(--accent); }
+  .legend .grad { background: var(--paper); }
+  .legend .today { background: var(--accent); }
 </style>
 </head>
 <body>
@@ -31,6 +57,21 @@
   <p class="kicker">Rebuild</p>
   <h1 id="year">…</h1>
   <p class="sub" id="where"></p>
+
+  <section aria-label="Year calendar">
+    <div class="cal-head">
+      <h2>Calendar</h2>
+      <div class="tabs" id="tabs" role="group" aria-label="College year"></div>
+    </div>
+    <p class="range" id="range"></p>
+    <div class="months" id="months"></div>
+    <div class="legend">
+      <span><i class="term"></i>Semester</span>
+      <span><i class="brk"></i>Break</span>
+      <span><i class="grad"></i>Graduation</span>
+      <span><i class="today"></i>Today</span>
+    </div>
+  </section>
 
   <section aria-label="Timeline">
     <h2>Timeline</h2>
@@ -109,6 +150,57 @@ YEARS.forEach((y, i) => {
     tl.appendChild(el);
   });
 });
+
+// Year calendar: each college year runs August 1 through July 31.
+const yearStart = (i) => new Date(d(YEARS[i].fall).getFullYear(), 7, 1);
+const yearOfDate = (dt) => {
+  for (let i = YEARS.length - 1; i >= 0; i--) if (dt >= yearStart(i)) return i;
+  return 0;
+};
+const allBreaks = terms.flatMap((t) => t.breaks);
+const dayClass = (dt) => {
+  const c = ["d"];
+  if (dt.getTime() === now.getTime()) c.push("today");
+  else if (dt.getTime() === grad.getTime()) c.push("grad");
+  else if (allBreaks.some((k) => dt >= k.a && dt <= k.b)) c.push("brk");
+  else if (terms.some((t) => dt >= t.a && dt <= t.b)) c.push("term");
+  if (dt < now) c.push("past");
+  return c.join(" ");
+};
+const monthName = (dt) => dt.toLocaleDateString("en-US", { month: "long" });
+
+function drawYear(i) {
+  const first = yearStart(i);
+  const last = new Date(first.getFullYear() + 1, 6, 31);
+  $("range").textContent = `${YEARS[i].name} year: ${fmt(first)} to ${fmt(last)}`;
+  [...$("tabs").children].forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  const wrap = $("months");
+  wrap.innerHTML = "";
+  for (let m = 0; m < 12; m++) {
+    const mStart = new Date(first.getFullYear(), first.getMonth() + m, 1);
+    const days = new Date(mStart.getFullYear(), mStart.getMonth() + 1, 0).getDate();
+    let html = `<h3>${monthName(mStart)} <span>${mStart.getFullYear()}</span></h3><div class="days">`;
+    html += ["S", "M", "T", "W", "T", "F", "S"].map((w) => `<span class="dow">${w}</span>`).join("");
+    html += "<span></span>".repeat(mStart.getDay());
+    for (let n = 1; n <= days; n++) {
+      const dt = new Date(mStart.getFullYear(), mStart.getMonth(), n);
+      html += `<span class="${dayClass(dt)}" title="${dayOf(dt)}">${n}</span>`;
+    }
+    const el = document.createElement("div");
+    el.className = "month";
+    el.innerHTML = html + "</div>";
+    wrap.appendChild(el);
+  }
+}
+
+YEARS.forEach((y, i) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = y.name;
+  b.addEventListener("click", () => drawYear(i));
+  $("tabs").appendChild(b);
+});
+drawYear(Math.min(yearOfDate(now), YEARS.length - 1));
 </script>
 </body>
 </html>
