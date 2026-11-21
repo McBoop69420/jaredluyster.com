@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Rebuild — Jared Luyster</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%23131113'/%3E%3Cpath fill='%23f2971d' d='M1 6h6v1H1zM2 3h4v2H2zM3 1h2v2H3z'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/shared-theme.css" />
+<style>
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  .kicker { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
+  h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 8vw, 3.6rem); line-height: 1; margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: 1.05rem; }
+  .card { border: var(--border-w) solid var(--paper); background: var(--surface); box-shadow: var(--shadow); padding: 20px; margin-bottom: 28px; }
+  .big { font-family: var(--font-display); font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0 0 4px; }
+  .row { margin-top: 8px; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .9rem; flex-wrap: wrap; }
+  h2 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .08em; font-size: 1rem; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .sem { border: 2px solid var(--muted); padding: 10px 12px; color: var(--muted); }
+  .sem b { display: block; font-family: var(--font-display); color: var(--text); }
+  .sem.done { border-color: var(--paper); color: var(--paper); opacity: .6; }
+  .sem.now { border-color: var(--accent); color: var(--text); box-shadow: var(--shadow-soft); }
+  .sem small { display: block; margin-top: 2px; }
+  .yr { margin: 0 0 6px; font-family: var(--font-display); color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; grid-column: 1 / -1; }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">Rebuild</p>
+  <h1 id="year">…</h1>
+  <p class="sub" id="where"></p>
+
+  <section class="card" aria-label="Right now">
+    <p class="big" id="term"></p>
+    <div class="row"><span id="termLeft"></span><span id="termPct"></span></div>
+  </section>
+
+  <section class="card" aria-label="To graduation">
+    <p class="big" id="grad"></p>
+    <div class="row"><span id="gradStart"></span><span id="gradPct"></span></div>
+  </section>
+
+  <section aria-label="Timeline">
+    <h2>Timeline</h2>
+    <div class="grid" id="timeline"></div>
+  </section>
+</main>
+
+<script>
+// Edit the dates here. Months are 1-12. Placeholders: adjust to the real term dates.
+const YEARS = [
+  { name: "Freshman",  fall: [2026, 8, 24], fallEnd: [2026, 12, 18], spring: [2027, 1, 11], springEnd: [2027, 5, 7] },
+  { name: "Sophomore", fall: [2027, 8, 23], fallEnd: [2027, 12, 17], spring: [2028, 1, 10], springEnd: [2028, 5, 5] },
+  { name: "Junior",    fall: [2028, 8, 21], fallEnd: [2028, 12, 15], spring: [2029, 1, 8],  springEnd: [2029, 5, 4] },
+  { name: "Senior",    fall: [2029, 8, 20], fallEnd: [2029, 12, 14], spring: [2030, 1, 7],  springEnd: [2030, 5, 3] },
+];
+const GRADUATION = [2030, 5, 11];
+
+const d = ([y, m, day]) => new Date(y, m - 1, day);
+const DAY = 86400000;
+const days = (a, b) => Math.round((b - a) / DAY);
+const fmt = (dt) => dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const $ = (id) => document.getElementById(id);
+
+const now = new Date(); now.setHours(0, 0, 0, 0);
+const start = d(YEARS[0].fall), grad = d(GRADUATION);
+
+const terms = YEARS.flatMap((y) => [
+  { year: y.name, label: "Fall", a: d(y.fall), b: d(y.fallEnd) },
+  { year: y.name, label: "Spring", a: d(y.spring), b: d(y.springEnd) },
+]);
+
+const cur = terms.findIndex((t) => now >= t.a && now <= t.b);
+const next = terms.findIndex((t) => t.a > now);
+const pct = (a, b) => Math.max(0, Math.min(100, ((now - a) / (b - a)) * 100));
+
+if (now > grad) {
+  $("year").textContent = "Graduated";
+  $("where").textContent = fmt(grad);
+} else if (cur >= 0) {
+  const t = terms[cur];
+  const wk = Math.floor(days(t.a, now) / 7) + 1, wks = Math.ceil((days(t.a, t.b) + 1) / 7);
+  $("year").textContent = `${t.year} year`;
+  $("where").textContent = `${t.label} semester, ${t.a.getFullYear()}`;
+  $("term").textContent = `Week ${wk} of ${wks}`;
+  $("termLeft").textContent = `${days(now, t.b)} days until the semester ends (${fmt(t.b)})`;
+  $("termPct").textContent = Math.round(pct(t.a, t.b)) + "%";
+} else {
+  const prev = next > 0 ? terms[next - 1] : null;
+  $("year").textContent = next >= 0 ? (terms[next].label === "Fall" && prev ? `Summer before ${terms[next].year.toLowerCase()} year` : "Break") : "Final stretch";
+  $("where").textContent = next >= 0 ? `Between semesters. Next up: ${terms[next].year} ${terms[next].label}.` : "";
+  if (next >= 0) {
+    $("term").textContent = `${days(now, terms[next].a)} days until ${terms[next].label.toLowerCase()} semester`;
+    $("termLeft").textContent = `Starts ${fmt(terms[next].a)}`;
+    $("termPct").textContent = "";
+  }
+}
+
+$("grad").textContent = `${Math.max(0, days(now, grad))} days to graduation`;
+$("gradStart").textContent = `${fmt(start)} → ${fmt(grad)}`;
+$("gradPct").textContent = Math.round(pct(start, grad)) + "%";
+
+const tl = $("timeline");
+YEARS.forEach((y, i) => {
+  const h = document.createElement("p");
+  h.className = "yr";
+  h.textContent = `${y.name} year`;
+  tl.appendChild(h);
+  [0, 1].forEach((k) => {
+    const idx = i * 2 + k, t = terms[idx];
+    const el = document.createElement("div");
+    el.className = "sem" + (idx === cur ? " now" : now > t.b ? " done" : "");
+    el.innerHTML = `<b>${t.label} ${t.a.getFullYear()}</b><small>${fmt(t.a)} – ${fmt(t.b)}</small>`;
+    tl.appendChild(el);
+  });
+});
+</script>
+</body>
+</html>
