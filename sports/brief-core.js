@@ -142,6 +142,29 @@
     return why.join(" ");
   }
 
+  // Plain reasons an upcoming game made the cut, from the same signals that
+  // weight it: stakes, rankings, records, the betting line. Up to three.
+  function whyPreview(league, a, h, o) {
+    const out = [];
+    const nm = t => (t.rank != null ? "No. " + t.rank + " " : "") + t.name;
+    if (o.stakes) out.push(o.note ? "High stakes: " + o.note + "." : "High stakes: postseason game.");
+    if (a.rank != null && h.rank != null) out.push("Top-25 matchup: " + nm(a) + " at " + nm(h) + ".");
+    else if (o.ranked) {
+      const r = a.rank != null ? a : h, other = r === a ? h : a;
+      out.push(nm(r) + " plays unranked " + other.name + ".");
+    }
+    const soccer = league.key.indexOf("soccer/") === 0;
+    const ra = readRec(a.rec, soccer), rh = readRec(h.rec, soccer);
+    if (ra && rh && ra.games >= 6 && rh.games >= 6) {
+      if (ra.pct >= 0.65 && rh.pct >= 0.65) out.push("Two winning teams: " + a.name + " (" + a.rec + ") and " + h.name + " (" + h.rec + ").");
+      else if (Math.abs(ra.pct - rh.pct) <= 0.1 && ra.pct >= 0.5 && rh.pct >= 0.5 && !out.length) out.push("Evenly matched: " + a.rec + " against " + h.rec + ".");
+    }
+    if (o.closeLine && out.length < 3) out.push("The line has it close (" + o.spreadText + ").");
+    if (o.live && out.length < 3) out.push("Already underway.");
+    if (!out.length) out.push(league.college ? "One of the day's better college games on the board." : "A pro game on a slate that is mostly college.");
+    return out.slice(0, 3).join(" ");
+  }
+
   // mode "post": finished games (the recap). mode "pre": not started or live (the preview).
   function parse(ev, league, mode) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
@@ -187,6 +210,7 @@
         id: league.key + ":" + ev.id, league: lg, away: a, home: h, note, preview: true, live,
         when, startMs: new Date(ev.date).getTime(), line, tv: nets && nets.names ? nets.names.join("/") : "",
         url: link && link.href, mine,
+        why: whyPreview(league, a, h, { stakes, note, ranked, closeLine, live, spreadText: odds && odds.details ? odds.details : "" }),
         weight: (mine ? 100 : 0) + (stakes ? 30 : 0) + (both ? 25 : ranked ? 12 : 0) + (closeLine ? 8 : 0) + (live ? 5 : 0),
       };
     }

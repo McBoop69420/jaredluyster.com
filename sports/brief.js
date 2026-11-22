@@ -36,7 +36,9 @@
     let html = '<div class="brief-game' + (g.mine ? " mine" : "") + '">' + teamLine(g.away, pre) + teamLine(g.home, pre);
     if (g.preview) {
       const pm = [g.when, g.tv, g.line, g.league.intl ? g.league.label : "", g.note].filter(Boolean).join(" · ");
-      return html + '<div class="brief-meta">' + (g.live ? "<b>Live</b> · " : "") + esc(pm) + "</div></div>";
+      html += '<div class="brief-meta">' + (g.live ? "<b>Live</b> · " : "") + esc(pm) + "</div>";
+      if (g.why && !g.mine) html += '<p class="brief-recap"><b>Why it made the list:</b> ' + esc(g.why) + "</p>";
+      return html + "</div>";
     }
     const meta = [g.league.intl ? g.league.label : "", g.note, g.detail].filter(Boolean).join(" · ");
     if (meta) html += '<div class="brief-meta">' + esc(meta) + "</div>";
