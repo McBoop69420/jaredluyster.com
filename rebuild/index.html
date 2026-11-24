@@ -84,7 +84,7 @@
     <div class="months" id="months"></div>
     <div class="legend">
       <span><i class="term"></i>Semester</span>
-      <span><i class="brk"></i>Break</span>
+      <span><i class="brk"></i>Break or holiday</span>
       <span><i class="mid"></i>Midterms week</span>
       <span><i class="read"></i>Reading days</span>
       <span><i class="fin"></i>Finals week</span>
@@ -155,6 +155,29 @@ const YEARS = [
     ] },
 ];
 const GRADUATION = [[2030, 5, 3], [2030, 5, 4]]; // UK spring 2030 commencement
+// UK holidays outside the semesters (offices closed, no classes). UK sets its own observed dates.
+const HOLIDAYS = [
+  { name: "Independence Day", a: [2026, 7, 3] },
+  { name: "Christmas Day", a: [2026, 12, 25] },
+  { name: "New Year's Day", a: [2027, 1, 1] },
+  { name: "Memorial Day", a: [2027, 5, 31] },
+  { name: "Juneteenth", a: [2027, 6, 18] },
+  { name: "Independence Day", a: [2027, 7, 5] },
+  { name: "Christmas Day", a: [2027, 12, 24] },
+  { name: "New Year's Day", a: [2027, 12, 31] },
+  { name: "Memorial Day", a: [2028, 5, 29] },
+  { name: "Juneteenth", a: [2028, 6, 19] },
+  { name: "Independence Day", a: [2028, 7, 4] },
+  { name: "Christmas Day", a: [2028, 12, 28] },
+  { name: "New Year's Day", a: [2029, 1, 1] },
+  { name: "Memorial Day", a: [2029, 5, 28] },
+  { name: "Juneteenth", a: [2029, 6, 19] },
+  { name: "Independence Day", a: [2029, 7, 4] },
+  { name: "Christmas Day", a: [2029, 12, 25] },
+  { name: "New Year's Day", a: [2030, 1, 1] },
+  { name: "Memorial Day", a: [2030, 5, 27] },
+  { name: "Juneteenth", a: [2030, 6, 19] },
+];
 
 const d = ([y, m, day]) => new Date(y, m - 1, day);
 const DAY = 86400000;
@@ -233,7 +256,14 @@ const yearOfDate = (dt) => {
   for (let i = YEARS.length - 1; i >= 0; i--) if (dt >= yearStart(i)) return i;
   return 0;
 };
-const allBreaks = terms.flatMap((t) => t.breaks);
+const holidays = HOLIDAYS.map((h) => ({ name: h.name, kind: "brk", a: d(h.a), b: d(h.a) }));
+const allBreaks = [...terms.flatMap((t) => t.breaks), ...holidays];
+// Hover text: the date plus whatever is happening that day.
+const labelOf = (dt) => {
+  if (dt >= grad && dt <= gradEnd) return "Commencement";
+  const k = [...terms.flatMap((t) => t.events), ...holidays].find((e) => dt >= e.a && dt <= e.b);
+  return k ? k.name : "";
+};
 const dayClass = (dt) => {
   const c = ["d"];
   if (dt.getTime() === now.getTime()) c.push("today");
@@ -263,7 +293,8 @@ function drawYear(i) {
     html += "<span></span>".repeat(mStart.getDay());
     for (let n = 1; n <= days; n++) {
       const dt = new Date(mStart.getFullYear(), mStart.getMonth(), n);
-      html += `<span class="${dayClass(dt)}" title="${dayOf(dt)}">${n}</span>`;
+      const lbl = labelOf(dt);
+      html += `<span class="${dayClass(dt)}" title="${dayOf(dt)}${lbl ? ": " + lbl : ""}">${n}</span>`;
     }
     const el = document.createElement("div");
     el.className = "month";
