@@ -8,6 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%23131113'/%3E%3Cpath fill='%23f2971d' d='M1 6h6v1H1zM2 3h4v2H2zM3 1h2v2H3z'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="/shared-theme.css" />
 <style>
+  :root { --midterm: #8bbfe8; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
   main { max-width: 1680px; margin: 0 auto; padding: 32px clamp(16px, 3vw, 48px) 64px; }
   .kicker { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
@@ -46,6 +47,8 @@
   .days .d { padding: 4px 0; color: var(--muted); border: 1px solid transparent; }
   .days .d.term { background: var(--surface); color: var(--text); }
   .days .d.brk { background: none; color: var(--accent); border-color: var(--accent); }
+  .days .d.mid { background: var(--midterm); color: var(--ink); border-color: var(--midterm); font-weight: 700; }
+  .days .d.read { color: var(--danger); border-color: var(--danger); border-style: dashed; }
   .days .d.fin { background: var(--danger); color: var(--ink); border-color: var(--danger); font-weight: 700; }
   .days .d.grad { background: var(--paper); color: var(--ink); font-weight: 700; }
   .days .d.today { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
@@ -55,7 +58,11 @@
   .legend i { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; border: 1px solid transparent; }
   .legend .term { background: var(--surface); border-color: var(--muted); }
   .legend .brk { border-color: var(--accent); }
+  .legend .mid { background: var(--midterm); }
+  .legend .read { border-color: var(--danger); border-style: dashed; }
   .legend .fin { background: var(--danger); }
+  .sem small.mid { color: var(--midterm); font-weight: 600; }
+  .sem.done small.mid { color: inherit; font-weight: inherit; }
   .legend .grad { background: var(--paper); }
   .sem small.fin { color: var(--danger); font-weight: 600; }
   .sem.done small.fin { color: inherit; font-weight: inherit; }
@@ -78,6 +85,8 @@
     <div class="legend">
       <span><i class="term"></i>Semester</span>
       <span><i class="brk"></i>Break</span>
+      <span><i class="mid"></i>Midterms week</span>
+      <span><i class="read"></i>Reading days</span>
       <span><i class="fin"></i>Finals week</span>
       <span><i class="grad"></i>Graduation</span>
       <span><i class="today"></i>Today</span>
@@ -91,23 +100,61 @@
 </main>
 
 <script>
-// The college-year framework: these are Jared's own term dates, not a real school's.
-// Edit them here. Months are 1-12.
+// University of Kentucky academic calendar, from the registrar:
+//   registrar.uky.edu/calendars/five-year-calendar and /holidays-and-breaks (checked Nov 24, 2026).
+// UK marks these as projected and subject to change. Months are 1-12.
+// Each semester runs from the first class day to the last final exam.
+// Midterms week: UK publishes one "Midterm" date (the Monday of week 10, which lands on fall or
+// spring break) and a two-week midterm grade window before it. We mark the week before that break.
+// UK has published midterm dates through spring 2028; junior and senior years follow the same pattern.
 const YEARS = [
-  { name: "Freshman",  fall: [2026, 8, 24], fallEnd: [2026, 12, 18], spring: [2027, 1, 11], springEnd: [2027, 5, 7],
-    finals: { fall: [[2026, 12, 14], [2026, 12, 18]], spring: [[2027, 5, 3], [2027, 5, 7]] },
-    breaks: [{ name: "Thanksgiving break", a: [2026, 11, 25], b: [2026, 11, 29] }, { name: "Spring break", a: [2027, 3, 8], b: [2027, 3, 14] }] },
-  { name: "Sophomore", fall: [2027, 8, 23], fallEnd: [2027, 12, 17], spring: [2028, 1, 10], springEnd: [2028, 5, 5],
-    finals: { fall: [[2027, 12, 13], [2027, 12, 17]], spring: [[2028, 5, 1], [2028, 5, 5]] },
-    breaks: [{ name: "Thanksgiving break", a: [2027, 11, 24], b: [2027, 11, 28] }, { name: "Spring break", a: [2028, 3, 6], b: [2028, 3, 12] }] },
-  { name: "Junior",    fall: [2028, 8, 21], fallEnd: [2028, 12, 15], spring: [2029, 1, 8],  springEnd: [2029, 5, 4],
-    finals: { fall: [[2028, 12, 11], [2028, 12, 15]], spring: [[2029, 4, 30], [2029, 5, 4]] },
-    breaks: [{ name: "Thanksgiving break", a: [2028, 11, 22], b: [2028, 11, 26] }, { name: "Spring break", a: [2029, 3, 5], b: [2029, 3, 11] }] },
-  { name: "Senior",    fall: [2029, 8, 20], fallEnd: [2029, 12, 14], spring: [2030, 1, 7],  springEnd: [2030, 5, 3],
-    finals: { fall: [[2029, 12, 10], [2029, 12, 14]], spring: [[2030, 4, 29], [2030, 5, 3]] },
-    breaks: [{ name: "Thanksgiving break", a: [2029, 11, 21], b: [2029, 11, 25] }, { name: "Spring break", a: [2030, 3, 4], b: [2030, 3, 10] }] },
+  { name: "Freshman",  fall: [2026, 8, 24], fallEnd: [2026, 12, 17], spring: [2027, 1, 11], springEnd: [2027, 5, 6],
+    midterms: { fall: [[2026, 10, 19], [2026, 10, 23]], spring: [[2027, 3, 8], [2027, 3, 12]] },
+    reading:  { fall: [[2026, 12, 10], [2026, 12, 11]], spring: [[2027, 4, 29], [2027, 4, 30]] },
+    finals:   { fall: [[2026, 12, 14], [2026, 12, 17]], spring: [[2027, 5, 3], [2027, 5, 6]] },
+    breaks: [
+      { name: "Labor Day", a: [2026, 9, 7], b: [2026, 9, 7] },
+      { name: "Fall break", a: [2026, 10, 26], b: [2026, 10, 27] },
+      { name: "Thanksgiving break", a: [2026, 11, 25], b: [2026, 11, 28] },
+      { name: "MLK Day", a: [2027, 1, 18], b: [2027, 1, 18] },
+      { name: "Spring break", a: [2027, 3, 15], b: [2027, 3, 20] },
+    ] },
+  { name: "Sophomore", fall: [2027, 8, 23], fallEnd: [2027, 12, 16], spring: [2028, 1, 10], springEnd: [2028, 5, 4],
+    midterms: { fall: [[2027, 10, 18], [2027, 10, 22]], spring: [[2028, 3, 6], [2028, 3, 10]] },
+    reading:  { fall: [[2027, 12, 9], [2027, 12, 10]], spring: [[2028, 4, 27], [2028, 4, 28]] },
+    finals:   { fall: [[2027, 12, 13], [2027, 12, 16]], spring: [[2028, 5, 1], [2028, 5, 4]] },
+    breaks: [
+      { name: "Labor Day", a: [2027, 9, 6], b: [2027, 9, 6] },
+      { name: "Fall break", a: [2027, 11, 22], b: [2027, 11, 23] },
+      { name: "Thanksgiving break", a: [2027, 11, 24], b: [2027, 11, 27] },
+      { name: "MLK Day", a: [2028, 1, 17], b: [2028, 1, 17] },
+      { name: "Spring break", a: [2028, 3, 13], b: [2028, 3, 18] },
+    ] },
+  { name: "Junior",    fall: [2028, 8, 21], fallEnd: [2028, 12, 14], spring: [2029, 1, 8],  springEnd: [2029, 5, 3],
+    midterms: { fall: [[2028, 10, 16], [2028, 10, 20]], spring: [[2029, 3, 5], [2029, 3, 9]] },
+    reading:  { fall: [[2028, 12, 7], [2028, 12, 8]], spring: [[2029, 4, 26], [2029, 4, 27]] },
+    finals:   { fall: [[2028, 12, 11], [2028, 12, 14]], spring: [[2029, 4, 30], [2029, 5, 3]] },
+    breaks: [
+      { name: "Labor Day", a: [2028, 9, 4], b: [2028, 9, 4] },
+      { name: "Election Day", a: [2028, 11, 7], b: [2028, 11, 7] },
+      { name: "Fall break", a: [2028, 11, 20], b: [2028, 11, 21] },
+      { name: "Thanksgiving break", a: [2028, 11, 22], b: [2028, 11, 25] },
+      { name: "MLK Day", a: [2029, 1, 15], b: [2029, 1, 15] },
+      { name: "Spring break", a: [2029, 3, 12], b: [2029, 3, 17] },
+    ] },
+  { name: "Senior",    fall: [2029, 8, 20], fallEnd: [2029, 12, 13], spring: [2030, 1, 7],  springEnd: [2030, 5, 2],
+    midterms: { fall: [[2029, 10, 15], [2029, 10, 19]], spring: [[2030, 3, 4], [2030, 3, 8]] },
+    reading:  { fall: [[2029, 12, 6], [2029, 12, 7]], spring: [[2030, 4, 25], [2030, 4, 26]] },
+    finals:   { fall: [[2029, 12, 10], [2029, 12, 13]], spring: [[2030, 4, 29], [2030, 5, 2]] },
+    breaks: [
+      { name: "Labor Day", a: [2029, 9, 3], b: [2029, 9, 3] },
+      { name: "Fall break", a: [2029, 11, 19], b: [2029, 11, 20] },
+      { name: "Thanksgiving break", a: [2029, 11, 21], b: [2029, 11, 24] },
+      { name: "MLK Day", a: [2030, 1, 21], b: [2030, 1, 21] },
+      { name: "Spring break", a: [2030, 3, 11], b: [2030, 3, 16] },
+    ] },
 ];
-const GRADUATION = [2030, 5, 11];
+const GRADUATION = [[2030, 5, 3], [2030, 5, 4]]; // UK spring 2030 commencement
 
 const d = ([y, m, day]) => new Date(y, m - 1, day);
 const DAY = 86400000;
@@ -117,34 +164,42 @@ const dayOf = (dt) => dt.toLocaleDateString("en-US", { weekday: "short", month: 
 const $ = (id) => document.getElementById(id);
 
 const now = new Date(); now.setHours(0, 0, 0, 0);
-const start = d(YEARS[0].fall), grad = d(GRADUATION);
+const grad = d(GRADUATION[0]), gradEnd = d(GRADUATION[1]);
+const span = (a, b) => (a.getTime() === b.getTime() ? short(a) : `${short(a)} – ${short(b)}`);
+// First weekday after a date, for "classes resume".
+const resumeAfter = (dt) => { const r = new Date(dt.getTime() + DAY); while (r.getDay() === 0 || r.getDay() === 6) r.setDate(r.getDate() + 1); return r; };
 
-const termOf = (y, label, a, b, fin) => ({
-  year: y.name, label, a: d(a), b: d(b),
-  breaks: y.breaks.map((k) => ({ name: k.name, a: d(k.a), b: d(k.b) })).filter((k) => k.a >= d(a) && k.b <= d(b)),
-  finals: { a: d(fin[0]), b: d(fin[1]) },
-});
+const termOf = (y, label, a, b, mid, rd, fin) => {
+  const breaks = y.breaks.map((k) => ({ name: k.name, kind: "brk", a: d(k.a), b: d(k.b) })).filter((k) => k.a >= d(a) && k.b <= d(b));
+  const midterms = { name: "Midterms week", kind: "mid", a: d(mid[0]), b: d(mid[1]) };
+  const reading = { name: "Reading days", kind: "read", a: d(rd[0]), b: d(rd[1]) };
+  const finals = { name: "Finals week", kind: "fin", a: d(fin[0]), b: d(fin[1]) };
+  // Everything that happens inside the semester, in date order.
+  const events = [...breaks, midterms, reading, finals].sort((p, q) => p.a - q.a);
+  return { year: y.name, label, a: d(a), b: d(b), breaks, midterms, reading, finals, events };
+};
 const terms = YEARS.flatMap((y) => [
-  termOf(y, "Fall", y.fall, y.fallEnd, y.finals.fall),
-  termOf(y, "Spring", y.spring, y.springEnd, y.finals.spring),
+  termOf(y, "Fall", y.fall, y.fallEnd, y.midterms.fall, y.reading.fall, y.finals.fall),
+  termOf(y, "Spring", y.spring, y.springEnd, y.midterms.spring, y.reading.spring, y.finals.spring),
 ]);
 
 const cur = terms.findIndex((t) => now >= t.a && now <= t.b);
 const next = terms.findIndex((t) => t.a > now);
 
-if (now > grad) {
-  $("year").textContent = "Graduated";
-  $("where").textContent = fmt(grad);
+if (now >= grad) {
+  $("year").textContent = now > gradEnd ? "Graduated" : "Graduation";
+  $("where").textContent = `Commencement ${span(grad, gradEnd)}, ${grad.getFullYear()}.`;
 } else if (cur >= 0) {
   const t = terms[cur];
   $("year").textContent = `${t.year} year`;
-  const onBreak = t.breaks.find((k) => now >= k.a && now <= k.b);
-  const nextBreak = t.breaks.find((k) => k.a > now);
+  const on = t.events.find((k) => now >= k.a && now <= k.b);
+  const upcoming = t.events.find((k) => k.a > now);
   let ahead;
-  if (onBreak) ahead = `${onBreak.name}. Classes resume ${dayOf(new Date(onBreak.b.getTime() + DAY))}.`;
-  else if (nextBreak) ahead = `${nextBreak.name} starts ${dayOf(nextBreak.a)}.`;
-  else if (now < t.finals.a) ahead = `Finals week starts ${dayOf(t.finals.a)}.`;
-  else if (now <= t.finals.b) ahead = `Finals week. Semester ends ${dayOf(t.b)}.`;
+  if (on && on.kind === "brk") ahead = `${on.name}. Classes resume ${dayOf(resumeAfter(on.b))}.`;
+  else if (on && on.kind === "mid") ahead = `Midterms week, through ${dayOf(on.b)}.`;
+  else if (on && on.kind === "read") ahead = `Reading days, no classes. Finals start ${dayOf(t.finals.a)}.`;
+  else if (on && on.kind === "fin") ahead = `Finals week. Semester ends ${dayOf(t.b)}.`;
+  else if (upcoming) ahead = `${upcoming.name} starts ${dayOf(upcoming.a)}.`;
   else ahead = `Semester ends ${dayOf(t.b)}.`;
   $("where").textContent = `${t.label} semester ${t.a.getFullYear()}. ${ahead}`;
 } else {
@@ -167,8 +222,7 @@ YEARS.forEach((y, i) => {
     const el = document.createElement("div");
     el.className = "sem" + (idx === cur ? " now" : now > t.b ? " done" : "");
     el.innerHTML = `<b>${idx === cur ? '<span class="tag">Now</span>' : ""}${t.label} ${t.a.getFullYear()}</b><small>${short(t.a)} – ${short(t.b)}</small>` +
-      t.breaks.map((k) => `<small>${k.name}: ${short(k.a)} – ${short(k.b)}</small>`).join("") +
-      `<small class="fin">Finals week: ${short(t.finals.a)} – ${short(t.finals.b)}</small>`;
+      t.events.map((k) => `<small class="${k.kind}">${k.name}: ${span(k.a, k.b)}</small>`).join("");
     col.appendChild(el);
   });
 });
@@ -183,9 +237,11 @@ const allBreaks = terms.flatMap((t) => t.breaks);
 const dayClass = (dt) => {
   const c = ["d"];
   if (dt.getTime() === now.getTime()) c.push("today");
-  else if (dt.getTime() === grad.getTime()) c.push("grad");
+  else if (dt >= grad && dt <= gradEnd) c.push("grad");
   else if (terms.some((t) => dt >= t.finals.a && dt <= t.finals.b)) c.push("fin");
+  else if (terms.some((t) => dt >= t.midterms.a && dt <= t.midterms.b)) c.push("mid");
   else if (allBreaks.some((k) => dt >= k.a && dt <= k.b)) c.push("brk");
+  else if (terms.some((t) => dt >= t.reading.a && dt <= t.reading.b)) c.push("read");
   else if (terms.some((t) => dt >= t.a && dt <= t.b)) c.push("term");
   if (dt < now) c.push("past");
   return c.join(" ");
