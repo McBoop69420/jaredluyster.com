@@ -724,6 +724,97 @@
     } catch (e) { /* ESPN Gamecast fallback still applies */ }
   }
 
+  // ---- Basketball: the last few plays on a live card -------------------
+  // The scoreboard only carries the single latest play, so these come from
+  // each game's own summary feed. That's a request per game (and a full D-I
+  // slate can have dozens live), so only cards on or near the screen are
+  // fetched. Substitutions are skipped: they arrive in bunches and would
+  // push every real event off the card.
+  const RECENT_PLAYS_SHOWN = 3;
+  const RECENT_PLAYS_REFRESH_MS = 10 * 1000;
+  const RECENT_PLAYS_TICK_MS = 2 * 1000;
+  const recentPlaysCache = new Map(); // eventId -> { plays, fetchedAt, pending }
+
+  function parseRecentPlays(summary) {
+    const plays = (summary && Array.isArray(summary.plays)) ? summary.plays : [];
+    const recent = [];
+    for (let i = plays.length - 1; i >= 0 && recent.length < RECENT_PLAYS_SHOWN; i--) {
+      const p = plays[i];
+      if (!p || !p.text || /substitution/i.test((p.type && p.type.text) || "")) continue;
+      recent.push({
+        clock: (p.clock && p.clock.displayValue) || "",
+        teamId: p.team && p.team.id != null ? String(p.team.id) : null,
+        text: String(p.text).replace(/\.$/, ""),
+        scoring: !!p.scoringPlay,
+      });
+    }
+    return recent; // newest first
+  }
+
+  // Always RECENT_PLAYS_SHOWN rows, blank until filled, so the card doesn't
+  // change height as plays come in.
+  function paintRecentPlays(list, plays) {
+    const teams = JSON.parse(list.dataset.teams);
+    const rows = [];
+    for (let i = 0; i < RECENT_PLAYS_SHOWN; i++) {
+      const p = plays[i];
+      if (!p) { rows.push('<li class="play">&nbsp;</li>'); continue; }
+      const team = teams[p.teamId];
+      const mark = !team ? "" : team.logo
+        ? '<img src="' + esc(team.logo) + '" alt="' + esc(team.abbr) + '">'
+        : esc(team.abbr);
+      rows.push('<li class="play' + (p.scoring ? " play--score" : "") + '">' +
+        '<span class="play-clock">' + esc(p.clock) + '</span>' +
+        '<span class="play-team">' + mark + '</span>' +
+        '<span class="play-text" title="' + esc(p.text) + '">' + esc(p.text) + '</span></li>');
+    }
+    const html = rows.join("");
+    if (list.paintedHtml !== html) { list.innerHTML = html; list.paintedHtml = html; }
+  }
+
+  function recentPlaysList(g) {
+    const list = el("ol", "recent-plays");
+    list.setAttribute("aria-label", "Latest plays");
+    list.dataset.eventId = g.eventId;
+    list.dataset.league = g.leagueKey;
+    list.dataset.teams = JSON.stringify(g.playTeams);
+    const cached = recentPlaysCache.get(g.eventId);
+    paintRecentPlays(list, (cached && cached.plays) || []);
+    return list;
+  }
+
+  async function fetchRecentPlays(leagueKey, eventId) {
+    const entry = recentPlaysCache.get(eventId) || { plays: null, fetchedAt: 0, pending: false };
+    if (entry.pending || Date.now() - entry.fetchedAt < RECENT_PLAYS_REFRESH_MS) return;
+    entry.pending = true;
+    recentPlaysCache.set(eventId, entry);
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      const url = ESPN + leagueKey + "/summary?event=" + encodeURIComponent(eventId) + "&_=" + Date.now();
+      const response = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (response.ok) entry.plays = parseRecentPlays(await response.json());
+    } catch (e) { /* keep the last good plays */ }
+    entry.pending = false;
+    entry.fetchedAt = Date.now();
+    if (!entry.plays) return;
+    // The same game can be on screen twice (Spotlight and its league board),
+    // and either card may have been rebuilt while this was in flight.
+    document.querySelectorAll(".recent-plays").forEach(list => {
+      if (list.dataset.eventId === String(eventId)) paintRecentPlays(list, entry.plays);
+    });
+  }
+
+  function refreshRecentPlays() {
+    if (document.hidden) return;
+    document.querySelectorAll(".recent-plays").forEach(list => {
+      const box = list.getBoundingClientRect();
+      if (!box.height || box.bottom < -200 || box.top > window.innerHeight + 200) return;
+      fetchRecentPlays(list.dataset.league, list.dataset.eventId);
+    });
+  }
+
   // ---- Parse a single scoreboard event ---------------------------------
   function parseEvent(ev, leagueKey, label) {
     const comp = (ev.competitions && ev.competitions[0]) || {};
@@ -793,6 +884,10 @@
     const possOf = c => (possId && String((c.team && c.team.id) || c.id) === possId)
       ? (situation.downDistanceText || "Has the ball") : null;
     const footballSituation = parseFootballSituation(situation, possId, status, cs);
+    // Live basketball only: who's who, for marking each play with its team.
+    const playTeams = state === "in" && leagueKey.indexOf("basketball/") === 0 && comp.playByPlayAvailable !== false
+      ? Object.fromEntries([away, home].map(c => [String((c.team && c.team.id) || c.id), { abbr: teamAbbr(c), logo: teamLogo(c) }]))
+      : null;
 
     return {
       eventId: ev.id,
@@ -810,6 +905,7 @@
       statusText: formatGameStatus(status, state, startTime, leagueKey),
       baseballSituation: parseBaseballSituation(comp, state, leagueKey),
       footballSituation,
+      playTeams,
       lineScore: parseBaseballLineScore(comp, state, leagueKey),
       isMyGame: isMyTeam(away.team.displayName) || isMyTeam(home.team.displayName),
       ranked: isRanked(away) || isRanked(home),
@@ -1128,6 +1224,7 @@
       card.appendChild(el("div", "broadcast", esc(g.broadcast)));
     }
     if (g.baseballSituation) card.appendChild(baseballSituationPanel(g.baseballSituation));
+    if (g.playTeams) card.appendChild(recentPlaysList(g));
     if (g.lineScore) card.appendChild(finalLineScoreTable(g.lineScore));
     if (g.boxScoreEventId) card.appendChild(detailedBoxScoreDetails(g.boxScoreEventId));
     return card;
@@ -3773,6 +3870,7 @@
     loadTeamContext();
     render();
     scheduleRefresh();
+    setInterval(refreshRecentPlays, RECENT_PLAYS_TICK_MS);
     scheduleValueScreenRefresh();
   }
 

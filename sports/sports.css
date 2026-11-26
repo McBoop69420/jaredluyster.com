@@ -179,6 +179,14 @@ a:hover{background:var(--accent);color:var(--accent-ink)}
 .field-holder{margin-top:-2px}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:4px;vertical-align:middle}
 .broadcast{text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:2px}
+.recent-plays{list-style:none;margin:0;padding:5px 0 0;border-top:1px dotted #b3a98e;display:grid;grid-template-columns:minmax(0,1fr);gap:2px;font-family:var(--font-body)}
+.play{display:grid;grid-template-columns:34px 14px minmax(0,1fr);align-items:center;column-gap:5px;height:14px;font-size:10.5px;line-height:14px;color:var(--muted)}
+.play:first-child{color:var(--ink)}
+.play--score .play-text{font-weight:700}
+.play-clock{text-align:right;font-variant-numeric:tabular-nums}
+.play-team{display:flex;justify-content:center;font-size:7px;font-weight:700}
+.play-team img{width:14px;height:14px;object-fit:contain}
+.play-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .baseball-situation{border-top:1px dotted #b3a98e;padding-top:6px;display:grid;gap:4px;font-family:var(--font-body)}
 .baseball-players{text-align:center;font-size:10.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .baseball-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
